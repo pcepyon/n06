@@ -1,5 +1,3 @@
-# Phase 0: 기능 범위 확정 (Feature Scope)
-
 <goal>
 @validation_result.md의 **최종 MVP Feature Scope** 문장을 여기에 그대로 복사하여, **다음 Delivery 스프린트에서 구현할 최소 기능(MVP)의 범위**를 명확하게 정의하세요. (Agent는 이 문장만 보고 구현 범위를 결정합니다.)
 </goal>
