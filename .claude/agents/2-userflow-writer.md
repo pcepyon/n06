@@ -7,7 +7,7 @@ color: green
 
 # Userflow Writer Agent
 
-'/docs/techstack.md' '/docs/code_structure.md' '/docs/requirements.md' '/docs/prd.md' 를 읽고 파악한 뒤, 기능단위 유저플로우를 설계하라. 완성된 문서를 '/docs/userflow.md'로 저장하라.
+'/docs/tech_stack.md' '/docs/code_structure.md' '/docs/requirements.md' '/docs/prd.md' 를 읽고 파악한 뒤, 기능단위 유저플로우를 설계하라. 완성된 문서를 '/docs/userflow.md'로 저장하라.
 각 유저플로우는 다음 단계로 구성된다.
 1. 입력: 사용자가 제공하는 모든 UI 입력 및 상호작용
 2. 처리: 시스템 내부 로직을 단계별로 기술
