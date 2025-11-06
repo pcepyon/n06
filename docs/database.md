@@ -27,10 +27,16 @@ weight_logs
 emergency_symptom_checks
 ```
 
-### 5. Dashboard Aggregation (Read)
+### 5. Achievement & Badges
 ```
-dose_records + weight_logs + symptom_logs
-→ weekly statistics, insights, badges
+badge_definitions (static)
+user_badges ← computed from user activity
+```
+
+### 6. Dashboard Aggregation (Read)
+```
+dose_records + weight_logs + symptom_logs + user_badges
+→ weekly statistics, insights, badges, timeline
 ```
 
 ---
@@ -254,6 +260,50 @@ dose_records + weight_logs + symptom_logs
 
 ---
 
+### badge_definitions
+뱃지 정의 (정적 데이터)
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | varchar(50) | PK | 뱃지 ID (예: 'streak_7', 'weight_5percent') |
+| name | varchar(100) | NOT NULL | 뱃지 이름 |
+| description | text | NOT NULL | 뱃지 설명 |
+| category | varchar(20) | NOT NULL | 카테고리 (streak/weight/dose/record) |
+| achievement_condition | jsonb | NOT NULL | 획득 조건 (JSON 형식) |
+| icon_url | text | NULL | 아이콘 이미지 URL |
+| display_order | integer | NOT NULL | 표시 순서 |
+| created_at | timestamptz | NOT NULL, DEFAULT now() | |
+
+**Indexes**
+- INDEX: (category, display_order)
+
+---
+
+### user_badges
+사용자별 뱃지 획득 상태
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK, DEFAULT gen_random_uuid() | |
+| user_id | uuid | FK(users.id), NOT NULL | |
+| badge_id | varchar(50) | FK(badge_definitions.id), NOT NULL | |
+| status | varchar(20) | NOT NULL | 미획득(locked)/진행중(in_progress)/획득(achieved) |
+| progress_percentage | integer | NOT NULL, DEFAULT 0 | 진행도 (0-100) |
+| achieved_at | timestamptz | NULL | 획득 일시 (획득 시에만) |
+| created_at | timestamptz | NOT NULL, DEFAULT now() | |
+| updated_at | timestamptz | NOT NULL, DEFAULT now() | |
+
+**Indexes**
+- UNIQUE: (user_id, badge_id)
+- INDEX: (user_id, status)
+- INDEX: (user_id, achieved_at DESC)
+
+**Constraints**
+- CHECK: status IN ('locked', 'in_progress', 'achieved')
+- CHECK: progress_percentage >= 0 AND progress_percentage <= 100
+
+---
+
 ## RLS (Row Level Security) Policies
 
 **Phase 1 적용**
@@ -291,6 +341,8 @@ USING (id = auth.uid());
 7. **symptom_logs**: (user_id, log_date DESC)
 8. **symptom_context_tags**: (symptom_log_id), (tag_name)
 9. **emergency_symptom_checks**: (user_id, checked_at DESC)
+10. **badge_definitions**: (category, display_order)
+11. **user_badges**: (user_id, badge_id) UNIQUE, (user_id, status), (user_id, achieved_at DESC)
 
 ---
 

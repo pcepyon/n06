@@ -194,7 +194,44 @@ CREATE TABLE emergency_symptom_checks (
 CREATE INDEX idx_emergency_checks_user_date ON emergency_symptom_checks(user_id, checked_at DESC);
 
 -- ============================================
--- 6. Updated At Trigger
+-- 6. Achievement & Badges
+-- ============================================
+
+-- badge_definitions table (static data)
+CREATE TABLE badge_definitions (
+    id varchar(50) PRIMARY KEY,
+    name varchar(100) NOT NULL,
+    description text NOT NULL,
+    category varchar(20) NOT NULL,
+    achievement_condition jsonb NOT NULL,
+    icon_url text,
+    display_order integer NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT check_badge_category CHECK (category IN ('streak', 'weight', 'dose', 'record'))
+);
+
+CREATE INDEX idx_badge_definitions_category ON badge_definitions(category, display_order);
+
+-- user_badges table
+CREATE TABLE user_badges (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    badge_id varchar(50) NOT NULL REFERENCES badge_definitions(id) ON DELETE CASCADE,
+    status varchar(20) NOT NULL,
+    progress_percentage integer NOT NULL DEFAULT 0,
+    achieved_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT unique_user_badge UNIQUE (user_id, badge_id),
+    CONSTRAINT check_badge_status CHECK (status IN ('locked', 'in_progress', 'achieved')),
+    CONSTRAINT check_progress CHECK (progress_percentage >= 0 AND progress_percentage <= 100)
+);
+
+CREATE INDEX idx_user_badges_user_status ON user_badges(user_id, status);
+CREATE INDEX idx_user_badges_user_achieved ON user_badges(user_id, achieved_at DESC);
+
+-- ============================================
+-- 7. Updated At Trigger
 -- ============================================
 
 -- Function to update updated_at timestamp
@@ -214,8 +251,12 @@ CREATE TRIGGER update_user_profiles_updated_at BEFORE UPDATE ON user_profiles
 CREATE TRIGGER update_dosage_plans_updated_at BEFORE UPDATE ON dosage_plans
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+-- Apply trigger to user_badges
+CREATE TRIGGER update_user_badges_updated_at BEFORE UPDATE ON user_badges
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- ============================================
--- 7. Comments
+-- 8. Comments
 -- ============================================
 
 COMMENT ON TABLE users IS 'User account information from OAuth providers';
@@ -230,9 +271,11 @@ COMMENT ON TABLE weight_logs IS 'Daily weight tracking records';
 COMMENT ON TABLE symptom_logs IS 'Side effect and symptom logs';
 COMMENT ON TABLE symptom_context_tags IS 'Context tags for symptoms (e.g., oily food, stress)';
 COMMENT ON TABLE emergency_symptom_checks IS 'Emergency symptom checklist records';
+COMMENT ON TABLE badge_definitions IS 'Badge definitions for achievement system (static data)';
+COMMENT ON TABLE user_badges IS 'User badge achievement status and progress';
 
 -- ============================================
--- 8. RLS Policies (Phase 1)
+-- 9. RLS Policies (Phase 1)
 -- ============================================
 
 -- Enable RLS on all tables
@@ -248,6 +291,8 @@ ALTER TABLE weight_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE symptom_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE symptom_context_tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE emergency_symptom_checks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE badge_definitions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_badges ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy: Users can only access their own profile
 CREATE POLICY users_policy ON users
@@ -310,5 +355,15 @@ CREATE POLICY symptom_context_tags_policy ON symptom_context_tags
 
 -- RLS Policy: Users can only access their own emergency checks
 CREATE POLICY emergency_symptom_checks_policy ON emergency_symptom_checks
+    FOR ALL
+    USING (user_id = auth.uid());
+
+-- RLS Policy: Badge definitions are readable by all authenticated users
+CREATE POLICY badge_definitions_policy ON badge_definitions
+    FOR SELECT
+    USING (auth.role() = 'authenticated');
+
+-- RLS Policy: Users can only access their own badges
+CREATE POLICY user_badges_policy ON user_badges
     FOR ALL
     USING (user_id = auth.uid());
