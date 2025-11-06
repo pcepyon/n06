@@ -1,76 +1,85 @@
-## [GLP-1 치료 관리 MVP] 최종 기술 스택 Blueprint (확장성을 고려한 최적화 버전)
+# Tech Stack
 
-YC 배치 CTO님의 핵심 가치와 요구사항, 그리고 잠재적 리스크 분석 결과를 통합하여 확정된 최종 기술 스택입니다. 이 Blueprint는 MVP의 **신속한 런칭(Isar, Flutter)**과 Phase 1 진입 시 발생할 **가장 큰 리스크(데이터 복잡성, 보안)**를 사전적으로 해소하는 것에 중점을 두었습니다.
+## Phase 구분
 
----
+**Phase 0 (MVP)**: Isar 로컬 DB, 오프라인 동작
+**Phase 1**: Supabase 클라우드 동기화 추가
 
-### 1. 최종 기술 스택 조합 (Optimal for Phase 0 & 1 Transition)
-
-| 영역 | 기술 | 핵심 역할 및 선정 이유 |
-| :--- | :--- | :--- |
-| **프론트엔드/플랫폼** | **Flutter** | **압도적인 UI/UX 구현 능력.** 동적 차트, 부드러운 애니메이션 구현에 최적화되었으며, 단일 코드베이스로 안정적인 iOS/Android 앱 출시 보장. |
-| **백엔드 및 인프라** | **Supabase (BaaS)** | **가장 쉬운 인프라 + 확장성 확보.** PostgreSQL 기반으로 복잡한 시계열 쿼리(F003, F006)를 효율적으로 처리하며, Auth, DB, Edge Functions를 통합 관리하여 인프라 부담을 최소화. |
-| **상태 관리** | **Riverpod** | **간결함과 안정성의 균형.** 컴파일 시점 안정성을 통해 개발 속도를 높이고, 복잡한 상태 의존성을 효과적으로 관리(e.g., 데이터 공유 모드). |
-| **로컬 데이터베이스** | **Isar** | **최고 성능의 오프라인 DB.** Dart 네이티브 기반으로 오프라인 기록 및 복잡한 클라이언트 로직(F001 스케줄 재계산) 처리에 최적. Phase 1에서는 로컬 캐시 역할을 수행할 것임. |
-| **아키텍처 패턴** | **Repository Pattern** | **(필수 선행 조건)** 모든 데이터 접근을 캡슐화하여, 현재는 Isar만 사용하더라도 향후 Supabase 클라우드 동기화 로직을 추가할 때 **대규모 리팩토링 없이 확장** 가능하도록 보장. |
-| **Analytics & Monitoring** | **Firebase Analytics + Crashlytics** | **(Phase 0 필수)** 사용자 행동 분석, 크래시 추적, MAU/DAU 측정. 로컬 DB만 사용하는 Phase 0에서도 제품 개선을 위한 피드백 수집 필수. |
-| **에러 추적** | **Sentry** (선택) | 상세한 에러 컨텍스트 수집 및 알림. Firebase Crashlytics 보완용. |
-| **주요 라이브러리** | `flutter_secure_storage`, `fl_chart`, `url_launcher`, `kakao_flutter_sdk`, `firebase_analytics`, `firebase_crashlytics` | 요구사항 충족을 위한 검증된 솔루션. |
+**현재**: Phase 0 구현 중
 
 ---
 
-### 2. 기술 스택 세부 판단 기준 및 수정 사유
+## Tech Stack by Phase
 
-#### A. 플랫폼 및 로컬 데이터: Flutter & Isar
+### Phase 0 (Local Only)
 
-*   **선정 사유:** MVP의 핵심인 **데이터 시각화와 부드러운 시각적 피드백(F006)**을 구현하는 데 Flutter가 가장 효율적이고 안정적입니다. Isar는 오프라인 상태 관리와 빠른 로컬 성능 요구사항을 완벽히 만족시킵니다.
-*   **아키텍처 강제:** 현재 로컬 DB(Isar)만 사용하더라도, **Repository Pattern**을 반드시 도입해야 합니다. 이는 클라이언트 상태 관리 레이어(Riverpod)가 Isar에 직접 접근하는 것을 막고, 미래의 클라우드 동기화 로직을 Repository 내부에 안전하게 담아낼 수 있는 유일한 방법입니다.
+| 영역 | 기술 | 버전 | 역할 |
+|------|------|------|------|
+| **Platform** | Flutter | 3.x | 크로스플랫폼 UI |
+| **Language** | Dart | 3.x | |
+| **State** | Riverpod | 2.x | 상태 관리 |
+| **Local DB** | Isar | 3.x | 오프라인 데이터 저장 |
+| **Auth** | kakao_flutter_sdk | 1.7+ | 카카오 로그인 |
+| | flutter_naver_login | 1.8+ | 네이버 로그인 |
+| | flutter_secure_storage | 9.0+ | 토큰 암호화 저장 |
+| **Analytics** | Firebase Analytics | 10.8+ | 사용자 행동 분석 |
+| | Firebase Crashlytics | 3.4+ | 크래시 추적 |
+| **UI** | fl_chart | 0.66+ | 차트 |
+| | go_router | 13.0+ | 내비게이션 |
+| | flutter_local_notifications | 16.3+ | 알림 |
 
-#### B. 백엔드 및 인프라: Supabase (Edge Functions를 활용한 Naver/Kakao 해결)
+**데이터 저장:**
+- 사용자 정보: Isar (로컬)
+- OAuth 토큰: FlutterSecureStorage (암호화)
+- 서버: 없음 (완전 오프라인)
 
-Supabase는 **Firebase의 쿼리 한계**를 해결하고, Hono 같은 **커스텀 서버의 보안/운영 리스크**를 회피하는 최적의 대안입니다.
+**Analytics 이유:**
+Phase 0는 로컬 DB만 사용 → 사용자 정보 수집 불가 → Firebase로 익명 데이터 수집
 
-| 기능 영역 | Supabase 처리 방안 | CTO 가치 부합성 |
-| :--- | :--- | :--- |
-| **데이터베이스** | **PostgreSQL 기반 DB** | F003(데이터 공유 모드), F006(대시보드 인사이트)에 필수적인 **시계열 데이터 집계 및 복잡한 쿼리**를 효율적으로 처리하여 확장성을 확보합니다. |
-| **카카오 로그인** | **Supabase Auth (공식 지원)** | BaaS의 안정성과 보안에 의존하여 가장 쉽고 빠르게 구현합니다. |
-| **네이버 로그인** | **Supabase Edge Functions** | 네이버 OAuth를 공식 지원하지 않는 문제를 해결하기 위해, **별도 서버 구축 없이** Supabase 내의 서버리스 함수를 활용하여 인증 로직(토큰 교환)을 처리합니다. 이는 보안 리스크를 최소화합니다. |
-| **데이터 보안** | **Row Level Security (RLS)** | **(Phase 1 전환 필수)** 클라우드 동기화가 시작될 때 RLS를 활성화하여, 모든 데이터 접근이 DB 레벨에서 자동으로 검증되도록 합니다. **오버엔지니어링 없이 최고의 데이터 보안**을 보장합니다. |
+### Phase 1 (Cloud Sync)
 
+| 영역 | 기술 | 역할 |
+|------|------|------|
+| **Backend** | Supabase | BaaS |
+| **Database** | PostgreSQL | 클라우드 DB (Supabase 내장) |
+| **Auth** | Supabase Auth | OAuth 통합 |
+| **Functions** | Edge Functions | 네이버 OAuth 처리 |
+| **Security** | RLS | DB 레벨 접근 제어 |
 
----
-
-#### C. Analytics & Monitoring: Firebase (Phase 0 필수)
-
-**Phase 0의 치명적 맹점 해결**
-
-현재 설계(Isar 로컬 DB만)에서는 다음 정보를 전혀 알 수 없음:
-- ❌ 몇 명이 앱을 사용하는가?
-- ❌ 어떤 기능을 주로 사용하는가?
-- ❌ 어디서 크래시가 발생하는가?
-- ❌ 사용자가 불편해하는 점은?
-
-**→ MVP 출시 후 개선 불가능**
-
-| 기능 영역 | Firebase 처리 방안 | MVP 가치 부합성 |
-| :--- | :--- | :--- |
-| **사용자 분석** | **Firebase Analytics** | 설치 수, MAU/DAU, 기능별 사용률 자동 추적. **익명 데이터로 개인정보 문제 없음**. |
-| **크래시 추적** | **Firebase Crashlytics** | 크래시 발생 시 자동 리포트. 스택 트레이스, 디바이스 정보, 재현 경로 제공. |
-| **이벤트 로깅** | **Custom Events** | 투여 기록, 증상 기록, 뱃지 획득 등 핵심 이벤트 추적하여 제품 개선 인사이트 확보. |
-| **비용** | **완전 무료** | 소규모 앱은 Firebase 무료 티어로 충분. 추가 인프라 비용 없음. |
-
-**Phase 1 전환 시:**
-- Firebase는 계속 유지 (기본 분석용)
-- Supabase에 상세 이벤트 로그 추가 저장 (심화 분석용)
+**데이터 저장:**
+- 사용자 정보: Supabase (auth.users + public.users)
+- OAuth 토큰: Supabase 자동 관리
+- 로컬 캐시: Isar (오프라인 지원)
 
 ---
 
-### 3. CTO 최종 점검 및 권고
+## Architecture Pattern
 
-| 점검 항목 | 결과 | 행동 권고 |
-| :--- | :--- | :--- |
-| **신속한 개발 iteration** | **매우 높음** | Flutter+Isar+Riverpod로 UI/로컬 로직 속도 확보. |
-| **오버엔지니어링 방지** | **성공** | Hono/커스텀 서버 대신 BaaS(Supabase)와 서버리스 함수(Edge Functions)를 사용하여 불필요한 인프라 관리 방지. |
-| **가장 쉬운 인프라 지향** | **성공** | 모든 핵심 기능을 단일 BaaS 플랫폼 내에서 처리하여 운영 부담을 최소화. |
-| **Phase 0/1 전환 리스크** | **최소화** | **Repository Pattern과 메타데이터 필드**를 지금부터 적용하여, 향후 클라우드 동기화 기능 추가 시 대규모 리팩토링(기술 부채)이 발생하지 않도록 사전 조치. |
-| **제품 개선 피드백** | **확보** | Firebase Analytics/Crashlytics로 Phase 0부터 사용자 데이터 수집, 빠른 iteration 가능. |
+**Repository Pattern 필수**
+
+Phase 1 전환 시 Repository 구현체만 교체 → Domain/Application/Presentation Layer 수정 불필요
+
+```dart
+// Phase 0
+MedicationRepository → IsarMedicationRepository
+
+// Phase 1
+MedicationRepository → SupabaseMedicationRepository
+```
+
+---
+
+## Phase 전환
+
+### 변경 영역
+
+| 항목 | Phase 0 | Phase 1 |
+|------|---------|---------|
+| Repository Interface | ✅ 동일 | ✅ 동일 |
+| Repository 구현체 | IsarMedicationRepository | SupabaseMedicationRepository (추가) |
+| Provider DI | 1줄 수정 | |
+| Domain Layer | ✅ 변경 없음 | ✅ 변경 없음 |
+| Application Layer | ✅ 변경 없음 | ✅ 변경 없음 |
+| Presentation Layer | ✅ 변경 없음 | ✅ 변경 없음 |
+
+**결론**: Infrastructure Layer만 수정
