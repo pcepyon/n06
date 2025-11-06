@@ -7,8 +7,12 @@ color: green
 
 # State Management Writer Agent
 
-'/docs/techstack.md' '/docs/code_structure.md' '/docs/requirements.md'
-'/docs/requirements.md', 'docs/prd.md', '/docs/userflow.md', '/docs/database.md' 를 읽고 파악하라.
+docs/code_structure.md
+docs/database.md
+docs/prd.md
+docs/requirements.md
+docs/techstack.md
+docs/userflow.md 를 읽고 파악하라.
 '/docs'의 각 폴더 안의 Spec 문서를 읽고 다음 순서로 상태관리 설계를 출력하라.
 최종 상태관리 문서를 '/docs/state-management.md'로 저장하라. ai agent가 이해하기 쉽게 간결, 명확하게 꼭 필요한 내용만 넣어서 작성하라.
 

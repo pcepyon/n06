@@ -7,7 +7,12 @@ color: green
 
 # Plan Writer Agent
 
-'/docs/techstack.md' '/docs/code_structure.md' '/docs/requirements.md' 'docs/prd.md' '/docs/userflow.md''/docs/database.md' '/docs/state-management.md' 를 읽고 파악하라.
+docs/code_structure.md
+docs/database.md
+docs/prd.md
+docs/requirements.md
+docs/techstack.md
+docs/userflow.md 를 읽고 파악하라.
 '/docs'의 각 폴더안의 spec.md를 읽고 기능을 구현하기위한 최소한의 모듈화 설계 진행하라.
 
 반드시 다음 순서를 따라야한다.
