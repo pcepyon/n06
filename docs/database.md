@@ -6,13 +6,12 @@
 ```
 users → oauth_tokens
 users → consent_records
-users → user_profiles → treatment_goals
+users → user_profiles
 ```
 
 ### 2. Dosage Management
 ```
 dosage_plans → dose_schedules → dose_records
-dose_records → injection_sites
 dosage_plans → plan_change_history
 ```
 
@@ -97,13 +96,14 @@ dose_records + weight_logs + symptom_logs + user_badges
 | id | uuid | PK, DEFAULT gen_random_uuid() | |
 | user_id | uuid | FK(users.id), UNIQUE, NOT NULL | |
 | target_weight_kg | numeric(5,2) | NOT NULL | 목표 체중 |
-| current_weight_kg | numeric(5,2) | NOT NULL | 현재 체중 |
 | target_period_weeks | integer | NULL | 목표 기간 (주) |
 | weekly_loss_goal_kg | numeric(4,2) | NULL | 주간 감량 목표 (자동 계산) |
 | weekly_weight_record_goal | integer | NOT NULL, DEFAULT 7 | 주간 체중 기록 목표 |
 | weekly_symptom_record_goal | integer | NOT NULL, DEFAULT 7 | 주간 부작용 기록 목표 |
 | created_at | timestamptz | NOT NULL, DEFAULT now() | |
 | updated_at | timestamptz | NOT NULL, DEFAULT now() | |
+
+**Note**: 현재 체중은 weight_logs 테이블에서 최신 기록으로 조회
 
 ---
 
@@ -175,21 +175,9 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 **Indexes**
 - INDEX: (dosage_plan_id, administered_at)
+- INDEX: (injection_site, administered_at DESC)
 
----
-
-### injection_sites
-주사 부위 이력 (부위 순환 관리)
-
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT gen_random_uuid() | |
-| dose_record_id | uuid | FK(dose_records.id), UNIQUE, NOT NULL | |
-| site_name | varchar(20) | NOT NULL | 복부/허벅지/상완 |
-| used_at | timestamptz | NOT NULL | 사용 일시 |
-
-**Indexes**
-- INDEX: (site_name, used_at)
+**Note**: 주사 부위 순환 관리는 injection_site 컬럼과 administered_at을 통해 구현
 
 ---
 
@@ -335,14 +323,13 @@ USING (id = auth.uid());
 1. **users**: (oauth_provider, oauth_user_id) UNIQUE
 2. **dosage_plans**: (user_id, is_active)
 3. **dose_schedules**: (dosage_plan_id, scheduled_date)
-4. **dose_records**: (dosage_plan_id, administered_at)
-5. **injection_sites**: (site_name, used_at)
-6. **weight_logs**: (user_id, log_date) UNIQUE, (user_id, log_date DESC)
-7. **symptom_logs**: (user_id, log_date DESC)
-8. **symptom_context_tags**: (symptom_log_id), (tag_name)
-9. **emergency_symptom_checks**: (user_id, checked_at DESC)
-10. **badge_definitions**: (category, display_order)
-11. **user_badges**: (user_id, badge_id) UNIQUE, (user_id, status), (user_id, achieved_at DESC)
+4. **dose_records**: (dosage_plan_id, administered_at), (injection_site, administered_at DESC)
+5. **weight_logs**: (user_id, log_date) UNIQUE, (user_id, log_date DESC)
+6. **symptom_logs**: (user_id, log_date DESC)
+7. **symptom_context_tags**: (symptom_log_id), (tag_name)
+8. **emergency_symptom_checks**: (user_id, checked_at DESC)
+9. **badge_definitions**: (category, display_order)
+10. **user_badges**: (user_id, badge_id) UNIQUE, (user_id, status), (user_id, achieved_at DESC)
 
 ---
 
@@ -360,3 +347,7 @@ Phase 2 이후 GDPR 준수를 위해 데이터 보관 정책 수립 필요.
 - Phase 0에서는 Isar 로컬 DB만 사용
 - Phase 1에서 Supabase PostgreSQL로 마이그레이션
 - Repository Pattern으로 데이터 소스 전환 대비
+
+### 설계 결정 사항
+
+1. **온보딩 시 weight_logs 자동 생성**: 온보딩에서 입력받은 현재 체중을 weight_logs에 첫 기록으로 자동 생성 필요

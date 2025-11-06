@@ -44,7 +44,6 @@ CREATE TABLE user_profiles (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     target_weight_kg numeric(5,2) NOT NULL,
-    current_weight_kg numeric(5,2) NOT NULL,
     target_period_weeks integer,
     weekly_loss_goal_kg numeric(4,2),
     weekly_weight_record_goal integer NOT NULL DEFAULT 7,
@@ -53,7 +52,6 @@ CREATE TABLE user_profiles (
     updated_at timestamptz NOT NULL DEFAULT now(),
     CONSTRAINT unique_user_profile UNIQUE (user_id),
     CONSTRAINT check_target_weight CHECK (target_weight_kg > 0 AND target_weight_kg < 500),
-    CONSTRAINT check_current_weight CHECK (current_weight_kg > 0 AND current_weight_kg < 500),
     CONSTRAINT check_weekly_goals CHECK (weekly_weight_record_goal >= 0 AND weekly_weight_record_goal <= 7 AND weekly_symptom_record_goal >= 0 AND weekly_symptom_record_goal <= 7)
 );
 
@@ -121,18 +119,7 @@ CREATE TABLE dose_records (
 );
 
 CREATE INDEX idx_dose_records_plan_date ON dose_records(dosage_plan_id, administered_at DESC);
-
--- injection_sites table
-CREATE TABLE injection_sites (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    dose_record_id uuid NOT NULL REFERENCES dose_records(id) ON DELETE CASCADE,
-    site_name varchar(20) NOT NULL,
-    used_at timestamptz NOT NULL,
-    CONSTRAINT unique_dose_site UNIQUE (dose_record_id),
-    CONSTRAINT check_site_name CHECK (site_name IN ('복부', '허벅지', '상완'))
-);
-
-CREATE INDEX idx_injection_sites_name_date ON injection_sites(site_name, used_at DESC);
+CREATE INDEX idx_dose_records_injection_site ON dose_records(injection_site, administered_at DESC);
 
 -- ============================================
 -- 4. Weight & Symptom Tracking
@@ -266,7 +253,6 @@ COMMENT ON TABLE dosage_plans IS 'Medication dosage plans with escalation schedu
 COMMENT ON TABLE plan_change_history IS 'History of changes to dosage plans';
 COMMENT ON TABLE dose_schedules IS 'Auto-generated dosage schedule';
 COMMENT ON TABLE dose_records IS 'Actual dose administration records';
-COMMENT ON TABLE injection_sites IS 'Injection site rotation tracking';
 COMMENT ON TABLE weight_logs IS 'Daily weight tracking records';
 COMMENT ON TABLE symptom_logs IS 'Side effect and symptom logs';
 COMMENT ON TABLE symptom_context_tags IS 'Context tags for symptoms (e.g., oily food, stress)';
@@ -286,7 +272,6 @@ ALTER TABLE dosage_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE plan_change_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dose_schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dose_records ENABLE ROW LEVEL SECURITY;
-ALTER TABLE injection_sites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE weight_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE symptom_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE symptom_context_tags ENABLE ROW LEVEL SECURITY;
@@ -328,15 +313,6 @@ CREATE POLICY dose_schedules_policy ON dose_schedules
 CREATE POLICY dose_records_policy ON dose_records
     FOR ALL
     USING (dosage_plan_id IN (SELECT id FROM dosage_plans WHERE user_id = auth.uid()));
-
--- RLS Policy: Users can only access their own injection sites
-CREATE POLICY injection_sites_policy ON injection_sites
-    FOR ALL
-    USING (dose_record_id IN (
-        SELECT id FROM dose_records WHERE dosage_plan_id IN (
-            SELECT id FROM dosage_plans WHERE user_id = auth.uid()
-        )
-    ));
 
 -- RLS Policy: Users can only access their own weight logs
 CREATE POLICY weight_logs_policy ON weight_logs
