@@ -30,9 +30,10 @@ lib/
 │   ├── constants/     # 앱 상수, UI 상수
 │   ├── errors/        # 커스텀 예외
 │   ├── routing/       # go_router 설정
+│   ├── analytics/     # Firebase Analytics & Crashlytics
 │   └── utils/         # 날짜 계산, 검증, 포맷팅
 │
-└── main.dart          # 앱 진입점, ProviderScope
+└── main.dart          # 앱 진입점, ProviderScope, Firebase 초기화
 ```
 
 ### core/ 상세
@@ -49,6 +50,11 @@ core/
 │
 ├── routing/
 │   └── app_router.dart
+│
+├── analytics/
+│   ├── analytics_service.dart       # Firebase Analytics wrapper
+│   ├── analytics_events.dart        # 이벤트 이름 상수
+│   └── crashlytics_service.dart     # Crashlytics wrapper
 │
 └── utils/
     ├── date_utils.dart       # 날짜 계산

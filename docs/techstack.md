@@ -13,7 +13,9 @@ YC 배치 CTO님의 핵심 가치와 요구사항, 그리고 잠재적 리스크
 | **상태 관리** | **Riverpod** | **간결함과 안정성의 균형.** 컴파일 시점 안정성을 통해 개발 속도를 높이고, 복잡한 상태 의존성을 효과적으로 관리(e.g., 데이터 공유 모드). |
 | **로컬 데이터베이스** | **Isar** | **최고 성능의 오프라인 DB.** Dart 네이티브 기반으로 오프라인 기록 및 복잡한 클라이언트 로직(F001 스케줄 재계산) 처리에 최적. Phase 1에서는 로컬 캐시 역할을 수행할 것임. |
 | **아키텍처 패턴** | **Repository Pattern** | **(필수 선행 조건)** 모든 데이터 접근을 캡슐화하여, 현재는 Isar만 사용하더라도 향후 Supabase 클라우드 동기화 로직을 추가할 때 **대규모 리팩토링 없이 확장** 가능하도록 보장. |
-| **주요 라이브러리** | `flutter_secure_storage`, `fl_chart`, `url_launcher`, `kakao_flutter_sdk` | 요구사항 충족을 위한 검증된 솔루션. |
+| **Analytics & Monitoring** | **Firebase Analytics + Crashlytics** | **(Phase 0 필수)** 사용자 행동 분석, 크래시 추적, MAU/DAU 측정. 로컬 DB만 사용하는 Phase 0에서도 제품 개선을 위한 피드백 수집 필수. |
+| **에러 추적** | **Sentry** (선택) | 상세한 에러 컨텍스트 수집 및 알림. Firebase Crashlytics 보완용. |
+| **주요 라이브러리** | `flutter_secure_storage`, `fl_chart`, `url_launcher`, `kakao_flutter_sdk`, `firebase_analytics`, `firebase_crashlytics` | 요구사항 충족을 위한 검증된 솔루션. |
 
 ---
 
@@ -38,6 +40,31 @@ Supabase는 **Firebase의 쿼리 한계**를 해결하고, Hono 같은 **커스�
 
 ---
 
+#### C. Analytics & Monitoring: Firebase (Phase 0 필수)
+
+**Phase 0의 치명적 맹점 해결**
+
+현재 설계(Isar 로컬 DB만)에서는 다음 정보를 전혀 알 수 없음:
+- ❌ 몇 명이 앱을 사용하는가?
+- ❌ 어떤 기능을 주로 사용하는가?
+- ❌ 어디서 크래시가 발생하는가?
+- ❌ 사용자가 불편해하는 점은?
+
+**→ MVP 출시 후 개선 불가능**
+
+| 기능 영역 | Firebase 처리 방안 | MVP 가치 부합성 |
+| :--- | :--- | :--- |
+| **사용자 분석** | **Firebase Analytics** | 설치 수, MAU/DAU, 기능별 사용률 자동 추적. **익명 데이터로 개인정보 문제 없음**. |
+| **크래시 추적** | **Firebase Crashlytics** | 크래시 발생 시 자동 리포트. 스택 트레이스, 디바이스 정보, 재현 경로 제공. |
+| **이벤트 로깅** | **Custom Events** | 투여 기록, 증상 기록, 뱃지 획득 등 핵심 이벤트 추적하여 제품 개선 인사이트 확보. |
+| **비용** | **완전 무료** | 소규모 앱은 Firebase 무료 티어로 충분. 추가 인프라 비용 없음. |
+
+**Phase 1 전환 시:**
+- Firebase는 계속 유지 (기본 분석용)
+- Supabase에 상세 이벤트 로그 추가 저장 (심화 분석용)
+
+---
+
 ### 3. CTO 최종 점검 및 권고
 
 | 점검 항목 | 결과 | 행동 권고 |
@@ -46,3 +73,4 @@ Supabase는 **Firebase의 쿼리 한계**를 해결하고, Hono 같은 **커스�
 | **오버엔지니어링 방지** | **성공** | Hono/커스텀 서버 대신 BaaS(Supabase)와 서버리스 함수(Edge Functions)를 사용하여 불필요한 인프라 관리 방지. |
 | **가장 쉬운 인프라 지향** | **성공** | 모든 핵심 기능을 단일 BaaS 플랫폼 내에서 처리하여 운영 부담을 최소화. |
 | **Phase 0/1 전환 리스크** | **최소화** | **Repository Pattern과 메타데이터 필드**를 지금부터 적용하여, 향후 클라우드 동기화 기능 추가 시 대규모 리팩토링(기술 부채)이 발생하지 않도록 사전 조치. |
+| **제품 개선 피드백** | **확보** | Firebase Analytics/Crashlytics로 Phase 0부터 사용자 데이터 수집, 빠른 iteration 가능. |
