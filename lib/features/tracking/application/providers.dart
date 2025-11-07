@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
+import 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart';
 import 'package:n06/features/tracking/domain/repositories/medication_repository.dart';
+import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
 import 'package:n06/features/tracking/domain/usecases/injection_site_rotation_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/missed_dose_analyzer_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/schedule_generator_usecase.dart';
@@ -12,6 +14,11 @@ final medicationRepositoryProvider = Provider<MedicationRepository>((ref) {
   // For now, we'll create a simple implementation
   throw UnimplementedError(
       'medicationRepositoryProvider must be provided by app initialization');
+});
+
+final trackingRepositoryProvider = Provider<TrackingRepository>((ref) {
+  throw UnimplementedError(
+      'trackingRepositoryProvider must be provided by app initialization');
 });
 
 // UseCase Providers
@@ -50,3 +57,17 @@ final medicationNotifierProvider = StateNotifierProvider.autoDispose<
     notificationService: notificationService,
   );
 });
+
+// Tracking Notifier Provider
+final trackingNotifierProvider =
+    StateNotifierProvider.autoDispose<TrackingNotifier, AsyncValue<TrackingState>>(
+  (ref) {
+    final repository = ref.watch(trackingRepositoryProvider);
+    // userId는 AuthNotifier에서 가져와야 함
+    // 현재는 null로 설정
+    return TrackingNotifier(
+      repository: repository,
+      userId: null,
+    );
+  },
+);
