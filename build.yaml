@@ -1,0 +1,20 @@
+# Build configuration for code generation
+
+targets:
+  $default:
+    builders:
+      # Riverpod code generation
+      riverpod_generator:
+        generate_for:
+          - lib/**
+          - test/**
+        options:
+          # Generate code for both lib and test directories
+          generate_combined_builder_output: true
+
+      # Isar code generation
+      isar_generator:
+        generate_for:
+          - lib/**
+        options:
+          # Isar specific options if needed
