@@ -27,7 +27,7 @@ class DosagePlanDto {
     cycleDays = entity.cycleDays;
     initialDoseMg = entity.initialDoseMg;
     escalationPlan = entity.escalationPlan?.map((step) {
-      return EscalationStepDto(
+      return EscalationStepDto.withValues(
         weeksFromStart: step.weeksFromStart,
         doseMg: step.doseMg,
       );
@@ -63,10 +63,10 @@ class EscalationStepDto {
   late int weeksFromStart;
   late double doseMg;
 
-  EscalationStepDto({
+  EscalationStepDto();
+
+  EscalationStepDto.withValues({
     required this.weeksFromStart,
     required this.doseMg,
   });
-
-  EscalationStepDto.empty();
 }

@@ -47,7 +47,6 @@ class DoseNotificationUseCase {
       return null;
     }
 
-    final time = schedule.notificationTime!;
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    return schedule.notificationTime.toString();
   }
 }

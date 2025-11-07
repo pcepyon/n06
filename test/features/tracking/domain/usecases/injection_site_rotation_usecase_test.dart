@@ -125,7 +125,7 @@ void main() {
           ),
         ];
 
-        final siteHistory = useCase.getSiteHistory(records);
+        final siteHistory = useCase.getSiteHistoryList(records);
 
         expect(siteHistory.length, 3); // Only last 30 days
         expect(siteHistory.contains('abdomen'), true);

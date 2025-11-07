@@ -23,7 +23,7 @@ void main() {
         DoseSchedule(
           id: 'schedule-2',
           dosagePlanId: 'plan-1',
-          scheduledDate: now,
+          scheduledDate: now.subtract(Duration(days: 1)),
           scheduledDoseMg: 0.25,
         ),
       ];
@@ -31,14 +31,16 @@ void main() {
       final records = [
         DoseRecord(
           id: 'record-1',
+          doseScheduleId: 'schedule-1',
           dosagePlanId: 'plan-1',
           administeredAt: now.subtract(Duration(days: 7)),
           actualDoseMg: 0.25,
         ),
         DoseRecord(
           id: 'record-2',
+          doseScheduleId: 'schedule-2',
           dosagePlanId: 'plan-1',
-          administeredAt: now,
+          administeredAt: now.subtract(Duration(days: 1)),
           actualDoseMg: 0.25,
         ),
       ];
@@ -71,7 +73,7 @@ void main() {
         DoseSchedule(
           id: 'schedule-1',
           dosagePlanId: 'plan-1',
-          scheduledDate: now.subtract(Duration(days: 7)),
+          scheduledDate: now.subtract(Duration(days: 6)),
           scheduledDoseMg: 0.25,
         ),
       ];

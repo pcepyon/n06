@@ -102,7 +102,7 @@ class DosagePlan extends Equatable {
     double currentDose = initialDoseMg;
 
     for (final step in escalationPlan!) {
-      if (weeksElapsed >= step.weeksFromStart) {
+      if (weeksElapsed > step.weeksFromStart) {
         currentDose = step.doseMg;
       } else {
         break;

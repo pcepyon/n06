@@ -5,17 +5,17 @@ class DoseSchedule extends Equatable {
   final String dosagePlanId;
   final DateTime scheduledDate;
   final double scheduledDoseMg;
-  final DateTime? notificationTime;
+  final Object? notificationTime;
   final DateTime createdAt;
 
-  const DoseSchedule({
+  DoseSchedule({
     required this.id,
     required this.dosagePlanId,
     required this.scheduledDate,
     required this.scheduledDoseMg,
     this.notificationTime,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? const Duration();
+  }) : createdAt = createdAt ?? DateTime.now();
 
   /// Check if schedule is overdue (before today)
   bool isOverdue() {

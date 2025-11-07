@@ -24,7 +24,7 @@ class ScheduleGeneratorUseCase {
   List<DoseSchedule> generateSchedules(
     DosagePlan plan,
     DateTime endDate, {
-    TimeOfDay? notificationTime,
+    Object? notificationTime,
   }) {
     if (endDate.isBefore(plan.startDate)) {
       return [];
@@ -58,7 +58,7 @@ class ScheduleGeneratorUseCase {
     DateTime changeDate,
     DateTime endDate,
     List<DoseSchedule> existingSchedules, {
-    TimeOfDay? notificationTime,
+    Object? notificationTime,
   }) {
     // Keep schedules before change date
     final keepSchedules = existingSchedules

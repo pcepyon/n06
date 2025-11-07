@@ -75,7 +75,7 @@ class IsarMedicationRepository implements MedicationRepository {
       final dtos = await isar.doseScheduleDtos
           .filter()
           .dosagePlanIdEqualTo(planId)
-          .scheduledDateGreaterThanOrEqualTo(fromDate)
+          .scheduledDateGreaterThan(fromDate)
           .findAll();
 
       await isar.doseScheduleDtos.deleteAll(dtos.map((dto) => dto.id!).toList());
@@ -107,7 +107,7 @@ class IsarMedicationRepository implements MedicationRepository {
     final dtos = await isar.doseRecordDtos
         .filter()
         .dosagePlanIdEqualTo(planId)
-        .administeredAtGreaterThanOrEqualTo(since)
+        .administeredAtGreaterThan(since)
         .findAll();
 
     return dtos.map((dto) => dto.toEntity()).toList();

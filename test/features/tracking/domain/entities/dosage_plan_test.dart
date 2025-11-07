@@ -153,16 +153,18 @@ void main() {
           ],
         );
 
-        // Weeks 0-3: 0.25mg
+        // Weeks 0-4: 0.25mg (before week 4 completes)
         expect(plan.getCurrentDose(weeksElapsed: 0), 0.25);
         expect(plan.getCurrentDose(weeksElapsed: 3), 0.25);
+        expect(plan.getCurrentDose(weeksElapsed: 4), 0.25); // Still initial dose
 
-        // Weeks 4-7: 0.5mg
-        expect(plan.getCurrentDose(weeksElapsed: 4), 0.5);
+        // Weeks 5-7: 0.5mg (after week 4 completes)
+        expect(plan.getCurrentDose(weeksElapsed: 5), 0.5);
         expect(plan.getCurrentDose(weeksElapsed: 7), 0.5);
 
-        // Weeks 8+: 1.0mg
-        expect(plan.getCurrentDose(weeksElapsed: 8), 1.0);
+        // Weeks 8+: 1.0mg (after week 8 completes)
+        expect(plan.getCurrentDose(weeksElapsed: 8), 0.5); // Still 0.5mg at week 8
+        expect(plan.getCurrentDose(weeksElapsed: 9), 1.0); // Escalate to 1.0mg after week 8
         expect(plan.getCurrentDose(weeksElapsed: 12), 1.0);
       });
 

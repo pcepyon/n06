@@ -10,6 +10,10 @@ import 'package:n06/features/authentication/infrastructure/dtos/consent_record_d
 import 'package:n06/features/authentication/infrastructure/dtos/user_dto.dart';
 import 'package:n06/features/authentication/infrastructure/repositories/isar_auth_repository.dart';
 import 'package:n06/features/authentication/presentation/screens/login_screen.dart';
+import 'package:n06/features/tracking/infrastructure/dtos/dosage_plan_dto.dart';
+import 'package:n06/features/tracking/infrastructure/dtos/dose_schedule_dto.dart';
+import 'package:n06/features/tracking/infrastructure/dtos/dose_record_dto.dart';
+import 'package:n06/features/tracking/infrastructure/dtos/plan_change_history_dto.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +24,14 @@ void main() async {
 
   // Initialize Isar
   final isar = await Isar.open(
-    [UserDtoSchema, ConsentRecordDtoSchema],
+    [
+      UserDtoSchema,
+      ConsentRecordDtoSchema,
+      DosagePlanDtoSchema,
+      DoseScheduleDtoSchema,
+      DoseRecordDtoSchema,
+      PlanChangeHistoryDtoSchema,
+    ],
     directory: '', // Will use default directory
   );
 

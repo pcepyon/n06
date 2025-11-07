@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
-import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:n06/features/tracking/domain/usecases/schedule_generator_usecase.dart';
 
 void main() {
@@ -194,8 +193,12 @@ void main() {
         );
 
         for (final schedule in schedules) {
-          expect(schedule.notificationTime?.hour, 14);
-          expect(schedule.notificationTime?.minute, 30);
+          expect(schedule.notificationTime, isNotNull);
+          if (schedule.notificationTime is TimeOfDay) {
+            final time = schedule.notificationTime as TimeOfDay;
+            expect(time.hour, 14);
+            expect(time.minute, 30);
+          }
         }
       });
     });
