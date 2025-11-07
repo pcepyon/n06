@@ -1,19 +1,21 @@
 # UF-SETTINGS Implementation Plan
 
-## 1. Overview
+## 1. 개요
 
-Settings 화면은 사용자 계정 및 앱 설정 관리를 위한 기능입니다.
+설정 화면 및 사용자 프로필 관리 기능 구현
 
-**Modules:**
-- SettingsScreen (Presentation): 설정 메뉴 리스트 UI
-- SettingsNotifier (Application): 설정 상태 관리
-- ProfileRepository (Domain): 프로필 데이터 인터페이스
-- IsarProfileRepository (Infrastructure): Isar 기반 프로필 데이터 구현
+### 모듈 목록
+- `SettingsScreen` (Presentation): 설정 화면 UI
+- `UserProfileNotifier` (Application): 사용자 프로필 상태 관리
+- `UserProfile` (Domain): 프로필 엔티티
+- `ProfileRepository` (Domain): 프로필 저장소 인터페이스
+- `IsarProfileRepository` (Infrastructure): Isar 기반 프로필 저장소 구현
+- `UserProfileDto` (Infrastructure): 프로필 DTO
 
-**TDD Scope:**
-- Unit Tests: Repository, Notifier, Domain logic
-- Widget Tests: SettingsScreen UI
-- Integration Tests: 설정 화면 진입 및 메뉴 선택 플로우
+### TDD 적용 범위
+- Unit: Repository, Notifier 로직
+- Widget: SettingsScreen UI 동작
+- Integration: 프로필 조회 전체 흐름
 
 ---
 
@@ -21,44 +23,31 @@ Settings 화면은 사용자 계정 및 앱 설정 관리를 위한 기능입니
 
 ```mermaid
 graph TD
-    subgraph Presentation
-        SettingsScreen[SettingsScreen Widget]
-        SettingsMenuItem[SettingsMenuItem Widget]
-    end
+    %% Presentation Layer
+    SettingsScreen[SettingsScreen<br/>설정 메뉴 표시]
 
-    subgraph Application
-        SettingsNotifier[SettingsNotifier]
-        AuthNotifier[AuthNotifier - from F-001]
-        ProfileNotifier[ProfileNotifier - from F000]
-    end
+    %% Application Layer
+    UserProfileNotifier[UserProfileNotifier<br/>프로필 상태 관리]
+    AuthNotifier[AuthNotifier<br/>인증 상태 관리]
 
-    subgraph Domain
-        UserProfile[UserProfile Entity]
-        User[User Entity]
-        ProfileRepository[ProfileRepository Interface]
-        AuthRepository[AuthRepository Interface]
-    end
+    %% Domain Layer
+    UserProfile[UserProfile Entity<br/>사용자 프로필]
+    ProfileRepository[ProfileRepository Interface<br/>프로필 저장소]
 
-    subgraph Infrastructure
-        IsarProfileRepository[IsarProfileRepository]
-        IsarAuthRepository[IsarAuthRepository]
-        Isar[(Isar Database)]
-    end
+    %% Infrastructure Layer
+    IsarProfileRepository[IsarProfileRepository<br/>Isar 구현체]
+    UserProfileDto[UserProfileDto<br/>Isar 스키마]
+    IsarProvider[IsarProvider<br/>Isar 인스턴스]
 
-    SettingsScreen --> SettingsNotifier
+    %% Dependencies
+    SettingsScreen --> UserProfileNotifier
     SettingsScreen --> AuthNotifier
-    SettingsScreen --> ProfileNotifier
-
-    SettingsNotifier --> ProfileRepository
-    SettingsNotifier --> AuthRepository
-    ProfileNotifier --> ProfileRepository
-    AuthNotifier --> AuthRepository
-
-    ProfileRepository -.implements.-> IsarProfileRepository
-    AuthRepository -.implements.-> IsarAuthRepository
-
-    IsarProfileRepository --> Isar
-    IsarAuthRepository --> Isar
+    UserProfileNotifier --> ProfileRepository
+    AuthNotifier --> ProfileRepository
+    ProfileRepository -.구현.-> IsarProfileRepository
+    IsarProfileRepository --> UserProfileDto
+    IsarProfileRepository --> IsarProvider
+    UserProfileNotifier --> UserProfile
 ```
 
 ---
@@ -67,433 +56,486 @@ graph TD
 
 ### 3.1. UserProfile Entity (Domain)
 
-**Location:** `lib/features/settings/domain/entities/user_profile.dart`
+**Location**: `lib/features/profile/domain/entities/user_profile.dart`
 
-**Responsibility:** 사용자 프로필 데이터 모델
+**Responsibility**: 사용자 프로필 데이터 구조 정의
 
-**Test Strategy:** Unit Test
+**Test Strategy**: Unit Test
 
-**Test Scenarios (Red Phase):**
+**Test Scenarios (Red Phase)**:
 ```dart
-// Arrange: UserProfile 생성 데이터
-// Act: UserProfile 생성
-// Assert: 필드 값 검증
+// 1. 엔티티 생성 테스트
+test('should create UserProfile with valid data', () {
+  // Arrange
+  final profile = UserProfile(
+    userId: 'user-1',
+    name: '홍길동',
+    targetWeightKg: 70.0,
+    weeklyWeightRecordGoal: 7,
+    weeklySymptomRecordGoal: 7,
+    createdAt: DateTime.now(),
+  );
 
-test('should create UserProfile with valid data')
-test('should create UserProfile with optional fields null')
-test('should calculate weeklyLossGoalKg correctly')
-test('should return 0 when targetPeriodWeeks is null')
+  // Assert
+  expect(profile.userId, 'user-1');
+  expect(profile.name, '홍길동');
+  expect(profile.targetWeightKg, 70.0);
+});
+
+// 2. copyWith 메서드 테스트
+test('should copy profile with updated fields', () {
+  // Arrange
+  final original = UserProfile(...);
+
+  // Act
+  final updated = original.copyWith(name: '김철수');
+
+  // Assert
+  expect(updated.name, '김철수');
+  expect(updated.userId, original.userId);
+});
 ```
 
-**Implementation Order:**
-1. RED: Entity 생성 테스트 작성
-2. GREEN: 최소 Entity 구현
-3. REFACTOR: Immutable 패턴, copyWith 추가
+**Implementation Order**:
+1. Red: 엔티티 생성 테스트 작성
+2. Green: 기본 필드 정의
+3. Red: copyWith 테스트 작성
+4. Green: copyWith 구현
+5. Refactor: 불변성 확인, 네이밍 개선
 
-**Dependencies:** None
+**Dependencies**: 없음
 
 ---
 
-### 3.2. User Entity (Domain)
+### 3.2. ProfileRepository Interface (Domain)
 
-**Location:** `lib/features/authentication/domain/entities/user.dart`
+**Location**: `lib/features/profile/domain/repositories/profile_repository.dart`
 
-**Responsibility:** 사용자 계정 데이터 모델
+**Responsibility**: 프로필 데이터 접근 추상화
 
-**Test Strategy:** Unit Test
+**Test Strategy**: Interface 정의만 존재, 구현체에서 테스트
 
-**Test Scenarios (Red Phase):**
+**Interface Definition**:
 ```dart
-test('should create User with valid data')
-test('should create User with optional profileImageUrl')
-test('should handle email validation')
+abstract class ProfileRepository {
+  Future<UserProfile?> getUserProfile(String userId);
+  Future<void> saveUserProfile(UserProfile profile);
+  Future<void> updateUserProfile(UserProfile profile);
+}
 ```
 
-**Implementation Order:**
-1. RED: Entity 생성 테스트
-2. GREEN: Entity 구현
-3. REFACTOR: Immutable, copyWith
+**Implementation Order**:
+1. Interface 선언
+2. 메서드 시그니처 정의
 
-**Dependencies:** None
+**Dependencies**: `UserProfile` Entity
 
 ---
 
-### 3.3. ProfileRepository Interface (Domain)
+### 3.3. UserProfileDto (Infrastructure)
 
-**Location:** `lib/features/settings/domain/repositories/profile_repository.dart`
+**Location**: `lib/features/profile/infrastructure/dtos/user_profile_dto.dart`
 
-**Responsibility:** 프로필 데이터 접근 계약
+**Responsibility**: Isar 스키마 정의 및 Entity 변환
 
-**Test Strategy:** Unit Test (Mock 기반)
+**Test Strategy**: Unit Test
 
-**Test Scenarios (Red Phase):**
+**Test Scenarios (Red Phase)**:
 ```dart
-test('should define getUserProfile method signature')
-test('should define updateUserProfile method signature')
-test('should return Future<UserProfile?>')
+// 1. DTO → Entity 변환 테스트
+test('should convert DTO to entity correctly', () {
+  // Arrange
+  final dto = UserProfileDto()
+    ..userId = 'user-1'
+    ..name = '홍길동'
+    ..targetWeightKg = 70.0
+    ..weeklyWeightRecordGoal = 7
+    ..weeklySymptomRecordGoal = 7;
+
+  // Act
+  final entity = dto.toEntity();
+
+  // Assert
+  expect(entity.userId, 'user-1');
+  expect(entity.name, '홍길동');
+  expect(entity.targetWeightKg, 70.0);
+});
+
+// 2. Entity → DTO 변환 테스트
+test('should convert entity to DTO correctly', () {
+  // Arrange
+  final entity = UserProfile(...);
+
+  // Act
+  final dto = UserProfileDto.fromEntity(entity);
+
+  // Assert
+  expect(dto.userId, entity.userId);
+  expect(dto.name, entity.name);
+});
 ```
 
-**Implementation Order:**
-1. RED: Repository interface 메서드 시그니처 테스트
-2. GREEN: Interface 정의
-3. REFACTOR: 문서화, 예외 타입 명시
+**Implementation Order**:
+1. Red: DTO → Entity 테스트
+2. Green: Isar 스키마 및 toEntity() 구현
+3. Red: Entity → DTO 테스트
+4. Green: fromEntity() 구현
+5. Refactor: 변환 로직 단순화
 
-**Dependencies:** UserProfile Entity
+**Dependencies**: `UserProfile`, `Isar`
 
 ---
 
 ### 3.4. IsarProfileRepository (Infrastructure)
 
-**Location:** `lib/features/settings/infrastructure/repositories/isar_profile_repository.dart`
+**Location**: `lib/features/profile/infrastructure/repositories/isar_profile_repository.dart`
 
-**Responsibility:** Isar 기반 프로필 데이터 저장/조회
+**Responsibility**: Isar를 통한 프로필 CRUD
 
-**Test Strategy:** Integration Test (Isar in-memory)
+**Test Strategy**: Integration Test (Isar 메모리 DB 사용)
 
-**Test Scenarios (Red Phase):**
+**Test Scenarios (Red Phase)**:
 ```dart
-// Happy Path
-test('should return UserProfile when profile exists')
-test('should save UserProfile successfully')
-test('should update existing UserProfile')
-test('should return null when profile does not exist')
+// 1. 프로필 저장 테스트
+test('should save user profile successfully', () async {
+  // Arrange
+  final isar = await Isar.open([UserProfileDtoSchema], directory: '');
+  final repository = IsarProfileRepository(isar);
+  final profile = UserProfile(...);
 
-// Edge Cases
-test('should throw RepositoryException on Isar error')
-test('should handle concurrent writes gracefully')
-test('should map Dto to Entity correctly')
-test('should map Entity to Dto correctly')
+  // Act
+  await repository.saveUserProfile(profile);
+
+  // Assert
+  final saved = await repository.getUserProfile(profile.userId);
+  expect(saved, isNotNull);
+  expect(saved!.name, profile.name);
+});
+
+// 2. 프로필 조회 테스트 (존재하지 않음)
+test('should return null when profile not found', () async {
+  // Arrange
+  final isar = await Isar.open([UserProfileDtoSchema], directory: '');
+  final repository = IsarProfileRepository(isar);
+
+  // Act
+  final profile = await repository.getUserProfile('non-existent');
+
+  // Assert
+  expect(profile, isNull);
+});
+
+// 3. 프로필 업데이트 테스트
+test('should update existing profile', () async {
+  // Arrange
+  final repository = IsarProfileRepository(isar);
+  await repository.saveUserProfile(originalProfile);
+
+  // Act
+  final updated = originalProfile.copyWith(name: '변경된이름');
+  await repository.updateUserProfile(updated);
+
+  // Assert
+  final result = await repository.getUserProfile(updated.userId);
+  expect(result!.name, '변경된이름');
+});
 ```
 
-**Implementation Order:**
-1. RED: getUserProfile 테스트 (null 케이스)
-2. GREEN: 최소 구현
-3. RED: saveProfile 테스트
-4. GREEN: 저장 로직
-5. RED: updateProfile 테스트
-6. GREEN: 업데이트 로직
-7. REFACTOR: 중복 제거, 에러 핸들링
+**Implementation Order**:
+1. Red: 프로필 저장 테스트
+2. Green: saveUserProfile() 구현
+3. Red: 프로필 조회 테스트
+4. Green: getUserProfile() 구현
+5. Red: 업데이트 테스트
+6. Green: updateUserProfile() 구현
+7. Refactor: 공통 로직 추출, 에러 핸들링
 
-**Dependencies:** ProfileRepository Interface, Isar, UserProfileDto
+**Dependencies**: `ProfileRepository`, `UserProfileDto`, `Isar`
 
 ---
 
-### 3.5. SettingsNotifier (Application)
+### 3.5. UserProfileNotifier (Application)
 
-**Location:** `lib/features/settings/application/notifiers/settings_notifier.dart`
+**Location**: `lib/features/profile/application/notifiers/user_profile_notifier.dart`
 
-**Responsibility:** 설정 화면 상태 관리, 프로필 정보 로드
+**Responsibility**: 프로필 상태 관리 및 비즈니스 로직
 
-**Test Strategy:** Unit Test (Mock Repository)
+**Test Strategy**: Unit Test (Repository Mock)
 
-**Test Scenarios (Red Phase):**
+**Test Scenarios (Red Phase)**:
 ```dart
-// Happy Path
-test('should load user profile on build')
-test('should return AsyncValue.data when profile exists')
-test('should return AsyncValue.loading initially')
-test('should navigate to profile edit screen')
-test('should navigate to dosage plan edit screen')
-test('should navigate to weekly goals screen')
-test('should navigate to notification settings screen')
+// 1. 프로필 로드 성공 테스트
+test('should load user profile successfully', () async {
+  // Arrange
+  final mockRepo = MockProfileRepository();
+  final profile = UserProfile(...);
+  when(() => mockRepo.getUserProfile(any())).thenAnswer((_) async => profile);
 
-// Edge Cases
-test('should return AsyncValue.error on repository failure')
-test('should handle null profile gracefully')
-test('should refresh profile on demand')
+  final container = ProviderContainer(
+    overrides: [profileRepositoryProvider.overrideWithValue(mockRepo)],
+  );
+
+  // Act
+  final notifier = container.read(userProfileNotifierProvider.notifier);
+  await notifier.loadProfile('user-1');
+
+  // Assert
+  final state = container.read(userProfileNotifierProvider);
+  expect(state, isA<AsyncData<UserProfile>>());
+  expect(state.value!.name, profile.name);
+});
+
+// 2. 프로필 로드 실패 테스트
+test('should handle profile load error', () async {
+  // Arrange
+  final mockRepo = MockProfileRepository();
+  when(() => mockRepo.getUserProfile(any())).thenThrow(Exception('DB Error'));
+
+  // Act
+  final notifier = container.read(userProfileNotifierProvider.notifier);
+  await notifier.loadProfile('user-1');
+
+  // Assert
+  final state = container.read(userProfileNotifierProvider);
+  expect(state, isA<AsyncError>());
+});
+
+// 3. 프로필 업데이트 테스트
+test('should update profile successfully', () async {
+  // Arrange
+  final mockRepo = MockProfileRepository();
+  final updatedProfile = UserProfile(...);
+  when(() => mockRepo.updateUserProfile(any())).thenAnswer((_) async {});
+
+  // Act
+  await notifier.updateProfile(updatedProfile);
+
+  // Assert
+  verify(() => mockRepo.updateUserProfile(updatedProfile)).called(1);
+  final state = container.read(userProfileNotifierProvider);
+  expect(state.value, updatedProfile);
+});
 ```
 
-**Implementation Order:**
-1. RED: build() 테스트 (loading → data)
-2. GREEN: 최소 Notifier 구현
-3. RED: 네비게이션 메서드 테스트
-4. GREEN: 네비게이션 로직
-5. RED: 에러 핸들링 테스트
-6. GREEN: 에러 핸들링
-7. REFACTOR: 상태 관리 로직 정리
+**Implementation Order**:
+1. Red: 프로필 로드 성공 테스트
+2. Green: build() 및 loadProfile() 구현
+3. Red: 로드 실패 테스트
+4. Green: 에러 핸들링
+5. Red: 업데이트 테스트
+6. Green: updateProfile() 구현
+7. Refactor: AsyncValue 처리 개선
 
-**Dependencies:** ProfileRepository, GoRouter
+**Dependencies**: `ProfileRepository`, `UserProfile`
 
 ---
 
 ### 3.6. SettingsScreen (Presentation)
 
-**Location:** `lib/features/settings/presentation/screens/settings_screen.dart`
+**Location**: `lib/features/settings/presentation/screens/settings_screen.dart`
 
-**Responsibility:** 설정 메뉴 UI 렌더링
+**Responsibility**: 설정 메뉴 UI 렌더링
 
-**Test Strategy:** Widget Test
+**Test Strategy**: Widget Test + QA Sheet
 
-**Test Scenarios (Red Phase):**
+**Test Scenarios (Red Phase)**:
 ```dart
-// Rendering
-test('should display settings title')
-test('should display user name when profile loaded')
-test('should display joined date')
-test('should display all menu items')
-test('should display loading indicator when loading')
-test('should display error message on error')
+// 1. 설정 화면 렌더링 테스트
+testWidgets('should display settings menu items', (tester) async {
+  // Arrange
+  final mockNotifier = MockUserProfileNotifier();
+  when(() => mockNotifier.build()).thenReturn(AsyncValue.data(profile));
 
-// Interaction
-test('should call navigateToProfileEdit when profile menu tapped')
-test('should call navigateToDosagePlanEdit when dosage menu tapped')
-test('should call navigateToWeeklyGoals when goals menu tapped')
-test('should call navigateToNotifications when notification menu tapped')
-test('should call logout when logout tapped')
+  // Act
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        userProfileNotifierProvider.overrideWith(() => mockNotifier),
+      ],
+      child: MaterialApp(home: SettingsScreen()),
+    ),
+  );
 
-// Edge Cases
-test('should disable menu items when loading')
-test('should show retry button on error')
-test('should handle session expiry')
+  // Assert
+  expect(find.text('프로필 및 목표 수정'), findsOneWidget);
+  expect(find.text('투여 계획 수정'), findsOneWidget);
+  expect(find.text('주간 기록 목표 조정'), findsOneWidget);
+  expect(find.text('푸시 알림 설정'), findsOneWidget);
+  expect(find.text('로그아웃'), findsOneWidget);
+});
+
+// 2. 사용자 정보 표시 테스트
+testWidgets('should display user information', (tester) async {
+  // Arrange
+  final profile = UserProfile(name: '홍길동', ...);
+
+  // Act
+  await tester.pumpWidget(...);
+
+  // Assert
+  expect(find.text('홍길동'), findsOneWidget);
+});
+
+// 3. 로딩 상태 테스트
+testWidgets('should show loading indicator when profile is loading', (tester) async {
+  // Arrange
+  when(() => mockNotifier.build()).thenReturn(const AsyncValue.loading());
+
+  // Act
+  await tester.pumpWidget(...);
+
+  // Assert
+  expect(find.byType(CircularProgressIndicator), findsOneWidget);
+});
+
+// 4. 에러 상태 테스트
+testWidgets('should show error message on load failure', (tester) async {
+  // Arrange
+  when(() => mockNotifier.build()).thenReturn(AsyncValue.error('Error', StackTrace.empty));
+
+  // Act
+  await tester.pumpWidget(...);
+
+  // Assert
+  expect(find.text('프로필 정보를 불러올 수 없습니다'), findsOneWidget);
+});
+
+// 5. 메뉴 항목 탭 테스트
+testWidgets('should navigate when menu item is tapped', (tester) async {
+  // Arrange & Act
+  await tester.pumpWidget(...);
+  await tester.tap(find.text('프로필 및 목표 수정'));
+  await tester.pumpAndSettle();
+
+  // Assert
+  // 네비게이션 검증
+});
 ```
 
-**Implementation Order:**
-1. RED: 기본 레이아웃 테스트
-2. GREEN: Scaffold, AppBar 구현
-3. RED: 프로필 정보 표시 테스트
-4. GREEN: 프로필 정보 위젯
-5. RED: 메뉴 리스트 테스트
-6. GREEN: ListView 구현
-7. RED: 로딩/에러 상태 테스트
-8. GREEN: AsyncValue 핸들링
-9. RED: 메뉴 클릭 테스트
-10. GREEN: onTap 콜백
-11. REFACTOR: 위젯 분리, 스타일링
+**Implementation Order**:
+1. Red: 메뉴 렌더링 테스트
+2. Green: 기본 UI 구조
+3. Red: 사용자 정보 표시 테스트
+4. Green: 프로필 데이터 바인딩
+5. Red: 로딩 상태 테스트
+6. Green: AsyncValue 처리
+7. Red: 에러 상태 테스트
+8. Green: 에러 UI
+9. Red: 메뉴 탭 테스트
+10. Green: 네비게이션 구현
+11. Refactor: 위젯 분리, 스타일 개선
 
-**Dependencies:** SettingsNotifier, AuthNotifier, ProfileNotifier
+**Dependencies**: `UserProfileNotifier`, `AuthNotifier`, `go_router`
 
-**QA Sheet (Presentation Layer):**
-```
-[ ] 설정 화면 진입 시 사용자 이름 표시
-[ ] 가입일 표시 (yyyy-MM-dd 형식)
-[ ] 5개 메뉴 항목 표시:
-    [ ] 프로필 및 목표 수정
-    [ ] 투여 계획 수정
-    [ ] 주간 기록 목표 조정
-    [ ] 푸시 알림 설정
-    [ ] 로그아웃
-[ ] 각 메뉴 클릭 시 해당 화면으로 이동
-[ ] 로딩 중 스피너 표시
-[ ] 에러 발생 시 재시도 버튼 표시
-[ ] 백 버튼으로 홈 대시보드 복귀
-[ ] 세션 만료 시 로그인 화면 이동
-```
-
----
-
-### 3.7. SettingsMenuItem Widget (Presentation)
-
-**Location:** `lib/features/settings/presentation/widgets/settings_menu_item.dart`
-
-**Responsibility:** 개별 설정 메뉴 아이템 UI
-
-**Test Strategy:** Widget Test
-
-**Test Scenarios (Red Phase):**
-```dart
-test('should display menu title')
-test('should display menu subtitle if provided')
-test('should display leading icon')
-test('should display trailing arrow icon')
-test('should call onTap when tapped')
-test('should disable tap when disabled')
-```
-
-**Implementation Order:**
-1. RED: 기본 렌더링 테스트
-2. GREEN: ListTile 구현
-3. RED: onTap 테스트
-4. GREEN: onTap 콜백
-5. REFACTOR: 스타일 일관성
-
-**Dependencies:** None
+**QA Sheet (수동 테스트)**:
+- [ ] 설정 화면 진입 시 사용자 이름 표시
+- [ ] 5개 메뉴 항목 모두 표시
+- [ ] 각 메뉴 항목 탭 시 올바른 화면 이동
+- [ ] 로그아웃 버튼 탭 시 확인 다이얼로그 표시
+- [ ] 네트워크 오류 시 재시도 옵션 표시
+- [ ] 로딩 중 스켈레톤 UI 또는 인디케이터 표시
 
 ---
 
 ## 4. TDD Workflow
 
-### Start Point
-1. **UserProfile Entity** (Domain) - 가장 독립적인 모듈
-2. **User Entity** (Domain)
+### Phase 1: Domain Layer (Inside-Out)
+1. **Start**: UserProfile Entity 테스트 작성
+2. Red → Green → Refactor
+3. Commit: "feat(profile): add UserProfile entity"
 
-### Red → Green → Refactor Sequence
+### Phase 2: Infrastructure Layer
+1. **Start**: UserProfileDto 테스트 작성
+2. Red → Green → Refactor
+3. Commit: "feat(profile): add UserProfileDto with Isar schema"
+4. **Next**: IsarProfileRepository 테스트 작성
+5. Red → Green → Refactor
+6. Commit: "feat(profile): implement IsarProfileRepository"
 
-#### Phase 1: Domain Layer (Inside-Out)
-```
-1. UserProfile Entity
-   - RED: test('should create UserProfile with valid data')
-   - GREEN: class UserProfile with fields
-   - REFACTOR: Immutable, copyWith, toString
+### Phase 3: Application Layer
+1. **Start**: UserProfileNotifier 테스트 작성
+2. Red → Green → Refactor
+3. Commit: "feat(profile): implement UserProfileNotifier"
 
-2. User Entity
-   - RED: test('should create User with valid data')
-   - GREEN: class User with fields
-   - REFACTOR: Immutable, copyWith
+### Phase 4: Presentation Layer
+1. **Start**: SettingsScreen 위젯 테스트 작성
+2. Red → Green → Refactor
+3. Commit: "feat(settings): implement SettingsScreen UI"
 
-3. ProfileRepository Interface
-   - RED: test('should define getUserProfile method')
-   - GREEN: abstract class ProfileRepository
-   - REFACTOR: Documentation
-```
+### Phase 5: Integration
+1. **Start**: 전체 프로필 조회 흐름 테스트
+2. Red → Green → Refactor
+3. Commit: "test(settings): add integration tests"
 
-**Commit Point 1:** "feat(settings): add domain entities and repository interface"
-
-#### Phase 2: Infrastructure Layer
-```
-4. UserProfileDto
-   - RED: test('should convert Entity to Dto')
-   - GREEN: UserProfileDto class with toEntity/fromEntity
-   - REFACTOR: Null safety, validation
-
-5. IsarProfileRepository
-   - RED: test('should return null when profile not found')
-   - GREEN: getUserProfile() implementation
-   - RED: test('should save profile successfully')
-   - GREEN: saveProfile() implementation
-   - RED: test('should throw on Isar error')
-   - GREEN: Error handling
-   - REFACTOR: Extract common logic
-```
-
-**Commit Point 2:** "feat(settings): implement Isar profile repository"
-
-#### Phase 3: Application Layer
-```
-6. SettingsNotifier
-   - RED: test('should load profile on build')
-   - GREEN: build() with repository call
-   - RED: test('should handle navigation')
-   - GREEN: Navigation methods
-   - RED: test('should handle errors')
-   - GREEN: AsyncValue.guard
-   - REFACTOR: Extract navigation logic
-```
-
-**Commit Point 3:** "feat(settings): add settings notifier with profile loading"
-
-#### Phase 4: Presentation Layer
-```
-7. SettingsMenuItem Widget
-   - RED: test('should render menu item')
-   - GREEN: ListTile widget
-   - RED: test('should call onTap')
-   - GREEN: onTap callback
-   - REFACTOR: Extract styles
-
-8. SettingsScreen Widget
-   - RED: test('should render app bar')
-   - GREEN: Scaffold with AppBar
-   - RED: test('should show profile info')
-   - GREEN: Profile info widget
-   - RED: test('should render menu list')
-   - GREEN: ListView with menu items
-   - RED: test('should handle loading state')
-   - GREEN: AsyncValue.when
-   - RED: test('should handle error state')
-   - GREEN: Error widget with retry
-   - REFACTOR: Extract widgets, improve layout
-```
-
-**Commit Point 4:** "feat(settings): implement settings screen UI"
-
-### Final Integration Test
-```
-9. Settings Flow E2E
-   - RED: test('should navigate from home to settings')
-   - GREEN: GoRouter route configuration
-   - RED: test('should display user profile on settings screen')
-   - GREEN: Integration with ProfileNotifier
-   - RED: test('should navigate to each submenu')
-   - GREEN: Navigation callbacks
-```
-
-**Commit Point 5:** "feat(settings): complete settings feature with navigation"
+### 완료 조건
+- [ ] 모든 Unit 테스트 통과
+- [ ] 모든 Widget 테스트 통과
+- [ ] Integration 테스트 통과
+- [ ] QA Sheet 항목 모두 검증
+- [ ] 코드 커버리지 80% 이상
+- [ ] flutter analyze 경고 없음
 
 ---
 
-## 5. Key Principles
+## 5. Edge Cases 처리
 
-### Test First
-- **NEVER** write implementation before test
-- Each test defines ONE specific behavior
-- Tests are living documentation
+### 5.1. 로그인 세션 만료
+**Test**:
+```dart
+test('should navigate to login when session expired', () async {
+  // Arrange
+  when(() => mockRepo.getUserProfile(any())).thenThrow(UnauthorizedException());
 
-### Small Steps
-- One test at a time
-- Minimal code to pass
-- Refactor only when green
+  // Act & Assert
+  // 로그인 화면 이동 검증
+});
+```
 
-### FIRST Principles
-- **Fast:** Tests run in milliseconds
-- **Independent:** No shared state between tests
-- **Repeatable:** Same result every run
-- **Self-validating:** Pass/fail, no manual check
-- **Timely:** Written just before code
+### 5.2. 네트워크 오류
+**Test**:
+```dart
+test('should show cached profile on network error', () async {
+  // Arrange
+  when(() => mockRepo.getUserProfile(any())).thenThrow(NetworkException());
+
+  // Act & Assert
+  // 캐시된 데이터 표시 검증
+});
+```
+
+### 5.3. 데이터 로딩 지연
+**Test**:
+```dart
+testWidgets('should show loading indicator for slow load', (tester) async {
+  // Arrange
+  when(() => mockNotifier.build()).thenReturn(const AsyncValue.loading());
+
+  // Act & Assert
+  // 로딩 UI 표시 검증
+});
+```
+
+---
+
+## 6. 핵심 원칙 준수
+
+### Repository Pattern
+- Application Layer는 `ProfileRepository` 인터페이스만 의존
+- Infrastructure 변경 시 Application/Presentation 무영향
+
+### Layer Dependency
+```
+Presentation → Application → Domain ← Infrastructure
+```
 
 ### Test Pyramid
-- **Unit Tests (70%):** Entity, Repository, Notifier logic
-- **Widget Tests (20%):** UI rendering, user interaction
-- **Integration Tests (10%):** Full screen flow
+- Unit: 70% (Entity, DTO, Repository, Notifier)
+- Widget: 20% (SettingsScreen)
+- Integration: 10% (전체 흐름)
 
-### TDD Strategy
-- **Inside-Out:** Domain → Infrastructure → Application → Presentation
-- Repository Pattern으로 Infrastructure 격리
-- Mock을 활용한 빠른 Unit Test
-
----
-
-## 6. Dependencies
-
-**External Packages:**
-- `riverpod` (2.x): State management
-- `isar` (3.x): Local database
-- `go_router` (13.x): Navigation
-- `flutter_test`: Testing framework
-- `mocktail`: Mocking library
-
-**Internal Dependencies:**
-- AuthNotifier (F-001): 로그아웃 기능
-- ProfileNotifier (F000): 프로필 데이터
-- GoRouter: 화면 전환
-
-**Phase 0 → Phase 1 Transition:**
-- Repository Interface 유지
-- SupabaseProfileRepository 추가
-- Provider DI 1줄 변경
-
----
-
-## 7. Edge Cases Handled
-
-1. **Session Expiry:** 설정 화면 진입 시 토큰 만료 → 로그인 화면 이동
-2. **Network Error:** 프로필 로딩 실패 → 캐시된 정보 표시 또는 재시도
-3. **Data Loading Delay:** 로딩 인디케이터 표시
-4. **Null Profile:** 신규 사용자 케이스 → 온보딩 유도
-5. **Concurrent Access:** Repository 레벨에서 동시성 제어
-
----
-
-## 8. Success Criteria
-
-**All Tests Pass:**
-- Unit: 30+ tests
-- Widget: 15+ tests
-- Integration: 3+ tests
-
-**Code Coverage:**
-- Domain: 100%
-- Infrastructure: 90%+
-- Application: 95%+
-- Presentation: 80%+
-
-**Manual QA:**
-- 모든 QA Sheet 항목 통과
-
-**Performance:**
-- 화면 진입 300ms 이내
-- 프로필 로딩 500ms 이내
-
-**No violations:**
-- Repository Pattern 유지
-- Layer 의존성 준수
-- `flutter analyze` 경고 0개
+### FIRST Principles
+- Fast: 모든 테스트 100ms 이내
+- Independent: 각 테스트 독립 실행
+- Repeatable: 동일 결과 보장
+- Self-validating: 자동 검증
+- Timely: 코드 작성 전 테스트 작성

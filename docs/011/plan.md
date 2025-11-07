@@ -1,19 +1,15 @@
-# UF-011: Past Record Edit/Delete Implementation Plan
+# 프로필 및 목표 수정 Implementation Plan
 
-## 1. Overview
+## 1. 개요
 
-### Module Summary
-| Module | Location | Description | TDD Scope |
-|--------|----------|-------------|-----------|
-| **Domain Layer** | `features/tracking/domain/` | Record entities, repository interface | Unit (Inside-Out) |
-| **Infrastructure Layer** | `features/tracking/infrastructure/` | Isar repository implementation, DTOs | Integration |
-| **Application Layer** | `features/tracking/application/` | Record edit/delete notifier, state management | Unit + Integration |
-| **Presentation Layer** | `features/tracking/presentation/` | Record list, edit/delete screens | Acceptance + Manual QA |
+프로필 및 목표 수정 기능(UF-008)을 위한 모듈 목록:
 
-### TDD Strategy
-- **Approach**: Inside-Out (Core Logic → Outward)
-- **Test Distribution**: Unit 70%, Integration 20%, Acceptance 10%
-- **Phase 0 Focus**: Isar local DB operations only
+- **Domain Layer**: UserProfile Entity, ProfileRepository Interface, UpdateProfileUseCase
+- **Application Layer**: ProfileNotifier (상태 관리)
+- **Infrastructure Layer**: IsarProfileRepository (Repository 구현), UserProfileDto (DTO)
+- **Presentation Layer**: ProfileEditScreen, ProfileEditForm Widget
+
+**TDD 적용 범위**: Domain, Application, Infrastructure Layer
 
 ---
 
@@ -21,791 +17,552 @@
 
 ```mermaid
 graph TD
-    %% Presentation Layer
-    RecordListScreen[RecordListScreen]
-    RecordEditDialog[RecordEditDialog]
-    RecordDeleteDialog[RecordDeleteDialog]
+    subgraph Presentation
+        Screen[ProfileEditScreen]
+        Form[ProfileEditForm Widget]
+    end
 
-    %% Application Layer
-    TrackingNotifier[TrackingNotifier<br/>AsyncNotifierProvider]
-    DashboardNotifier[DashboardNotifier<br/>AsyncNotifierProvider]
+    subgraph Application
+        Notifier[ProfileNotifier]
+    end
 
-    %% Domain Layer
-    WeightLog[WeightLog Entity]
-    SymptomLog[SymptomLog Entity]
-    TrackingRepo[TrackingRepository<br/>Interface]
+    subgraph Domain
+        Entity[UserProfile Entity]
+        RepoInterface[ProfileRepository Interface]
+        UseCase[UpdateProfileUseCase]
+    end
 
-    %% Infrastructure Layer
-    IsarTrackingRepo[IsarTrackingRepository<br/>Implementation]
-    WeightLogDto[WeightLogDto]
-    SymptomLogDto[SymptomLogDto]
-    IsarProvider[isarProvider]
+    subgraph Infrastructure
+        RepoImpl[IsarProfileRepository]
+        DTO[UserProfileDto]
+    end
 
-    %% Dependencies
-    RecordListScreen --> TrackingNotifier
-    RecordEditDialog --> TrackingNotifier
-    RecordDeleteDialog --> TrackingNotifier
-
-    TrackingNotifier --> TrackingRepo
-    TrackingNotifier --> DashboardNotifier
-
-    IsarTrackingRepo --> IsarProvider
-    IsarTrackingRepo --> WeightLogDto
-    IsarTrackingRepo --> SymptomLogDto
-
-    TrackingRepo -.implements.-> IsarTrackingRepo
-    WeightLogDto -.converts.-> WeightLog
-    SymptomLogDto -.converts.-> SymptomLog
+    Screen --> Notifier
+    Form --> Screen
+    Notifier --> RepoInterface
+    Notifier --> UseCase
+    UseCase --> RepoInterface
+    RepoInterface <|.. RepoImpl
+    RepoImpl --> DTO
+    DTO --> Entity
 ```
 
 ---
 
 ## 3. Implementation Plan
 
-### 3.1. Domain Layer
+### 3.1. UserProfile Entity (Domain)
 
-#### Module: WeightLog Entity
-- **Location**: `features/tracking/domain/entities/weight_log.dart`
-- **Responsibility**: Immutable weight record entity
-- **Test Strategy**: Unit Tests
-- **Test Scenarios (RED Phase)**:
-  ```dart
-  // AAA Pattern
-  test('should create WeightLog with valid data', () {
-    // Arrange
-    final date = DateTime(2024, 1, 1);
-    // Act
-    final log = WeightLog(id: '1', userId: 'u1', logDate: date, weightKg: 70.5, createdAt: date);
-    // Assert
-    expect(log.weightKg, 70.5);
-  });
+**Location**: `lib/features/profile/domain/entities/user_profile.dart`
 
-  test('should create copy with updated weight', () {
-    // Arrange
-    final log = WeightLog(...);
-    // Act
-    final updated = log.copyWith(weightKg: 68.0);
-    // Assert
-    expect(updated.weightKg, 68.0);
-    expect(updated.id, log.id); // Unchanged fields preserved
-  });
-  ```
-- **Edge Cases**:
-  - Negative weight validation (handled by UI/Application, not Entity)
-  - Future date validation (handled by UI/Application)
-- **Implementation Order**: Test → Entity → copyWith method
-- **Dependencies**: None
+**Responsibility**:
+- 사용자 프로필 및 목표 데이터 표현
+- 비즈니스 규칙 검증 (목표 체중 < 현재 체중, 체중 범위 20-300kg)
+- 주간 감량 목표 계산
 
-#### Module: SymptomLog Entity
-- **Location**: `features/tracking/domain/entities/symptom_log.dart`
-- **Responsibility**: Immutable symptom record entity
-- **Test Strategy**: Unit Tests
-- **Test Scenarios (RED Phase)**:
-  ```dart
-  test('should create SymptomLog with all fields', () {
-    // Arrange & Act
-    final log = SymptomLog(
-      id: '1', userId: 'u1', logDate: DateTime.now(),
-      symptomName: 'nausea', severity: 5, tags: ['oily_food']
-    );
-    // Assert
-    expect(log.severity, 5);
-    expect(log.tags, contains('oily_food'));
-  });
+**Test Strategy**: Unit Test
 
-  test('should create copy with updated severity', () {
-    // Arrange
-    final log = SymptomLog(...);
-    // Act
-    final updated = log.copyWith(severity: 7);
-    // Assert
-    expect(updated.severity, 7);
-  });
-  ```
-- **Edge Cases**:
-  - Severity out of range (1-10) validation
-  - Empty tags list handling
-- **Implementation Order**: Test → Entity → copyWith method
-- **Dependencies**: None
+**Test Scenarios (Red Phase)**:
+```dart
+// AAA 패턴: Arrange - Act - Assert
 
-#### Module: TrackingRepository Interface
-- **Location**: `features/tracking/domain/repositories/tracking_repository.dart`
-- **Responsibility**: Define data access contract
-- **Test Strategy**: Integration Tests (via Implementation)
-- **Test Scenarios**: N/A (Interface only)
-- **Implementation Order**: Interface definition first
-- **Dependencies**: WeightLog, SymptomLog entities
-- **Interface Methods**:
-  ```dart
-  abstract class TrackingRepository {
-    Future<List<WeightLog>> getWeightLogs();
-    Future<List<SymptomLog>> getSymptomLogs();
-    Future<void> updateWeightLog(String id, double newWeight);
-    Future<void> updateSymptomLog(String id, SymptomLog updatedLog);
-    Future<void> deleteWeightLog(String id);
-    Future<void> deleteSymptomLog(String id);
-    Stream<List<WeightLog>> watchWeightLogs();
-    Stream<List<SymptomLog>> watchSymptomLogs();
-  }
-  ```
+1. 생성 및 속성 검증
+   - given: 유효한 프로필 데이터
+   - when: UserProfile 생성
+   - then: 모든 속성이 올바르게 저장됨
+
+2. 주간 감량 목표 자동 계산
+   - given: 현재 체중 80kg, 목표 체중 70kg, 목표 기간 10주
+   - when: UserProfile 생성
+   - then: weeklyLossGoalKg = 1.0
+
+3. 목표 기간 없을 경우 주간 감량 목표 null
+   - given: targetPeriodWeeks = null
+   - when: UserProfile 생성
+   - then: weeklyLossGoalKg = null
+
+4. 목표 체중이 현재 체중보다 큰 경우 예외
+   - given: 현재 체중 70kg, 목표 체중 80kg
+   - when: UserProfile 생성
+   - then: ArgumentError 발생
+
+5. 체중이 20kg 미만인 경우 예외
+   - given: targetWeightKg = 15kg
+   - when: UserProfile 생성
+   - then: ArgumentError 발생
+
+6. 체중이 300kg 초과인 경우 예외
+   - given: targetWeightKg = 350kg
+   - when: UserProfile 생성
+   - then: ArgumentError 발생
+
+7. copyWith 메서드 동작 검증
+   - given: 기존 UserProfile
+   - when: copyWith로 일부 필드 변경
+   - then: 변경된 필드만 업데이트됨
+
+8. 주간 감량 목표가 1kg 초과 시 경고 필요 여부 확인
+   - given: 주간 감량 목표 1.5kg
+   - when: needsWeightLossWarning 호출
+   - then: true 반환
+```
+
+**Implementation Order**:
+1. Test: 기본 생성 및 속성 검증
+2. Code: UserProfile 클래스, 기본 생성자
+3. Test: 주간 감량 목표 계산
+4. Code: 계산 로직 추가
+5. Test: 검증 규칙 (목표 체중 < 현재 체중)
+6. Code: 검증 로직 추가
+7. Test: 체중 범위 검증
+8. Code: 범위 검증 로직
+9. Refactor: 검증 로직 분리, 상수 추출
+
+**Dependencies**: 없음 (Pure Dart)
 
 ---
 
-### 3.2. Infrastructure Layer
+### 3.2. ProfileRepository Interface (Domain)
 
-#### Module: WeightLogDto
-- **Location**: `features/tracking/infrastructure/dtos/weight_log_dto.dart`
-- **Responsibility**: Isar collection model, Entity conversion
-- **Test Strategy**: Unit Tests
-- **Test Scenarios (RED Phase)**:
-  ```dart
-  test('should convert DTO to Entity', () {
-    // Arrange
-    final dto = WeightLogDto()
-      ..id = 1
-      ..userId = 'u1'
-      ..logDate = DateTime(2024, 1, 1)
-      ..weightKg = 70.5;
-    // Act
-    final entity = dto.toEntity();
-    // Assert
-    expect(entity.weightKg, 70.5);
-    expect(entity.id, '1'); // ID conversion
-  });
+**Location**: `lib/features/profile/domain/repositories/profile_repository.dart`
 
-  test('should convert Entity to DTO', () {
-    // Arrange
-    final entity = WeightLog(id: '1', userId: 'u1', ...);
-    // Act
-    final dto = WeightLogDto.fromEntity(entity);
-    // Assert
-    expect(dto.weightKg, entity.weightKg);
-  });
-  ```
-- **Edge Cases**:
-  - ID type conversion (String ↔ int)
-  - Null handling for optional fields
-- **Implementation Order**: Test → toEntity → fromEntity
-- **Dependencies**: WeightLog entity, Isar
+**Responsibility**:
+- 프로필 CRUD 인터페이스 정의
+- Domain Layer가 Infrastructure에 의존하지 않도록 추상화
 
-#### Module: SymptomLogDto
-- **Location**: `features/tracking/infrastructure/dtos/symptom_log_dto.dart`
-- **Responsibility**: Isar collection model, Entity conversion
-- **Test Strategy**: Unit Tests
-- **Test Scenarios (RED Phase)**:
-  ```dart
-  test('should convert DTO with tags to Entity', () {
-    // Arrange
-    final dto = SymptomLogDto()
-      ..tags = ['oily_food', 'overeating'];
-    // Act
-    final entity = dto.toEntity();
-    // Assert
-    expect(entity.tags.length, 2);
-  });
+**Test Strategy**: Unit Test (UseCase, Notifier 테스트 시 Mock 사용)
 
-  test('should handle empty tags', () {
-    // Arrange
-    final dto = SymptomLogDto()..tags = [];
-    // Act
-    final entity = dto.toEntity();
-    // Assert
-    expect(entity.tags, isEmpty);
-  });
-  ```
-- **Edge Cases**:
-  - Empty tags list
-  - Null isPersistent24h field
-  - Null daysSinceEscalation field
-- **Implementation Order**: Test → toEntity → fromEntity
-- **Dependencies**: SymptomLog entity, Isar
+**Test Scenarios (Red Phase)**:
+```dart
+// Mock을 사용한 계약 테스트
 
-#### Module: IsarTrackingRepository
-- **Location**: `features/tracking/infrastructure/repositories/isar_tracking_repository.dart`
-- **Responsibility**: Isar database operations implementation
-- **Test Strategy**: Integration Tests (with mock Isar)
-- **Test Scenarios (RED Phase)**:
-  ```dart
-  group('updateWeightLog', () {
-    test('should update existing weight log', () async {
-      // Arrange
-      final repo = IsarTrackingRepository(mockIsar);
-      await repo.saveWeightLog(WeightLog(...)); // Seed data
-      // Act
-      await repo.updateWeightLog('1', 68.0);
-      // Assert
-      final logs = await repo.getWeightLogs();
-      expect(logs.first.weightKg, 68.0);
-    });
+1. getUserProfile 호출 가능
+   - given: Mock Repository
+   - when: getUserProfile 호출
+   - then: 정상 호출됨
 
-    test('should throw exception when record not found', () async {
-      // Arrange
-      final repo = IsarTrackingRepository(mockIsar);
-      // Act & Assert
-      expect(
-        () => repo.updateWeightLog('nonexistent', 70.0),
-        throwsA(isA<RepositoryException>()),
-      );
-    });
-  });
+2. updateUserProfile 호출 가능
+   - given: Mock Repository, UserProfile
+   - when: updateUserProfile 호출
+   - then: 정상 호출됨
 
-  group('deleteWeightLog', () {
-    test('should delete existing weight log', () async {
-      // Arrange
-      final repo = IsarTrackingRepository(mockIsar);
-      await repo.saveWeightLog(WeightLog(...));
-      // Act
-      await repo.deleteWeightLog('1');
-      // Assert
-      final logs = await repo.getWeightLogs();
-      expect(logs, isEmpty);
-    });
+3. watchUserProfile 스트림 반환
+   - given: Mock Repository
+   - when: watchUserProfile 호출
+   - then: Stream<UserProfile> 반환
+```
 
-    test('should be idempotent (no error on double delete)', () async {
-      // Arrange
-      final repo = IsarTrackingRepository(mockIsar);
-      await repo.deleteWeightLog('1');
-      // Act & Assert
-      expect(() => repo.deleteWeightLog('1'), returnsNormally);
-    });
-  });
+**Implementation Order**:
+1. Test: Interface 메서드 정의 확인
+2. Code: ProfileRepository abstract class
+3. Refactor: 문서화 주석 추가
 
-  group('updateSymptomLog', () {
-    test('should update symptom severity and tags', () async {
-      // Arrange
-      final repo = IsarTrackingRepository(mockIsar);
-      final original = SymptomLog(severity: 5, tags: ['stress']);
-      await repo.saveSymptomLog(original);
-      // Act
-      final updated = original.copyWith(severity: 7, tags: ['stress', 'fatigue']);
-      await repo.updateSymptomLog('1', updated);
-      // Assert
-      final logs = await repo.getSymptomLogs();
-      expect(logs.first.severity, 7);
-      expect(logs.first.tags.length, 2);
-    });
-  });
-  ```
-- **Edge Cases**:
-  - Record not found (throw RepositoryException)
-  - Delete non-existent record (idempotent, no error)
-  - Concurrent modification (Isar transaction handling)
-  - Update with invalid ID format
-- **Implementation Order**: Test → updateWeightLog → deleteWeightLog → updateSymptomLog → deleteSymptomLog
-- **Dependencies**: TrackingRepository interface, Isar, DTOs
+**Dependencies**: UserProfile Entity
 
 ---
 
-### 3.3. Application Layer
+### 3.3. UpdateProfileUseCase (Domain)
 
-#### Module: TrackingNotifier
-- **Location**: `features/tracking/application/notifiers/tracking_notifier.dart`
-- **Responsibility**: State management for tracking records, orchestrate CRUD
-- **Test Strategy**: Unit Tests (mock repository)
-- **Test Scenarios (RED Phase)**:
-  ```dart
-  group('updateWeightLog', () {
-    test('should update state to loading then data on success', () async {
-      // Arrange
-      final mockRepo = MockTrackingRepository();
-      when(() => mockRepo.updateWeightLog(any(), any())).thenAnswer((_) async {});
-      when(() => mockRepo.getWeightLogs()).thenAnswer((_) async => [updatedLog]);
-      final notifier = TrackingNotifier(mockRepo);
+**Location**: `lib/features/profile/domain/usecases/update_profile_usecase.dart`
 
-      // Act
-      await notifier.updateWeightLog('1', 68.0);
+**Responsibility**:
+- 프로필 업데이트 비즈니스 로직 수행
+- 검증 후 Repository 호출
+- 홈 대시보드 데이터 재계산 트리거 (이벤트 발행)
 
-      // Assert
-      expect(notifier.state, isA<AsyncData<TrackingState>>());
-      verify(() => mockRepo.updateWeightLog('1', 68.0)).called(1);
-    });
+**Test Strategy**: Unit Test
 
-    test('should update state to error on failure', () async {
-      // Arrange
-      final mockRepo = MockTrackingRepository();
-      when(() => mockRepo.updateWeightLog(any(), any()))
-        .thenThrow(RepositoryException('DB error'));
-      final notifier = TrackingNotifier(mockRepo);
+**Test Scenarios (Red Phase)**:
+```dart
+// Mock Repository 사용
 
-      // Act
-      await notifier.updateWeightLog('1', 68.0);
+1. 유효한 프로필 업데이트 성공
+   - given: Mock Repository, 유효한 UserProfile
+   - when: execute 호출
+   - then: repository.updateUserProfile 호출됨
 
-      // Assert
-      expect(notifier.state, isA<AsyncError>());
-    });
-  });
+2. 목표 체중 > 현재 체중 시 실패
+   - given: 잘못된 UserProfile
+   - when: execute 호출
+   - then: ValidationException 발생
 
-  group('deleteWeightLog', () {
-    test('should remove record from state on success', () async {
-      // Arrange
-      final mockRepo = MockTrackingRepository();
-      when(() => mockRepo.deleteWeightLog(any())).thenAnswer((_) async {});
-      when(() => mockRepo.getWeightLogs()).thenAnswer((_) async => []);
-      final notifier = TrackingNotifier(mockRepo);
+3. 체중 범위 초과 시 실패
+   - given: 체중 300kg 초과 UserProfile
+   - when: execute 호출
+   - then: ValidationException 발생
 
-      // Act
-      await notifier.deleteWeightLog('1');
+4. Repository 실패 시 예외 전파
+   - given: Repository가 예외 발생
+   - when: execute 호출
+   - then: 동일한 예외 전파됨
+```
 
-      // Assert
-      final state = notifier.state.value;
-      expect(state?.weights.value, isEmpty);
-    });
-  });
+**Implementation Order**:
+1. Test: 기본 실행 및 Repository 호출
+2. Code: UpdateProfileUseCase 클래스, execute 메서드
+3. Test: 검증 실패 케이스
+4. Code: 검증 로직 추가
+5. Refactor: 검증 로직을 Entity로 이동
 
-  group('updateSymptomLog', () {
-    test('should update symptom with new values', () async {
-      // Arrange
-      final mockRepo = MockTrackingRepository();
-      final updated = SymptomLog(severity: 8, ...);
-      when(() => mockRepo.updateSymptomLog(any(), any())).thenAnswer((_) async {});
-      final notifier = TrackingNotifier(mockRepo);
-
-      // Act
-      await notifier.updateSymptomLog('1', updated);
-
-      // Assert
-      verify(() => mockRepo.updateSymptomLog('1', updated)).called(1);
-    });
-  });
-  ```
-- **Edge Cases**:
-  - Update/delete during loading state (queue or reject)
-  - Repository throws exception (propagate to UI)
-  - Dashboard refresh trigger failure (log error, continue)
-- **Implementation Order**: Test → updateWeightLog → deleteWeightLog → updateSymptomLog → deleteSymptomLog
-- **Dependencies**: TrackingRepository, DashboardNotifier (refresh trigger)
-
-#### Module: Dashboard Refresh Integration
-- **Location**: `features/tracking/application/notifiers/tracking_notifier.dart` (within methods)
-- **Responsibility**: Trigger dashboard recalculation after edit/delete
-- **Test Strategy**: Integration Tests
-- **Test Scenarios (RED Phase)**:
-  ```dart
-  test('should trigger dashboard refresh after weight update', () async {
-    // Arrange
-    final mockDashboard = MockDashboardNotifier();
-    final notifier = TrackingNotifier(mockRepo, mockDashboard);
-
-    // Act
-    await notifier.updateWeightLog('1', 68.0);
-
-    // Assert
-    verify(() => mockDashboard.refresh()).called(1);
-  });
-
-  test('should trigger dashboard refresh after record deletion', () async {
-    // Arrange
-    final mockDashboard = MockDashboardNotifier();
-    final notifier = TrackingNotifier(mockRepo, mockDashboard);
-
-    // Act
-    await notifier.deleteSymptomLog('1');
-
-    // Assert
-    verify(() => mockDashboard.refresh()).called(1);
-  });
-
-  test('should not fail if dashboard refresh throws', () async {
-    // Arrange
-    final mockDashboard = MockDashboardNotifier();
-    when(() => mockDashboard.refresh()).thenThrow(Exception('Dashboard error'));
-    final notifier = TrackingNotifier(mockRepo, mockDashboard);
-
-    // Act & Assert
-    expect(() => notifier.updateWeightLog('1', 68.0), returnsNormally);
-  });
-  ```
-- **Edge Cases**:
-  - Dashboard refresh failure should not block record update
-  - Dashboard provider not available (defensive coding)
-- **Implementation Order**: After TrackingNotifier methods
-- **Dependencies**: DashboardNotifier
+**Dependencies**: UserProfile, ProfileRepository
 
 ---
 
-### 3.4. Presentation Layer
+### 3.4. UserProfileDto (Infrastructure)
 
-#### Module: RecordListScreen
-- **Location**: `features/tracking/presentation/screens/record_list_screen.dart`
-- **Responsibility**: Display weight/symptom logs, navigate to edit/delete
-- **Test Strategy**: Widget Tests
-- **Test Scenarios (RED Phase)**:
-  ```dart
-  testWidgets('should display list of weight logs', (tester) async {
-    // Arrange
-    final mockState = TrackingState(
-      weights: AsyncData([WeightLog(weightKg: 70.5, ...)]),
-      symptoms: AsyncData([]),
-    );
+**Location**: `lib/features/profile/infrastructure/dtos/user_profile_dto.dart`
 
-    // Act
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [trackingNotifierProvider.overrideWith((ref) => mockState)],
-        child: RecordListScreen(),
-      ),
-    );
+**Responsibility**:
+- Isar 데이터베이스 스키마 정의
+- DTO ↔ Entity 변환
 
-    // Assert
-    expect(find.text('70.5 kg'), findsOneWidget);
-  });
+**Test Strategy**: Unit Test
 
-  testWidgets('should show edit button for each record', (tester) async {
-    // Arrange & Act
-    await tester.pumpWidget(...);
+**Test Scenarios (Red Phase)**:
+```dart
+1. Entity → DTO 변환
+   - given: UserProfile Entity
+   - when: UserProfileDto.fromEntity 호출
+   - then: 모든 필드가 올바르게 매핑됨
 
-    // Assert
-    expect(find.byIcon(Icons.edit), findsWidgets);
-  });
+2. DTO → Entity 변환
+   - given: UserProfileDto
+   - when: toEntity 호출
+   - then: 모든 필드가 올바르게 매핑됨
 
-  testWidgets('should open edit dialog on edit tap', (tester) async {
-    // Arrange
-    await tester.pumpWidget(...);
+3. null 필드 처리
+   - given: targetPeriodWeeks = null인 Entity
+   - when: 변환 수행
+   - then: null 값 유지됨
 
-    // Act
-    await tester.tap(find.byIcon(Icons.edit).first);
-    await tester.pumpAndSettle();
+4. 왕복 변환 일관성
+   - given: UserProfile Entity
+   - when: Entity → DTO → Entity 변환
+   - then: 원본과 동일한 데이터
+```
 
-    // Assert
-    expect(find.byType(RecordEditDialog), findsOneWidget);
-  });
-  ```
-- **Edge Cases**:
-  - Empty list (show placeholder)
-  - Loading state (show skeleton)
-  - Error state (show error message)
-- **Implementation Order**: Test → List UI → Edit navigation → Delete navigation
-- **Dependencies**: TrackingNotifier
-- **QA Sheet**: See Section 4
+**Implementation Order**:
+1. Test: Entity → DTO 변환
+2. Code: UserProfileDto 클래스, fromEntity 메서드
+3. Test: DTO → Entity 변환
+4. Code: toEntity 메서드
+5. Test: 왕복 변환 일관성
+6. Refactor: 중복 코드 제거
 
-#### Module: RecordEditDialog
-- **Location**: `features/tracking/presentation/widgets/record_edit_dialog.dart`
-- **Responsibility**: Edit weight or symptom values, validation
-- **Test Strategy**: Widget Tests
-- **Test Scenarios (RED Phase)**:
-  ```dart
-  testWidgets('should show current weight value in input field', (tester) async {
-    // Arrange
-    final log = WeightLog(weightKg: 70.5, ...);
+**Dependencies**: UserProfile Entity, Isar
 
-    // Act
-    await tester.pumpWidget(RecordEditDialog(weightLog: log));
+---
 
-    // Assert
-    expect(find.text('70.5'), findsOneWidget);
-  });
+### 3.5. IsarProfileRepository (Infrastructure)
 
-  testWidgets('should validate weight input (positive number)', (tester) async {
-    // Arrange
-    await tester.pumpWidget(RecordEditDialog(weightLog: log));
+**Location**: `lib/features/profile/infrastructure/repositories/isar_profile_repository.dart`
 
-    // Act
-    await tester.enterText(find.byType(TextField), '-10');
-    await tester.tap(find.text('Save'));
-    await tester.pump();
+**Responsibility**:
+- ProfileRepository 인터페이스 구현
+- Isar를 통한 데이터 저장/조회
+- DTO ↔ Entity 변환 관리
 
-    // Assert
-    expect(find.text('Weight must be positive'), findsOneWidget);
-  });
+**Test Strategy**: Integration Test (실제 Isar 사용)
 
-  testWidgets('should call updateWeightLog on save', (tester) async {
-    // Arrange
-    final mockNotifier = MockTrackingNotifier();
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [trackingNotifierProvider.overrideWith((ref) => mockNotifier)],
-        child: RecordEditDialog(weightLog: log),
-      ),
-    );
+**Test Scenarios (Red Phase)**:
+```dart
+// 실제 Isar 인스턴스 사용
 
-    // Act
-    await tester.enterText(find.byType(TextField), '68.0');
-    await tester.tap(find.text('Save'));
-    await tester.pump();
+1. 프로필 저장 및 조회
+   - given: IsarProfileRepository, UserProfile
+   - when: updateUserProfile → getUserProfile
+   - then: 저장한 데이터 반환됨
 
-    // Assert
-    verify(() => mockNotifier.updateWeightLog(log.id, 68.0)).called(1);
-  });
-  ```
-- **Edge Cases**:
-  - Empty input (show validation error)
-  - Non-numeric input (show validation error)
-  - Unrealistic values (20kg < weight < 300kg)
-  - Save during loading (disable button)
-- **Implementation Order**: Test → UI → Validation → Save action
-- **Dependencies**: TrackingNotifier
-- **QA Sheet**: See Section 4
+2. 프로필 업데이트
+   - given: 기존 프로필 존재
+   - when: 새로운 프로필로 updateUserProfile
+   - then: 업데이트된 데이터 조회됨
 
-#### Module: RecordDeleteDialog
-- **Location**: `features/tracking/presentation/widgets/record_delete_dialog.dart`
-- **Responsibility**: Confirm deletion, execute delete
-- **Test Strategy**: Widget Tests
-- **Test Scenarios (RED Phase)**:
-  ```dart
-  testWidgets('should show confirmation message', (tester) async {
-    // Arrange & Act
-    await tester.pumpWidget(RecordDeleteDialog(recordId: '1', recordType: 'weight'));
+3. 프로필 없을 때 null 반환
+   - given: 빈 DB
+   - when: getUserProfile 호출
+   - then: null 반환
 
-    // Assert
-    expect(find.text('Are you sure you want to delete this record?'), findsOneWidget);
-  });
+4. watchUserProfile 실시간 업데이트
+   - given: IsarProfileRepository
+   - when: watchUserProfile 구독 후 updateUserProfile
+   - then: 스트림에서 업데이트된 데이터 수신
 
-  testWidgets('should call deleteWeightLog on confirm', (tester) async {
-    // Arrange
-    final mockNotifier = MockTrackingNotifier();
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [trackingNotifierProvider.overrideWith((ref) => mockNotifier)],
-        child: RecordDeleteDialog(recordId: '1', recordType: 'weight'),
-      ),
-    );
+5. 동일 userId로 중복 저장 시 덮어쓰기
+   - given: 동일 userId의 프로필 2개
+   - when: 순차적으로 저장
+   - then: 마지막 저장본만 존재
+```
 
-    // Act
-    await tester.tap(find.text('Delete'));
-    await tester.pump();
+**Implementation Order**:
+1. Test: 기본 저장 및 조회
+2. Code: IsarProfileRepository 클래스, getUserProfile, updateUserProfile
+3. Test: 업데이트 동작
+4. Code: 업데이트 로직
+5. Test: watchUserProfile 스트림
+6. Code: watch 메서드 구현
+7. Refactor: 에러 핸들링 추가
 
-    // Assert
-    verify(() => mockNotifier.deleteWeightLog('1')).called(1);
-  });
+**Dependencies**: ProfileRepository, UserProfileDto, Isar
 
-  testWidgets('should close dialog on cancel', (tester) async {
-    // Arrange
-    await tester.pumpWidget(...);
+---
 
-    // Act
-    await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
+### 3.6. ProfileNotifier (Application)
 
-    // Assert
-    expect(find.byType(RecordDeleteDialog), findsNothing);
-  });
-  ```
-- **Edge Cases**:
-  - Delete during loading (disable button)
-  - Delete failure (show error snackbar)
-- **Implementation Order**: Test → UI → Confirm action → Cancel action
-- **Dependencies**: TrackingNotifier
-- **QA Sheet**: See Section 4
+**Location**: `lib/features/profile/application/notifiers/profile_notifier.dart`
+
+**Responsibility**:
+- 프로필 상태 관리
+- UI 이벤트를 UseCase/Repository 호출로 변환
+- AsyncValue를 통한 로딩/에러 상태 관리
+
+**Test Strategy**: Unit Test (Mock Repository, UseCase)
+
+**Test Scenarios (Red Phase)**:
+```dart
+// Mock 사용
+
+1. 초기 로드 성공
+   - given: Mock Repository with 프로필 데이터
+   - when: build 호출
+   - then: AsyncValue.data(profile) 반환
+
+2. 초기 로드 실패
+   - given: Mock Repository가 예외 발생
+   - when: build 호출
+   - then: AsyncValue.error 반환
+
+3. 프로필 업데이트 성공
+   - given: 초기 상태, Mock UseCase
+   - when: updateProfile 호출
+   - then: state = AsyncValue.loading → data
+
+4. 프로필 업데이트 실패
+   - given: Mock UseCase가 예외 발생
+   - when: updateProfile 호출
+   - then: state = AsyncValue.error
+
+5. 주간 목표 업데이트
+   - given: 초기 상태, Mock Repository
+   - when: updateWeeklyGoals 호출
+   - then: state 업데이트됨
+
+6. 업데이트 중 중복 호출 방지
+   - given: 업데이트 진행 중
+   - when: updateProfile 재호출
+   - then: 첫 번째 완료 후 두 번째 실행
+```
+
+**Implementation Order**:
+1. Test: 초기 로드
+2. Code: ProfileNotifier 클래스, build 메서드
+3. Test: 업데이트 성공 케이스
+4. Code: updateProfile 메서드
+5. Test: 에러 핸들링
+6. Code: AsyncValue.guard 적용
+7. Refactor: 로직 분리, 상수 추출
+
+**Dependencies**: ProfileRepository, UpdateProfileUseCase, Riverpod
+
+---
+
+### 3.7. ProfileEditScreen (Presentation)
+
+**Location**: `lib/features/profile/presentation/screens/profile_edit_screen.dart`
+
+**Responsibility**:
+- 프로필 수정 UI 렌더링
+- ProfileNotifier 상태 구독
+- 사용자 입력 수집 및 검증
+
+**Test Strategy**: Widget Test
+
+**Test Scenarios (Red Phase)**:
+```dart
+1. 화면 로드 시 로딩 표시
+   - given: ProfileNotifier state = loading
+   - when: 화면 빌드
+   - then: CircularProgressIndicator 표시
+
+2. 프로필 데이터 로드 시 폼에 표시
+   - given: ProfileNotifier state = data(profile)
+   - when: 화면 빌드
+   - then: 이름, 목표 체중, 현재 체중, 목표 기간 표시
+
+3. 저장 버튼 클릭 시 updateProfile 호출
+   - given: 수정된 폼 데이터
+   - when: 저장 버튼 탭
+   - then: ProfileNotifier.updateProfile 호출됨
+
+4. 입력 검증 에러 표시
+   - given: 목표 체중 > 현재 체중
+   - when: 저장 시도
+   - then: 에러 메시지 표시
+
+5. 저장 성공 시 네비게이션
+   - given: updateProfile 성공
+   - when: 저장 완료
+   - then: 이전 화면으로 이동
+
+6. 저장 실패 시 스낵바 표시
+   - given: updateProfile 실패
+   - when: 에러 발생
+   - then: 에러 스낵바 표시
+```
+
+**Implementation Order**:
+1. Test: 기본 화면 렌더링
+2. Code: ProfileEditScreen 클래스, Scaffold
+3. Test: 폼 데이터 표시
+4. Code: ProfileEditForm Widget
+5. Test: 저장 동작
+6. Code: 저장 버튼 핸들러
+7. Refactor: UI 컴포넌트 분리
+
+**Dependencies**: ProfileNotifier, Flutter Widgets
+
+**QA Sheet** (수동 테스트):
+- [ ] 화면 진입 시 현재 프로필 정보가 표시되는가?
+- [ ] 이름 필드를 수정할 수 있는가?
+- [ ] 목표 체중을 수정할 수 있는가?
+- [ ] 현재 체중을 수정할 수 있는가?
+- [ ] 목표 기간을 수정할 수 있는가?
+- [ ] 목표 체중 > 현재 체중 입력 시 에러 메시지가 표시되는가?
+- [ ] 체중 20kg 미만 입력 시 에러 메시지가 표시되는가?
+- [ ] 체중 300kg 초과 입력 시 에러 메시지가 표시되는가?
+- [ ] 주간 감량 목표가 실시간으로 재계산되는가?
+- [ ] 주간 감량 목표 1kg 초과 시 경고가 표시되는가?
+- [ ] 저장 버튼 클릭 시 로딩 표시가 나타나는가?
+- [ ] 저장 완료 시 설정 화면으로 돌아가는가?
+- [ ] 저장 실패 시 에러 메시지가 표시되는가?
+- [ ] 변경사항 없이 저장 시 정상 동작하는가?
+
+---
+
+### 3.8. ProfileEditForm Widget (Presentation)
+
+**Location**: `lib/features/profile/presentation/widgets/profile_edit_form.dart`
+
+**Responsibility**:
+- 입력 필드 렌더링 (이름, 목표 체중, 현재 체중, 목표 기간)
+- 실시간 입력 검증
+- 주간 감량 목표 표시
+
+**Test Strategy**: Widget Test
+
+**Test Scenarios (Red Phase)**:
+```dart
+1. 모든 입력 필드 렌더링
+   - given: ProfileEditForm Widget
+   - when: 빌드
+   - then: 이름, 목표 체중, 현재 체중, 목표 기간 필드 표시
+
+2. 초기 값 표시
+   - given: 초기 UserProfile
+   - when: 빌드
+   - then: 각 필드에 초기 값 표시
+
+3. 입력 값 변경 감지
+   - given: 폼
+   - when: 이름 필드 입력
+   - then: onChanged 콜백 호출
+
+4. 주간 감량 목표 계산 표시
+   - given: 목표 체중 70kg, 현재 체중 80kg, 목표 기간 10주
+   - when: 입력 완료
+   - then: "주간 감량 목표: 1.0kg" 표시
+
+5. 경고 메시지 표시
+   - given: 주간 감량 목표 1.5kg
+   - when: 계산 완료
+   - then: 경고 아이콘 및 메시지 표시
+```
+
+**Implementation Order**:
+1. Test: 기본 필드 렌더링
+2. Code: TextField 위젯들
+3. Test: 초기 값 표시
+4. Code: Controller 연결
+5. Test: 주간 감량 목표 표시
+6. Code: 계산 로직 및 표시 위젯
+7. Refactor: 재사용 가능한 입력 필드 컴포넌트 추출
+
+**Dependencies**: Flutter Widgets, UserProfile
+
+**QA Sheet** (수동 테스트):
+- [ ] 각 필드에 라벨이 명확히 표시되는가?
+- [ ] 숫자 입력 필드에 숫자 키패드가 나타나는가?
+- [ ] 목표 기간 입력 시 주간 감량 목표가 즉시 계산되는가?
+- [ ] 경고 메시지가 눈에 띄는 색상으로 표시되는가?
+- [ ] 필드 간 탭 이동이 자연스러운가?
 
 ---
 
 ## 4. TDD Workflow
 
-### Phase 1: Domain Layer (Inside-Out)
-1. **Start**: WeightLog entity tests
-2. **Red**: Write test for entity creation and copyWith
-3. **Green**: Implement minimal entity
-4. **Refactor**: Add validation in copyWith if needed
-5. **Commit**: "test: add WeightLog entity tests" → "feat: add WeightLog entity"
-6. **Repeat**: SymptomLog entity → TrackingRepository interface
+### 시작 단계
+1. UserProfile Entity 테스트 작성
+2. Red: 테스트 실패 확인
+3. Green: 최소 코드로 테스트 통과
+4. Refactor: 검증 로직 정리
 
-### Phase 2: Infrastructure Layer
-1. **Start**: WeightLogDto conversion tests
-2. **Red**: Write toEntity/fromEntity tests
-3. **Green**: Implement conversion methods
-4. **Refactor**: Extract common logic
-5. **Commit**: "test: add DTO conversion tests" → "feat: add DTO converters"
-6. **Repeat**: SymptomLogDto → IsarTrackingRepository (integration tests)
+### 중간 단계
+5. ProfileRepository Interface 정의
+6. UpdateProfileUseCase 테스트 작성 (Mock 사용)
+7. Red → Green → Refactor
+8. UserProfileDto 테스트 작성
+9. Red → Green → Refactor
 
-### Phase 3: Application Layer
-1. **Start**: TrackingNotifier update tests
-2. **Red**: Write state transition tests (loading → data/error)
-3. **Green**: Implement update methods with AsyncValue
-4. **Refactor**: Extract error handling logic
-5. **Commit**: "test: add notifier update tests" → "feat: add record update logic"
-6. **Repeat**: Delete methods → Dashboard refresh integration
+### 후반 단계
+10. IsarProfileRepository Integration Test 작성
+11. Red → Green → Refactor (실제 Isar 사용)
+12. ProfileNotifier Unit Test 작성 (Mock 사용)
+13. Red → Green → Refactor
 
-### Phase 4: Presentation Layer
-1. **Start**: RecordListScreen widget tests
-2. **Red**: Write list display tests
-3. **Green**: Implement UI with mock data
-4. **Refactor**: Extract reusable widgets
-5. **Commit**: "test: add record list tests" → "feat: add record list UI"
-6. **Repeat**: RecordEditDialog → RecordDeleteDialog
+### 완료 단계
+14. ProfileEditScreen Widget Test 작성
+15. Red → Green → Refactor
+16. ProfileEditForm Widget Test 작성
+17. Red → Green → Refactor
+18. 통합 테스트 실행 및 수동 QA
 
-### Phase 5: Acceptance Tests
-1. **Start**: End-to-end user flow
-2. **Red**: Write full edit/delete scenario test
-3. **Green**: Connect all layers
-4. **Refactor**: Optimize state management
-5. **Commit**: "test: add e2e edit/delete tests" → "feat: complete UF-011"
+### Commit 포인트
+- Entity + Repository Interface 완료
+- UseCase + DTO 완료
+- Repository 구현 완료
+- Notifier 완료
+- Presentation Layer 완료
 
-### Test Execution Strategy
-- Run unit tests after each RED → GREEN cycle
-- Run integration tests after infrastructure completion
-- Run widget tests after each presentation module
-- Run acceptance tests at the end
-- All tests must pass before commit
+### 완료 조건
+- 모든 Unit/Integration/Widget 테스트 통과
+- Presentation Layer 수동 QA 체크리스트 완료
+- 코드 커버리지 80% 이상
+- flutter analyze 경고 0개
 
 ---
 
-## 5. QA Sheet (Presentation Layer Manual Testing)
+## 5. 핵심 원칙
 
-### RecordListScreen
-- [ ] Weight logs displayed with date, weight value
-- [ ] Symptom logs displayed with date, symptom name, severity
-- [ ] Empty state shows "No records yet" message
-- [ ] Loading state shows skeleton UI
-- [ ] Error state shows retry button
-- [ ] Edit icon visible on each record
-- [ ] Delete icon visible on each record
-- [ ] Tap edit icon opens RecordEditDialog
-- [ ] Tap delete icon opens RecordDeleteDialog
-- [ ] List refreshes after edit/delete
+### Test First
+- 코드보다 테스트를 먼저 작성
+- Red → Green → Refactor 사이클 엄격히 준수
 
-### RecordEditDialog
-- [ ] Dialog shows current record values
-- [ ] Weight input accepts decimal numbers (e.g., 70.5)
-- [ ] Symptom severity input shows 1-10 slider
-- [ ] Tags input shows multi-select chips
-- [ ] Validation error shows for empty weight
-- [ ] Validation error shows for negative weight
-- [ ] Validation error shows for weight < 20kg or > 300kg
-- [ ] Validation error shows for severity outside 1-10
-- [ ] Save button disabled during loading
-- [ ] Save button triggers update and closes dialog
-- [ ] Cancel button closes dialog without saving
-- [ ] Snackbar shows "Record updated" on success
-- [ ] Snackbar shows error message on failure
+### Small Steps
+- 한 번에 하나의 시나리오만 구현
+- 테스트 케이스 단위로 커밋
 
-### RecordDeleteDialog
-- [ ] Dialog shows confirmation message
-- [ ] Record details displayed (date, type)
-- [ ] Warning icon visible
-- [ ] Delete button has destructive color (red)
-- [ ] Delete button disabled during loading
-- [ ] Delete button triggers deletion and closes dialog
-- [ ] Cancel button closes dialog without deleting
-- [ ] Snackbar shows "Record deleted" on success
-- [ ] Snackbar shows error message on failure
-- [ ] Record removed from list immediately
+### FIRST 원칙
+- Fast: 빠른 테스트 실행
+- Independent: 독립적인 테스트
+- Repeatable: 반복 가능한 결과
+- Self-validating: 자동 검증
+- Timely: 코드 작성 전 테스트 작성
 
-### Dashboard Integration
-- [ ] Goal progress recalculates after weight update
-- [ ] Weekly progress recalculates after record deletion
-- [ ] Continuous record days updates correctly
-- [ ] Timeline reflects changes immediately
-- [ ] Insight messages regenerate if applicable
-- [ ] Badge progress updates (if affected by changes)
+### Test Pyramid
+- Unit Test 70%: Entity, UseCase, DTO, Repository Mock
+- Integration Test 20%: IsarProfileRepository
+- Widget Test 10%: Screen, Form
 
-### Edge Case Scenarios
-- [ ] Edit record while offline (queue for retry)
-- [ ] Delete record while offline (queue for retry)
-- [ ] Concurrent edits (last write wins)
-- [ ] Edit non-existent record (show error)
-- [ ] Delete already deleted record (no error)
-- [ ] Rapid edit/delete taps (debounce/disable)
-
----
-
-## 6. Performance Constraints
-
-- Record list load: < 200ms (100 records)
-- Edit dialog open: < 100ms
-- Update operation: < 500ms (local Isar)
-- Delete operation: < 300ms (local Isar)
-- Dashboard refresh: < 1s (after edit/delete)
-- UI responsiveness: 60fps maintained
-
----
-
-## 7. Dependencies & Prerequisites
-
-### Before Implementation
-- [ ] F000 (Onboarding) completed (UserProfile entity exists)
-- [ ] F002 (Tracking) completed (WeightLog, SymptomLog entities exist)
-- [ ] F006 (Dashboard) completed (DashboardNotifier exists)
-- [ ] Isar schema generated
-- [ ] Repository pattern established
-
-### External Dependencies
-- `isar`: ^3.x (local DB)
-- `riverpod`: ^2.x (state management)
-- `flutter_test`: (testing framework)
-- `mocktail`: (mocking)
-
----
-
-## 8. Critical Rules Checklist
-
-- [ ] Repository Pattern strictly followed (Interface in Domain, Implementation in Infrastructure)
-- [ ] No layer violations (Presentation → Application → Domain ← Infrastructure)
-- [ ] All Repository calls through Application Layer
-- [ ] DTO ↔ Entity conversion in Infrastructure only
-- [ ] No business logic in Presentation Layer
-- [ ] No Isar imports in Domain/Application/Presentation
-- [ ] All async operations use AsyncValue<T>
-- [ ] Error handling with RepositoryException
-- [ ] Tests written BEFORE implementation (TDD)
-- [ ] FIRST principles applied to all tests
-
----
-
-## 9. Commit Strategy
-
-### Recommended Commits (Small, Frequent)
-1. `test: add WeightLog entity tests`
-2. `feat: add WeightLog entity with copyWith`
-3. `test: add SymptomLog entity tests`
-4. `feat: add SymptomLog entity with copyWith`
-5. `feat: add TrackingRepository interface methods`
-6. `test: add WeightLogDto conversion tests`
-7. `feat: add WeightLogDto with toEntity/fromEntity`
-8. `test: add SymptomLogDto conversion tests`
-9. `feat: add SymptomLogDto with toEntity/fromEntity`
-10. `test: add IsarTrackingRepository update tests`
-11. `feat: implement IsarTrackingRepository update methods`
-12. `test: add IsarTrackingRepository delete tests`
-13. `feat: implement IsarTrackingRepository delete methods`
-14. `test: add TrackingNotifier update tests`
-15. `feat: implement TrackingNotifier update methods`
-16. `test: add TrackingNotifier delete tests`
-17. `feat: implement TrackingNotifier delete methods`
-18. `test: add dashboard refresh integration tests`
-19. `feat: integrate dashboard refresh triggers`
-20. `test: add RecordListScreen widget tests`
-21. `feat: implement RecordListScreen UI`
-22. `test: add RecordEditDialog widget tests`
-23. `feat: implement RecordEditDialog with validation`
-24. `test: add RecordDeleteDialog widget tests`
-25. `feat: implement RecordDeleteDialog`
-26. `test: add e2e edit/delete flow tests`
-27. `feat: complete UF-011 implementation`
-28. `docs: add UF-011 completion notes`
-
----
-
-## 10. Success Criteria
-
-### Functional
-- [ ] User can edit weight value for existing records
-- [ ] User can edit symptom severity, tags, notes
-- [ ] User can delete weight/symptom records with confirmation
-- [ ] Dashboard recalculates automatically after changes
-- [ ] All edge cases handled gracefully
-
-### Non-Functional
-- [ ] All unit tests pass (70%+ coverage)
-- [ ] All integration tests pass
-- [ ] All widget tests pass
-- [ ] Performance constraints met
-- [ ] No memory leaks in list/dialog operations
-- [ ] Accessibility: screen reader support, large text support
-
-### TDD Compliance
-- [ ] Every feature has tests written first
-- [ ] RED → GREEN → REFACTOR cycle followed
-- [ ] FIRST principles verified
-- [ ] AAA pattern used consistently
-- [ ] No untested code merged
-
----
-
-## 11. Notes
-
-- **Phase 0 Scope**: This plan focuses on Isar local DB only. Phase 1 (Supabase) will require only Infrastructure Layer changes (SupabaseTrackingRepository).
-- **State Management**: Use Riverpod AsyncNotifierProvider for all stateful operations. Avoid StatefulWidget for business logic.
-- **Error Handling**: Wrap repository calls in try-catch, throw RepositoryException with user-friendly messages.
-- **Validation**: UI-level validation for user input, repository-level validation for data integrity.
-- **Testing Tools**: Use `mocktail` for mocking, `flutter_test` for widget tests, `integration_test` for e2e.
-- **Accessibility**: Ensure all interactive elements have semantic labels for screen readers.
+### Outside-In 전략
+- Presentation Layer에서 시작하여 필요한 하위 레이어를 순차적으로 구현
+- 각 레이어는 Interface를 통해 하위 레이어와 통신

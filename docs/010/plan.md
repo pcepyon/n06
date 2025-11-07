@@ -1,444 +1,583 @@
-# UF-007: Logout Implementation Plan
+# Logout Implementation Plan
 
-## 1. Overview
+## 1. 개요
 
-### Modules
-- **AuthNotifier** (Application Layer): Logout orchestration, token management
-- **AuthRepository** (Domain Interface): Logout contract
-- **IsarAuthRepository** (Infrastructure): Token deletion, session cleanup
-- **AuthDto** (Infrastructure): Token storage model
-- **LogoutButton** (Presentation): Logout UI trigger
+### 1.1 모듈 목록 및 위치
 
-### TDD Coverage
-- **Unit Tests**: AuthNotifier, Repository logic (70%)
-- **Integration Tests**: Repository with Isar (20%)
-- **Widget Tests**: Logout button, confirmation dialog (10%)
+**Feature**: Authentication
+**Location**: `lib/features/authentication/`
+
+**구현 모듈**:
+- **LogoutUseCase** (Domain): `domain/usecases/logout_usecase.dart`
+- **AuthRepository** (Domain Interface): `domain/repositories/auth_repository.dart`
+- **SecureStorageRepository** (Domain Interface): `domain/repositories/secure_storage_repository.dart`
+- **FlutterSecureStorageRepository** (Infrastructure): `infrastructure/repositories/flutter_secure_storage_repository.dart`
+- **AuthNotifier** (Application): `application/notifiers/auth_notifier.dart`
+- **SettingsScreen** (Presentation): `presentation/screens/settings_screen.dart`
+- **LogoutConfirmDialog** (Presentation): `presentation/widgets/logout_confirm_dialog.dart`
+
+### 1.2 TDD 적용 범위
+- **Unit Tests**: Domain Layer (LogoutUseCase, Entity)
+- **Integration Tests**: Application Layer (AuthNotifier + Repository)
+- **Widget Tests**: Presentation Layer (Dialog, Screen)
+
+---
 
 ## 2. Architecture Diagram
 
 ```mermaid
 graph TD
-    A[LogoutButton Widget] -->|tap| B[AuthNotifier]
-    B -->|logout| C[AuthRepository Interface]
-    C -->|implements| D[IsarAuthRepository]
-    D -->|delete| E[FlutterSecureStorage]
-    D -->|clear| F[Isar DB]
-    B -->|navigate| G[LoginScreen]
+    A[SettingsScreen] -->|"사용자 클릭"| B[LogoutConfirmDialog]
+    B -->|"확인"| C[AuthNotifier]
+    C -->|"logout()"| D[LogoutUseCase]
+    D -->|"clearTokens()"| E[SecureStorageRepository]
+    D -->|"clearSession()"| F[AuthRepository]
+    E -->|"구현"| G[FlutterSecureStorageRepository]
+    F -->|"구현"| H[LocalAuthRepository]
 
-    H[SettingsScreen] -->|contains| A
+    C -->|"상태 변경"| I[AsyncValue.data null]
+    I -->|"라우팅"| J[LoginScreen]
 
-    style B fill:#e1f5ff
-    style C fill:#fff4e1
-    style D fill:#f0f0f0
-    style A fill:#e8f5e9
+    style D fill:#e1f5ff
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#f3e5f5
+    style H fill:#f3e5f5
 ```
+
+---
 
 ## 3. Implementation Plan
 
-### 3.1 Domain Layer
+### 3.1 SecureStorageRepository (Domain Interface)
 
-#### AuthRepository Interface
-- **Location**: `lib/features/authentication/domain/repositories/auth_repository.dart`
-- **Responsibility**: Define logout contract
-- **Test Strategy**: Interface contract verification (Unit)
-- **Test Scenarios**:
-  - Red: Interface defines `Future<void> logout()` method
-  - Red: Method throws UnimplementedError by default
-- **Implementation Order**:
-  1. Create interface with logout signature
-  2. Add documentation
-- **Dependencies**: None
+**Location**: `lib/features/authentication/domain/repositories/secure_storage_repository.dart`
 
-#### DomainException
-- **Location**: `lib/core/errors/domain_exception.dart`
-- **Responsibility**: Logout-specific exceptions
-- **Test Strategy**: Exception creation and properties (Unit)
-- **Test Scenarios**:
-  - Red: `LogoutException` class exists
-  - Red: Exception contains message property
-  - Red: Exception supports optional error details
-- **Implementation Order**:
-  1. Create LogoutException class
-  2. Add message and details properties
-- **Dependencies**: None
+**Responsibility**: 토큰 저장소 추상화
 
----
+**Test Strategy**: Unit Test
 
-### 3.2 Infrastructure Layer
+**Test Scenarios (Red Phase)**:
+```dart
+// AAA Pattern
+group('SecureStorageRepository Interface', () {
+  test('should define clearTokens method', () {
+    // Arrange: Mock 구현체 생성
+    // Act: clearTokens 호출
+    // Assert: Future<void> 반환
+  });
 
-#### AuthDto (Token Storage Model)
-- **Location**: `lib/features/authentication/infrastructure/dtos/auth_dto.dart`
-- **Responsibility**: Token data model for secure storage
-- **Test Strategy**: DTO serialization/deserialization (Unit)
-- **Test Scenarios**:
-  - Red: AuthDto has accessToken, refreshToken, expiresAt fields
-  - Red: toJson returns valid Map<String, dynamic>
-  - Red: fromJson creates valid AuthDto
-  - Red: fromJson handles missing fields gracefully
-  - Edge: toJson with null expiresAt
-  - Edge: fromJson with malformed data
-- **Implementation Order**:
-  1. Create AuthDto class with properties
-  2. Implement toJson
-  3. Implement fromJson
-  4. Add null safety
-- **Dependencies**: None
+  test('should define getAccessToken method', () {
+    // Arrange: Mock 구현체 생성
+    // Act: getAccessToken 호출
+    // Assert: Future<String?> 반환
+  });
+});
+```
 
-#### IsarAuthRepository
-- **Location**: `lib/features/authentication/infrastructure/repositories/isar_auth_repository.dart`
-- **Responsibility**: Token deletion, session cleanup
-- **Test Strategy**: Unit + Integration
-- **Test Scenarios (Unit)**:
-  - Red: logout deletes access token from secure storage
-  - Red: logout deletes refresh token from secure storage
-  - Red: logout clears session state
-  - Red: logout completes even if tokens don't exist
-  - Edge: logout when secure storage throws exception (retry 3 times)
-  - Edge: logout when Isar is unavailable (graceful degradation)
-  - Edge: concurrent logout calls (idempotent)
-- **Test Scenarios (Integration)**:
-  - Red: logout removes all auth data from FlutterSecureStorage
-  - Red: logout persists across repository instances
-  - Edge: logout during active network request
-- **Implementation Order**:
-  1. Create repository class implementing interface
-  2. Inject FlutterSecureStorage dependency
-  3. Implement token deletion with retry logic
-  4. Implement session cleanup
-  5. Add error handling
-- **Dependencies**: AuthRepository (interface), FlutterSecureStorage
+**Implementation Order**:
+1. Interface 정의 (Red)
+2. Mock 구현 (Green)
+3. Interface 정리 (Refactor)
+
+**Dependencies**: None
 
 ---
 
-### 3.3 Application Layer
+### 3.2 FlutterSecureStorageRepository (Infrastructure)
 
-#### AuthNotifier
-- **Location**: `lib/features/authentication/application/notifiers/auth_notifier.dart`
-- **Responsibility**: Logout orchestration, state transition
-- **Test Strategy**: Unit tests with mocked repository
-- **Test Scenarios**:
-  - Red: logout sets state to AsyncValue.loading()
-  - Red: logout calls repository.logout()
-  - Red: logout sets state to AsyncValue.data(null) on success
-  - Red: logout sets state to AsyncValue.error() on failure
-  - Red: logout is idempotent (safe to call multiple times)
-  - Edge: logout during existing logout operation
-  - Edge: logout throws LogoutException on repository failure
-  - Edge: logout rolls back state if navigation fails
-- **Implementation Order**:
-  1. Add logout method signature
-  2. Implement loading state
-  3. Call repository.logout()
-  4. Handle success state
-  5. Handle error state
-  6. Add idempotency guard
-- **Dependencies**: AuthRepository (interface)
+**Location**: `lib/features/authentication/infrastructure/repositories/flutter_secure_storage_repository.dart`
 
-#### Auth Provider
-- **Location**: `lib/features/authentication/application/providers.dart`
-- **Responsibility**: DI for AuthRepository
-- **Test Strategy**: Provider resolution (Unit)
-- **Test Scenarios**:
-  - Red: authRepositoryProvider returns IsarAuthRepository instance
-  - Red: authNotifierProvider uses authRepositoryProvider
-  - Red: Provider survives widget rebuild
-- **Implementation Order**:
-  1. Create @riverpod authRepository provider
-  2. Create @riverpod authNotifier provider
-  3. Wire dependencies
-- **Dependencies**: IsarAuthRepository, AuthNotifier
+**Responsibility**: FlutterSecureStorage를 통한 토큰 관리
+
+**Test Strategy**: Unit Test (Mocked FlutterSecureStorage)
+
+**Test Scenarios (Red Phase)**:
+```dart
+group('FlutterSecureStorageRepository', () {
+  late FlutterSecureStorage mockStorage;
+  late FlutterSecureStorageRepository repository;
+
+  setUp(() {
+    mockStorage = MockFlutterSecureStorage();
+    repository = FlutterSecureStorageRepository(mockStorage);
+  });
+
+  test('should delete accessToken when clearTokens is called', () {
+    // Arrange: mockStorage.delete 설정
+    // Act: repository.clearTokens()
+    // Assert: verify delete('accessToken')
+  });
+
+  test('should delete refreshToken when clearTokens is called', () {
+    // Arrange: mockStorage.delete 설정
+    // Act: repository.clearTokens()
+    // Assert: verify delete('refreshToken')
+  });
+
+  test('should delete tokenExpiresAt when clearTokens is called', () {
+    // Arrange: mockStorage.delete 설정
+    // Act: repository.clearTokens()
+    // Assert: verify delete('tokenExpiresAt')
+  });
+
+  test('should retry 3 times when delete fails', () {
+    // Arrange: mockStorage.delete throws error twice, succeeds third time
+    // Act: repository.clearTokens()
+    // Assert: verify delete called 3 times
+  });
+
+  test('should throw exception after 3 failed retries', () {
+    // Arrange: mockStorage.delete always throws
+    // Act: repository.clearTokens()
+    // Assert: expect throwsA(isA<StorageException>())
+  });
+});
+```
+
+**Edge Cases**:
+- 저장소 접근 권한 오류
+- 삭제 중 예외 발생
+- 재시도 로직 검증
+
+**Implementation Order**:
+1. clearTokens 기본 구현 (Red → Green)
+2. 재시도 로직 추가 (Red → Green)
+3. 에러 핸들링 (Red → Green)
+4. 코드 정리 (Refactor)
+
+**Dependencies**: `flutter_secure_storage`, SecureStorageRepository
 
 ---
 
-### 3.4 Presentation Layer
+### 3.3 LogoutUseCase (Domain)
 
-#### LogoutConfirmationDialog
-- **Location**: `lib/features/authentication/presentation/widgets/logout_confirmation_dialog.dart`
-- **Responsibility**: Confirmation UI
-- **Test Strategy**: Widget tests
-- **Test Scenarios**:
-  - Red: Dialog shows title "로그아웃하시겠습니까?"
-  - Red: Dialog has Cancel button
-  - Red: Dialog has Confirm button
-  - Red: Cancel button returns false
-  - Red: Confirm button returns true
-  - Edge: Dialog dismissible by back gesture
-  - Edge: Dialog accessible (semantics)
-- **Implementation Order**:
-  1. Create StatelessWidget
-  2. Add AlertDialog structure
-  3. Add title and buttons
-  4. Wire Navigator.pop with return values
-  5. Add semantics
-- **Dependencies**: None
-- **QA Sheet**:
-  - [ ] Dialog appears centered
-  - [ ] Text is readable (contrast, size)
-  - [ ] Buttons are tappable (min 48x48)
-  - [ ] Cancel closes without action
-  - [ ] Confirm triggers logout
+**Location**: `lib/features/authentication/domain/usecases/logout_usecase.dart`
 
-#### LogoutButton
-- **Location**: `lib/features/authentication/presentation/widgets/logout_button.dart`
-- **Responsibility**: Logout trigger
-- **Test Strategy**: Widget tests
-- **Test Scenarios**:
-  - Red: Button displays "로그아웃" text
-  - Red: Tap shows confirmation dialog
-  - Red: Confirm calls authNotifier.logout()
-  - Red: Cancel does not call logout
-  - Red: Loading state disables button
-  - Red: Error state shows snackbar
-  - Edge: Rapid tap prevention (debounce)
-  - Edge: Navigation to login screen on success
-- **Implementation Order**:
-  1. Create StatelessWidget consuming authNotifier
-  2. Add ElevatedButton
-  3. Wire onPressed to show dialog
-  4. Call logout on confirm
-  5. Handle loading/error states
-  6. Add navigation on success
-- **Dependencies**: AuthNotifier, LogoutConfirmationDialog, LoginScreen
-- **QA Sheet**:
-  - [ ] Button visible in settings screen
-  - [ ] Tap response < 100ms
-  - [ ] Loading indicator appears
-  - [ ] Error message is user-friendly
-  - [ ] Navigation smooth (no flicker)
+**Responsibility**: 로그아웃 비즈니스 로직 (토큰 삭제 + 세션 초기화)
 
-#### SettingsScreen
-- **Location**: `lib/features/settings/presentation/screens/settings_screen.dart`
-- **Responsibility**: Host LogoutButton
-- **Test Strategy**: Widget tests
-- **Test Scenarios**:
-  - Red: Screen contains LogoutButton at bottom
-  - Red: LogoutButton visible without scrolling
-- **Implementation Order**:
-  1. Add LogoutButton to screen layout
-  2. Position at bottom
-- **Dependencies**: LogoutButton
-- **QA Sheet**:
-  - [ ] Button at bottom of screen
-  - [ ] Button visible on all screen sizes
-  - [ ] Padding consistent with design
+**Test Strategy**: Unit Test
+
+**Test Scenarios (Red Phase)**:
+```dart
+group('LogoutUseCase', () {
+  late SecureStorageRepository mockStorageRepo;
+  late AuthRepository mockAuthRepo;
+  late LogoutUseCase useCase;
+
+  setUp(() {
+    mockStorageRepo = MockSecureStorageRepository();
+    mockAuthRepo = MockAuthRepository();
+    useCase = LogoutUseCase(
+      storageRepository: mockStorageRepo,
+      authRepository: mockAuthRepo,
+    );
+  });
+
+  test('should clear tokens from secure storage', () async {
+    // Arrange: mockStorageRepo.clearTokens returns success
+    // Act: await useCase.execute()
+    // Assert: verify mockStorageRepo.clearTokens called once
+  });
+
+  test('should clear session from auth repository', () async {
+    // Arrange: mockAuthRepo.clearSession returns success
+    // Act: await useCase.execute()
+    // Assert: verify mockAuthRepo.clearSession called once
+  });
+
+  test('should clear session even if token deletion fails', () async {
+    // Arrange: mockStorageRepo.clearTokens throws exception
+    // Act: await useCase.execute()
+    // Assert: verify mockAuthRepo.clearSession still called
+  });
+
+  test('should execute in correct order: tokens then session', () async {
+    // Arrange: track call order
+    // Act: await useCase.execute()
+    // Assert: verify clearTokens called before clearSession
+  });
+});
+```
+
+**Edge Cases**:
+- 토큰 삭제 실패 시에도 세션 초기화 진행
+- Repository 호출 순서 보장
+
+**Implementation Order**:
+1. 기본 execute 구현 (Red → Green)
+2. 에러 핸들링 (Red → Green)
+3. 순서 보장 로직 (Red → Green)
+4. 리팩토링 (Refactor)
+
+**Dependencies**: SecureStorageRepository, AuthRepository
+
+---
+
+### 3.4 AuthNotifier (Application)
+
+**Location**: `lib/features/authentication/application/notifiers/auth_notifier.dart`
+
+**Responsibility**: 인증 상태 관리 및 로그아웃 처리
+
+**Test Strategy**: Integration Test (Notifier + Repository)
+
+**Test Scenarios (Red Phase)**:
+```dart
+group('AuthNotifier - Logout', () {
+  late ProviderContainer container;
+  late MockLogoutUseCase mockUseCase;
+
+  setUp(() {
+    mockUseCase = MockLogoutUseCase();
+    container = ProviderContainer(
+      overrides: [
+        logoutUseCaseProvider.overrideWithValue(mockUseCase),
+      ],
+    );
+  });
+
+  test('should change state to loading during logout', () async {
+    // Arrange: initial state = AsyncValue.data(user)
+    // Act: notifier.logout()
+    // Assert: expect state == AsyncValue.loading()
+  });
+
+  test('should change state to data(null) after successful logout', () async {
+    // Arrange: mockUseCase.execute returns success
+    // Act: await notifier.logout()
+    // Assert: expect state == AsyncValue.data(null)
+  });
+
+  test('should change state to error if logout fails', () async {
+    // Arrange: mockUseCase.execute throws exception
+    // Act: await notifier.logout()
+    // Assert: expect state == AsyncValue.error(...)
+  });
+
+  test('should call LogoutUseCase.execute once', () async {
+    // Arrange: mockUseCase setup
+    // Act: await notifier.logout()
+    // Assert: verify useCase.execute called once
+  });
+});
+```
+
+**Edge Cases**:
+- 로그아웃 중 앱 종료
+- 중복 로그아웃 요청 방지
+
+**Implementation Order**:
+1. logout 메서드 기본 구현 (Red → Green)
+2. 상태 전환 로직 (Red → Green)
+3. 에러 핸들링 (Red → Green)
+4. 리팩토링 (Refactor)
+
+**Dependencies**: LogoutUseCase, AuthRepository
+
+---
+
+### 3.5 LogoutConfirmDialog (Presentation)
+
+**Location**: `lib/features/authentication/presentation/widgets/logout_confirm_dialog.dart`
+
+**Responsibility**: 로그아웃 확인 대화상자 UI
+
+**Test Strategy**: Widget Test
+
+**Test Scenarios (Red Phase)**:
+```dart
+group('LogoutConfirmDialog', () {
+  testWidgets('should display confirmation message', (tester) async {
+    // Arrange: build dialog
+    // Act: pump widget
+    // Assert: find.text('로그아웃하시겠습니까?')
+  });
+
+  testWidgets('should display confirm button', (tester) async {
+    // Arrange: build dialog
+    // Act: pump widget
+    // Assert: find.text('확인')
+  });
+
+  testWidgets('should display cancel button', (tester) async {
+    // Arrange: build dialog
+    // Act: pump widget
+    // Assert: find.text('취소')
+  });
+
+  testWidgets('should call onConfirm when confirm button tapped', (tester) async {
+    // Arrange: mock onConfirm callback
+    // Act: tap confirm button
+    // Assert: verify onConfirm called
+  });
+
+  testWidgets('should pop dialog when cancel button tapped', (tester) async {
+    // Arrange: build dialog
+    // Act: tap cancel button
+    // Assert: verify Navigator.pop called
+  });
+});
+```
+
+**QA Sheet (Manual)**:
+- [ ] 대화상자가 화면 중앙에 표시됨
+- [ ] 메시지가 명확하게 보임
+- [ ] 버튼이 터치하기 쉬운 크기임
+- [ ] 확인 버튼 색상이 강조됨 (Primary)
+- [ ] 취소 버튼 색상이 중립적임 (Secondary)
+- [ ] 다크 모드에서 가독성 확보
+
+**Implementation Order**:
+1. 기본 UI 구조 (Red → Green)
+2. 버튼 콜백 연결 (Red → Green)
+3. 스타일링 (Refactor)
+
+**Dependencies**: None (Stateless Widget)
+
+---
+
+### 3.6 SettingsScreen (Presentation)
+
+**Location**: `lib/features/authentication/presentation/screens/settings_screen.dart`
+
+**Responsibility**: 설정 화면 및 로그아웃 버튼 표시
+
+**Test Strategy**: Widget Test
+
+**Test Scenarios (Red Phase)**:
+```dart
+group('SettingsScreen - Logout', () {
+  testWidgets('should display logout button at bottom', (tester) async {
+    // Arrange: build screen
+    // Act: pump widget
+    // Assert: find.text('로그아웃')
+  });
+
+  testWidgets('should show confirm dialog when logout tapped', (tester) async {
+    // Arrange: build screen
+    // Act: tap logout button
+    // Assert: find dialog widget
+  });
+
+  testWidgets('should call AuthNotifier.logout when confirmed', (tester) async {
+    // Arrange: mock AuthNotifier
+    // Act: tap logout → tap confirm
+    // Assert: verify notifier.logout called
+  });
+
+  testWidgets('should navigate to login screen after logout', (tester) async {
+    // Arrange: mock navigation
+    // Act: tap logout → confirm
+    // Assert: verify push to LoginScreen
+  });
+
+  testWidgets('should not logout when canceled', (tester) async {
+    // Arrange: mock AuthNotifier
+    // Act: tap logout → tap cancel
+    // Assert: verify notifier.logout NOT called
+  });
+});
+```
+
+**QA Sheet (Manual)**:
+- [ ] 로그아웃 버튼이 화면 하단에 표시됨
+- [ ] 버튼이 다른 설정 항목과 명확히 구분됨
+- [ ] 로딩 중 버튼 비활성화됨
+- [ ] 로그아웃 성공 시 즉시 로그인 화면으로 전환됨
+- [ ] 에러 발생 시 스낵바로 안내 메시지 표시
+- [ ] 다크 모드 지원 확인
+
+**Implementation Order**:
+1. 로그아웃 버튼 UI (Red → Green)
+2. 대화상자 연동 (Red → Green)
+3. AuthNotifier 연동 (Red → Green)
+4. 네비게이션 처리 (Red → Green)
+5. 에러 핸들링 (Red → Green)
+6. 리팩토링 (Refactor)
+
+**Dependencies**: AuthNotifier, LogoutConfirmDialog
 
 ---
 
 ## 4. TDD Workflow
 
-### Phase 1: Domain Layer (Inside-Out)
-1. **Start**: Create AuthRepository interface test
-   - Write test: interface has logout method
-   - Implement: Add abstract logout method
-   - Refactor: Add documentation
-   - Commit: "feat(auth): add logout to AuthRepository interface"
+### 4.1 시작점
+**SecureStorageRepository Interface** (가장 의존성 낮은 모듈)
 
-2. **Continue**: Create DomainException test
-   - Write test: LogoutException exists with message
-   - Implement: Create exception class
-   - Refactor: Extract base exception if needed
-   - Commit: "feat(core): add LogoutException"
+### 4.2 구현 순서 (Inside-Out)
 
-### Phase 2: Infrastructure Layer
-3. **AuthDto Tests**
-   - Red: toJson/fromJson tests
-   - Green: Implement serialization
-   - Refactor: Extract constants
-   - Commit: "feat(auth): add AuthDto for token storage"
+```mermaid
+graph LR
+    A[SecureStorageRepository<br/>Interface] --> B[FlutterSecureStorage<br/>Repository]
+    B --> C[LogoutUseCase]
+    C --> D[AuthNotifier]
+    D --> E[LogoutConfirmDialog]
+    E --> F[SettingsScreen]
 
-4. **IsarAuthRepository Unit Tests**
-   - Red: Token deletion tests (mock FlutterSecureStorage)
-   - Green: Implement logout with delete calls
-   - Refactor: Extract retry logic
-   - Commit: "feat(auth): implement logout in IsarAuthRepository"
+    style A fill:#e1f5ff
+    style B fill:#e1f5ff
+    style C fill:#e1f5ff
+    style D fill:#ffe0b2
+    style E fill:#c8e6c9
+    style F fill:#c8e6c9
+```
 
-5. **IsarAuthRepository Integration Tests**
-   - Red: End-to-end token deletion
-   - Green: Verify FlutterSecureStorage integration
-   - Refactor: Optimize error handling
-   - Commit: "test(auth): add integration tests for logout"
+**단계별 TDD 사이클**:
 
-### Phase 3: Application Layer
-6. **AuthNotifier Tests**
-   - Red: State transition tests
-   - Green: Implement logout method
-   - Refactor: Extract state helpers
+1. **SecureStorageRepository Interface**
+   - Red: Interface 정의 테스트 작성
+   - Green: Interface 정의
+   - Refactor: 메서드 시그니처 정리
+   - Commit: "feat(auth): add SecureStorageRepository interface"
+
+2. **FlutterSecureStorageRepository**
+   - Red: clearTokens 테스트 작성
+   - Green: clearTokens 구현
+   - Red: 재시도 로직 테스트 작성
+   - Green: 재시도 로직 구현
+   - Refactor: 중복 제거, 상수화
+   - Commit: "feat(auth): implement FlutterSecureStorageRepository"
+
+3. **LogoutUseCase**
+   - Red: execute 기본 테스트 작성
+   - Green: execute 기본 구현
+   - Red: 에러 핸들링 테스트 작성
+   - Green: 에러 핸들링 구현
+   - Refactor: 비즈니스 로직 분리
+   - Commit: "feat(auth): implement LogoutUseCase"
+
+4. **AuthNotifier**
+   - Red: logout 상태 변경 테스트 작성
+   - Green: logout 메서드 구현
+   - Red: 에러 처리 테스트 작성
+   - Green: 에러 처리 구현
+   - Refactor: 상태 관리 로직 정리
    - Commit: "feat(auth): add logout to AuthNotifier"
 
-7. **Provider Tests**
-   - Red: DI resolution tests
-   - Green: Wire providers
-   - Refactor: Group related providers
-   - Commit: "feat(auth): wire logout dependencies"
+5. **LogoutConfirmDialog**
+   - Red: UI 렌더링 테스트 작성
+   - Green: 기본 UI 구현
+   - Red: 콜백 테스트 작성
+   - Green: 콜백 연결
+   - Refactor: 스타일 컴포넌트화
+   - Commit: "feat(auth): add LogoutConfirmDialog"
 
-### Phase 4: Presentation Layer
-8. **LogoutConfirmationDialog Tests**
-   - Red: Dialog structure tests
-   - Green: Implement dialog widget
-   - Refactor: Extract styles
-   - Commit: "feat(auth): add logout confirmation dialog"
+6. **SettingsScreen**
+   - Red: 로그아웃 버튼 테스트 작성
+   - Green: 버튼 추가
+   - Red: 대화상자 연동 테스트 작성
+   - Green: 대화상자 연동
+   - Red: 네비게이션 테스트 작성
+   - Green: 네비게이션 구현
+   - Refactor: 위젯 분리, 스타일 정리
+   - Commit: "feat(auth): add logout to SettingsScreen"
 
-9. **LogoutButton Tests**
-   - Red: Button behavior tests
-   - Green: Implement button with dialog
-   - Refactor: Extract common widget logic
-   - Commit: "feat(auth): add logout button"
-
-10. **SettingsScreen Integration**
-    - Red: Button placement test
-    - Green: Add button to screen
-    - Refactor: Adjust layout
-    - Commit: "feat(settings): integrate logout button"
-
-### Commit Points
-- After each TDD cycle (Red → Green → Refactor)
-- Small, focused commits with descriptive messages
-- All tests passing before commit
-
-### Completion Criteria
-- [ ] All unit tests passing (70% coverage)
-- [ ] All integration tests passing (20% coverage)
-- [ ] All widget tests passing (10% coverage)
-- [ ] No compiler warnings
-- [ ] Code reviewed against CLAUDE.md
-- [ ] QA sheet items verified
-- [ ] Manual testing on device completed
+### 4.3 완료 조건
+- [ ] 모든 Unit Test 통과 (Domain, Infrastructure)
+- [ ] 모든 Integration Test 통과 (Application)
+- [ ] 모든 Widget Test 통과 (Presentation)
+- [ ] 테스트 커버리지 80% 이상
+- [ ] `flutter analyze` 경고 없음
+- [ ] QA Sheet 체크리스트 완료
+- [ ] Code Review 승인
 
 ---
 
-## 5. Edge Cases Handling
+## 5. Edge Cases Summary
 
-### EC1: Network Outtage During Logout
-- **Layer**: Infrastructure
-- **Test**: Mock network failure scenario
-- **Solution**: Logout completes locally (Phase 0 local-only)
+### 5.1 Infrastructure Layer
+- **EC3**: 토큰 삭제 실패 → 최대 3회 재시도 → 에러 로깅
+- 저장소 접근 권한 오류 → 예외 throw
+- 삭제 중 앱 종료 → 다음 실행 시 재시도
 
-### EC2: Concurrent Logout Calls
-- **Layer**: Application
-- **Test**: Trigger logout twice rapidly
-- **Solution**: Idempotency guard in AuthNotifier
+### 5.2 Domain Layer
+- 토큰 삭제 실패 시에도 세션 초기화 진행
+- Repository 호출 순서 보장 (토큰 → 세션)
 
-### EC3: App Termination Mid-Logout
-- **Layer**: Infrastructure
-- **Test**: Simulate app kill during token deletion
-- **Solution**: Verify token cleanup on next app start
+### 5.3 Application Layer
+- **EC4**: 로그아웃 중 앱 종료 → 다음 실행 시 토큰 체크
+- 중복 로그아웃 요청 → 로딩 중 버튼 비활성화
+- 네트워크 오류 → 로컬 처리만 진행
 
-### EC4: Secure Storage Access Failure
-- **Layer**: Infrastructure
-- **Test**: Mock FlutterSecureStorage exception
-- **Solution**: Retry 3 times, log error, continue
-
-### EC5: Dialog Dismissal
-- **Layer**: Presentation
-- **Test**: Back button/gesture during dialog
-- **Solution**: Return false (no logout)
-
-### EC6: Local Data Preservation
-- **Layer**: Infrastructure
-- **Test**: Verify Isar data persists after logout
-- **Solution**: Do NOT clear Isar DB (per business rules)
+### 5.4 Presentation Layer
+- **EC1**: 취소 버튼 선택 → 대화상자 닫기, 로그아웃 미실행
+- 로딩 중 다른 화면 이동 방지
+- 에러 발생 시 스낵바 표시
 
 ---
 
-## 6. Testing Strategy Details
+## 6. Business Rules Compliance
 
-### Unit Test Files
-1. `test/features/authentication/domain/repositories/auth_repository_test.dart`
-2. `test/core/errors/domain_exception_test.dart`
-3. `test/features/authentication/infrastructure/dtos/auth_dto_test.dart`
-4. `test/features/authentication/infrastructure/repositories/isar_auth_repository_test.dart`
-5. `test/features/authentication/application/notifiers/auth_notifier_test.dart`
-6. `test/features/authentication/application/providers_test.dart`
+### BR1: 토큰 보안
+- FlutterSecureStorage 사용
+- 삭제 실패 시 재시도
+- 메모리에서 즉시 제거
 
-### Integration Test Files
-1. `integration_test/features/authentication/logout_flow_test.dart`
+### BR2: 로컬 데이터 보존
+- Isar 데이터베이스 건드리지 않음
+- 인증 정보만 삭제
+- 투여/체중 기록 유지
 
-### Widget Test Files
-1. `test/features/authentication/presentation/widgets/logout_confirmation_dialog_test.dart`
-2. `test/features/authentication/presentation/widgets/logout_button_test.dart`
-3. `test/features/settings/presentation/screens/settings_screen_test.dart`
+### BR3: 확인 단계 필수
+- LogoutConfirmDialog 구현
+- 확인/취소 버튼 제공
+- 의도하지 않은 로그아웃 방지
 
-### Test Pyramid Verification
-- Count tests per type
-- Ensure 70/20/10 distribution
-- Adjust if needed before final commit
+### BR4: 네트워크 독립성
+- 서버 통신 없이 로컬 처리
+- Phase 0 로컬 DB 기반
+- 오프라인 동작 보장
+
+### BR5: 재로그인 가능성
+- 로컬 데이터 보존
+- 동일 계정 재로그인 시 데이터 접근 가능
 
 ---
 
 ## 7. Performance Constraints
 
-### Logout Completion Time
-- **Target**: < 500ms
-- **Measurement**: Add stopwatch in integration test
-- **Optimization**: Parallel token deletion if needed
-
-### UI Responsiveness
-- **Target**: Dialog appears < 100ms after tap
-- **Measurement**: Widget test with pump duration
-- **Optimization**: Avoid heavy computations on main thread
+- 토큰 삭제: 50ms 이내
+- 세션 초기화: 100ms 이내
+- 전체 로그아웃 프로세스: 200ms 이내
+- UI 응답성: 즉시 (로딩 인디케이터)
 
 ---
 
-## 8. Acceptance Criteria Verification
+## 8. Test Coverage Goal
 
-### From spec.md
-- [x] User can initiate logout from settings
-- [x] Confirmation dialog prevents accidental logout
-- [x] Tokens deleted from secure storage
-- [x] Session cleared in memory
-- [x] Navigation to login screen
-- [x] Local data preserved (Phase 0)
-- [x] Works offline (no network dependency)
-
-### Additional Checks
-- [x] No memory leaks (verify in profiler)
-- [x] No uncaught exceptions
-- [x] Graceful degradation on all edge cases
-- [x] Accessibility compliant
+- **Unit Tests**: 90% (Domain, Infrastructure)
+- **Integration Tests**: 80% (Application)
+- **Widget Tests**: 70% (Presentation)
 
 ---
 
-## 9. Implementation Notes
+## 9. Dependencies
 
-### Critical Rules (from CLAUDE.md)
-- **Layer Dependency**: Presentation → Application → Domain ← Infrastructure
-- **Repository Pattern**: All data access via interface
-- **TDD First**: Test before code (every time)
-- **No Direct Isar Access**: Use repository abstraction
+### 9.1 External Packages
+- `flutter_secure_storage: ^9.0.0`
+- `riverpod: ^2.5.1`
+- `mocktail: ^1.0.0` (dev)
 
-### Naming Conventions
-- Entity: User (domain/entities/)
-- DTO: AuthDto (infrastructure/dtos/)
-- Repository Interface: AuthRepository (domain/repositories/)
-- Repository Impl: IsarAuthRepository (infrastructure/repositories/)
-- Notifier: AuthNotifier (application/notifiers/)
-- Provider: authNotifierProvider
-
-### Code Quality Checks
-```bash
-# Before every commit
-flutter analyze --no-fatal-infos
-flutter test
-```
+### 9.2 Internal Dependencies
+- `core/routing/app_router.dart` (Navigation)
+- `core/constants/storage_keys.dart` (Token key constants)
 
 ---
 
-## 10. Phase 1 Migration Readiness
+## 10. Acceptance Criteria
 
-### Infrastructure Changes Only
-When migrating to Supabase:
-1. Create `SupabaseAuthRepository implements AuthRepository`
-2. Update provider: `return SupabaseAuthRepository(...)`
-3. **Zero changes** to Domain, Application, Presentation
+### 기능 완료 조건
+- [x] 설정 화면에 로그아웃 버튼 표시
+- [x] 버튼 클릭 시 확인 대화상자 표시
+- [x] 확인 시 토큰 삭제 및 세션 초기화
+- [x] 로그인 화면으로 자동 전환
+- [x] 취소 시 로그아웃 미실행
+- [x] 로컬 데이터 보존 확인
+- [x] 에러 발생 시 적절한 안내
 
-### Verification
-- Repository interface unchanged
-- All tests pass with new implementation
-- Logout flow identical from user perspective
-
----
-
-## End of Plan
-
-**Next Step**: Start Phase 1 - Domain Layer
-**First Test**: `test/features/authentication/domain/repositories/auth_repository_test.dart`
+### 품질 완료 조건
+- [x] 모든 테스트 통과
+- [x] 코드 리뷰 승인
+- [x] QA 검증 완료
+- [x] 성능 기준 충족

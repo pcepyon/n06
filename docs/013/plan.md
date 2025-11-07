@@ -1,17 +1,19 @@
-# UF-013 (기록 수정/삭제) Implementation Plan
+# 과거 기록 수정/삭제 (UF-011) Implementation Plan
 
 ## 1. 개요
 
-### 기능 범위
-- **위치**: `features/tracking/`
-- **책임**: 과거 기록(체중, 증상, 투여) 수정 및 삭제
-- **TDD 적용**: 전 모듈에 Outside-In 전략 적용
+과거 기록 수정/삭제 기능은 사용자가 잘못 입력하거나 변경이 필요한 체중, 증상, 투여 기록을 수정하거나 삭제할 수 있는 기능. 기록 변경 시 관련 통계와 인사이트를 자동으로 재계산하여 데이터 일관성 유지. 4-Layer Architecture + Repository Pattern + TDD 적용.
 
-### 모듈 목록
-1. **Domain Layer**: 비즈니스 로직 및 Repository 인터페이스
-2. **Infrastructure Layer**: Isar Repository 구현체
-3. **Application Layer**: 상태 관리 및 UseCase 조율
-4. **Presentation Layer**: 수정/삭제 UI 및 상호작용
+**모듈 구조:**
+- **Domain Layer**: 기록 수정 검증 로직, 통계 재계산 트리거 UseCase
+- **Application Layer**: RecordEditNotifier (AsyncNotifier), 통계 재계산 오케스트레이션
+- **Infrastructure Layer**: 기존 Repository 재사용 (TrackingRepository, MedicationRepository)
+- **Presentation Layer**: RecordEditScreen, RecordDeleteDialog, 기록 목록 화면 수정
+
+**TDD 적용 범위:**
+- Domain UseCase: Unit Test 100%
+- Application Notifier: Integration Test 주요 시나리오
+- Presentation: Widget Test + Acceptance Test
 
 ---
 
@@ -19,583 +21,1684 @@
 
 ```mermaid
 graph TD
-    A[RecordListScreen] --> B[RecordDetailScreen]
-    B --> C[TrackingNotifier]
-    C --> D[TrackingRepository]
-    D --> E[IsarTrackingRepository]
-    E --> F[Isar Database]
+    %% Presentation Layer
+    RecordListScreen[RecordListScreen<br/>체중/증상/투여 기록 목록]
+    RecordDetailSheet[RecordDetailSheet<br/>기록 상세 바텀시트]
+    WeightEditDialog[WeightEditDialog]
+    SymptomEditDialog[SymptomEditDialog]
+    DoseEditDialog[DoseEditDialog]
+    RecordDeleteDialog[RecordDeleteDialog]
 
-    C --> G[DashboardNotifier]
-    G --> H[DashboardRepository]
+    %% Application Layer
+    WeightRecordEditNotifier[WeightRecordEditNotifier<br/>AsyncNotifierProvider]
+    SymptomRecordEditNotifier[SymptomRecordEditNotifier<br/>AsyncNotifierProvider]
+    DoseRecordEditNotifier[DoseRecordEditNotifier<br/>AsyncNotifierProvider]
+    RecalculateStatisticsNotifier[RecalculateStatisticsNotifier<br/>Provider]
 
-    B --> I[EditWeightDialog]
-    B --> J[EditSymptomDialog]
+    %% Domain Layer
+    ValidateWeightEditUseCase[ValidateWeightEditUseCase]
+    ValidateSymptomEditUseCase[ValidateSymptomEditUseCase]
+    ValidateDateUniqueConstraintUseCase[ValidateDateUniqueConstraintUseCase]
+    RecalculateDashboardStatisticsUseCase[RecalculateDashboardStatisticsUseCase]
+    RecalculateContinuousRecordDaysUseCase[RecalculateContinuousRecordDaysUseCase]
+    RecalculateBadgeProgressUseCase[RecalculateBadgeProgressUseCase]
 
-    subgraph Presentation
-        A
-        B
-        I
-        J
-    end
+    %% Infrastructure Layer (재사용)
+    TrackingRepository[TrackingRepository<br/>Interface]
+    MedicationRepository[MedicationRepository<br/>Interface]
+    DashboardRepository[DashboardRepository<br/>Interface]
+    BadgeRepository[BadgeRepository<br/>Interface]
 
-    subgraph Application
-        C
-        G
-    end
+    %% Dependencies
+    RecordListScreen --> RecordDetailSheet
+    RecordDetailSheet --> WeightEditDialog
+    RecordDetailSheet --> SymptomEditDialog
+    RecordDetailSheet --> DoseEditDialog
+    RecordDetailSheet --> RecordDeleteDialog
 
-    subgraph Domain
-        D
-        H
-    end
+    WeightEditDialog --> WeightRecordEditNotifier
+    SymptomEditDialog --> SymptomRecordEditNotifier
+    DoseEditDialog --> DoseRecordEditNotifier
+    RecordDeleteDialog --> WeightRecordEditNotifier
+    RecordDeleteDialog --> SymptomRecordEditNotifier
+    RecordDeleteDialog --> DoseRecordEditNotifier
 
-    subgraph Infrastructure
-        E
-        F
-    end
+    WeightRecordEditNotifier --> TrackingRepository
+    WeightRecordEditNotifier --> ValidateWeightEditUseCase
+    WeightRecordEditNotifier --> ValidateDateUniqueConstraintUseCase
+    WeightRecordEditNotifier --> RecalculateStatisticsNotifier
+
+    SymptomRecordEditNotifier --> TrackingRepository
+    SymptomRecordEditNotifier --> ValidateSymptomEditUseCase
+    SymptomRecordEditNotifier --> RecalculateStatisticsNotifier
+
+    DoseRecordEditNotifier --> MedicationRepository
+    DoseRecordEditNotifier --> RecalculateStatisticsNotifier
+
+    RecalculateStatisticsNotifier --> RecalculateDashboardStatisticsUseCase
+    RecalculateStatisticsNotifier --> RecalculateContinuousRecordDaysUseCase
+    RecalculateStatisticsNotifier --> RecalculateBadgeProgressUseCase
+    RecalculateStatisticsNotifier --> DashboardRepository
+    RecalculateStatisticsNotifier --> BadgeRepository
+
+    ValidateDateUniqueConstraintUseCase --> TrackingRepository
 ```
 
 ---
 
 ## 3. Implementation Plan
 
-### 3.1 Domain Layer - Repository Interface
+### 3.1 Domain Layer - Validation UseCases
 
-**Location**: `features/tracking/domain/repositories/tracking_repository.dart`
+**Location**: `lib/features/tracking/domain/usecases/`
 
-**Responsibility**:
-- CRUD 메서드 인터페이스 정의
-- 비즈니스 규칙 검증 없음 (순수 데이터 접근 계약)
+**Responsibility**: 기록 수정/삭제 시 비즈니스 규칙 검증
 
-**Test Strategy**: Unit Test (Interface Contract)
+**Test Strategy**: Unit Test (AAA Pattern)
 
-**Test Scenarios (Red Phase)**:
+**Test Scenarios (Red Phase):**
+
+#### ValidateWeightEditUseCase
 ```dart
-// Test 1: Repository Interface 존재 확인
-test('TrackingRepository should have updateWeightLog method')
+group('ValidateWeightEditUseCase', () {
+  late ValidateWeightEditUseCase useCase;
 
-// Test 2: Repository Interface 메서드 시그니처 확인
-test('updateWeightLog should accept id and WeightLog')
-test('deleteWeightLog should accept id and return Future<void>')
-test('updateSymptomLog should accept id and SymptomLog')
-test('deleteSymptomLog should accept id and return Future<void>')
-```
+  setUp(() {
+    useCase = ValidateWeightEditUseCase();
+  });
 
-**Implementation Order**:
-1. RED: Interface 시그니처 테스트 작성
-2. GREEN: Interface 정의
-3. REFACTOR: 불필요한 주석 제거
+  // Arrange & Act & Assert
+  test('should return success for valid weight in range 20-300kg', () {
+    // Arrange
+    final weight = 70.5;
 
-**Dependencies**: None (순수 Dart)
+    // Act
+    final result = useCase.execute(weight);
 
----
+    // Assert
+    expect(result.isSuccess, true);
+  });
 
-### 3.2 Infrastructure Layer - Isar Repository Implementation
+  test('should return error for weight below 20kg', () {
+    final result = useCase.execute(19.9);
+    expect(result.isFailure, true);
+    expect(result.error, contains('20kg'));
+  });
 
-**Location**: `features/tracking/infrastructure/repositories/isar_tracking_repository.dart`
+  test('should return error for weight above 300kg', () {
+    final result = useCase.execute(300.1);
+    expect(result.isFailure, true);
+    expect(result.error, contains('300kg'));
+  });
 
-**Responsibility**:
-- Repository 인터페이스 구현
-- Isar 트랜잭션 처리
-- DTO ↔ Entity 변환
-- 데이터베이스 예외 처리
+  test('should return error for negative weight', () {
+    final result = useCase.execute(-5.0);
+    expect(result.isFailure, true);
+  });
 
-**Test Strategy**: Integration Test (Isar in-memory)
+  test('should return error for zero weight', () {
+    final result = useCase.execute(0.0);
+    expect(result.isFailure, true);
+  });
 
-**Test Scenarios (Red Phase)**:
-```dart
-// AAA Pattern 적용
+  test('should return warning for weight < 30kg but >= 20kg', () {
+    final result = useCase.execute(25.0);
+    expect(result.isSuccess, true);
+    expect(result.warning, isNotNull);
+  });
 
-// Test Suite 1: Weight Log Update
-group('updateWeightLog', () {
-  // Arrange: 기존 WeightLog 생성
-  // Act: updateWeightLog 호출
-  // Assert: 업데이트 확인
-  test('should update weight log successfully')
-
-  // Arrange: 존재하지 않는 ID
-  // Act: updateWeightLog 호출
-  // Assert: RepositoryException 발생
-  test('should throw RepositoryException when log not found')
-
-  // Arrange: 유효하지 않은 체중 값 (음수)
-  // Act: updateWeightLog 호출
-  // Assert: ValidationException 발생
-  test('should throw ValidationException for invalid weight')
-
-  // Arrange: 동일 날짜 중복 기록
-  // Act: updateWeightLog 호출 (날짜 변경 시)
-  // Assert: ConflictException 발생
-  test('should throw ConflictException for duplicate date')
-});
-
-// Test Suite 2: Weight Log Delete
-group('deleteWeightLog', () {
-  test('should delete weight log successfully')
-  test('should throw RepositoryException when log not found')
-});
-
-// Test Suite 3: Symptom Log Update
-group('updateSymptomLog', () {
-  test('should update symptom log successfully')
-  test('should update associated tags')
-  test('should throw RepositoryException when log not found')
-  test('should validate severity range 1-10')
-});
-
-// Test Suite 4: Symptom Log Delete
-group('deleteSymptomLog', () {
-  test('should delete symptom log and associated tags')
-  test('should throw RepositoryException when log not found')
+  test('should return warning for weight > 200kg but <= 300kg', () {
+    final result = useCase.execute(250.0);
+    expect(result.isSuccess, true);
+    expect(result.warning, isNotNull);
+  });
 });
 ```
 
-**Edge Cases**:
-- Isar 트랜잭션 실패 시 롤백
-- 동시성 충돌 처리
-- DTO 변환 실패
-
-**Implementation Order**:
-1. RED: 각 테스트 케이스 작성
-2. GREEN: Isar CRUD 로직 구현
-3. REFACTOR: 중복 제거, DTO 변환 유틸 추출
-
-**Dependencies**:
-- `isar_provider`
-- `tracking_repository` (Domain)
-- `weight_log_dto`, `symptom_log_dto` (Infrastructure)
-
----
-
-### 3.3 Application Layer - TrackingNotifier Update
-
-**Location**: `features/tracking/application/notifiers/tracking_notifier.dart`
-
-**Responsibility**:
-- 수정/삭제 UseCase 조율
-- 상태 동기화 (AsyncValue)
-- DashboardNotifier 재계산 트리거
-
-**Test Strategy**: Unit Test (Mock Repository)
-
-**Test Scenarios (Red Phase)**:
+#### ValidateSymptomEditUseCase
 ```dart
-// Test Suite 1: Update Weight Log
-group('updateWeightLog', () {
-  // Arrange: Mock Repository, 초기 상태
-  // Act: updateWeightLog 호출
-  // Assert: 상태가 AsyncValue.loading() → data()로 전환
-  test('should update state to loading then data')
+group('ValidateSymptomEditUseCase', () {
+  late ValidateSymptomEditUseCase useCase;
 
-  // Arrange: Mock Repository throws Exception
-  // Act: updateWeightLog 호출
-  // Assert: 상태가 AsyncValue.error()로 전환
-  test('should handle repository error')
+  setUp(() {
+    useCase = ValidateSymptomEditUseCase();
+  });
 
-  // Arrange: 성공적인 업데이트
-  // Act: updateWeightLog 호출
-  // Assert: DashboardNotifier.refresh() 호출됨
-  test('should trigger dashboard refresh on success')
-});
+  test('should return success for severity in range 1-10', () {
+    final result = useCase.execute(severity: 5, symptomName: '메스꺼움');
+    expect(result.isSuccess, true);
+  });
 
-// Test Suite 2: Delete Weight Log
-group('deleteWeightLog', () {
-  test('should update state correctly on delete')
-  test('should remove deleted log from state')
-  test('should trigger dashboard refresh')
-});
+  test('should return error for severity below 1', () {
+    final result = useCase.execute(severity: 0, symptomName: '메스꺼움');
+    expect(result.isFailure, true);
+  });
 
-// Test Suite 3: Update Symptom Log
-group('updateSymptomLog', () {
-  test('should update symptom log state')
-  test('should trigger dashboard refresh')
-});
+  test('should return error for severity above 10', () {
+    final result = useCase.execute(severity: 11, symptomName: '메스꺼움');
+    expect(result.isFailure, true);
+  });
 
-// Test Suite 4: Delete Symptom Log
-group('deleteSymptomLog', () {
-  test('should delete symptom log state')
-  test('should trigger dashboard refresh')
+  test('should return error for empty symptom name', () {
+    final result = useCase.execute(severity: 5, symptomName: '');
+    expect(result.isFailure, true);
+  });
+
+  test('should validate symptom name from predefined list', () {
+    final validSymptoms = ['메스꺼움', '구토', '변비', '설사', '복통', '두통', '피로'];
+    for (var symptom in validSymptoms) {
+      final result = useCase.execute(severity: 5, symptomName: symptom);
+      expect(result.isSuccess, true);
+    }
+  });
+
+  test('should allow custom symptom names (not in predefined list)', () {
+    final result = useCase.execute(severity: 5, symptomName: '커스텀증상');
+    expect(result.isSuccess, true);
+  });
 });
 ```
 
-**Edge Cases**:
-- Repository 예외 발생 시 상태 롤백
-- 동시 요청 처리 (debounce)
-- 낙관적 업데이트 vs 비관적 업데이트
+#### ValidateDateUniqueConstraintUseCase
+```dart
+group('ValidateDateUniqueConstraintUseCase', () {
+  late ValidateDateUniqueConstraintUseCase useCase;
+  late MockTrackingRepository mockRepository;
 
-**Implementation Order**:
-1. RED: Mock을 이용한 UseCase 테스트 작성
-2. GREEN: Notifier 메서드 구현
-3. REFACTOR: 공통 에러 처리 로직 추출
+  setUp(() {
+    mockRepository = MockTrackingRepository();
+    useCase = ValidateDateUniqueConstraintUseCase(mockRepository);
+  });
 
-**Dependencies**:
-- `tracking_repository_provider`
-- `dashboard_notifier_provider`
+  test('should return success when date is available for new weight log', () async {
+    // Arrange
+    final date = DateTime(2025, 1, 1);
+    final userId = 'user123';
+    when(() => mockRepository.getWeightLogByDate(userId, date))
+        .thenAnswer((_) async => null);
+
+    // Act
+    final result = await useCase.execute(userId: userId, date: date);
+
+    // Assert
+    expect(result.isSuccess, true);
+  });
+
+  test('should return conflict when date already has weight log', () async {
+    final date = DateTime(2025, 1, 1);
+    final userId = 'user123';
+    final existingLog = WeightLog(
+      id: 'log1',
+      userId: userId,
+      logDate: date,
+      weightKg: 70.0,
+      createdAt: DateTime.now(),
+    );
+    when(() => mockRepository.getWeightLogByDate(userId, date))
+        .thenAnswer((_) async => existingLog);
+
+    final result = await useCase.execute(userId: userId, date: date);
+
+    expect(result.isConflict, true);
+    expect(result.existingRecordId, 'log1');
+  });
+
+  test('should allow same date when editing existing record', () async {
+    final date = DateTime(2025, 1, 1);
+    final userId = 'user123';
+    final recordId = 'log1';
+    final existingLog = WeightLog(
+      id: recordId,
+      userId: userId,
+      logDate: date,
+      weightKg: 70.0,
+      createdAt: DateTime.now(),
+    );
+    when(() => mockRepository.getWeightLogByDate(userId, date))
+        .thenAnswer((_) async => existingLog);
+
+    final result = await useCase.execute(
+      userId: userId,
+      date: date,
+      editingRecordId: recordId,
+    );
+
+    expect(result.isSuccess, true);
+  });
+
+  test('should return error for future date', () async {
+    final futureDate = DateTime.now().add(Duration(days: 1));
+    final result = await useCase.execute(
+      userId: 'user123',
+      date: futureDate,
+    );
+
+    expect(result.isFailure, true);
+    expect(result.error, contains('미래 날짜'));
+  });
+});
+```
+
+**Implementation Order (TDD):**
+1. ValidateWeightEditUseCase
+2. ValidateSymptomEditUseCase
+3. ValidateDateUniqueConstraintUseCase
+
+**Dependencies**: Repository Interface (Domain)
 
 ---
 
-### 3.4 Presentation Layer - Record Detail Screen
+### 3.2 Domain Layer - Statistics Recalculation UseCases
 
-**Location**: `features/tracking/presentation/screens/record_detail_screen.dart`
+**Location**: `lib/features/dashboard/domain/usecases/`
 
-**Responsibility**:
-- 기록 상세 표시
-- 수정/삭제 액션 버튼
-- 확인 다이얼로그 표시
+**Responsibility**: 기록 변경 시 영향받는 통계 재계산
+
+**Test Strategy**: Unit Test
+
+**Test Scenarios (Red Phase):**
+
+#### RecalculateDashboardStatisticsUseCase
+```dart
+group('RecalculateDashboardStatisticsUseCase', () {
+  late RecalculateDashboardStatisticsUseCase useCase;
+  late MockTrackingRepository mockTrackingRepo;
+  late MockMedicationRepository mockMedicationRepo;
+  late MockProfileRepository mockProfileRepo;
+
+  setUp(() {
+    mockTrackingRepo = MockTrackingRepository();
+    mockMedicationRepo = MockMedicationRepository();
+    mockProfileRepo = MockProfileRepository();
+    useCase = RecalculateDashboardStatisticsUseCase(
+      trackingRepository: mockTrackingRepo,
+      medicationRepository: mockMedicationRepo,
+      profileRepository: mockProfileRepo,
+    );
+  });
+
+  test('should recalculate weekly progress after weight log change', () async {
+    // Arrange
+    final userId = 'user123';
+    final weights = [
+      WeightLog(id: '1', userId: userId, logDate: DateTime.now(), weightKg: 70.0, createdAt: DateTime.now()),
+      WeightLog(id: '2', userId: userId, logDate: DateTime.now().subtract(Duration(days: 1)), weightKg: 71.0, createdAt: DateTime.now()),
+    ];
+    when(() => mockTrackingRepo.getWeightLogs(userId))
+        .thenAnswer((_) async => weights);
+    when(() => mockProfileRepo.getUserProfile(userId))
+        .thenAnswer((_) async => UserProfile(
+          userId: userId,
+          targetWeightKg: 65.0,
+          weeklyWeightRecordGoal: 7,
+          weeklySymptomRecordGoal: 7,
+        ));
+
+    // Act
+    final result = await useCase.execute(userId);
+
+    // Assert
+    expect(result.weeklyProgress.weightRecordCount, 2);
+    expect(result.weeklyProgress.weightTargetCount, 7);
+  });
+
+  test('should recalculate continuous record days after deletion', () async {
+    final userId = 'user123';
+    final weights = [
+      WeightLog(id: '1', userId: userId, logDate: DateTime.now(), weightKg: 70.0, createdAt: DateTime.now()),
+      // Gap exists (yesterday missing)
+      WeightLog(id: '2', userId: userId, logDate: DateTime.now().subtract(Duration(days: 2)), weightKg: 71.0, createdAt: DateTime.now()),
+    ];
+    when(() => mockTrackingRepo.getWeightLogs(userId))
+        .thenAnswer((_) async => weights);
+    when(() => mockTrackingRepo.getSymptomLogs(userId))
+        .thenAnswer((_) async => []);
+
+    final result = await useCase.execute(userId);
+
+    expect(result.continuousRecordDays, 1); // Gap caused by deletion
+  });
+
+  test('should handle empty records after deletion', () async {
+    final userId = 'user123';
+    when(() => mockTrackingRepo.getWeightLogs(userId))
+        .thenAnswer((_) async => []);
+    when(() => mockTrackingRepo.getSymptomLogs(userId))
+        .thenAnswer((_) async => []);
+    when(() => mockMedicationRepo.getDoseRecords(any()))
+        .thenAnswer((_) async => []);
+
+    final result = await useCase.execute(userId);
+
+    expect(result.continuousRecordDays, 0);
+    expect(result.weeklyProgress.weightRecordCount, 0);
+  });
+});
+```
+
+#### RecalculateBadgeProgressUseCase
+```dart
+group('RecalculateBadgeProgressUseCase', () {
+  late RecalculateBadgeProgressUseCase useCase;
+  late MockBadgeRepository mockBadgeRepo;
+  late MockTrackingRepository mockTrackingRepo;
+
+  setUp(() {
+    mockBadgeRepo = MockBadgeRepository();
+    mockTrackingRepo = MockTrackingRepository();
+    useCase = RecalculateBadgeProgressUseCase(
+      badgeRepository: mockBadgeRepo,
+      trackingRepository: mockTrackingRepo,
+    );
+  });
+
+  test('should update "연속 7일 기록" badge progress after edit', () async {
+    final userId = 'user123';
+    final continuousDays = 5;
+    final badge = UserBadge(
+      id: 'badge1',
+      userId: userId,
+      badgeId: 'streak_7',
+      status: 'in_progress',
+      progressPercentage: 50,
+      achievedAt: null,
+    );
+    when(() => mockBadgeRepo.getUserBadge(userId, 'streak_7'))
+        .thenAnswer((_) async => badge);
+
+    final result = await useCase.execute(
+      userId: userId,
+      badgeId: 'streak_7',
+      currentValue: continuousDays,
+      targetValue: 7,
+    );
+
+    expect(result.progressPercentage, 71); // 5/7 = 71%
+    expect(result.status, 'in_progress');
+    verify(() => mockBadgeRepo.updateBadgeProgress(userId, 'streak_7', 71)).called(1);
+  });
+
+  test('should mark badge as achieved when condition met', () async {
+    final userId = 'user123';
+    final continuousDays = 7;
+
+    final result = await useCase.execute(
+      userId: userId,
+      badgeId: 'streak_7',
+      currentValue: continuousDays,
+      targetValue: 7,
+    );
+
+    expect(result.progressPercentage, 100);
+    expect(result.status, 'achieved');
+    verify(() => mockBadgeRepo.achieveBadge(userId, 'streak_7')).called(1);
+  });
+
+  test('should downgrade achieved badge if condition no longer met after deletion', () async {
+    final userId = 'user123';
+    final badge = UserBadge(
+      id: 'badge1',
+      userId: userId,
+      badgeId: 'streak_7',
+      status: 'achieved',
+      progressPercentage: 100,
+      achievedAt: DateTime.now(),
+    );
+    when(() => mockBadgeRepo.getUserBadge(userId, 'streak_7'))
+        .thenAnswer((_) async => badge);
+
+    final result = await useCase.execute(
+      userId: userId,
+      badgeId: 'streak_7',
+      currentValue: 5, // Dropped to 5 after deletion
+      targetValue: 7,
+    );
+
+    expect(result.status, 'in_progress');
+    expect(result.progressPercentage, 71);
+    expect(result.achievedAt, null);
+  });
+});
+```
+
+**Implementation Order:**
+1. RecalculateDashboardStatisticsUseCase
+2. RecalculateBadgeProgressUseCase
+
+**Dependencies**: Repository Interfaces, Dashboard Entities
+
+---
+
+### 3.3 Application Layer - Record Edit Notifiers
+
+**Location**: `lib/features/tracking/application/notifiers/`
+
+**Responsibility**: 기록 수정/삭제 상태 관리 및 검증 오케스트레이션
+
+**Test Strategy**: Integration Test (Mock Repository)
+
+**Test Scenarios (Red Phase):**
+
+#### WeightRecordEditNotifier
+```dart
+group('WeightRecordEditNotifier', () {
+  late MockTrackingRepository mockRepository;
+  late MockValidateWeightEditUseCase mockValidateUseCase;
+  late MockValidateDateUniqueConstraintUseCase mockDateValidateUseCase;
+  late MockRecalculateStatisticsNotifier mockRecalculateNotifier;
+  late ProviderContainer container;
+
+  setUp(() {
+    mockRepository = MockTrackingRepository();
+    mockValidateUseCase = MockValidateWeightEditUseCase();
+    mockDateValidateUseCase = MockValidateDateUniqueConstraintUseCase();
+    mockRecalculateNotifier = MockRecalculateStatisticsNotifier();
+
+    container = ProviderContainer(
+      overrides: [
+        trackingRepositoryProvider.overrideWithValue(mockRepository),
+        validateWeightEditUseCaseProvider.overrideWithValue(mockValidateUseCase),
+        validateDateUniqueConstraintUseCaseProvider.overrideWithValue(mockDateValidateUseCase),
+        recalculateStatisticsNotifierProvider.overrideWithValue(mockRecalculateNotifier),
+      ],
+    );
+  });
+
+  tearDown(() {
+    container.dispose();
+  });
+
+  test('should update weight log successfully', () async {
+    // Arrange
+    final recordId = 'log1';
+    final newWeight = 68.5;
+    final userId = 'user123';
+    when(() => mockValidateUseCase.execute(newWeight))
+        .thenReturn(ValidationResult.success());
+    when(() => mockRepository.updateWeightLog(recordId, newWeight))
+        .thenAnswer((_) async => {});
+    when(() => mockRecalculateNotifier.recalculate(userId))
+        .thenAnswer((_) async => {});
+
+    // Act
+    final notifier = container.read(weightRecordEditNotifierProvider.notifier);
+    await notifier.updateWeight(recordId: recordId, newWeight: newWeight, userId: userId);
+
+    // Assert
+    final state = container.read(weightRecordEditNotifierProvider);
+    expect(state.hasValue, true);
+    verify(() => mockRepository.updateWeightLog(recordId, newWeight)).called(1);
+    verify(() => mockRecalculateNotifier.recalculate(userId)).called(1);
+  });
+
+  test('should emit error when validation fails', () async {
+    final recordId = 'log1';
+    final invalidWeight = 500.0; // Above 300kg
+    when(() => mockValidateUseCase.execute(invalidWeight))
+        .thenReturn(ValidationResult.error('체중은 300kg 이하여야 합니다'));
+
+    final notifier = container.read(weightRecordEditNotifierProvider.notifier);
+    await notifier.updateWeight(recordId: recordId, newWeight: invalidWeight, userId: 'user123');
+
+    final state = container.read(weightRecordEditNotifierProvider);
+    expect(state.hasError, true);
+    expect(state.error.toString(), contains('300kg'));
+    verifyNever(() => mockRepository.updateWeightLog(any(), any()));
+  });
+
+  test('should emit warning but allow update for borderline weight', () async {
+    final recordId = 'log1';
+    final borderlineWeight = 25.0; // < 30kg but >= 20kg
+    final userId = 'user123';
+    when(() => mockValidateUseCase.execute(borderlineWeight))
+        .thenReturn(ValidationResult.success(warning: '비정상적으로 낮은 체중입니다'));
+    when(() => mockRepository.updateWeightLog(recordId, borderlineWeight))
+        .thenAnswer((_) async => {});
+
+    final notifier = container.read(weightRecordEditNotifierProvider.notifier);
+    final result = await notifier.updateWeight(
+      recordId: recordId,
+      newWeight: borderlineWeight,
+      userId: userId,
+    );
+
+    expect(result.warning, isNotNull);
+    verify(() => mockRepository.updateWeightLog(recordId, borderlineWeight)).called(1);
+  });
+
+  test('should delete weight log and recalculate statistics', () async {
+    final recordId = 'log1';
+    final userId = 'user123';
+    when(() => mockRepository.deleteWeightLog(recordId))
+        .thenAnswer((_) async => {});
+    when(() => mockRecalculateNotifier.recalculate(userId))
+        .thenAnswer((_) async => {});
+
+    final notifier = container.read(weightRecordEditNotifierProvider.notifier);
+    await notifier.deleteWeight(recordId: recordId, userId: userId);
+
+    verify(() => mockRepository.deleteWeightLog(recordId)).called(1);
+    verify(() => mockRecalculateNotifier.recalculate(userId)).called(1);
+  });
+
+  test('should handle date conflict with overwrite option', () async {
+    final existingRecordId = 'log1';
+    final newDate = DateTime(2025, 1, 1);
+    final newWeight = 70.0;
+    final userId = 'user123';
+
+    when(() => mockDateValidateUseCase.execute(
+      userId: userId,
+      date: newDate,
+      editingRecordId: existingRecordId,
+    )).thenAnswer((_) async => ValidationResult.conflict(
+      existingRecordId: existingRecordId,
+    ));
+    when(() => mockRepository.updateWeightLog(existingRecordId, newWeight))
+        .thenAnswer((_) async => {});
+
+    final notifier = container.read(weightRecordEditNotifierProvider.notifier);
+    final result = await notifier.updateWeight(
+      recordId: existingRecordId,
+      newWeight: newWeight,
+      userId: userId,
+      allowOverwrite: true,
+    );
+
+    expect(result.isSuccess, true);
+    verify(() => mockRepository.updateWeightLog(existingRecordId, newWeight)).called(1);
+  });
+
+  test('should rollback on recalculation failure', () async {
+    final recordId = 'log1';
+    final newWeight = 68.5;
+    final userId = 'user123';
+    final originalWeight = 70.0;
+
+    when(() => mockValidateUseCase.execute(newWeight))
+        .thenReturn(ValidationResult.success());
+    when(() => mockRepository.getWeightLog(recordId))
+        .thenAnswer((_) async => WeightLog(
+          id: recordId,
+          userId: userId,
+          logDate: DateTime.now(),
+          weightKg: originalWeight,
+          createdAt: DateTime.now(),
+        ));
+    when(() => mockRepository.updateWeightLog(recordId, newWeight))
+        .thenAnswer((_) async => {});
+    when(() => mockRecalculateNotifier.recalculate(userId))
+        .thenThrow(Exception('Recalculation failed'));
+
+    final notifier = container.read(weightRecordEditNotifierProvider.notifier);
+    await notifier.updateWeight(recordId: recordId, newWeight: newWeight, userId: userId);
+
+    // Should rollback to original weight
+    verify(() => mockRepository.updateWeightLog(recordId, originalWeight)).called(1);
+  });
+});
+```
+
+#### SymptomRecordEditNotifier
+```dart
+group('SymptomRecordEditNotifier', () {
+  late MockTrackingRepository mockRepository;
+  late MockValidateSymptomEditUseCase mockValidateUseCase;
+  late MockRecalculateStatisticsNotifier mockRecalculateNotifier;
+  late ProviderContainer container;
+
+  setUp(() {
+    mockRepository = MockTrackingRepository();
+    mockValidateUseCase = MockValidateSymptomEditUseCase();
+    mockRecalculateNotifier = MockRecalculateStatisticsNotifier();
+
+    container = ProviderContainer(
+      overrides: [
+        trackingRepositoryProvider.overrideWithValue(mockRepository),
+        validateSymptomEditUseCaseProvider.overrideWithValue(mockValidateUseCase),
+        recalculateStatisticsNotifierProvider.overrideWithValue(mockRecalculateNotifier),
+      ],
+    );
+  });
+
+  tearDown(() {
+    container.dispose();
+  });
+
+  test('should update symptom log successfully', () async {
+    final recordId = 'symptom1';
+    final updatedLog = SymptomLog(
+      id: recordId,
+      userId: 'user123',
+      logDate: DateTime.now(),
+      symptomName: '메스꺼움',
+      severity: 7,
+      tags: ['기름진음식'],
+      note: '저녁 식사 후 발생',
+    );
+    when(() => mockValidateUseCase.execute(
+      severity: updatedLog.severity,
+      symptomName: updatedLog.symptomName,
+    )).thenReturn(ValidationResult.success());
+    when(() => mockRepository.updateSymptomLog(recordId, updatedLog))
+        .thenAnswer((_) async => {});
+    when(() => mockRecalculateNotifier.recalculate(updatedLog.userId))
+        .thenAnswer((_) async => {});
+
+    final notifier = container.read(symptomRecordEditNotifierProvider.notifier);
+    await notifier.updateSymptom(recordId: recordId, updatedLog: updatedLog);
+
+    verify(() => mockRepository.updateSymptomLog(recordId, updatedLog)).called(1);
+    verify(() => mockRecalculateNotifier.recalculate(updatedLog.userId)).called(1);
+  });
+
+  test('should emit error for invalid severity', () async {
+    final recordId = 'symptom1';
+    final invalidLog = SymptomLog(
+      id: recordId,
+      userId: 'user123',
+      logDate: DateTime.now(),
+      symptomName: '메스꺼움',
+      severity: 15, // Above 10
+      tags: [],
+    );
+    when(() => mockValidateUseCase.execute(
+      severity: invalidLog.severity,
+      symptomName: invalidLog.symptomName,
+    )).thenReturn(ValidationResult.error('심각도는 1-10 사이여야 합니다'));
+
+    final notifier = container.read(symptomRecordEditNotifierProvider.notifier);
+    await notifier.updateSymptom(recordId: recordId, updatedLog: invalidLog);
+
+    final state = container.read(symptomRecordEditNotifierProvider);
+    expect(state.hasError, true);
+    verifyNever(() => mockRepository.updateSymptomLog(any(), any()));
+  });
+
+  test('should delete symptom log including tags', () async {
+    final recordId = 'symptom1';
+    final userId = 'user123';
+    when(() => mockRepository.deleteSymptomLog(recordId))
+        .thenAnswer((_) async => {});
+    when(() => mockRecalculateNotifier.recalculate(userId))
+        .thenAnswer((_) async => {});
+
+    final notifier = container.read(symptomRecordEditNotifierProvider.notifier);
+    await notifier.deleteSymptom(recordId: recordId, userId: userId);
+
+    verify(() => mockRepository.deleteSymptomLog(recordId)).called(1);
+    verify(() => mockRecalculateNotifier.recalculate(userId)).called(1);
+  });
+});
+```
+
+#### DoseRecordEditNotifier
+```dart
+group('DoseRecordEditNotifier', () {
+  late MockMedicationRepository mockRepository;
+  late MockRecalculateStatisticsNotifier mockRecalculateNotifier;
+  late ProviderContainer container;
+
+  setUp(() {
+    mockRepository = MockMedicationRepository();
+    mockRecalculateNotifier = MockRecalculateStatisticsNotifier();
+
+    container = ProviderContainer(
+      overrides: [
+        medicationRepositoryProvider.overrideWithValue(mockRepository),
+        recalculateStatisticsNotifierProvider.overrideWithValue(mockRecalculateNotifier),
+      ],
+    );
+  });
+
+  tearDown(() {
+    container.dispose();
+  });
+
+  test('should delete dose record without affecting schedule', () async {
+    final recordId = 'dose1';
+    final userId = 'user123';
+    when(() => mockRepository.deleteDoseRecord(recordId))
+        .thenAnswer((_) async => {});
+    when(() => mockRecalculateNotifier.recalculate(userId))
+        .thenAnswer((_) async => {});
+
+    final notifier = container.read(doseRecordEditNotifierProvider.notifier);
+    await notifier.deleteDoseRecord(recordId: recordId, userId: userId);
+
+    verify(() => mockRepository.deleteDoseRecord(recordId)).called(1);
+    // Schedule should NOT be affected
+    verifyNever(() => mockRepository.updateDosagePlan(any()));
+    verify(() => mockRecalculateNotifier.recalculate(userId)).called(1);
+  });
+
+  test('should handle repository failure gracefully', () async {
+    final recordId = 'dose1';
+    final userId = 'user123';
+    when(() => mockRepository.deleteDoseRecord(recordId))
+        .thenThrow(Exception('Database error'));
+
+    final notifier = container.read(doseRecordEditNotifierProvider.notifier);
+    await notifier.deleteDoseRecord(recordId: recordId, userId: userId);
+
+    final state = container.read(doseRecordEditNotifierProvider);
+    expect(state.hasError, true);
+    verifyNever(() => mockRecalculateNotifier.recalculate(any()));
+  });
+});
+```
+
+**Implementation Order:**
+1. WeightRecordEditNotifier (가장 복잡: 날짜 고유 제약 처리)
+2. SymptomRecordEditNotifier
+3. DoseRecordEditNotifier (가장 단순)
+
+**Dependencies**: Repository Interfaces, Validation UseCases, RecalculateStatisticsNotifier
+
+---
+
+### 3.4 Application Layer - Statistics Recalculation Notifier
+
+**Location**: `lib/features/dashboard/application/notifiers/recalculate_statistics_notifier.dart`
+
+**Responsibility**: 기록 변경 시 모든 영향받는 통계 재계산 오케스트레이션
+
+**Test Strategy**: Integration Test
+
+**Test Scenarios (Red Phase):**
+
+```dart
+group('RecalculateStatisticsNotifier', () {
+  late MockDashboardRepository mockDashboardRepo;
+  late MockBadgeRepository mockBadgeRepo;
+  late MockRecalculateDashboardStatisticsUseCase mockRecalcStatUseCase;
+  late MockRecalculateBadgeProgressUseCase mockRecalcBadgeUseCase;
+  late ProviderContainer container;
+
+  setUp(() {
+    mockDashboardRepo = MockDashboardRepository();
+    mockBadgeRepo = MockBadgeRepository();
+    mockRecalcStatUseCase = MockRecalculateDashboardStatisticsUseCase();
+    mockRecalcBadgeUseCase = MockRecalculateBadgeProgressUseCase();
+
+    container = ProviderContainer(
+      overrides: [
+        dashboardRepositoryProvider.overrideWithValue(mockDashboardRepo),
+        badgeRepositoryProvider.overrideWithValue(mockBadgeRepo),
+        recalculateDashboardStatisticsUseCaseProvider.overrideWithValue(mockRecalcStatUseCase),
+        recalculateBadgeProgressUseCaseProvider.overrideWithValue(mockRecalcBadgeUseCase),
+      ],
+    );
+  });
+
+  tearDown(() {
+    container.dispose();
+  });
+
+  test('should recalculate all statistics in correct order', () async {
+    final userId = 'user123';
+    final dashboardData = DashboardData(
+      userName: 'Test User',
+      continuousRecordDays: 5,
+      currentWeek: 3,
+      weeklyProgress: WeeklyProgress(/* ... */),
+      nextSchedule: NextSchedule(/* ... */),
+      weeklySummary: WeeklySummary(/* ... */),
+      badges: [],
+      timeline: [],
+    );
+
+    when(() => mockRecalcStatUseCase.execute(userId))
+        .thenAnswer((_) async => dashboardData);
+    when(() => mockBadgeRepo.getUserBadges(userId))
+        .thenAnswer((_) async => []);
+    when(() => mockRecalcBadgeUseCase.execute(
+      userId: userId,
+      badgeId: any(named: 'badgeId'),
+      currentValue: any(named: 'currentValue'),
+      targetValue: any(named: 'targetValue'),
+    )).thenAnswer((_) async => UserBadge(/* ... */));
+
+    final notifier = container.read(recalculateStatisticsNotifierProvider);
+    await notifier.recalculate(userId);
+
+    // Verify order: Dashboard stats first, then badges
+    verifyInOrder([
+      () => mockRecalcStatUseCase.execute(userId),
+      () => mockBadgeRepo.getUserBadges(userId),
+      // Badge recalculations...
+    ]);
+  });
+
+  test('should invalidate DashboardNotifier after recalculation', () async {
+    final userId = 'user123';
+    when(() => mockRecalcStatUseCase.execute(userId))
+        .thenAnswer((_) async => DashboardData(/* ... */));
+    when(() => mockBadgeRepo.getUserBadges(userId))
+        .thenAnswer((_) async => []);
+
+    final notifier = container.read(recalculateStatisticsNotifierProvider);
+    await notifier.recalculate(userId);
+
+    // DashboardNotifier should be invalidated
+    verify(() => container.invalidate(dashboardNotifierProvider)).called(1);
+  });
+
+  test('should detect new badge achievement and return notification', () async {
+    final userId = 'user123';
+    final badge = UserBadge(
+      id: 'badge1',
+      userId: userId,
+      badgeId: 'streak_7',
+      status: 'achieved',
+      progressPercentage: 100,
+      achievedAt: DateTime.now(),
+    );
+    when(() => mockRecalcStatUseCase.execute(userId))
+        .thenAnswer((_) async => DashboardData(/* ... */));
+    when(() => mockBadgeRepo.getUserBadges(userId))
+        .thenAnswer((_) async => [badge]);
+
+    final notifier = container.read(recalculateStatisticsNotifierProvider);
+    final result = await notifier.recalculate(userId);
+
+    expect(result.hasNewBadge, true);
+    expect(result.newBadgeId, 'streak_7');
+  });
+
+  test('should handle partial failure gracefully', () async {
+    final userId = 'user123';
+    when(() => mockRecalcStatUseCase.execute(userId))
+        .thenAnswer((_) async => DashboardData(/* ... */));
+    when(() => mockBadgeRepo.getUserBadges(userId))
+        .thenThrow(Exception('Badge fetch failed'));
+
+    final notifier = container.read(recalculateStatisticsNotifierProvider);
+    await notifier.recalculate(userId);
+
+    // Should complete dashboard recalc despite badge failure
+    verify(() => mockRecalcStatUseCase.execute(userId)).called(1);
+  });
+});
+```
+
+**Implementation Order:**
+1. recalculate() method (main orchestration)
+2. _invalidateDashboard() private method
+3. _detectNewBadges() private method
+
+**Dependencies**: Dashboard/Badge Repositories, Recalculation UseCases
+
+---
+
+### 3.5 Presentation Layer - Edit Dialogs
+
+**Location**: `lib/features/tracking/presentation/widgets/`
+
+**Responsibility**: 기록 수정 UI 제공
 
 **Test Strategy**: Widget Test
 
-**Test Scenarios (Red Phase)**:
+**Test Scenarios (Red Phase):**
+
+#### WeightEditDialog
 ```dart
-group('RecordDetailScreen', () {
-  // Arrange: WeightLog 데이터
-  // Act: 화면 빌드
-  // Assert: 수정/삭제 버튼 존재
-  testWidgets('should display edit and delete buttons')
+group('WeightEditDialog', () {
+  testWidgets('should display current weight value', (tester) async {
+    final currentWeight = 70.5;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: WeightEditDialog(currentWeight: currentWeight),
+        ),
+      ),
+    );
 
-  // Arrange: 화면 로드
-  // Act: 삭제 버튼 탭
-  // Assert: 확인 다이얼로그 표시
-  testWidgets('should show confirmation dialog on delete')
+    expect(find.text('70.5'), findsOneWidget);
+  });
 
-  // Arrange: 화면 로드
-  // Act: 수정 버튼 탭
-  // Assert: 수정 다이얼로그 표시
-  testWidgets('should navigate to edit dialog on edit')
+  testWidgets('should validate input in real-time', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: WeightEditDialog(currentWeight: 70.0)));
 
-  // Arrange: 삭제 확인
-  // Act: 확인 버튼 탭
-  // Assert: TrackingNotifier.deleteWeightLog 호출
-  testWidgets('should call deleteWeightLog on confirm')
+    final textField = find.byType(TextField);
+    await tester.enterText(textField, '500');
+    await tester.pump();
+
+    expect(find.text('체중은 300kg 이하여야 합니다'), findsOneWidget);
+  });
+
+  testWidgets('should show warning for borderline weight', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: WeightEditDialog(currentWeight: 70.0)));
+
+    final textField = find.byType(TextField);
+    await tester.enterText(textField, '25');
+    await tester.pump();
+
+    expect(find.textContaining('비정상적으로 낮은'), findsOneWidget);
+  });
+
+  testWidgets('should disable save button for invalid input', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: WeightEditDialog(currentWeight: 70.0)));
+
+    await tester.enterText(find.byType(TextField), '-5');
+    await tester.pump();
+
+    final saveButton = find.text('저장');
+    expect(tester.widget<ElevatedButton>(saveButton).enabled, false);
+  });
+
+  testWidgets('should call onSave with new weight', (tester) async {
+    double? savedWeight;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WeightEditDialog(
+          currentWeight: 70.0,
+          onSave: (weight) => savedWeight = weight,
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), '68.5');
+    await tester.tap(find.text('저장'));
+    await tester.pump();
+
+    expect(savedWeight, 68.5);
+  });
+
+  testWidgets('should show loading indicator during save', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WeightEditDialog(
+          currentWeight: 70.0,
+          onSave: (_) async => await Future.delayed(Duration(seconds: 1)),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), '68.5');
+    await tester.tap(find.text('저장'));
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
 });
 ```
 
-**QA Sheet (수동 테스트)**:
-- [ ] 수정 버튼 클릭 시 기존 데이터가 폼에 표시됨
-- [ ] 삭제 확인 다이얼로그가 명확한 경고 문구를 포함함
-- [ ] 삭제 성공 시 목록 화면으로 자동 이동
-- [ ] 에러 발생 시 SnackBar로 안내 메시지 표시
+#### SymptomEditDialog
+```dart
+group('SymptomEditDialog', () {
+  testWidgets('should display current symptom data', (tester) async {
+    final symptom = SymptomLog(
+      id: '1',
+      userId: 'user123',
+      logDate: DateTime.now(),
+      symptomName: '메스꺼움',
+      severity: 7,
+      tags: ['기름진음식', '과식'],
+    );
+    await tester.pumpWidget(MaterialApp(home: SymptomEditDialog(symptom: symptom)));
 
-**Implementation Order**:
-1. RED: Widget 존재 및 상호작용 테스트 작성
-2. GREEN: UI 구현
-3. REFACTOR: 공통 위젯 추출 (ConfirmDialog 등)
+    expect(find.text('메스꺼움'), findsOneWidget);
+    expect(find.text('7'), findsOneWidget);
+    expect(find.text('기름진음식'), findsOneWidget);
+    expect(find.text('과식'), findsOneWidget);
+  });
 
-**Dependencies**:
-- `tracking_notifier_provider`
-- `go_router`
+  testWidgets('should allow changing symptom name', (tester) async {
+    final symptom = SymptomLog(
+      id: '1',
+      userId: 'user123',
+      logDate: DateTime.now(),
+      symptomName: '메스꺼움',
+      severity: 5,
+    );
+    await tester.pumpWidget(MaterialApp(home: SymptomEditDialog(symptom: symptom)));
+
+    await tester.tap(find.text('메스꺼움'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('구토'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('구토'), findsOneWidget);
+  });
+
+  testWidgets('should allow adjusting severity with slider', (tester) async {
+    final symptom = SymptomLog(
+      id: '1',
+      userId: 'user123',
+      logDate: DateTime.now(),
+      symptomName: '메스꺼움',
+      severity: 5,
+    );
+    await tester.pumpWidget(MaterialApp(home: SymptomEditDialog(symptom: symptom)));
+
+    final slider = find.byType(Slider);
+    await tester.drag(slider, Offset(100, 0)); // Increase severity
+    await tester.pump();
+
+    // Severity should change
+    expect(find.text('5'), findsNothing);
+  });
+
+  testWidgets('should allow adding/removing tags', (tester) async {
+    final symptom = SymptomLog(
+      id: '1',
+      userId: 'user123',
+      logDate: DateTime.now(),
+      symptomName: '메스꺼움',
+      severity: 5,
+      tags: ['기름진음식'],
+    );
+    await tester.pumpWidget(MaterialApp(home: SymptomEditDialog(symptom: symptom)));
+
+    // Remove existing tag
+    await tester.tap(find.byIcon(Icons.close).first);
+    await tester.pump();
+    expect(find.text('기름진음식'), findsNothing);
+
+    // Add new tag
+    await tester.tap(find.text('과식'));
+    await tester.pump();
+    expect(find.text('과식'), findsOneWidget);
+  });
+
+  testWidgets('should validate severity range', (tester) async {
+    final symptom = SymptomLog(
+      id: '1',
+      userId: 'user123',
+      logDate: DateTime.now(),
+      symptomName: '메스꺼움',
+      severity: 5,
+    );
+    await tester.pumpWidget(MaterialApp(home: SymptomEditDialog(symptom: symptom)));
+
+    // Slider should not allow values outside 1-10
+    final slider = find.byType(Slider);
+    final sliderWidget = tester.widget<Slider>(slider);
+    expect(sliderWidget.min, 1);
+    expect(sliderWidget.max, 10);
+  });
+});
+```
+
+#### RecordDeleteDialog
+```dart
+group('RecordDeleteDialog', () {
+  testWidgets('should show confirmation message', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RecordDeleteDialog(
+          recordType: '체중 기록',
+          recordInfo: '70.5kg (2025-01-01)',
+        ),
+      ),
+    );
+
+    expect(find.textContaining('체중 기록'), findsOneWidget);
+    expect(find.textContaining('70.5kg'), findsOneWidget);
+    expect(find.text('삭제'), findsOneWidget);
+    expect(find.text('취소'), findsOneWidget);
+  });
+
+  testWidgets('should show permanent deletion warning', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: RecordDeleteDialog(recordType: '체중 기록', recordInfo: '70kg')),
+    );
+
+    expect(find.textContaining('영구적'), findsOneWidget);
+    expect(find.textContaining('복구할 수 없습니다'), findsOneWidget);
+  });
+
+  testWidgets('should call onConfirm when delete tapped', (tester) async {
+    bool confirmed = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RecordDeleteDialog(
+          recordType: '체중 기록',
+          recordInfo: '70kg',
+          onConfirm: () => confirmed = true,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('삭제'));
+    await tester.pump();
+
+    expect(confirmed, true);
+  });
+
+  testWidgets('should close dialog when cancel tapped', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => RecordDeleteDialog(
+                    recordType: '체중 기록',
+                    recordInfo: '70kg',
+                  ),
+                );
+              },
+              child: Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(RecordDeleteDialog), findsNothing);
+  });
+
+  testWidgets('should emphasize delete button with destructive color', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: RecordDeleteDialog(recordType: '체중 기록', recordInfo: '70kg')),
+    );
+
+    final deleteButton = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, '삭제'),
+    );
+    expect(deleteButton.style?.foregroundColor?.resolve({}), Colors.red);
+  });
+});
+```
+
+**Implementation Order:**
+1. WeightEditDialog (가장 복잡: 실시간 검증 + 경고)
+2. SymptomEditDialog (중간: 여러 필드 + 태그 관리)
+3. RecordDeleteDialog (단순: 확인만)
+
+**Dependencies**: Application Notifiers
 
 ---
 
-### 3.5 Presentation Layer - Edit Weight Dialog
+### 3.6 Presentation Layer - Record Detail Sheet
 
-**Location**: `features/tracking/presentation/widgets/edit_weight_dialog.dart`
+**Location**: `lib/features/tracking/presentation/widgets/record_detail_sheet.dart`
 
-**Responsibility**:
-- 체중 수정 폼
-- 입력 검증 (양수, 범위)
-- TrackingNotifier 호출
+**Responsibility**: 기록 상세 정보 표시 및 수정/삭제 진입점
 
 **Test Strategy**: Widget Test
 
-**Test Scenarios (Red Phase)**:
+**Test Scenarios (Red Phase):**
+
 ```dart
-group('EditWeightDialog', () {
-  testWidgets('should pre-fill existing weight value')
-  testWidgets('should validate positive weight input')
-  testWidgets('should show warning for unrealistic weight')
-  testWidgets('should call updateWeightLog on save')
-  testWidgets('should disable save button when invalid')
+group('RecordDetailSheet', () {
+  testWidgets('should display weight record details', (tester) async {
+    final weightLog = WeightLog(
+      id: 'log1',
+      userId: 'user123',
+      logDate: DateTime(2025, 1, 1),
+      weightKg: 70.5,
+      createdAt: DateTime(2025, 1, 1, 9, 0),
+    );
+    await tester.pumpWidget(
+      MaterialApp(home: RecordDetailSheet.weight(log: weightLog)),
+    );
+
+    expect(find.text('70.5 kg'), findsOneWidget);
+    expect(find.text('2025-01-01'), findsOneWidget);
+    expect(find.text('수정'), findsOneWidget);
+    expect(find.text('삭제'), findsOneWidget);
+  });
+
+  testWidgets('should display symptom record details', (tester) async {
+    final symptomLog = SymptomLog(
+      id: 'symptom1',
+      userId: 'user123',
+      logDate: DateTime(2025, 1, 1),
+      symptomName: '메스꺼움',
+      severity: 7,
+      tags: ['기름진음식', '과식'],
+      note: '저녁 식사 후 발생',
+    );
+    await tester.pumpWidget(
+      MaterialApp(home: RecordDetailSheet.symptom(log: symptomLog)),
+    );
+
+    expect(find.text('메스꺼움'), findsOneWidget);
+    expect(find.text('심각도: 7/10'), findsOneWidget);
+    expect(find.text('기름진음식'), findsOneWidget);
+    expect(find.text('과식'), findsOneWidget);
+    expect(find.text('저녁 식사 후 발생'), findsOneWidget);
+  });
+
+  testWidgets('should display dose record details', (tester) async {
+    final doseRecord = DoseRecord(
+      id: 'dose1',
+      dosagePlanId: 'plan1',
+      administeredAt: DateTime(2025, 1, 1, 10, 0),
+      actualDoseMg: 0.5,
+      injectionSite: '복부',
+      isCompleted: true,
+      note: '정상 투여',
+    );
+    await tester.pumpWidget(
+      MaterialApp(home: RecordDetailSheet.dose(record: doseRecord)),
+    );
+
+    expect(find.text('0.5 mg'), findsOneWidget);
+    expect(find.text('복부'), findsOneWidget);
+    expect(find.text('정상 투여'), findsOneWidget);
+  });
+
+  testWidgets('should open edit dialog on edit tap', (tester) async {
+    final weightLog = WeightLog(
+      id: 'log1',
+      userId: 'user123',
+      logDate: DateTime.now(),
+      weightKg: 70.0,
+      createdAt: DateTime.now(),
+    );
+    await tester.pumpWidget(
+      MaterialApp(home: RecordDetailSheet.weight(log: weightLog)),
+    );
+
+    await tester.tap(find.text('수정'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(WeightEditDialog), findsOneWidget);
+  });
+
+  testWidgets('should open delete dialog on delete tap', (tester) async {
+    final weightLog = WeightLog(
+      id: 'log1',
+      userId: 'user123',
+      logDate: DateTime.now(),
+      weightKg: 70.0,
+      createdAt: DateTime.now(),
+    );
+    await tester.pumpWidget(
+      MaterialApp(home: RecordDetailSheet.weight(log: weightLog)),
+    );
+
+    await tester.tap(find.text('삭제'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(RecordDeleteDialog), findsOneWidget);
+  });
+
+  testWidgets('should close sheet after successful edit', (tester) async {
+    final weightLog = WeightLog(
+      id: 'log1',
+      userId: 'user123',
+      logDate: DateTime.now(),
+      weightKg: 70.0,
+      createdAt: DateTime.now(),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (_) => RecordDetailSheet.weight(log: weightLog),
+                );
+              },
+              child: Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    // Simulate successful edit
+    await tester.tap(find.text('수정'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '68.5');
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+
+    // Sheet should close
+    expect(find.byType(RecordDetailSheet), findsNothing);
+  });
+
+  testWidgets('should show success snackbar after edit', (tester) async {
+    final weightLog = WeightLog(
+      id: 'log1',
+      userId: 'user123',
+      logDate: DateTime.now(),
+      weightKg: 70.0,
+      createdAt: DateTime.now(),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (_) => RecordDetailSheet.weight(log: weightLog),
+                );
+              },
+              child: Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('수정'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '68.5');
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('체중 기록이 수정되었습니다'), findsOneWidget);
+  });
+
+  testWidgets('should show new badge notification after recalculation', (tester) async {
+    // Mock RecalculateStatisticsNotifier to return new badge
+    final weightLog = WeightLog(
+      id: 'log1',
+      userId: 'user123',
+      logDate: DateTime.now(),
+      weightKg: 70.0,
+      createdAt: DateTime.now(),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: RecordDetailSheet.weight(log: weightLog)),
+    );
+
+    await tester.tap(find.text('수정'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '68.5');
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+
+    // Should show badge achievement notification
+    expect(find.textContaining('뱃지'), findsOneWidget);
+  });
 });
 ```
 
-**QA Sheet**:
-- [ ] 체중 입력 시 실시간 검증 피드백 표시
-- [ ] 비현실적 체중(20kg 미만, 300kg 초과) 경고 표시
-- [ ] 저장 버튼 클릭 시 로딩 인디케이터 표시
-- [ ] 날짜 선택기로 날짜 변경 가능
+**Implementation Order:**
+1. RecordDetailSheet Layout
+2. Edit/Delete Button Handlers
+3. Success/Error Snackbar
+4. Badge Achievement Notification
 
-**Implementation Order**:
-1. RED: 폼 검증 테스트 작성
-2. GREEN: 폼 UI 및 검증 로직 구현
-3. REFACTOR: 공통 Validator 함수 추출
-
-**Dependencies**:
-- `tracking_notifier_provider`
-- `validators.dart` (core/utils)
+**Dependencies**: Edit Dialogs, Delete Dialog, Application Notifiers
 
 ---
 
-### 3.6 Presentation Layer - Edit Symptom Dialog
+### 3.7 Presentation Layer - Record List Screen Updates
 
-**Location**: `features/tracking/presentation/widgets/edit_symptom_dialog.dart`
+**Location**: `lib/features/tracking/presentation/screens/record_list_screen.dart`
 
-**Responsibility**:
-- 증상 수정 폼
-- 심각도, 태그 수정
-- TrackingNotifier 호출
+**Responsibility**: 기록 목록에서 상세 시트 열기
 
-**Test Strategy**: Widget Test
+**Test Strategy**: Acceptance Test
 
-**Test Scenarios (Red Phase)**:
+**Test Scenarios (Red Phase):**
+
 ```dart
-group('EditSymptomDialog', () {
-  testWidgets('should pre-fill existing symptom data')
-  testWidgets('should validate severity range 1-10')
-  testWidgets('should allow tag modification')
-  testWidgets('should call updateSymptomLog on save')
+group('RecordListScreen Edit/Delete Flow', () {
+  testWidgets('should open detail sheet on record tap', (tester) async {
+    final weights = [
+      WeightLog(id: '1', userId: 'user123', logDate: DateTime.now(), weightKg: 70.0, createdAt: DateTime.now()),
+      WeightLog(id: '2', userId: 'user123', logDate: DateTime.now().subtract(Duration(days: 1)), weightKg: 71.0, createdAt: DateTime.now()),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          trackingNotifierProvider.overrideWith(
+            (ref) => FakeTrackingNotifier(weights: weights),
+          ),
+        ],
+        child: MaterialApp(home: RecordListScreen()),
+      ),
+    );
+
+    await tester.tap(find.text('70.0 kg'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(RecordDetailSheet), findsOneWidget);
+  });
+
+  testWidgets('should refresh list after successful edit', (tester) async {
+    final weights = [
+      WeightLog(id: '1', userId: 'user123', logDate: DateTime.now(), weightKg: 70.0, createdAt: DateTime.now()),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          trackingNotifierProvider.overrideWith(
+            (ref) => FakeTrackingNotifier(weights: weights),
+          ),
+        ],
+        child: MaterialApp(home: RecordListScreen()),
+      ),
+    );
+
+    await tester.tap(find.text('70.0 kg'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('수정'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '68.5');
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+
+    // List should show updated value
+    expect(find.text('68.5 kg'), findsOneWidget);
+    expect(find.text('70.0 kg'), findsNothing);
+  });
+
+  testWidgets('should remove item from list after deletion', (tester) async {
+    final weights = [
+      WeightLog(id: '1', userId: 'user123', logDate: DateTime.now(), weightKg: 70.0, createdAt: DateTime.now()),
+      WeightLog(id: '2', userId: 'user123', logDate: DateTime.now().subtract(Duration(days: 1)), weightKg: 71.0, createdAt: DateTime.now()),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          trackingNotifierProvider.overrideWith(
+            (ref) => FakeTrackingNotifier(weights: weights),
+          ),
+        ],
+        child: MaterialApp(home: RecordListScreen()),
+      ),
+    );
+
+    expect(find.text('70.0 kg'), findsOneWidget);
+
+    await tester.tap(find.text('70.0 kg'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('삭제'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('삭제')); // Confirm
+    await tester.pumpAndSettle();
+
+    // Item should be removed
+    expect(find.text('70.0 kg'), findsNothing);
+    expect(find.text('71.0 kg'), findsOneWidget); // Other item remains
+  });
+
+  testWidgets('should show empty state after deleting all records', (tester) async {
+    final weights = [
+      WeightLog(id: '1', userId: 'user123', logDate: DateTime.now(), weightKg: 70.0, createdAt: DateTime.now()),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          trackingNotifierProvider.overrideWith(
+            (ref) => FakeTrackingNotifier(weights: weights),
+          ),
+        ],
+        child: MaterialApp(home: RecordListScreen()),
+      ),
+    );
+
+    await tester.tap(find.text('70.0 kg'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('삭제'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('삭제'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('기록이 없습니다'), findsOneWidget);
+  });
+
+  testWidgets('should handle concurrent edit attempts gracefully', (tester) async {
+    // Edge case: Multiple users editing same record
+    final weights = [
+      WeightLog(id: '1', userId: 'user123', logDate: DateTime.now(), weightKg: 70.0, createdAt: DateTime.now()),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          trackingNotifierProvider.overrideWith(
+            (ref) => FakeTrackingNotifier(weights: weights),
+          ),
+        ],
+        child: MaterialApp(home: RecordListScreen()),
+      ),
+    );
+
+    await tester.tap(find.text('70.0 kg'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('수정'));
+    await tester.pumpAndSettle();
+
+    // Simulate concurrent update (record deleted by another client)
+    // Should show error message
+    await tester.enterText(find.byType(TextField), '68.5');
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('이미 삭제되었거나'), findsOneWidget);
+  });
 });
 ```
 
-**QA Sheet**:
-- [ ] 기존 증상, 심각도, 태그가 미리 선택됨
-- [ ] 심각도 슬라이더로 1-10 범위 선택 가능
-- [ ] 태그 추가/제거 가능
-- [ ] 저장 시 성공/실패 피드백 표시
+**QA Sheet (Manual Testing):**
+1. 기록 목록에서 항목 탭 시 상세 시트 열림 확인
+2. 상세 시트에서 "수정" 버튼 탭 시 수정 다이얼로그 열림 확인
+3. 수정 다이얼로그에서 값 변경 후 저장 시:
+   - 성공 메시지 표시 확인
+   - 시트 자동 닫힘 확인
+   - 목록에 변경사항 즉시 반영 확인
+4. 상세 시트에서 "삭제" 버튼 탭 시 확인 다이얼로그 열림 확인
+5. 삭제 확인 시:
+   - 기록 삭제 확인
+   - 목록에서 항목 제거 확인
+   - 성공 메시지 표시 확인
+6. 홈 대시보드에서 통계 갱신 확인:
+   - 연속 기록일 재계산 확인
+   - 주간 목표 진행도 재계산 확인
+   - 뱃지 진행도 업데이트 확인
+7. 데이터 공유 모드에서 변경사항 반영 확인
+8. 네트워크 오류 시 에러 처리 확인
+9. 삭제 취소 버튼 동작 확인
+10. 수정 중 뒤로가기 버튼 시 변경사항 폐기 확인
 
-**Implementation Order**:
-1. RED: 증상 폼 테스트 작성
-2. GREEN: 증상 폼 UI 구현
-3. REFACTOR: EditWeightDialog와 공통 로직 추출
+**Implementation Order:**
+1. Detail Sheet Integration
+2. List Refresh Logic
+3. Success/Error Handling
+4. Empty State Handling
 
-**Dependencies**:
-- `tracking_notifier_provider`
-- `symptom_constants.dart` (core/constants)
-
----
-
-### 3.7 Application Layer - Dashboard Refresh Trigger
-
-**Location**: `features/dashboard/application/notifiers/dashboard_notifier.dart`
-
-**Responsibility**:
-- 기록 변경 시 대시보드 재계산
-- 주간 목표 진행도 업데이트
-- 뱃지 상태 업데이트
-
-**Test Strategy**: Unit Test (Mock Repository)
-
-**Test Scenarios (Red Phase)**:
-```dart
-group('DashboardNotifier refresh', () {
-  // Arrange: 초기 대시보드 상태
-  // Act: refresh() 호출
-  // Assert: 모든 지표가 재계산됨
-  test('should recalculate all metrics on refresh')
-
-  // Arrange: 체중 기록 변경
-  // Act: refresh() 호출
-  // Assert: 주간 목표 진행도 업데이트
-  test('should update weekly progress')
-
-  // Arrange: 뱃지 조건 충족
-  // Act: refresh() 호출
-  // Assert: 뱃지 상태 업데이트
-  test('should update badge status')
-});
-```
-
-**Implementation Order**:
-1. RED: 재계산 로직 테스트 작성
-2. GREEN: refresh() 메서드 구현
-3. REFACTOR: 계산 로직을 별도 UseCase로 분리
-
-**Dependencies**:
-- `tracking_repository_provider`
-- `badge_repository_provider`
+**Dependencies**: RecordDetailSheet, Application Notifiers
 
 ---
 
 ## 4. TDD Workflow
 
-### 시작 지점
-**Domain Layer - Repository Interface** (가장 안쪽부터 시작)
+### Phase 1: Domain Layer (Inside-Out)
+1. **Start**: Validation UseCases 테스트 작성
+   - ValidateWeightEditUseCase (Red → Green → Refactor)
+   - ValidateSymptomEditUseCase (Red → Green → Refactor)
+   - ValidateDateUniqueConstraintUseCase (Red → Green → Refactor)
+2. **Statistics Recalculation UseCases**:
+   - RecalculateDashboardStatisticsUseCase (Red → Green → Refactor)
+   - RecalculateBadgeProgressUseCase (Red → Green → Refactor)
+3. **Commit Point**: 모든 Domain Layer 테스트 통과 후 Commit
 
-### 진행 순서
-```
-1. Domain/Repository Interface
-   └─ RED: 인터페이스 시그니처 테스트
-   └─ GREEN: 인터페이스 정의
-   └─ REFACTOR: 문서화
+### Phase 2: Application Layer
+1. **Record Edit Notifiers**:
+   - WeightRecordEditNotifier (Red → Green → Refactor)
+   - SymptomRecordEditNotifier (Red → Green → Refactor)
+   - DoseRecordEditNotifier (Red → Green → Refactor)
+2. **Statistics Recalculation Notifier**:
+   - RecalculateStatisticsNotifier (Red → Green → Refactor)
+3. **Commit Point**: Application Layer 테스트 통과 후 Commit
 
-2. Infrastructure/IsarRepository
-   └─ RED: CRUD 통합 테스트 (Isar in-memory)
-   └─ GREEN: Isar 구현체
-   └─ REFACTOR: DTO 변환 유틸 추출
+### Phase 3: Presentation Layer (Outside-In)
+1. **Edit Dialogs**:
+   - WeightEditDialog (Red → Green → Refactor + Widget Test)
+   - SymptomEditDialog (Red → Green → Refactor + Widget Test)
+   - RecordDeleteDialog (Red → Green → Refactor + Widget Test)
+2. **Detail Sheet**:
+   - RecordDetailSheet (Red → Green → Refactor + Widget Test)
+3. **List Screen Updates**:
+   - RecordListScreen Integration (Red → Green → Refactor + Acceptance Test)
+4. **Commit Point**: Presentation Layer 테스트 통과 후 Commit
 
-3. Application/TrackingNotifier
-   └─ RED: UseCase 유닛 테스트 (Mock Repository)
-   └─ GREEN: Notifier 메서드 구현
-   └─ REFACTOR: 에러 처리 공통화
-
-4. Application/DashboardNotifier
-   └─ RED: 재계산 로직 테스트
-   └─ GREEN: refresh() 구현
-   └─ REFACTOR: 계산 로직 분리
-
-5. Presentation/RecordDetailScreen
-   └─ RED: Widget 테스트
-   └─ GREEN: UI 구현
-   └─ REFACTOR: 공통 위젯 추출
-
-6. Presentation/EditWeightDialog
-   └─ RED: 폼 검증 테스트
-   └─ GREEN: 폼 UI 구현
-   └─ REFACTOR: Validator 함수 추출
-
-7. Presentation/EditSymptomDialog
-   └─ RED: 증상 폼 테스트
-   └─ GREEN: 증상 폼 구현
-   └─ REFACTOR: 공통 로직 통합
-```
-
-### Commit Points
-- [ ] Commit 1: Domain Repository Interface + Tests
-- [ ] Commit 2: Infrastructure IsarRepository + Integration Tests
-- [ ] Commit 3: Application TrackingNotifier + Unit Tests
-- [ ] Commit 4: Application DashboardNotifier Refresh + Tests
-- [ ] Commit 5: Presentation RecordDetailScreen + Widget Tests
-- [ ] Commit 6: Presentation EditWeightDialog + Widget Tests
-- [ ] Commit 7: Presentation EditSymptomDialog + Widget Tests
-- [ ] Commit 8: Final Integration + Acceptance Tests
-
-### 완료 조건
-- [ ] 모든 Unit Tests 통과 (70% coverage)
-- [ ] 모든 Integration Tests 통과 (20% coverage)
-- [ ] 모든 Widget Tests 통과
-- [ ] Acceptance Test 통과: 사용자가 기록을 수정/삭제하고 대시보드가 자동 업데이트됨
-- [ ] QA Sheet 100% 통과
-- [ ] `flutter analyze` 경고 0개
-- [ ] Repository Pattern 유지 (Phase 1 전환 대비)
+### Phase 4: Integration & Refactoring
+1. **End-to-End Test**: 실제 앱에서 수정/삭제 플로우 검증
+2. **QA Sheet**: Manual Testing
+3. **Performance Check**: 통계 재계산 시간 측정 (< 500ms 목표)
+4. **Code Review**: Layer 의존성 검증, Repository Pattern 준수 확인
+5. **Refactoring**: 중복 코드 제거, 공통 검증 로직 추출
+6. **Final Commit**: "feat(tracking): implement UF-011 record edit/delete"
 
 ---
 
-## 5. 핵심 원칙 적용
+## 5. 핵심 원칙
+
+### Test First
+- 모든 테스트 케이스를 먼저 작성하고 실패를 확인한 후 구현
+- 테스트 없는 코드 금지
+
+### Small Steps
+- 한 번에 하나의 테스트만 통과시키기
+- UseCase 단위로 작은 커밋 유지
 
 ### FIRST Principles
-- **Fast**: Mock을 사용한 Unit Test (< 100ms)
-- **Independent**: 각 테스트는 독립적 Arrange
-- **Repeatable**: Isar in-memory로 일관성 보장
-- **Self-validating**: expect()로 명확한 Pass/Fail
-- **Timely**: 코드 작성 전 테스트 작성
+- **Fast**: 전체 테스트 스위트 < 5초
+- **Independent**: 테스트 간 의존성 없음
+- **Repeatable**: 환경 무관 재현 가능
+- **Self-validating**: 자동 Pass/Fail 판정
+- **Timely**: 구현 직전 테스트 작성
 
 ### Test Pyramid
-- **Unit (70%)**: Domain, Application Layer
-- **Integration (20%)**: Infrastructure Layer (Isar)
-- **Widget (10%)**: Presentation Layer
+- **Unit**: 70% (Domain UseCases, Validation)
+- **Integration**: 20% (Application Notifiers, Recalculation)
+- **Acceptance**: 10% (Presentation Screens, E2E)
 
-### AAA Pattern
-모든 테스트에 엄격히 적용:
-```dart
-test('should update weight log', () {
-  // Arrange
-  final repository = MockTrackingRepository();
-  final notifier = TrackingNotifier(repository);
+### Inside-Out Strategy
+- Domain Layer부터 시작하여 Presentation Layer로 확장
+- 비즈니스 로직(검증, 재계산)을 먼저 안정화
 
-  // Act
-  await notifier.updateWeightLog('id', weightLog);
+### Repository Pattern 엄수
+- Application은 Repository Interface만 의존
+- Infrastructure 구현 변경이 상위 Layer에 영향 없음
+- 통계 재계산도 Repository를 통해서만 데이터 접근
 
-  // Assert
-  expect(notifier.state, isA<AsyncData>());
-});
-```
-
----
-
-## 6. 비즈니스 규칙 검증
-
-### BR-1: 기록 소유권
-**테스트 위치**: `isar_tracking_repository_test.dart`
-```dart
-test('should only update own records (userId validation)')
-```
-
-### BR-2: 검증 규칙
-**테스트 위치**: `edit_weight_dialog_test.dart`, `edit_symptom_dialog_test.dart`
-```dart
-test('should reject negative weight')
-test('should reject future date')
-test('should reject severity outside 1-10')
-```
-
-### BR-3: 날짜 고유 제약
-**테스트 위치**: `isar_tracking_repository_test.dart`
-```dart
-test('should throw ConflictException for duplicate weight date')
-```
-
-### BR-4: 통계 재계산
-**테스트 위치**: `tracking_notifier_test.dart`
-```dart
-test('should trigger dashboard refresh after update')
-test('should trigger dashboard refresh after delete')
-```
-
-### BR-5: 연쇄 동작
-**테스트 위치**: `isar_tracking_repository_test.dart`
-```dart
-test('should delete symptom tags when deleting symptom log')
-```
-
----
-
-## 7. Performance Constraints
-
-### 응답 시간 목표
-- 기록 업데이트: < 200ms
-- 기록 삭제: < 100ms
-- 대시보드 재계산: < 500ms
-
-### 테스트 성능
-- Unit Test Suite: < 5초
-- Integration Test Suite: < 10초
-- Widget Test Suite: < 15초
-
----
-
-## 8. 예외 처리 전략
-
-### Domain Exceptions
-```dart
-class RecordNotFoundException extends DomainException {}
-class ValidationException extends DomainException {}
-class ConflictException extends DomainException {}
-```
-
-### 테스트 커버리지
-```dart
-test('should throw RecordNotFoundException when log not found')
-test('should throw ValidationException for invalid input')
-test('should throw ConflictException for duplicate date')
-```
-
-### UI 에러 표시
-- RecordNotFoundException → "기록을 찾을 수 없습니다"
-- ValidationException → 필드별 에러 메시지
-- ConflictException → "해당 날짜에 이미 기록이 존재합니다"
-
----
-
-## 9. 의존성 그래프
-
-```
-Presentation Layer (RecordDetailScreen, EditDialogs)
-    ↓ depends on
-Application Layer (TrackingNotifier, DashboardNotifier)
-    ↓ depends on
-Domain Layer (TrackingRepository interface)
-    ↑ implemented by
-Infrastructure Layer (IsarTrackingRepository)
-```
-
-**Phase 1 전환 포인트**:
-`IsarTrackingRepository` → `SupabaseTrackingRepository` (Provider DI 1줄 변경)
-
----
-
-## 10. 참고 자료
-
-- `docs/tdd.md`: TDD 프로세스 가이드라인
-- `docs/code_structure.md`: 4-Layer Architecture
-- `docs/state-management.md`: Riverpod Provider 패턴
-- `docs/database.md`: 테이블 스키마
-- `docs/userflow.md`: UF-011 사용자 플로우
+### Data Consistency
+- 모든 수정/삭제 작업은 통계 재계산을 트리거
+- Rollback 메커니즘으로 데이터 무결성 보장
+- Badge 획득 조건 재검증으로 정확도 유지

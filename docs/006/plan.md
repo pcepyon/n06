@@ -1,26 +1,21 @@
-# F006: 홈 대시보드 Implementation Plan
+# F004: 부작용 대처 가이드 Implementation Plan
 
 ## 1. 개요
 
-F006은 사용자의 치료 진행 상황을 한눈에 확인하고 동기를 부여하는 핵심 화면이다. 데이터 집계, 인사이트 생성, 뱃지 시스템을 통해 사용자 경험을 극대화한다.
+F004는 부작용 기록 완료 시 자동으로 대처 가이드를 표시하고, 가이드 탭에서 증상별 가이드를 직접 조회할 수 있는 기능입니다.
 
-### 모듈 목록
-- **DashboardNotifier** (Application): 대시보드 통합 상태 관리
-- **WeeklyProgressCalculator** (Domain): 주간 목표 진행도 계산
-- **ContinuousDaysCalculator** (Domain): 연속 기록일 계산
-- **InsightGenerator** (Domain): 데이터 기반 인사이트 생성
-- **BadgeEvaluator** (Domain): 뱃지 획득 조건 평가
-- **BadgeRepository** (Infrastructure): 뱃지 데이터 접근
-- **DashboardScreen** (Presentation): 홈 대시보드 UI
-- **QuickActionWidget** (Presentation): 퀵 액션 버튼 위젯
-- **WeeklyProgressWidget** (Presentation): 주간 목표 진행도 위젯
-- **BadgeWidget** (Presentation): 뱃지 표시 위젯
+### 모듈 구조
+- **CopingGuideService** (Domain): 증상별 가이드 데이터 관리 (정적 데이터)
+- **CopingGuideRepository** (Domain/Infrastructure): 가이드 조회 인터페이스 및 구현
+- **CopingGuideNotifier** (Application): 가이드 조회 및 피드백 상태 관리
+- **CopingGuideScreen** (Presentation): 가이드 탭 화면
+- **CopingGuideCard** (Presentation): 가이드 카드 위젯
+- **FeedbackWidget** (Presentation): 피드백 UI
 
 ### TDD 적용 범위
-- Domain Layer: 100% Unit Test 커버리지
-- Application Layer: 95% Unit Test + Integration Test
-- Infrastructure Layer: Unit Test (Mock 활용)
-- Presentation Layer: Widget Test + Manual QA
+- Unit Tests: CopingGuideService, CopingGuideRepository (70%)
+- Integration Tests: CopingGuideNotifier와 Repository 연동 (20%)
+- Widget Tests: CopingGuideCard, FeedbackWidget (10%)
 
 ---
 
@@ -29,790 +24,1055 @@ F006은 사용자의 치료 진행 상황을 한눈에 확인하고 동기를 �
 ```mermaid
 graph TD
     %% Presentation Layer
-    DashboardScreen[DashboardScreen]
-    QuickActionWidget[QuickActionWidget]
-    WeeklyProgressWidget[WeeklyProgressWidget]
-    BadgeWidget[BadgeWidget]
+    SymptomRecordScreen[SymptomRecordScreen<br/>F002]
+    CopingGuideScreen[CopingGuideScreen<br/>가이드 탭]
+    CopingGuideCard[CopingGuideCard<br/>가이드 카드]
+    DetailedGuideScreen[DetailedGuideScreen<br/>상세 가이드]
+    FeedbackWidget[FeedbackWidget<br/>피드백 UI]
 
     %% Application Layer
-    DashboardNotifier[DashboardNotifier]
+    CopingGuideNotifier[CopingGuideNotifier<br/>상태 관리]
 
     %% Domain Layer
-    WeeklyProgressCalc[WeeklyProgressCalculator]
-    ContinuousDaysCalc[ContinuousDaysCalculator]
-    InsightGen[InsightGenerator]
-    BadgeEval[BadgeEvaluator]
-
-    %% Domain Entities
-    DashboardData[DashboardData Entity]
-    WeeklyProgress[WeeklyProgress Entity]
-    UserBadge[UserBadge Entity]
-
-    %% Repository Interfaces
-    BadgeRepoInterface[BadgeRepository Interface]
-    MedicationRepoInterface[MedicationRepository Interface]
-    TrackingRepoInterface[TrackingRepository Interface]
-    ProfileRepoInterface[ProfileRepository Interface]
+    CopingGuideRepoInterface[CopingGuideRepository<br/>Interface]
+    CopingGuide[CopingGuide<br/>Entity]
+    GuideSection[GuideSection<br/>Entity]
 
     %% Infrastructure Layer
-    BadgeRepoImpl[IsarBadgeRepository]
+    IsarCopingGuideRepo[IsarCopingGuideRepository<br/>구현체]
+    CopingGuideDto[CopingGuideDto<br/>Isar Model]
 
-    %% Dependencies
-    DashboardScreen --> DashboardNotifier
-    DashboardScreen --> QuickActionWidget
-    DashboardScreen --> WeeklyProgressWidget
-    DashboardScreen --> BadgeWidget
+    %% 관계
+    SymptomRecordScreen --> CopingGuideCard
+    CopingGuideScreen --> CopingGuideCard
+    CopingGuideCard --> DetailedGuideScreen
+    CopingGuideCard --> FeedbackWidget
 
-    DashboardNotifier --> WeeklyProgressCalc
-    DashboardNotifier --> ContinuousDaysCalc
-    DashboardNotifier --> InsightGen
-    DashboardNotifier --> BadgeEval
-    DashboardNotifier --> BadgeRepoInterface
-    DashboardNotifier --> MedicationRepoInterface
-    DashboardNotifier --> TrackingRepoInterface
-    DashboardNotifier --> ProfileRepoInterface
+    SymptomRecordScreen --> CopingGuideNotifier
+    CopingGuideScreen --> CopingGuideNotifier
+    CopingGuideCard --> CopingGuideNotifier
+    DetailedGuideScreen --> CopingGuideNotifier
+    FeedbackWidget --> CopingGuideNotifier
 
-    WeeklyProgressCalc --> WeeklyProgress
-    BadgeEval --> UserBadge
-    DashboardNotifier --> DashboardData
+    CopingGuideNotifier --> CopingGuideRepoInterface
+    CopingGuideRepoInterface --> CopingGuide
+    CopingGuideRepoInterface --> GuideSection
 
-    BadgeRepoInterface --> BadgeRepoImpl
+    IsarCopingGuideRepo .->|implements| CopingGuideRepoInterface
+    IsarCopingGuideRepo --> CopingGuideDto
+    CopingGuideDto --> CopingGuide
 ```
 
 ---
 
 ## 3. Implementation Plan
 
-### Module 1: WeeklyProgressCalculator (Domain)
+### 3.1. Domain Layer - CopingGuide Entity
 
-**Location**: `lib/features/dashboard/domain/usecases/weekly_progress_calculator.dart`
+**Location**: `lib/features/coping_guide/domain/entities/coping_guide.dart`
 
-**Responsibility**: 주간 목표 진행도 계산 로직
+**Responsibility**: 가이드 데이터 구조 정의
 
-**Test Strategy**: Unit Test (Inside-Out)
+**Test Strategy**: Unit Test
 
 **Test Scenarios (Red Phase)**:
-1. 투여 완료 진행도 계산
-   - Arrange: 주간 목표 3회, 실제 완료 2회
-   - Act: calculate() 호출
-   - Assert: 투여 달성률 66.7% (2/3)
+```dart
+// AAA 패턴
+group('CopingGuide', () {
+  test('증상명과 간단 가이드로 생성 가능', () {
+    // Arrange & Act
+    final guide = CopingGuide(
+      symptomName: '메스꺼움',
+      shortGuide: '소량씩 자주 식사하세요',
+    );
 
-2. 체중 기록 진행도 계산
-   - Arrange: 주간 목표 7회, 실제 기록 5회
-   - Act: calculate() 호출
-   - Assert: 체중 기록 달성률 71.4% (5/7)
+    // Assert
+    expect(guide.symptomName, '메스꺼움');
+    expect(guide.shortGuide, '소량씩 자주 식사하세요');
+  });
 
-3. 증상 기록 진행도 계산
-   - Arrange: 주간 목표 7회, 실제 기록 7회
-   - Act: calculate() 호출
-   - Assert: 증상 기록 달성률 100% (7/7)
+  test('상세 가이드 섹션 리스트를 포함할 수 있음', () {
+    // Arrange
+    final sections = [
+      GuideSection(title: '즉시 조치', content: '물 마시기'),
+      GuideSection(title: '식이 조절', content: '기름진 음식 피하기'),
+    ];
 
-4. 목표 0회일 때 예외 처리
-   - Arrange: 주간 목표 0회
-   - Act: calculate() 호출
-   - Assert: 달성률 0% (Division by zero 방지)
+    // Act
+    final guide = CopingGuide(
+      symptomName: '메스꺼움',
+      shortGuide: '소량씩 자주 식사하세요',
+      detailedSections: sections,
+    );
 
-5. 실제 기록이 목표 초과 시
-   - Arrange: 주간 목표 7회, 실제 기록 10회
-   - Act: calculate() 호출
-   - Assert: 달성률 100% (Cap at 100%)
+    // Assert
+    expect(guide.detailedSections, sections);
+    expect(guide.detailedSections.length, 2);
+  });
+});
 
-**Implementation Order**:
-1. Red: Test 1 작성 → Fail
-2. Green: 투여 진행도 계산 구현 → Pass
-3. Refactor: 중복 제거
-4. Red: Test 2-5 순차 작성
-5. Green: 각 테스트 통과 구현
-6. Refactor: 계산 로직 메서드 분리
+group('GuideSection', () {
+  test('제목과 내용으로 생성 가능', () {
+    // Arrange & Act
+    final section = GuideSection(
+      title: '즉시 조치',
+      content: '물을 천천히 마시세요',
+    );
 
-**Dependencies**: WeeklyProgress Entity
+    // Assert
+    expect(section.title, '즉시 조치');
+    expect(section.content, '물을 천천히 마시세요');
+  });
+});
+```
 
 **Edge Cases**:
-- 목표가 null인 경우
-- 음수 값 입력 방어
-- 부동소수점 정밀도 처리
+- 빈 증상명 처리
+- 빈 가이드 내용 처리
+- null 상세 섹션 처리
+
+**Implementation Order**:
+1. CopingGuide 클래스 정의 (Red)
+2. GuideSection 클래스 정의 (Red)
+3. 최소 구현으로 테스트 통과 (Green)
+4. Immutable 구조로 리팩토링 (Refactor)
+
+**Dependencies**: 없음
 
 ---
 
-### Module 2: ContinuousDaysCalculator (Domain)
+### 3.2. Domain Layer - CopingGuideRepository Interface
 
-**Location**: `lib/features/dashboard/domain/usecases/continuous_days_calculator.dart`
+**Location**: `lib/features/coping_guide/domain/repositories/coping_guide_repository.dart`
 
-**Responsibility**: 연속 기록일 계산 로직
+**Responsibility**: 가이드 조회 계약 정의
 
-**Test Strategy**: Unit Test (Inside-Out)
+**Test Strategy**: Unit Test (Mock 사용)
 
 **Test Scenarios (Red Phase)**:
-1. 오늘 기록 시 연속 1일
-   - Arrange: [오늘] 기록
-   - Act: calculate(records, today)
-   - Assert: 1일
+```dart
+group('CopingGuideRepository', () {
+  test('증상명으로 가이드 조회 가능', () async {
+    // Arrange
+    final mockRepo = MockCopingGuideRepository();
+    final expectedGuide = CopingGuide(
+      symptomName: '메스꺼움',
+      shortGuide: '소량씩 자주 식사하세요',
+    );
+    when(() => mockRepo.getGuideBySymptom('메스꺼움'))
+        .thenAnswer((_) async => expectedGuide);
 
-2. 어제와 오늘 기록 시 연속 2일
-   - Arrange: [어제, 오늘] 기록
-   - Act: calculate(records, today)
-   - Assert: 2일
+    // Act
+    final result = await mockRepo.getGuideBySymptom('메스꺼움');
 
-3. 중간에 하루 빠진 경우 리셋
-   - Arrange: [3일 전, 오늘] 기록
-   - Act: calculate(records, today)
-   - Assert: 1일 (오늘만)
+    // Assert
+    expect(result, expectedGuide);
+    verify(() => mockRepo.getGuideBySymptom('메스꺼움')).called(1);
+  });
 
-4. 기록 없을 때 0일
-   - Arrange: [] 빈 리스트
-   - Act: calculate(records, today)
-   - Assert: 0일
+  test('등록되지 않은 증상은 null 반환', () async {
+    // Arrange
+    final mockRepo = MockCopingGuideRepository();
+    when(() => mockRepo.getGuideBySymptom('알 수 없는 증상'))
+        .thenAnswer((_) async => null);
 
-5. 최신 기록이 어제인 경우 0일
-   - Arrange: [어제] 기록
-   - Act: calculate(records, today)
-   - Assert: 0일 (오늘 기록 없음)
+    // Act
+    final result = await mockRepo.getGuideBySymptom('알 수 없는 증상');
 
-6. 체중과 증상 기록 혼합 (날짜 통합)
-   - Arrange: [체중: 오늘, 증상: 어제]
-   - Act: calculate(all_records, today)
-   - Assert: 2일
+    // Assert
+    expect(result, isNull);
+  });
 
-**Implementation Order**:
-1. Red: Test 1-3 작성
-2. Green: 날짜 정렬 및 연속성 체크 로직
-3. Refactor: 날짜 비교 로직 분리
-4. Red: Test 4-6 작성
-5. Green: 엣지케이스 처리
-6. Refactor: 중복 날짜 제거 로직 최적화
+  test('모든 증상의 가이드 목록 조회 가능', () async {
+    // Arrange
+    final mockRepo = MockCopingGuideRepository();
+    final expectedGuides = [
+      CopingGuide(symptomName: '메스꺼움', shortGuide: '...'),
+      CopingGuide(symptomName: '구토', shortGuide: '...'),
+    ];
+    when(() => mockRepo.getAllGuides())
+        .thenAnswer((_) async => expectedGuides);
 
-**Dependencies**: WeightLog, SymptomLog Entities
+    // Act
+    final result = await mockRepo.getAllGuides();
+
+    // Assert
+    expect(result, expectedGuides);
+    expect(result.length, 2);
+  });
+});
+```
 
 **Edge Cases**:
-- 미래 날짜 기록 방어
-- Timezone 처리 (UTC vs Local)
-- 같은 날 여러 기록 중복 제거
+- 빈 증상명 입력
+- null 입력 처리
+- Repository 조회 실패 시 예외 처리
+
+**Implementation Order**:
+1. Interface 메서드 시그니처 정의 (Red)
+2. Mock 구현 테스트 (Green)
+3. 메서드 문서화 (Refactor)
+
+**Dependencies**: CopingGuide Entity
 
 ---
 
-### Module 3: InsightGenerator (Domain)
+### 3.3. Infrastructure Layer - IsarCopingGuideRepository
 
-**Location**: `lib/features/dashboard/domain/usecases/insight_generator.dart`
+**Location**: `lib/features/coping_guide/infrastructure/repositories/isar_coping_guide_repository.dart`
 
-**Responsibility**: 데이터 분석 기반 인사이트 메시지 생성
+**Responsibility**: Isar를 통한 정적 가이드 데이터 조회 (Phase 0에서는 하드코딩된 데이터 반환)
 
-**Test Strategy**: Unit Test (Inside-Out)
+**Test Strategy**: Integration Test
 
 **Test Scenarios (Red Phase)**:
-1. 체중 1% 이상 감소 시 긍정 메시지
-   - Arrange: 전주 70kg, 이번주 69kg (1.4% 감소)
-   - Act: generate(weightData)
-   - Assert: "지난주 대비 1.4kg 감소했어요"
+```dart
+group('IsarCopingGuideRepository', () {
+  late Isar isar;
+  late IsarCopingGuideRepository repository;
 
-2. 연속 7일 기록 시 격려 메시지
-   - Arrange: 연속 7일
-   - Act: generate(continuousDays: 7)
-   - Assert: "7일 연속 기록 달성"
+  setUp(() async {
+    // Arrange - 테스트용 Isar 인스턴스 생성
+    isar = await Isar.open(
+      [CopingGuideSchema],
+      directory: await getTemporaryDirectory(),
+    );
+    repository = IsarCopingGuideRepository(isar);
+  });
 
-3. 부작용 평균 강도 2점 이상 감소
-   - Arrange: 전주 평균 8점, 이번주 평균 5점
-   - Act: generate(symptomData)
-   - Assert: "부작용이 3점 감소했어요"
+  tearDown(() async {
+    await isar.close(deleteFromDisk: true);
+  });
 
-4. 조건 미충족 시 일반 격려 메시지
-   - Arrange: 모든 조건 미충족
-   - Act: generate(allData)
-   - Assert: "꾸준히 기록하고 계시네요"
+  test('메스꺼움 증상의 가이드를 반환', () async {
+    // Act
+    final result = await repository.getGuideBySymptom('메스꺼움');
 
-5. 컨텍스트 태그 패턴 발견
-   - Arrange: #기름진음식 + 메스꺼움 5회
-   - Act: generate(symptomData)
-   - Assert: "기름진음식과 메스꺼움이 자주 함께 나타나요"
+    // Assert
+    expect(result, isNotNull);
+    expect(result!.symptomName, '메스꺼움');
+    expect(result.shortGuide, isNotEmpty);
+    expect(result.detailedSections, isNotEmpty);
+  });
 
-6. 목표 달성 가능성 예측
-   - Arrange: 현재 추세 주당 1kg 감소, 목표까지 8주
-   - Act: generate(weightTrend)
-   - Assert: "현재 추세라면 8주 내 목표 달성 가능"
+  test('모든 7가지 증상의 가이드를 반환', () async {
+    // Arrange
+    final expectedSymptoms = ['메스꺼움', '구토', '변비', '설사', '복통', '두통', '피로'];
 
-**Implementation Order**:
-1. Red: Test 1-2 작성 (체중, 연속 기록)
-2. Green: 기본 조건 체크 및 메시지 생성
-3. Refactor: 메시지 템플릿 분리
-4. Red: Test 3-4 작성 (부작용, 기본 메시지)
-5. Green: 우선순위 로직 추가
-6. Red: Test 5-6 작성 (P1 기능)
-7. Green: 고급 인사이트 구현
-8. Refactor: 조건 평가 로직 Strategy Pattern 적용
+    // Act
+    final result = await repository.getAllGuides();
 
-**Dependencies**: WeightLog, SymptomLog, DoseRecord Entities
+    // Assert
+    expect(result.length, 7);
+    for (var symptom in expectedSymptoms) {
+      expect(result.any((g) => g.symptomName == symptom), isTrue);
+    }
+  });
+
+  test('등록되지 않은 증상은 null 반환', () async {
+    // Act
+    final result = await repository.getGuideBySymptom('알 수 없는 증상');
+
+    // Assert
+    expect(result, isNull);
+  });
+
+  test('가이드 데이터는 긍정적인 톤으로 작성됨', () async {
+    // Act
+    final guides = await repository.getAllGuides();
+
+    // Assert
+    for (var guide in guides) {
+      expect(guide.shortGuide, isNot(contains('위험')));
+      expect(guide.shortGuide, isNot(contains('심각')));
+    }
+  });
+});
+```
 
 **Edge Cases**:
-- 데이터 부족 시 (1주 미만)
-- 여러 조건 동시 충족 시 우선순위
-- 태그 빈도 임계값 설정
+- Isar 초기화 실패
+- 데이터 파싱 오류
+- 빈 가이드 데이터 처리
+
+**Implementation Order**:
+1. 하드코딩된 7가지 증상 가이드 데이터 작성 (Red)
+2. Repository 인터페이스 구현 (Green)
+3. 가이드 데이터 상수로 분리 (Refactor)
+4. GuideSection 구조 적용 (Refactor)
+
+**Dependencies**: CopingGuideRepository Interface, Isar
 
 ---
 
-### Module 4: BadgeEvaluator (Domain)
+### 3.4. Infrastructure Layer - CopingGuideDto
 
-**Location**: `lib/features/dashboard/domain/usecases/badge_evaluator.dart`
+**Location**: `lib/features/coping_guide/infrastructure/dtos/coping_guide_dto.dart`
 
-**Responsibility**: 뱃지 획득 조건 평가 및 진행도 계산
+**Responsibility**: Isar 데이터 모델 및 Entity 변환
 
-**Test Strategy**: Unit Test (Inside-Out)
+**Test Strategy**: Unit Test
 
 **Test Scenarios (Red Phase)**:
-1. 연속 7일 기록 뱃지 획득
-   - Arrange: 연속 7일, badge: streak_7
-   - Act: evaluate(badge, userData)
-   - Assert: achieved, 100%
+```dart
+group('CopingGuideDto', () {
+  test('Entity에서 DTO로 변환', () {
+    // Arrange
+    final entity = CopingGuide(
+      symptomName: '메스꺼움',
+      shortGuide: '소량씩 자주 식사하세요',
+      detailedSections: [
+        GuideSection(title: '즉시 조치', content: '물 마시기'),
+      ],
+    );
 
-2. 연속 7일 뱃지 진행 중 (5일)
-   - Arrange: 연속 5일, badge: streak_7
-   - Act: evaluate(badge, userData)
-   - Assert: in_progress, 71% (5/7)
+    // Act
+    final dto = CopingGuideDto.fromEntity(entity);
 
-3. 체중 5% 감량 뱃지 획득
-   - Arrange: 시작 100kg, 현재 95kg
-   - Act: evaluate(badge: weight_5percent, userData)
-   - Assert: achieved, 100%
+    // Assert
+    expect(dto.symptomName, entity.symptomName);
+    expect(dto.shortGuide, entity.shortGuide);
+  });
 
-4. 첫 투여 완료 뱃지 획득
-   - Arrange: 투여 기록 1개 이상
-   - Act: evaluate(badge: first_dose, userData)
-   - Assert: achieved, 100%
+  test('DTO에서 Entity로 변환', () {
+    // Arrange
+    final dto = CopingGuideDto()
+      ..symptomName = '메스꺼움'
+      ..shortGuide = '소량씩 자주 식사하세요';
 
-5. 조건 미충족 뱃지 (locked)
-   - Arrange: 연속 0일, badge: streak_7
-   - Act: evaluate(badge, userData)
-   - Assert: locked, 0%
+    // Act
+    final entity = dto.toEntity();
 
-6. 여러 뱃지 동시 평가
-   - Arrange: 복수 뱃지 목록
-   - Act: evaluateAll(badges, userData)
-   - Assert: 각 뱃지별 상태 배열
+    // Assert
+    expect(entity.symptomName, dto.symptomName);
+    expect(entity.shortGuide, dto.shortGuide);
+  });
 
-**Implementation Order**:
-1. Red: Test 1-2 작성 (연속 기록 뱃지)
-2. Green: 연속 기록 조건 평가 로직
-3. Refactor: 조건 평가 인터페이스 추상화
-4. Red: Test 3-4 작성 (체중, 투여 뱃지)
-5. Green: 각 뱃지 타입별 평가 구현
-6. Red: Test 5-6 작성 (상태 관리)
-7. Green: 상태 변화 로직 및 일괄 평가
-8. Refactor: 뱃지 조건 Strategy Pattern 적용
+  test('JSON 직렬화/역직렬화 (detailedSections)', () {
+    // Arrange
+    final sections = [
+      GuideSection(title: '즉시 조치', content: '물 마시기'),
+      GuideSection(title: '식이 조절', content: '기름진 음식 피하기'),
+    ];
+    final dto = CopingGuideDto()
+      ..symptomName = '메스꺼움'
+      ..shortGuide = '...'
+      ..detailedSectionsJson = jsonEncode(
+        sections.map((s) => {'title': s.title, 'content': s.content}).toList(),
+      );
 
-**Dependencies**: BadgeDefinition, UserBadge Entities
+    // Act
+    final entity = dto.toEntity();
+
+    // Assert
+    expect(entity.detailedSections, isNotNull);
+    expect(entity.detailedSections!.length, 2);
+    expect(entity.detailedSections![0].title, '즉시 조치');
+  });
+});
+```
 
 **Edge Cases**:
-- 뱃지 조건이 null인 경우
-- 데이터 부족으로 평가 불가
-- 이미 획득한 뱃지 재평가
+- JSON 파싱 실패
+- null detailedSections 처리
+
+**Implementation Order**:
+1. Isar 스키마 정의 (Red)
+2. toEntity/fromEntity 메서드 구현 (Green)
+3. JSON 직렬화 로직 추가 (Refactor)
+
+**Dependencies**: CopingGuide Entity, Isar
 
 ---
 
-### Module 5: BadgeRepository Interface (Domain)
+### 3.5. Application Layer - CopingGuideNotifier
 
-**Location**: `lib/features/dashboard/domain/repositories/badge_repository.dart`
+**Location**: `lib/features/coping_guide/application/notifiers/coping_guide_notifier.dart`
 
-**Responsibility**: 뱃지 데이터 접근 인터페이스 정의
+**Responsibility**: 가이드 조회 및 피드백 상태 관리
 
-**Test Strategy**: Integration Test (Repository Pattern 검증)
-
-**Test Scenarios (Red Phase)**:
-1. 모든 뱃지 정의 조회
-   - Arrange: Mock Repository
-   - Act: getAllBadgeDefinitions()
-   - Assert: List<BadgeDefinition> 반환
-
-2. 사용자 뱃지 상태 조회
-   - Arrange: userId, Mock Repository
-   - Act: getUserBadges(userId)
-   - Assert: List<UserBadge> 반환
-
-3. 뱃지 상태 업데이트
-   - Arrange: UserBadge 객체
-   - Act: updateUserBadge(badge)
-   - Assert: 저장 성공
-
-4. 뱃지 획득 기록 생성
-   - Arrange: userId, badgeId
-   - Act: achieveBadge(userId, badgeId)
-   - Assert: achievedAt 타임스탬프 설정
-
-**Implementation Order**:
-1. Red: Interface 메서드 시그니처 정의
-2. Green: Mock Repository 구현 (테스트용)
-3. Red: Integration Test 작성
-4. Green: Isar Repository 구현
-5. Refactor: 에러 처리 추가
-
-**Dependencies**: BadgeDefinition, UserBadge Entities
-
----
-
-### Module 6: IsarBadgeRepository (Infrastructure)
-
-**Location**: `lib/features/dashboard/infrastructure/repositories/isar_badge_repository.dart`
-
-**Responsibility**: Isar 기반 뱃지 데이터 저장/조회
-
-**Test Strategy**: Unit Test (Mock Isar)
+**Test Strategy**: Unit Test (Mock Repository)
 
 **Test Scenarios (Red Phase)**:
-1. Isar에서 뱃지 정의 전체 조회
-   - Arrange: Mock Isar, seed data
-   - Act: getAllBadgeDefinitions()
-   - Assert: DTO → Entity 변환 검증
+```dart
+group('CopingGuideNotifier', () {
+  late MockCopingGuideRepository mockRepo;
+  late ProviderContainer container;
 
-2. 사용자별 뱃지 필터링 조회
-   - Arrange: userId, Mock Isar
-   - Act: getUserBadges(userId)
-   - Assert: userId로 필터링된 결과
+  setUp(() {
+    mockRepo = MockCopingGuideRepository();
+    container = ProviderContainer(
+      overrides: [
+        copingGuideRepositoryProvider.overrideWithValue(mockRepo),
+      ],
+    );
+  });
 
-3. 뱃지 상태 업데이트 (DTO 변환)
-   - Arrange: UserBadge Entity
-   - Act: updateUserBadge(badge)
-   - Assert: Entity → DTO 변환 후 Isar 저장
+  tearDown(() {
+    container.dispose();
+  });
 
-4. 뱃지 획득 시 타임스탬프 설정
-   - Arrange: userId, badgeId
-   - Act: achieveBadge(userId, badgeId)
-   - Assert: achievedAt이 현재 시각으로 설정
+  test('초기 상태는 loading', () {
+    // Act
+    final notifier = container.read(copingGuideNotifierProvider.notifier);
+    final state = container.read(copingGuideNotifierProvider);
 
-**Implementation Order**:
-1. Red: Test 1 작성 (조회)
-2. Green: DTO 정의 및 조회 구현
-3. Red: Test 2-4 작성 (필터링, 업데이트)
-4. Green: CRUD 로직 구현
-5. Refactor: DTO ↔ Entity 변환 로직 분리
+    // Assert
+    expect(state, isA<AsyncLoading>());
+  });
 
-**Dependencies**: Isar, BadgeDefinitionDto, UserBadgeDto
+  test('증상명으로 가이드 조회 성공', () async {
+    // Arrange
+    final expectedGuide = CopingGuide(
+      symptomName: '메스꺼움',
+      shortGuide: '소량씩 자주 식사하세요',
+    );
+    when(() => mockRepo.getGuideBySymptom('메스꺼움'))
+        .thenAnswer((_) async => expectedGuide);
 
----
+    // Act
+    final notifier = container.read(copingGuideNotifierProvider.notifier);
+    await notifier.getGuideBySymptom('메스꺼움');
 
-### Module 7: DashboardNotifier (Application)
+    // Assert
+    final state = container.read(copingGuideNotifierProvider);
+    expect(state.value, expectedGuide);
+    verify(() => mockRepo.getGuideBySymptom('메스꺼움')).called(1);
+  });
 
-**Location**: `lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
+  test('등록되지 않은 증상은 기본 가이드 반환', () async {
+    // Arrange
+    when(() => mockRepo.getGuideBySymptom('알 수 없는 증상'))
+        .thenAnswer((_) async => null);
 
-**Responsibility**: 대시보드 통합 상태 관리 및 데이터 조합
+    // Act
+    final notifier = container.read(copingGuideNotifierProvider.notifier);
+    await notifier.getGuideBySymptom('알 수 없는 증상');
 
-**Test Strategy**: Unit Test + Integration Test
+    // Assert
+    final state = container.read(copingGuideNotifierProvider);
+    expect(state.value, isNotNull);
+    expect(state.value!.symptomName, '일반');
+    expect(state.value!.shortGuide, contains('전문가와 상담'));
+  });
 
-**Test Scenarios (Red Phase)**:
-1. 초기 로드 시 모든 데이터 조합
-   - Arrange: Mock Repositories, Mock UseCases
-   - Act: build()
-   - Assert: DashboardData 완전한 상태 반환
+  test('모든 가이드 목록 조회', () async {
+    // Arrange
+    final expectedGuides = [
+      CopingGuide(symptomName: '메스꺼움', shortGuide: '...'),
+      CopingGuide(symptomName: '구토', shortGuide: '...'),
+    ];
+    when(() => mockRepo.getAllGuides())
+        .thenAnswer((_) async => expectedGuides);
 
-2. 주간 목표 진행도 계산 통합
-   - Arrange: 투여/체중/증상 데이터
-   - Act: build()
-   - Assert: WeeklyProgress 정확한 계산
+    // Act
+    final notifier = container.read(copingGuideListNotifierProvider.notifier);
+    await notifier.loadAllGuides();
 
-3. 연속 기록일 계산 통합
-   - Arrange: 기록 데이터
-   - Act: build()
-   - Assert: continuousRecordDays 정확한 값
+    // Assert
+    final state = container.read(copingGuideListNotifierProvider);
+    expect(state.value, expectedGuides);
+    expect(state.value!.length, 2);
+  });
 
-4. 인사이트 메시지 생성 통합
-   - Arrange: 전체 데이터
-   - Act: build()
-   - Assert: insightMessage 조건 충족 시 반환
+  test('피드백 제출 (선택적)', () async {
+    // Arrange
+    final notifier = container.read(copingGuideNotifierProvider.notifier);
 
-5. 뱃지 상태 평가 및 업데이트
-   - Arrange: 사용자 활동 데이터
-   - Act: build()
-   - Assert: 새 뱃지 획득 시 상태 변경
+    // Act
+    await notifier.submitFeedback('메스꺼움', helpful: true);
 
-6. Refresh 시 데이터 재계산
-   - Arrange: 기존 상태
-   - Act: refresh()
-   - Assert: AsyncValue.loading → data 전환
-
-7. 에러 처리 (Repository 실패)
-   - Arrange: Mock Repository throws
-   - Act: build()
-   - Assert: AsyncValue.error 상태
-
-**Implementation Order**:
-1. Red: Test 1-3 작성 (기본 데이터 조합)
-2. Green: build() 구현, Repository 호출
-3. Refactor: 데이터 조합 로직 분리
-4. Red: Test 4-5 작성 (UseCase 통합)
-5. Green: UseCase 호출 및 결과 통합
-6. Red: Test 6-7 작성 (상태 관리)
-7. Green: refresh(), error handling 구현
-8. Refactor: AsyncValue 패턴 정리
-
-**Dependencies**:
-- WeeklyProgressCalculator
-- ContinuousDaysCalculator
-- InsightGenerator
-- BadgeEvaluator
-- BadgeRepository
-- MedicationRepository
-- TrackingRepository
-- ProfileRepository
+    // Assert
+    // Phase 0에서는 로그만 남김 (Phase 1에서 서버 전송)
+    expect(true, isTrue); // 예외 없이 완료
+  });
+});
+```
 
 **Edge Cases**:
-- 일부 Repository 실패 시 Partial 데이터 표시
-- 계산 실패 시 기본값 사용
-- 동시 refresh 호출 debounce
-
----
-
-### Module 8: DashboardScreen (Presentation)
-
-**Location**: `lib/features/dashboard/presentation/screens/dashboard_screen.dart`
-
-**Responsibility**: 홈 대시보드 UI 렌더링 및 사용자 인터랙션
-
-**Test Strategy**: Widget Test + Manual QA
-
-**Test Scenarios (Widget Test)**:
-1. 로딩 상태 표시
-   - Arrange: AsyncValue.loading
-   - Act: Render DashboardScreen
-   - Assert: CircularProgressIndicator 표시
-
-2. 데이터 로드 후 모든 섹션 표시
-   - Arrange: AsyncValue.data(DashboardData)
-   - Act: Render
-   - Assert: 개인화 인사, 주간 진행도, 퀵 액션, 리포트, 뱃지 모두 표시
-
-3. 에러 상태 표시
-   - Arrange: AsyncValue.error
-   - Act: Render
-   - Assert: 에러 메시지 및 재시도 버튼 표시
-
-4. 퀵 액션 버튼 탭 시 네비게이션
-   - Arrange: DashboardScreen
-   - Act: Tap "체중 기록" 버튼
-   - Assert: 체중 기록 화면으로 이동
-
-5. 주간 리포트 터치 시 상세 화면
-   - Arrange: DashboardScreen
-   - Act: Tap 주간 리포트 영역
-   - Assert: 데이터 공유 모드로 이동
+- Repository 조회 실패 시 에러 상태
+- 네트워크 타임아웃 처리 (Phase 1)
+- 동시 다발적인 조회 요청
 
 **Implementation Order**:
-1. Red: Widget Test 1 작성 (로딩)
-2. Green: Scaffold 및 로딩 UI 구현
-3. Red: Widget Test 2 작성 (데이터 표시)
-4. Green: 각 섹션 위젯 배치
-5. Red: Widget Test 3-5 작성 (인터랙션)
-6. Green: 네비게이션 및 이벤트 핸들러
-7. Refactor: 위젯 분리 (QuickAction, Progress, Badge)
+1. AsyncNotifier 기본 구조 작성 (Red)
+2. getGuideBySymptom 구현 (Green)
+3. 기본 가이드 fallback 로직 추가 (Green)
+4. getAllGuides Provider 추가 (Refactor)
+5. 피드백 메서드 추가 (Refactor)
 
-**Dependencies**:
-- DashboardNotifier
-- QuickActionWidget
-- WeeklyProgressWidget
-- BadgeWidget
-
-**QA Sheet** (Manual Testing):
-- [ ] 개인화 인사 영역 정확한 데이터 표시
-- [ ] 주간 목표 진행도 진행 바 애니메이션 동작
-- [ ] 퀵 액션 버튼 터치 피드백 및 네비게이션
-- [ ] 뱃지 획득 시 알림 표시
-- [ ] 스크롤 성능 (60fps 유지)
-- [ ] 다크 모드 지원
-- [ ] 접근성 (TalkBack/VoiceOver)
+**Dependencies**: CopingGuideRepository
 
 ---
 
-### Module 9: QuickActionWidget (Presentation)
+### 3.6. Presentation Layer - CopingGuideCard Widget
 
-**Location**: `lib/features/dashboard/presentation/widgets/quick_action_widget.dart`
+**Location**: `lib/features/coping_guide/presentation/widgets/coping_guide_card.dart`
 
-**Responsibility**: 퀵 액션 버튼 UI
+**Responsibility**: 간단 버전 가이드 카드 UI
 
 **Test Strategy**: Widget Test
 
-**Test Scenarios**:
-1. 3개 버튼 모두 표시
-   - Arrange: QuickActionWidget
-   - Act: Render
-   - Assert: 체중, 증상, 투여 버튼 존재
+**Test Scenarios (Red Phase)**:
+```dart
+group('CopingGuideCard', () {
+  testWidgets('증상명과 간단 가이드 표시', (tester) async {
+    // Arrange
+    final guide = CopingGuide(
+      symptomName: '메스꺼움',
+      shortGuide: '소량씩 자주 식사하세요',
+    );
 
-2. 버튼 탭 시 콜백 호출
-   - Arrange: Mock callback
-   - Act: Tap "체중 기록"
-   - Assert: onWeightTap 호출
+    // Act
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CopingGuideCard(guide: guide),
+        ),
+      ),
+    );
 
-3. 터치 영역 충분 (44x44 이상)
-   - Arrange: QuickActionWidget
-   - Act: Render
-   - Assert: 각 버튼 크기 검증
+    // Assert
+    expect(find.text('메스꺼움 대처 가이드'), findsOneWidget);
+    expect(find.text('소량씩 자주 식사하세요'), findsOneWidget);
+  });
+
+  testWidgets('"더 자세한 가이드 보기" 버튼 표시', (tester) async {
+    // Arrange
+    final guide = CopingGuide(
+      symptomName: '메스꺼움',
+      shortGuide: '...',
+    );
+
+    // Act
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CopingGuideCard(guide: guide),
+        ),
+      ),
+    );
+
+    // Assert
+    expect(find.text('더 자세한 가이드 보기'), findsOneWidget);
+  });
+
+  testWidgets('피드백 위젯 표시', (tester) async {
+    // Arrange
+    final guide = CopingGuide(
+      symptomName: '메스꺼움',
+      shortGuide: '...',
+    );
+
+    // Act
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CopingGuideCard(guide: guide),
+        ),
+      ),
+    );
+
+    // Assert
+    expect(find.text('도움이 되었나요?'), findsOneWidget);
+    expect(find.text('예'), findsOneWidget);
+    expect(find.text('아니오'), findsOneWidget);
+  });
+
+  testWidgets('"더 자세한 가이드 보기" 탭 시 상세 화면 이동', (tester) async {
+    // Arrange
+    final guide = CopingGuide(
+      symptomName: '메스꺼움',
+      shortGuide: '...',
+    );
+    bool navigated = false;
+
+    // Act
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CopingGuideCard(
+            guide: guide,
+            onDetailTap: () => navigated = true,
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('더 자세한 가이드 보기'));
+    await tester.pumpAndSettle();
+
+    // Assert
+    expect(navigated, isTrue);
+  });
+});
+```
+
+**Edge Cases**:
+- 긴 텍스트 줄바꿈 처리
+- 다크모드 대응
 
 **Implementation Order**:
-1. Red: Test 1-2 작성
-2. Green: Row/Column 레이아웃, 버튼 구현
-3. Refactor: 버튼 스타일 상수화
+1. 기본 카드 레이아웃 (Red)
+2. 텍스트 표시 (Green)
+3. 버튼 추가 (Green)
+4. FeedbackWidget 통합 (Refactor)
+5. 스타일링 적용 (Refactor)
+
+**Dependencies**: CopingGuide Entity, FeedbackWidget
 
 **QA Sheet**:
-- [ ] 버튼 간격 균등
-- [ ] 아이콘 명확성
-- [ ] 터치 피드백 애니메이션
+- [ ] 카드가 화면에 정상 표시됨
+- [ ] 증상명이 카드 상단에 표시됨
+- [ ] 간단 가이드 텍스트가 읽기 쉬움
+- [ ] "더 자세한 가이드 보기" 버튼 탭 시 상세 화면 이동
+- [ ] 피드백 버튼이 하단에 표시됨
 
 ---
 
-### Module 10: WeeklyProgressWidget (Presentation)
+### 3.7. Presentation Layer - DetailedGuideScreen
 
-**Location**: `lib/features/dashboard/presentation/widgets/weekly_progress_widget.dart`
+**Location**: `lib/features/coping_guide/presentation/screens/detailed_guide_screen.dart`
 
-**Responsibility**: 주간 목표 진행도 시각화
+**Responsibility**: 단계별 상세 가이드 화면
 
 **Test Strategy**: Widget Test
 
-**Test Scenarios**:
-1. 진행 바 퍼센트 표시
-   - Arrange: WeeklyProgress(doseRate: 0.66)
-   - Act: Render
-   - Assert: "66%" 텍스트 표시
+**Test Scenarios (Red Phase)**:
+```dart
+group('DetailedGuideScreen', () {
+  testWidgets('증상명을 제목으로 표시', (tester) async {
+    // Arrange
+    final guide = CopingGuide(
+      symptomName: '메스꺼움',
+      shortGuide: '...',
+      detailedSections: [],
+    );
 
-2. 100% 달성 시 시각적 강조
-   - Arrange: WeeklyProgress(doseRate: 1.0)
-   - Act: Render
-   - Assert: 강조 색상 적용
+    // Act
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DetailedGuideScreen(guide: guide),
+      ),
+    );
 
-3. 0% 시 기본 상태
-   - Arrange: WeeklyProgress(doseRate: 0.0)
-   - Act: Render
-   - Assert: 회색 진행 바
+    // Assert
+    expect(find.text('메스꺼움 대처 가이드'), findsOneWidget);
+  });
+
+  testWidgets('4가지 섹션을 순서대로 표시', (tester) async {
+    // Arrange
+    final guide = CopingGuide(
+      symptomName: '메스꺼움',
+      shortGuide: '...',
+      detailedSections: [
+        GuideSection(title: '즉시 조치', content: '물 마시기'),
+        GuideSection(title: '식이 조절', content: '기름진 음식 피하기'),
+        GuideSection(title: '생활 습관', content: '충분한 휴식'),
+        GuideSection(title: '경과 관찰', content: '3일 후에도 지속 시 상담'),
+      ],
+    );
+
+    // Act
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DetailedGuideScreen(guide: guide),
+      ),
+    );
+
+    // Assert
+    expect(find.text('즉시 조치'), findsOneWidget);
+    expect(find.text('식이 조절'), findsOneWidget);
+    expect(find.text('생활 습관'), findsOneWidget);
+    expect(find.text('경과 관찰'), findsOneWidget);
+  });
+
+  testWidgets('스크롤 가능', (tester) async {
+    // Arrange
+    final guide = CopingGuide(
+      symptomName: '메스꺼움',
+      shortGuide: '...',
+      detailedSections: List.generate(
+        10,
+        (i) => GuideSection(title: '섹션 $i', content: '내용 ' * 50),
+      ),
+    );
+
+    // Act
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DetailedGuideScreen(guide: guide),
+      ),
+    );
+
+    // Assert
+    expect(find.byType(ListView), findsOneWidget);
+  });
+});
+```
+
+**Edge Cases**:
+- detailedSections가 비어있는 경우
+- 매우 긴 텍스트 처리
 
 **Implementation Order**:
-1. Red: Test 1 작성
-2. Green: LinearProgressIndicator 구현
-3. Red: Test 2-3 작성
-4. Green: 조건부 스타일 적용
-5. Refactor: 색상 테마 분리
+1. Scaffold 기본 구조 (Red)
+2. AppBar 추가 (Green)
+3. ListView로 섹션 표시 (Green)
+4. 섹션 구분선 추가 (Refactor)
+5. 스타일링 적용 (Refactor)
+
+**Dependencies**: CopingGuide Entity
 
 **QA Sheet**:
-- [ ] 진행 바 애니메이션 부드러움
-- [ ] 100% 달성 시 축하 효과
-- [ ] 레이블 가독성
+- [ ] 상세 가이드 화면이 정상 표시됨
+- [ ] 4가지 섹션이 명확히 구분됨
+- [ ] 스크롤이 부드러움
+- [ ] 뒤로가기 버튼 동작
+- [ ] 텍스트 가독성이 높음
 
 ---
 
-### Module 11: BadgeWidget (Presentation)
+### 3.8. Presentation Layer - FeedbackWidget
 
-**Location**: `lib/features/dashboard/presentation/widgets/badge_widget.dart`
+**Location**: `lib/features/coping_guide/presentation/widgets/feedback_widget.dart`
 
-**Responsibility**: 뱃지 표시 및 획득 알림
+**Responsibility**: 피드백 UI 및 상호작용
 
 **Test Strategy**: Widget Test
 
-**Test Scenarios**:
-1. 획득한 뱃지 색상 표시
-   - Arrange: UserBadge(status: achieved)
-   - Act: Render
-   - Assert: 컬러 아이콘
+**Test Scenarios (Red Phase)**:
+```dart
+group('FeedbackWidget', () {
+  testWidgets('"도움이 되었나요?" 텍스트 표시', (tester) async {
+    // Act
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: FeedbackWidget(
+            onFeedback: (helpful) {},
+          ),
+        ),
+      ),
+    );
 
-2. 미획득 뱃지 잠금 표시
-   - Arrange: UserBadge(status: locked)
-   - Act: Render
-   - Assert: 회색 + 잠금 아이콘
+    // Assert
+    expect(find.text('도움이 되었나요?'), findsOneWidget);
+  });
 
-3. 진행 중 뱃지 진행도 표시
-   - Arrange: UserBadge(status: in_progress, progress: 50)
-   - Act: Render
-   - Assert: "50%" 표시
+  testWidgets('"예", "아니오" 버튼 표시', (tester) async {
+    // Act
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: FeedbackWidget(
+            onFeedback: (helpful) {},
+          ),
+        ),
+      ),
+    );
 
-4. 뱃지 탭 시 상세 화면
-   - Arrange: BadgeWidget
-   - Act: Tap
-   - Assert: 뱃지 상세 다이얼로그
+    // Assert
+    expect(find.text('예'), findsOneWidget);
+    expect(find.text('아니오'), findsOneWidget);
+  });
+
+  testWidgets('"예" 탭 시 콜백 호출 및 감사 메시지 표시', (tester) async {
+    // Arrange
+    bool? callbackResult;
+
+    // Act
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: FeedbackWidget(
+            onFeedback: (helpful) => callbackResult = helpful,
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('예'));
+    await tester.pumpAndSettle();
+
+    // Assert
+    expect(callbackResult, isTrue);
+    expect(find.text('도움이 되어 기쁩니다!'), findsOneWidget);
+  });
+
+  testWidgets('"아니오" 탭 시 추가 옵션 표시', (tester) async {
+    // Arrange
+    bool? callbackResult;
+
+    // Act
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: FeedbackWidget(
+            onFeedback: (helpful) => callbackResult = helpful,
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('아니오'));
+    await tester.pumpAndSettle();
+
+    // Assert
+    expect(callbackResult, isFalse);
+    expect(find.text('다른 팁 보기'), findsOneWidget);
+    expect(find.text('의료진 상담 권장'), findsOneWidget);
+  });
+});
+```
+
+**Edge Cases**:
+- 빠른 연속 탭 방지
+- 피드백 제출 실패 시 재시도
 
 **Implementation Order**:
-1. Red: Test 1-3 작성
-2. Green: 조건부 렌더링 구현
-3. Red: Test 4 작성
-4. Green: 탭 이벤트 및 다이얼로그
-5. Refactor: 뱃지 아이콘 매핑 분리
+1. 기본 레이아웃 (Red)
+2. 버튼 추가 (Green)
+3. 상태 관리 추가 (Green)
+4. 감사 메시지 표시 로직 (Green)
+5. 추가 옵션 표시 로직 (Refactor)
+
+**Dependencies**: 없음
 
 **QA Sheet**:
-- [ ] 뱃지 획득 알림 애니메이션
-- [ ] 뱃지 목록 그리드 레이아웃
-- [ ] 상세 화면 조건 설명 명확
+- [ ] 피드백 질문이 명확히 표시됨
+- [ ] 버튼 탭 시 즉시 반응
+- [ ] 감사 메시지가 자연스럽게 표시됨
+- [ ] 추가 옵션이 적절히 표시됨
+
+---
+
+### 3.9. Presentation Layer - CopingGuideScreen
+
+**Location**: `lib/features/coping_guide/presentation/screens/coping_guide_screen.dart`
+
+**Responsibility**: 가이드 탭 화면 (증상 목록 및 직접 조회)
+
+**Test Strategy**: Widget Test
+
+**Test Scenarios (Red Phase)**:
+```dart
+group('CopingGuideScreen', () {
+  testWidgets('7가지 증상 목록 표시', (tester) async {
+    // Arrange
+    final container = ProviderContainer(
+      overrides: [
+        copingGuideListNotifierProvider.overrideWith((ref) {
+          return MockCopingGuideListNotifier([
+            CopingGuide(symptomName: '메스꺼움', shortGuide: '...'),
+            CopingGuide(symptomName: '구토', shortGuide: '...'),
+            CopingGuide(symptomName: '변비', shortGuide: '...'),
+            CopingGuide(symptomName: '설사', shortGuide: '...'),
+            CopingGuide(symptomName: '복통', shortGuide: '...'),
+            CopingGuide(symptomName: '두통', shortGuide: '...'),
+            CopingGuide(symptomName: '피로', shortGuide: '...'),
+          ]);
+        }),
+      ],
+    );
+
+    // Act
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: CopingGuideScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Assert
+    expect(find.text('메스꺼움'), findsOneWidget);
+    expect(find.text('구토'), findsOneWidget);
+    expect(find.text('변비'), findsOneWidget);
+    expect(find.text('설사'), findsOneWidget);
+    expect(find.text('복통'), findsOneWidget);
+    expect(find.text('두통'), findsOneWidget);
+    expect(find.text('피로'), findsOneWidget);
+  });
+
+  testWidgets('증상 탭 시 가이드 카드 표시', (tester) async {
+    // Arrange
+    final container = ProviderContainer(
+      overrides: [
+        copingGuideListNotifierProvider.overrideWith((ref) {
+          return MockCopingGuideListNotifier([
+            CopingGuide(symptomName: '메스꺼움', shortGuide: '소량씩 자주 식사하세요'),
+          ]);
+        }),
+      ],
+    );
+
+    // Act
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: CopingGuideScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('메스꺼움'));
+    await tester.pumpAndSettle();
+
+    // Assert
+    expect(find.text('소량씩 자주 식사하세요'), findsOneWidget);
+  });
+
+  testWidgets('로딩 중 인디케이터 표시', (tester) async {
+    // Arrange
+    final container = ProviderContainer(
+      overrides: [
+        copingGuideListNotifierProvider.overrideWith((ref) {
+          return MockCopingGuideListNotifier(null, isLoading: true);
+        }),
+      ],
+    );
+
+    // Act
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: CopingGuideScreen(),
+        ),
+      ),
+    );
+
+    // Assert
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
+});
+```
+
+**Edge Cases**:
+- 데이터 로딩 실패 시 에러 메시지
+- 빈 목록 처리
+
+**Implementation Order**:
+1. Scaffold 기본 구조 (Red)
+2. ListView 추가 (Green)
+3. Provider 연동 (Green)
+4. 로딩/에러 상태 처리 (Refactor)
+5. 탭 인터랙션 추가 (Refactor)
+
+**Dependencies**: CopingGuideNotifier, CopingGuideCard
+
+**QA Sheet**:
+- [ ] 가이드 탭 화면이 정상 표시됨
+- [ ] 7가지 증상이 모두 나열됨
+- [ ] 증상 탭 시 가이드가 표시됨
+- [ ] 로딩 인디케이터가 자연스러움
+- [ ] 에러 발생 시 안내 메시지 표시
 
 ---
 
 ## 4. TDD Workflow
 
-### Phase 1: Domain Layer (Inside-Out)
-1. **Start**: WeeklyProgressCalculator 테스트 작성
-2. **Red**: Test 실패 확인
-3. **Green**: 최소 구현으로 테스트 통과
-4. **Refactor**: 계산 로직 메서드 분리
-5. **Commit**: "feat(dashboard): implement WeeklyProgressCalculator"
+### 단계별 진행 순서
 
-### Phase 2: Domain Layer (계속)
-6. **Red**: ContinuousDaysCalculator 테스트 작성
-7. **Green**: 날짜 정렬 및 연속성 체크
-8. **Refactor**: 날짜 비교 유틸 분리
-9. **Commit**: "feat(dashboard): implement ContinuousDaysCalculator"
+1. **Domain Entities 구현** (Inside-Out)
+   - Red: CopingGuide, GuideSection 테스트 작성
+   - Green: 최소 구현
+   - Refactor: Immutable 구조로 개선
+   - Commit: "feat: add CopingGuide entities"
 
-### Phase 3: Domain Layer (고급 로직)
-10. **Red**: InsightGenerator 테스트 (기본 조건)
-11. **Green**: 체중/연속기록 조건 구현
-12. **Refactor**: 메시지 템플릿 분리
-13. **Red**: InsightGenerator 테스트 (고급 조건 - P1)
-14. **Green**: 패턴 분석 및 예측 로직
-15. **Refactor**: Strategy Pattern 적용
-16. **Commit**: "feat(dashboard): implement InsightGenerator"
+2. **Repository Interface 정의**
+   - Red: Repository 인터페이스 테스트 (Mock)
+   - Green: Interface 정의
+   - Refactor: 문서화 추가
+   - Commit: "feat: add CopingGuideRepository interface"
 
-### Phase 4: Domain Layer (뱃지 시스템)
-17. **Red**: BadgeEvaluator 테스트 작성
-18. **Green**: 뱃지 조건 평가 로직
-19. **Refactor**: 조건 평가 인터페이스 추상화
-20. **Commit**: "feat(dashboard): implement BadgeEvaluator"
+3. **Infrastructure - DTO 구현**
+   - Red: DTO 변환 테스트
+   - Green: fromEntity/toEntity 구현
+   - Refactor: JSON 직렬화 추가
+   - Commit: "feat: add CopingGuideDto"
 
-### Phase 5: Infrastructure Layer
-21. **Red**: BadgeRepository Interface 정의
-22. **Green**: Mock Repository 구현
-23. **Red**: IsarBadgeRepository 테스트
-24. **Green**: Isar CRUD 구현
-25. **Refactor**: DTO 변환 로직 분리
-26. **Commit**: "feat(dashboard): implement BadgeRepository"
+4. **Infrastructure - Repository 구현**
+   - Red: IsarCopingGuideRepository 테스트
+   - Green: 하드코딩된 7가지 증상 가이드 반환
+   - Refactor: 가이드 데이터 상수화
+   - Commit: "feat: implement IsarCopingGuideRepository"
 
-### Phase 6: Application Layer
-27. **Red**: DashboardNotifier 테스트 (기본 데이터)
-28. **Green**: build() 구현, Repository 호출
-29. **Refactor**: 데이터 조합 로직 분리
-30. **Red**: DashboardNotifier 테스트 (UseCase 통합)
-31. **Green**: UseCase 호출 및 결과 통합
-32. **Red**: DashboardNotifier 테스트 (상태 관리)
-33. **Green**: refresh(), error handling
-34. **Refactor**: AsyncValue 패턴 정리
-35. **Commit**: "feat(dashboard): implement DashboardNotifier"
+5. **Application - Notifier 구현**
+   - Red: CopingGuideNotifier 테스트
+   - Green: 기본 조회 로직 구현
+   - Refactor: 기본 가이드 fallback 추가
+   - Commit: "feat: add CopingGuideNotifier"
 
-### Phase 7: Presentation Layer (Outside-In)
-36. **Red**: DashboardScreen Widget Test (로딩)
-37. **Green**: Scaffold 및 로딩 UI
-38. **Red**: DashboardScreen Widget Test (데이터 표시)
-39. **Green**: 각 섹션 위젯 배치
-40. **Refactor**: 위젯 분리
-41. **Commit**: "feat(dashboard): implement DashboardScreen"
+6. **Presentation - FeedbackWidget**
+   - Red: Widget 테스트
+   - Green: 기본 UI 구현
+   - Refactor: 상태 관리 및 스타일링
+   - Commit: "feat: add FeedbackWidget"
 
-### Phase 8: Presentation Layer (자식 위젯)
-42. **Red**: QuickActionWidget 테스트
-43. **Green**: 퀵 액션 버튼 구현
-44. **Red**: WeeklyProgressWidget 테스트
-45. **Green**: 진행 바 구현
-46. **Red**: BadgeWidget 테스트
-47. **Green**: 뱃지 표시 및 알림
-48. **Refactor**: 공통 스타일 분리
-49. **Commit**: "feat(dashboard): implement dashboard widgets"
+7. **Presentation - CopingGuideCard**
+   - Red: Widget 테스트
+   - Green: 카드 레이아웃 구현
+   - Refactor: FeedbackWidget 통합
+   - Commit: "feat: add CopingGuideCard"
 
-### Phase 9: Integration & QA
-50. **Integration Test**: 전체 플로우 시나리오 테스트
-51. **Manual QA**: QA Sheet 항목 체크
-52. **Refactor**: 성능 최적화 (Memoization, LazyLoading)
-53. **Commit**: "test(dashboard): add integration tests"
-54. **Commit**: "refactor(dashboard): optimize performance"
+8. **Presentation - DetailedGuideScreen**
+   - Red: Widget 테스트
+   - Green: 상세 화면 구현
+   - Refactor: 스타일링 개선
+   - Commit: "feat: add DetailedGuideScreen"
+
+9. **Presentation - CopingGuideScreen**
+   - Red: Widget 테스트
+   - Green: 목록 화면 구현
+   - Refactor: Provider 연동 및 에러 처리
+   - Commit: "feat: add CopingGuideScreen"
+
+10. **F002 연동 테스트**
+    - Integration Test: 증상 기록 후 가이드 자동 표시
+    - Commit: "feat: integrate coping guide with symptom tracking"
+
+### Commit 포인트
+- 각 모듈의 Red → Green → Refactor 사이클 완료 시
+- 테스트가 모두 통과한 상태에서만 커밋
+- 커밋 메시지는 conventional commits 형식 준수
 
 ### 완료 기준
-- [ ] 모든 Unit Test 통과 (Domain 100%, Application 95%)
-- [ ] 모든 Widget Test 통과
-- [ ] Integration Test 통과
-- [ ] QA Sheet 모든 항목 Pass
-- [ ] 코드 리뷰 완료
-- [ ] Refactoring 완료 (중복 제거, SOLID 원칙 준수)
+- [ ] 모든 Unit Tests 통과
+- [ ] 모든 Widget Tests 통과
+- [ ] Integration Tests 통과 (F002 연동)
+- [ ] Code Coverage 80% 이상
+- [ ] QA Sheet 모든 항목 확인
+- [ ] 문서화 완료
 
 ---
 
-## 5. 핵심 원칙
-
-### TDD Cycle
-- **Red**: 실패하는 테스트 먼저 작성 (AAA 패턴)
-- **Green**: 최소한의 코드로 테스트 통과
-- **Refactor**: 중복 제거, 구조 개선 (테스트는 Green 유지)
-
-### FIRST Principles
-- **Fast**: Domain 로직 테스트 < 10ms
-- **Independent**: 테스트 간 순서 무관
-- **Repeatable**: 환경 무관 (Mock 활용)
-- **Self-validating**: 명확한 Pass/Fail
-- **Timely**: 코드 작성 직전 테스트 작성
-
-### Test Pyramid
-- **Unit Tests (70%)**: Domain/Application Layer
-- **Integration Tests (20%)**: Repository Pattern 검증
-- **Widget Tests (10%)**: Presentation Layer
+## 5. 핵심 원칙 준수
 
 ### Layer Dependency
-- Presentation → Application → Domain ← Infrastructure
-- Domain Layer는 Flutter/Isar 의존성 없음
-- Repository Pattern 엄격히 준수
+```
+Presentation → Application → Domain ← Infrastructure
+```
 
-### Commit Strategy
-- 작은 단위로 자주 커밋 (Red → Green → Refactor 각 단계)
-- 커밋 메시지: Conventional Commits 형식
-- 각 모듈 완료 시 기능 커밋
+### Repository Pattern
+- Application/Presentation은 Repository Interface만 의존
+- Infrastructure에서 IsarCopingGuideRepository 구현
+- Phase 1 전환 시 SupabaseCopingGuideRepository로 1줄 변경
 
----
+### Test-First Approach
+- 모든 코드 작성 전 테스트 작성
+- Red → Green → Refactor 사이클 엄격히 준수
+- 테스트는 행동(behavior) 검증, 구현 세부사항은 테스트하지 않음
 
-## 6. Edge Cases & Error Handling
+### FIRST Principles
+- Fast: 모든 테스트는 밀리초 단위로 실행
+- Independent: 테스트 간 공유 상태 없음
+- Repeatable: 동일한 결과 보장
+- Self-validating: Pass/Fail 명확
+- Timely: 코드 작성 직전에 테스트 작성
 
-### 데이터 부족 시나리오
-- 신규 사용자 (기록 없음): 환영 메시지 표시
-- 일부 데이터만 존재: Partial 렌더링
-- 계산 불가 (목표 미설정): 기본값 사용
-
-### 성능 최적화
-- 대시보드 데이터 캐싱 (Riverpod autoDispose: false)
-- 뱃지 평가 Memoization
-- 차트 렌더링 LazyLoading
-
-### 네트워크 & 동기화
-- Phase 0: 로컬 DB만 사용 (Isar)
-- Repository 실패 시 캐시 데이터 사용
-- Retry 로직 (최대 3회)
-
-### 접근성
-- 모든 위젯 Semantics 레이블
-- 색상 대비 WCAG 2.1 AA 기준
-- 터치 영역 최소 44x44
-
----
-
-## 7. Dependencies
-
-### 기존 Feature 의존성
-- **F000 (Onboarding)**: UserProfile, DosagePlan
-- **F001 (Medication)**: DoseSchedule, DoseRecord
-- **F002 (Tracking)**: WeightLog, SymptomLog
-- **F005 (Emergency)**: EmergencySymptomCheck (타임라인용)
-
-### Repository 의존성
-- MedicationRepository (투여 기록)
-- TrackingRepository (체중/증상 기록)
-- ProfileRepository (사용자 프로필)
-- BadgeRepository (뱃지 데이터)
-
-### 외부 패키지
-- `riverpod: ^2.x` (상태 관리)
-- `fl_chart: ^0.66+` (차트 렌더링)
-- `isar: ^3.x` (로컬 DB)
-- `flutter_test` (테스트 프레임워크)
-
----
-
-## 8. Implementation Timeline
-
-| Phase | 작업 | 예상 시간 |
-|-------|------|----------|
-| 1 | Domain Layer (Calculator, Generator, Evaluator) | 8 시간 |
-| 2 | Infrastructure Layer (BadgeRepository) | 3 시간 |
-| 3 | Application Layer (DashboardNotifier) | 4 시간 |
-| 4 | Presentation Layer (Screen + Widgets) | 6 시간 |
-| 5 | Integration Test & QA | 3 시간 |
-| 6 | Refactoring & 문서화 | 2 시간 |
-| **Total** | | **26 시간** |
-
----
-
-## 9. Success Metrics
-
-- **Test Coverage**: Domain 100%, Application 95%, Overall 85%+
-- **Performance**: 대시보드 로딩 < 500ms
-- **Accessibility**: WCAG 2.1 AA 준수
-- **Code Quality**: No Linter Warnings, 순환 복잡도 < 10
-- **User Experience**: 주간 목표 100% 달성 시 명확한 피드백
+### Code Quality
+- 모든 코드는 분석 도구 경고 없음 (flutter analyze)
+- 테스트 코드도 프로덕션 코드 수준 품질 유지
+- 작은 단위로 커밋하여 이력 추적 용이

@@ -1,26 +1,20 @@
-# UF-013: 주간 기록 목표 조정 - Implementation Plan (TDD)
+# UF-013: 주간 기록 목표 조정 Implementation Plan
 
 ## 1. 개요
 
-주간 기록 목표 조정 기능은 사용자가 체중 및 부작용 기록의 주간 목표 횟수를 수정할 수 있는 기능이다. 모든 구현은 TDD(Red → Green → Refactor) 사이클을 엄격히 따른다.
+주간 체중 기록 목표와 부작용 기록 목표를 사용자가 직접 조정할 수 있는 기능을 구현한다. 목표 변경 시 홈 대시보드의 주간 진행도가 즉시 재계산된다.
 
-### 모듈 구성
+**모듈 목록:**
+- **Domain**: UserProfile Entity, ProfileRepository Interface
+- **Infrastructure**: IsarProfileRepository, UserProfileDto
+- **Application**: ProfileNotifier (목표 업데이트 메서드 추가)
+- **Presentation**: WeeklyGoalSettingsScreen, WeeklyGoalInputWidget
 
-| Module | Location | Layer | TDD Strategy |
-|--------|----------|-------|--------------|
-| WeeklyGoalInput | domain/entities/ | Domain | Inside-Out (Unit) |
-| UserProfile | domain/entities/ | Domain | Inside-Out (Unit) |
-| ProfileRepository | domain/repositories/ | Domain | Inside-Out (Unit) |
-| IsarProfileRepository | infrastructure/repositories/ | Infrastructure | Integration |
-| ProfileNotifier | application/notifiers/ | Application | Inside-Out (Unit) |
-| DashboardNotifier | application/notifiers/ | Application | Integration |
-| WeeklyGoalSettingsScreen | presentation/screens/ | Presentation | Outside-In (Widget) |
-| WeeklyGoalInputWidget | presentation/widgets/ | Presentation | Outside-In (Widget) |
-
-### TDD 적용 범위
-- **Unit Tests (70%)**: Domain Entities, UseCases, Validation Logic
-- **Integration Tests (20%)**: Repository, Notifier State Changes
-- **Widget Tests (10%)**: UI Components, User Interactions
+**TDD 적용 범위:**
+- Domain Layer: 100% (Entity 비즈니스 로직)
+- Application Layer: 100% (Notifier 상태 관리)
+- Infrastructure Layer: 100% (Repository 구현)
+- Presentation Layer: Manual QA (위젯 테스트)
 
 ---
 
@@ -28,1131 +22,430 @@
 
 ```mermaid
 graph TD
-    %% Presentation Layer
-    Screen[WeeklyGoalSettingsScreen] --> Notifier[ProfileNotifier]
-    Screen --> Widget[WeeklyGoalInputWidget]
-    Widget --> Validator[WeeklyGoalValidator]
+    subgraph Presentation Layer
+        A[WeeklyGoalSettingsScreen]
+        B[WeeklyGoalInputWidget]
+    end
 
-    %% Application Layer
-    Notifier --> RepoInterface[ProfileRepository Interface]
-    Notifier --> Dashboard[DashboardNotifier]
+    subgraph Application Layer
+        C[ProfileNotifier]
+        D[DashboardNotifier]
+    end
 
-    %% Domain Layer
-    RepoInterface --> Entity[UserProfile]
-    Entity --> ValueObject[WeeklyGoalInput]
-    Validator --> ValueObject
+    subgraph Domain Layer
+        E[UserProfile Entity]
+        F[ProfileRepository Interface]
+    end
 
-    %% Infrastructure Layer
-    RepoImpl[IsarProfileRepository] -.implements.-> RepoInterface
-    RepoImpl --> DTO[UserProfileDto]
-    RepoImpl --> Isar[(Isar DB)]
+    subgraph Infrastructure Layer
+        G[IsarProfileRepository]
+        H[UserProfileDto]
+        I[Isar DB]
+    end
 
-    %% Dependencies
-    Notifier -.reads.-> RepoImpl
-    Dashboard -.invalidates.-> Cache[Dashboard Cache]
+    A --> B
+    A --> C
+    B --> C
+    C --> F
+    F --> G
+    G --> H
+    H --> I
+    C --> D
+    E -.defines.- F
 ```
+
+**데이터 흐름:**
+1. User Input (Screen) → ProfileNotifier.updateWeeklyGoals()
+2. ProfileNotifier → ProfileRepository.updateWeeklyGoals()
+3. IsarProfileRepository → Isar DB (UPDATE user_profiles)
+4. ProfileNotifier → invalidate DashboardNotifier
+5. DashboardNotifier → recalculate weekly progress
+6. UI → reflect updated progress
 
 ---
 
 ## 3. Implementation Plan
 
-### 3.1. WeeklyGoalInput (Value Object)
-
-**Location**: `lib/features/profile/domain/entities/weekly_goal_input.dart`
-
-**Responsibility**: 주간 목표 입력값 검증 및 불변성 보장
-
-**Test Strategy**: Unit Test (Inside-Out)
-
-**Test Scenarios (Red Phase)**:
-
-```dart
-// Test File: test/features/profile/domain/entities/weekly_goal_input_test.dart
-
-group('WeeklyGoalInput Validation', () {
-  // AAA Pattern
-  test('should create valid WeeklyGoalInput with value 0', () {
-    // Arrange & Act
-    final goal = WeeklyGoalInput(value: 0);
-
-    // Assert
-    expect(goal.value, 0);
-  });
-
-  test('should create valid WeeklyGoalInput with value 7', () {
-    // Arrange & Act
-    final goal = WeeklyGoalInput(value: 7);
-
-    // Assert
-    expect(goal.value, 7);
-  });
-
-  test('should throw exception when value is negative', () {
-    // Arrange, Act & Assert
-    expect(
-      () => WeeklyGoalInput(value: -1),
-      throwsA(isA<InvalidWeeklyGoalException>()),
-    );
-  });
-
-  test('should throw exception when value exceeds 7', () {
-    // Arrange, Act & Assert
-    expect(
-      () => WeeklyGoalInput(value: 8),
-      throwsA(isA<InvalidWeeklyGoalException>()),
-    );
-  });
-
-  test('should be equal when values are same', () {
-    // Arrange
-    final goal1 = WeeklyGoalInput(value: 5);
-    final goal2 = WeeklyGoalInput(value: 5);
-
-    // Act & Assert
-    expect(goal1, goal2);
-  });
-});
-```
-
-**Implementation Order (TDD Cycle)**:
-1. RED: Write test for valid value 0
-2. GREEN: Implement minimal constructor
-3. RED: Write test for valid value 7
-4. GREEN: Keep implementation minimal
-5. RED: Write test for negative value exception
-6. GREEN: Add validation logic
-7. RED: Write test for value > 7 exception
-8. GREEN: Complete validation
-9. RED: Write equality test
-10. GREEN: Override `==` and `hashCode`
-11. REFACTOR: Extract validation logic, improve naming
-
-**Dependencies**: None (Pure Dart)
-
----
-
-### 3.2. UserProfile (Entity Update)
+### 3.1. Domain Layer: UserProfile Entity
 
 **Location**: `lib/features/profile/domain/entities/user_profile.dart`
 
-**Responsibility**: 사용자 프로필 도메인 모델 (주간 목표 필드 포함)
+**Responsibility**:
+- 주간 목표 데이터 모델 정의
+- 주간 목표 검증 로직 (0~7 범위)
 
-**Test Strategy**: Unit Test (Inside-Out)
+**Test Strategy**: Unit Test
 
 **Test Scenarios (Red Phase)**:
-
 ```dart
-// Test File: test/features/profile/domain/entities/user_profile_test.dart
+describe('UserProfile Entity')
+  test('주간 체중 기록 목표가 0~7 범위 내인지 검증')
+    // Arrange: weeklyWeightRecordGoal = -1
+    // Act: UserProfile 생성
+    // Assert: ArgumentError 발생
 
-group('UserProfile Weekly Goal Management', () {
-  test('should create UserProfile with default weekly goals', () {
-    // Arrange & Act
-    final profile = UserProfile(
-      userId: 'user1',
-      targetWeightKg: 70.0,
-      weeklyWeightRecordGoal: WeeklyGoalInput(value: 7),
-      weeklySymptomRecordGoal: WeeklyGoalInput(value: 7),
-    );
+  test('주간 부작용 기록 목표가 0~7 범위 내인지 검증')
+    // Arrange: weeklySymptomRecordGoal = 8
+    // Act: UserProfile 생성
+    // Assert: ArgumentError 발생
 
-    // Assert
-    expect(profile.weeklyWeightRecordGoal.value, 7);
-    expect(profile.weeklySymptomRecordGoal.value, 7);
-  });
+  test('유효한 주간 목표로 UserProfile 생성 성공')
+    // Arrange: weeklyWeightRecordGoal = 5, weeklySymptomRecordGoal = 3
+    // Act: UserProfile 생성
+    // Assert: 생성 성공, 필드 값 일치
 
-  test('should update weekly weight goal', () {
-    // Arrange
-    final profile = UserProfile(
-      userId: 'user1',
-      targetWeightKg: 70.0,
-      weeklyWeightRecordGoal: WeeklyGoalInput(value: 7),
-      weeklySymptomRecordGoal: WeeklyGoalInput(value: 7),
-    );
+  test('copyWith로 주간 목표만 변경 가능')
+    // Arrange: 기존 UserProfile
+    // Act: copyWith(weeklyWeightRecordGoal: 4)
+    // Assert: 목표만 변경, 나머지 필드 유지
 
-    // Act
-    final updated = profile.copyWith(
-      weeklyWeightRecordGoal: WeeklyGoalInput(value: 5),
-    );
-
-    // Assert
-    expect(updated.weeklyWeightRecordGoal.value, 5);
-    expect(updated.weeklySymptomRecordGoal.value, 7); // unchanged
-  });
-
-  test('should update weekly symptom goal', () {
-    // Arrange
-    final profile = UserProfile(
-      userId: 'user1',
-      targetWeightKg: 70.0,
-      weeklyWeightRecordGoal: WeeklyGoalInput(value: 7),
-      weeklySymptomRecordGoal: WeeklyGoalInput(value: 7),
-    );
-
-    // Act
-    final updated = profile.copyWith(
-      weeklySymptomRecordGoal: WeeklyGoalInput(value: 3),
-    );
-
-    // Assert
-    expect(updated.weeklySymptomRecordGoal.value, 3);
-    expect(updated.weeklyWeightRecordGoal.value, 7); // unchanged
-  });
-});
+  test('주간 목표 0 허용 (경고용)')
+    // Arrange: weeklyWeightRecordGoal = 0
+    // Act: UserProfile 생성
+    // Assert: 생성 성공
 ```
 
 **Implementation Order (TDD Cycle)**:
-1. RED: Write test for default goals
-2. GREEN: Add fields to UserProfile entity
-3. RED: Write test for updating weight goal
-4. GREEN: Implement `copyWith` method
-5. RED: Write test for updating symptom goal
-6. GREEN: Complete `copyWith` logic
-7. REFACTOR: Ensure immutability
+1. Red: 테스트 작성 (Entity 검증 로직)
+2. Green: Entity에 검증 로직 추가
+3. Refactor: Entity 불변성 확인
 
-**Dependencies**: WeeklyGoalInput
+**Dependencies**: 없음 (Pure Dart)
 
 ---
 
-### 3.3. ProfileRepository (Interface)
+### 3.2. Domain Layer: ProfileRepository Interface
 
 **Location**: `lib/features/profile/domain/repositories/profile_repository.dart`
 
-**Responsibility**: 프로필 데이터 접근 추상화
+**Responsibility**:
+- UserProfile CRUD 인터페이스 정의
+- updateWeeklyGoals 메서드 시그니처 정의
 
-**Test Strategy**: Unit Test (Mock Implementation)
+**Test Strategy**: Unit Test (Mock 사용)
 
 **Test Scenarios (Red Phase)**:
-
 ```dart
-// Test File: test/features/profile/domain/repositories/profile_repository_test.dart
+describe('ProfileRepository Interface')
+  test('updateWeeklyGoals 메서드 시그니처 존재')
+    // Arrange: Mock ProfileRepository
+    // Act: updateWeeklyGoals(userId, 5, 3) 호출
+    // Assert: 메서드 호출 성공
 
-group('ProfileRepository Interface', () {
-  late ProfileRepository repository;
-
-  setUp(() {
-    repository = MockProfileRepository();
-  });
-
-  test('should update weekly goals', () async {
-    // Arrange
-    final profile = UserProfile(
-      userId: 'user1',
-      targetWeightKg: 70.0,
-      weeklyWeightRecordGoal: WeeklyGoalInput(value: 5),
-      weeklySymptomRecordGoal: WeeklyGoalInput(value: 3),
-    );
-
-    when(() => repository.updateWeeklyGoals(
-      userId: 'user1',
-      weightGoal: 5,
-      symptomGoal: 3,
-    )).thenAnswer((_) async => profile);
-
-    // Act
-    final result = await repository.updateWeeklyGoals(
-      userId: 'user1',
-      weightGoal: 5,
-      symptomGoal: 3,
-    );
-
-    // Assert
-    expect(result.weeklyWeightRecordGoal.value, 5);
-    expect(result.weeklySymptomRecordGoal.value, 3);
-  });
-
-  test('should throw exception on invalid data', () async {
-    // Arrange
-    when(() => repository.updateWeeklyGoals(
-      userId: 'user1',
-      weightGoal: -1,
-      symptomGoal: 3,
-    )).thenThrow(InvalidWeeklyGoalException());
-
-    // Act & Assert
-    expect(
-      () => repository.updateWeeklyGoals(
-        userId: 'user1',
-        weightGoal: -1,
-        symptomGoal: 3,
-      ),
-      throwsA(isA<InvalidWeeklyGoalException>()),
-    );
-  });
-});
+  test('updateWeeklyGoals 반환 타입 Future<void>')
+    // Arrange: Mock ProfileRepository
+    // Act: updateWeeklyGoals() 실행
+    // Assert: Future<void> 반환
 ```
 
 **Implementation Order (TDD Cycle)**:
-1. RED: Write interface test with mock
-2. GREEN: Define abstract method signatures
-3. RED: Write exception test
-4. GREEN: Document expected exceptions
-5. REFACTOR: Add documentation
+1. Red: 테스트 작성 (Interface 메서드 시그니처)
+2. Green: Interface에 updateWeeklyGoals 추가
+3. Refactor: 메서드 문서화
 
-**Dependencies**: UserProfile
+**Dependencies**: UserProfile Entity
 
 ---
 
-### 3.4. IsarProfileRepository (Implementation)
+### 3.3. Infrastructure Layer: UserProfileDto
+
+**Location**: `lib/features/profile/infrastructure/dtos/user_profile_dto.dart`
+
+**Responsibility**:
+- Isar DB 스키마 정의
+- Entity ↔ DTO 변환
+
+**Test Strategy**: Unit Test
+
+**Test Scenarios (Red Phase)**:
+```dart
+describe('UserProfileDto')
+  test('Entity → DTO 변환 (fromEntity)')
+    // Arrange: UserProfile Entity
+    // Act: UserProfileDto.fromEntity(profile)
+    // Assert: DTO 필드 값 일치
+
+  test('DTO → Entity 변환 (toEntity)')
+    // Arrange: UserProfileDto
+    // Act: dto.toEntity()
+    // Assert: Entity 필드 값 일치
+
+  test('주간 목표 필드 NOT NULL 제약 확인')
+    // Arrange: weeklyWeightRecordGoal = null
+    // Act: DTO 생성 시도
+    // Assert: 컴파일 에러 또는 실행 시 에러
+
+  test('주간 목표 기본값 7 설정')
+    // Arrange: 기본값 사용
+    // Act: DTO 생성
+    // Assert: weeklyWeightRecordGoal = 7, weeklySymptomRecordGoal = 7
+```
+
+**Implementation Order (TDD Cycle)**:
+1. Red: 테스트 작성 (DTO ↔ Entity 변환)
+2. Green: DTO 구현 (fromEntity/toEntity)
+3. Refactor: 변환 로직 최적화
+
+**Dependencies**: UserProfile Entity, Isar
+
+---
+
+### 3.4. Infrastructure Layer: IsarProfileRepository
 
 **Location**: `lib/features/profile/infrastructure/repositories/isar_profile_repository.dart`
 
-**Responsibility**: Isar DB를 통한 프로필 데이터 영속화
+**Responsibility**:
+- ProfileRepository 구현
+- Isar DB 접근 및 트랜잭션 관리
 
-**Test Strategy**: Integration Test (Real Isar Instance)
+**Test Strategy**: Integration Test (Isar Test Instance)
 
 **Test Scenarios (Red Phase)**:
-
 ```dart
-// Test File: test/features/profile/infrastructure/repositories/isar_profile_repository_test.dart
+describe('IsarProfileRepository.updateWeeklyGoals')
+  test('주간 목표 업데이트 성공')
+    // Arrange: Isar DB에 UserProfile 존재
+    // Act: updateWeeklyGoals(userId, 5, 3)
+    // Assert: DB에서 조회 시 목표 변경 확인
 
-group('IsarProfileRepository Integration', () {
-  late Isar isar;
-  late IsarProfileRepository repository;
+  test('updated_at 필드 갱신 확인')
+    // Arrange: 기존 UserProfile (updated_at = t1)
+    // Act: updateWeeklyGoals()
+    // Assert: updated_at = t2 (t2 > t1)
 
-  setUp(() async {
-    isar = await Isar.open(
-      [UserProfileDtoSchema],
-      directory: await getTemporaryDirectory(),
-      name: 'test_isar_${DateTime.now().millisecondsSinceEpoch}',
-    );
-    repository = IsarProfileRepository(isar);
-  });
+  test('존재하지 않는 userId로 업데이트 시도')
+    // Arrange: 존재하지 않는 userId
+    // Act: updateWeeklyGoals(invalidUserId, 5, 3)
+    // Assert: RepositoryException 발생
 
-  tearDown(() async {
-    await isar.close(deleteFromDisk: true);
-  });
+  test('트랜잭션 실패 시 롤백')
+    // Arrange: DB 트랜잭션 중 에러 발생
+    // Act: updateWeeklyGoals()
+    // Assert: 변경사항 롤백, 기존 값 유지
 
-  test('should update weekly goals and persist to DB', () async {
-    // Arrange
-    final initialDto = UserProfileDto()
-      ..userId = 'user1'
-      ..targetWeightKg = 70.0
-      ..weeklyWeightRecordGoal = 7
-      ..weeklySymptomRecordGoal = 7;
-
-    await isar.writeTxn(() => isar.userProfileDtos.put(initialDto));
-
-    // Act
-    final updated = await repository.updateWeeklyGoals(
-      userId: 'user1',
-      weightGoal: 5,
-      symptomGoal: 3,
-    );
-
-    // Assert
-    expect(updated.weeklyWeightRecordGoal.value, 5);
-    expect(updated.weeklySymptomRecordGoal.value, 3);
-
-    // Verify persistence
-    final fromDb = await isar.userProfileDtos
-        .filter()
-        .userIdEqualTo('user1')
-        .findFirst();
-    expect(fromDb?.weeklyWeightRecordGoal, 5);
-    expect(fromDb?.weeklySymptomRecordGoal, 3);
-  });
-
-  test('should throw exception when user not found', () async {
-    // Act & Assert
-    expect(
-      () => repository.updateWeeklyGoals(
-        userId: 'nonexistent',
-        weightGoal: 5,
-        symptomGoal: 3,
-      ),
-      throwsA(isA<UserNotFoundException>()),
-    );
-  });
-
-  test('should validate goals before saving', () async {
-    // Arrange
-    final initialDto = UserProfileDto()
-      ..userId = 'user1'
-      ..targetWeightKg = 70.0;
-    await isar.writeTxn(() => isar.userProfileDtos.put(initialDto));
-
-    // Act & Assert
-    expect(
-      () => repository.updateWeeklyGoals(
-        userId: 'user1',
-        weightGoal: 8, // Invalid
-        symptomGoal: 3,
-      ),
-      throwsA(isA<InvalidWeeklyGoalException>()),
-    );
-  });
-
-  test('should update updatedAt timestamp', () async {
-    // Arrange
-    final before = DateTime.now();
-    final initialDto = UserProfileDto()
-      ..userId = 'user1'
-      ..targetWeightKg = 70.0
-      ..weeklyWeightRecordGoal = 7
-      ..weeklySymptomRecordGoal = 7
-      ..updatedAt = before;
-    await isar.writeTxn(() => isar.userProfileDtos.put(initialDto));
-
-    await Future.delayed(Duration(milliseconds: 10));
-
-    // Act
-    await repository.updateWeeklyGoals(
-      userId: 'user1',
-      weightGoal: 5,
-      symptomGoal: 3,
-    );
-
-    // Assert
-    final fromDb = await isar.userProfileDtos
-        .filter()
-        .userIdEqualTo('user1')
-        .findFirst();
-    expect(fromDb!.updatedAt.isAfter(before), true);
-  });
-});
+  test('동시 업데이트 요청 처리 (Race Condition)')
+    // Arrange: 동시에 2개 업데이트 요청
+    // Act: 병렬 updateWeeklyGoals() 실행
+    // Assert: 마지막 요청 값으로 저장
 ```
 
 **Implementation Order (TDD Cycle)**:
-1. RED: Write test for basic update
-2. GREEN: Implement updateWeeklyGoals method
-3. RED: Write test for user not found
-4. GREEN: Add null check and exception
-5. RED: Write test for validation
-6. GREEN: Add validation before save
-7. RED: Write test for timestamp update
-8. GREEN: Update updatedAt field
-9. REFACTOR: Extract transaction logic, improve error handling
+1. Red: 테스트 작성 (Repository 메서드)
+2. Green: Repository 구현 (Isar 트랜잭션)
+3. Refactor: 에러 핸들링 강화
 
-**Dependencies**: Isar, UserProfileDto, ProfileRepository
+**Dependencies**: ProfileRepository Interface, UserProfileDto, Isar
 
 ---
 
-### 3.5. ProfileNotifier (Application State)
+### 3.5. Application Layer: ProfileNotifier
 
 **Location**: `lib/features/profile/application/notifiers/profile_notifier.dart`
 
-**Responsibility**: 프로필 상태 관리 및 주간 목표 업데이트 오케스트레이션
+**Responsibility**:
+- UserProfile 상태 관리
+- updateWeeklyGoals 메서드 제공
+- DashboardNotifier invalidation 트리거
 
 **Test Strategy**: Unit Test (Mock Repository)
 
 **Test Scenarios (Red Phase)**:
-
 ```dart
-// Test File: test/features/profile/application/notifiers/profile_notifier_test.dart
+describe('ProfileNotifier.updateWeeklyGoals')
+  test('목표 업데이트 성공 시 상태 갱신')
+    // Arrange: Mock ProfileRepository
+    // Act: notifier.updateWeeklyGoals(5, 3)
+    // Assert: state = AsyncValue.data(updatedProfile)
 
-group('ProfileNotifier Weekly Goals Update', () {
-  late ProfileRepository mockRepository;
-  late ProviderContainer container;
+  test('목표 업데이트 실패 시 에러 상태')
+    // Arrange: Repository가 RepositoryException 발생
+    // Act: notifier.updateWeeklyGoals(5, 3)
+    // Assert: state = AsyncValue.error(exception)
 
-  setUp(() {
-    mockRepository = MockProfileRepository();
-    container = ProviderContainer(
-      overrides: [
-        profileRepositoryProvider.overrideWithValue(mockRepository),
-      ],
-    );
-  });
+  test('목표 업데이트 중 로딩 상태')
+    // Arrange: 비동기 Repository
+    // Act: notifier.updateWeeklyGoals(5, 3) (완료 전)
+    // Assert: state = AsyncValue.loading()
 
-  tearDown(() {
-    container.dispose();
-  });
+  test('DashboardNotifier invalidate 트리거')
+    // Arrange: Mock DashboardNotifier
+    // Act: notifier.updateWeeklyGoals(5, 3)
+    // Assert: ref.invalidate(dashboardNotifierProvider) 호출 확인
 
-  test('should update weekly goals successfully', () async {
-    // Arrange
-    final updatedProfile = UserProfile(
-      userId: 'user1',
-      targetWeightKg: 70.0,
-      weeklyWeightRecordGoal: WeeklyGoalInput(value: 5),
-      weeklySymptomRecordGoal: WeeklyGoalInput(value: 3),
-    );
-
-    when(() => mockRepository.updateWeeklyGoals(
-      userId: 'user1',
-      weightGoal: 5,
-      symptomGoal: 3,
-    )).thenAnswer((_) async => updatedProfile);
-
-    final notifier = container.read(profileNotifierProvider.notifier);
-
-    // Act
-    await notifier.updateWeeklyGoals(
-      weightGoal: 5,
-      symptomGoal: 3,
-    );
-
-    // Assert
-    final state = container.read(profileNotifierProvider);
-    expect(state.value?.weeklyWeightRecordGoal.value, 5);
-    expect(state.value?.weeklySymptomRecordGoal.value, 3);
-  });
-
-  test('should handle validation error', () async {
-    // Arrange
-    when(() => mockRepository.updateWeeklyGoals(
-      userId: 'user1',
-      weightGoal: -1,
-      symptomGoal: 3,
-    )).thenThrow(InvalidWeeklyGoalException());
-
-    final notifier = container.read(profileNotifierProvider.notifier);
-
-    // Act
-    await notifier.updateWeeklyGoals(
-      weightGoal: -1,
-      symptomGoal: 3,
-    );
-
-    // Assert
-    final state = container.read(profileNotifierProvider);
-    expect(state.hasError, true);
-    expect(state.error, isA<InvalidWeeklyGoalException>());
-  });
-
-  test('should emit loading state during update', () async {
-    // Arrange
-    final updatedProfile = UserProfile(
-      userId: 'user1',
-      targetWeightKg: 70.0,
-      weeklyWeightRecordGoal: WeeklyGoalInput(value: 5),
-      weeklySymptomRecordGoal: WeeklyGoalInput(value: 3),
-    );
-
-    when(() => mockRepository.updateWeeklyGoals(
-      userId: 'user1',
-      weightGoal: 5,
-      symptomGoal: 3,
-    )).thenAnswer((_) async {
-      await Future.delayed(Duration(milliseconds: 100));
-      return updatedProfile;
-    });
-
-    final notifier = container.read(profileNotifierProvider.notifier);
-
-    // Act
-    final future = notifier.updateWeeklyGoals(
-      weightGoal: 5,
-      symptomGoal: 3,
-    );
-
-    // Assert - Loading
-    await Future.delayed(Duration(milliseconds: 10));
-    expect(container.read(profileNotifierProvider).isLoading, true);
-
-    // Assert - Data
-    await future;
-    expect(container.read(profileNotifierProvider).hasValue, true);
-  });
-});
+  test('유효하지 않은 목표 값 입력 시 에러')
+    // Arrange: weeklyWeightRecordGoal = -1
+    // Act: notifier.updateWeeklyGoals(-1, 3)
+    // Assert: ArgumentError 발생
 ```
 
 **Implementation Order (TDD Cycle)**:
-1. RED: Write test for successful update
-2. GREEN: Implement updateWeeklyGoals method
-3. RED: Write test for validation error
-4. GREEN: Add error handling
-5. RED: Write test for loading state
-6. GREEN: Use AsyncValue.guard pattern
-7. REFACTOR: Extract business logic, improve state transitions
+1. Red: 테스트 작성 (Notifier 상태 전환)
+2. Green: Notifier 메서드 구현
+3. Refactor: 상태 관리 로직 정리
 
-**Dependencies**: ProfileRepository, Riverpod
+**Dependencies**: ProfileRepository, DashboardNotifier
 
 ---
 
-### 3.6. DashboardNotifier Invalidation
-
-**Location**: `lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
-
-**Responsibility**: 주간 목표 변경 시 대시보드 데이터 재계산
-
-**Test Strategy**: Integration Test (Multiple Notifiers)
-
-**Test Scenarios (Red Phase)**:
-
-```dart
-// Test File: test/features/dashboard/application/notifiers/dashboard_notifier_test.dart
-
-group('DashboardNotifier Goal Change Handling', () {
-  test('should recalculate progress when weekly goals change', () async {
-    // Arrange
-    final container = ProviderContainer(
-      overrides: [
-        profileRepositoryProvider.overrideWithValue(mockProfileRepo),
-        trackingRepositoryProvider.overrideWithValue(mockTrackingRepo),
-      ],
-    );
-
-    // Initial state
-    when(() => mockProfileRepo.getUserProfile('user1')).thenAnswer(
-      (_) async => UserProfile(
-        userId: 'user1',
-        targetWeightKg: 70.0,
-        weeklyWeightRecordGoal: WeeklyGoalInput(value: 7),
-        weeklySymptomRecordGoal: WeeklyGoalInput(value: 7),
-      ),
-    );
-
-    when(() => mockTrackingRepo.getWeeklyRecordCount('user1'))
-        .thenAnswer((_) async => (weightCount: 5, symptomCount: 3));
-
-    await container.read(dashboardNotifierProvider.future);
-
-    // Act - Update goals
-    when(() => mockProfileRepo.updateWeeklyGoals(
-      userId: 'user1',
-      weightGoal: 5,
-      symptomGoal: 3,
-    )).thenAnswer((_) async => UserProfile(
-      userId: 'user1',
-      targetWeightKg: 70.0,
-      weeklyWeightRecordGoal: WeeklyGoalInput(value: 5),
-      weeklySymptomRecordGoal: WeeklyGoalInput(value: 3),
-    ));
-
-    await container.read(profileNotifierProvider.notifier)
-        .updateWeeklyGoals(weightGoal: 5, symptomGoal: 3);
-
-    // Wait for dashboard refresh
-    await Future.delayed(Duration(milliseconds: 100));
-
-    // Assert
-    final dashboardState = await container.read(
-      dashboardNotifierProvider.future,
-    );
-    expect(dashboardState.weeklyProgress.weightRate, 1.0); // 5/5 = 100%
-    expect(dashboardState.weeklyProgress.symptomRate, 1.0); // 3/3 = 100%
-  });
-});
-```
-
-**Implementation Order (TDD Cycle)**:
-1. RED: Write integration test for recalculation
-2. GREEN: Add listener to ProfileNotifier in DashboardNotifier
-3. RED: Write test for rate calculation accuracy
-4. GREEN: Implement correct formula
-5. REFACTOR: Optimize invalidation logic
-
-**Dependencies**: ProfileNotifier, TrackingRepository
-
----
-
-### 3.7. WeeklyGoalInputWidget
-
-**Location**: `lib/features/profile/presentation/widgets/weekly_goal_input_widget.dart`
-
-**Responsibility**: 주간 목표 입력 UI 컴포넌트
-
-**Test Strategy**: Widget Test (Outside-In)
-
-**Test Scenarios (Red Phase)**:
-
-```dart
-// Test File: test/features/profile/presentation/widgets/weekly_goal_input_widget_test.dart
-
-group('WeeklyGoalInputWidget', () {
-  testWidgets('should display current value', (tester) async {
-    // Arrange & Act
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: WeeklyGoalInputWidget(
-            label: '체중 기록 목표',
-            initialValue: 7,
-            onChanged: (_) {},
-          ),
-        ),
-      ),
-    );
-
-    // Assert
-    expect(find.text('체중 기록 목표'), findsOneWidget);
-    expect(find.text('7'), findsOneWidget);
-  });
-
-  testWidgets('should call onChanged when value changes', (tester) async {
-    // Arrange
-    int? changedValue;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: WeeklyGoalInputWidget(
-            label: '체중 기록 목표',
-            initialValue: 7,
-            onChanged: (value) => changedValue = value,
-          ),
-        ),
-      ),
-    );
-
-    // Act
-    await tester.enterText(find.byType(TextField), '5');
-
-    // Assert
-    expect(changedValue, 5);
-  });
-
-  testWidgets('should show error for invalid input', (tester) async {
-    // Arrange
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: WeeklyGoalInputWidget(
-            label: '체중 기록 목표',
-            initialValue: 7,
-            onChanged: (_) {},
-          ),
-        ),
-      ),
-    );
-
-    // Act
-    await tester.enterText(find.byType(TextField), '-1');
-    await tester.pump();
-
-    // Assert
-    expect(find.text('0 이상의 값을 입력하세요'), findsOneWidget);
-  });
-
-  testWidgets('should show error for value exceeding 7', (tester) async {
-    // Arrange
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: WeeklyGoalInputWidget(
-            label: '체중 기록 목표',
-            initialValue: 7,
-            onChanged: (_) {},
-          ),
-        ),
-      ),
-    );
-
-    // Act
-    await tester.enterText(find.byType(TextField), '8');
-    await tester.pump();
-
-    // Assert
-    expect(find.text('주간 목표는 최대 7회입니다'), findsOneWidget);
-  });
-
-  testWidgets('should show warning for value 0', (tester) async {
-    // Arrange
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: WeeklyGoalInputWidget(
-            label: '체중 기록 목표',
-            initialValue: 7,
-            onChanged: (_) {},
-          ),
-        ),
-      ),
-    );
-
-    // Act
-    await tester.enterText(find.byType(TextField), '0');
-    await tester.pump();
-
-    // Assert
-    expect(find.text('목표를 0으로 설정하시겠습니까?'), findsOneWidget);
-  });
-});
-```
-
-**Implementation Order (TDD Cycle)**:
-1. RED: Write test for displaying current value
-2. GREEN: Create basic TextField widget
-3. RED: Write test for onChanged callback
-4. GREEN: Implement change handler
-5. RED: Write test for negative input error
-6. GREEN: Add validation logic
-7. RED: Write test for value > 7 error
-8. GREEN: Complete validation
-9. RED: Write test for value 0 warning
-10. GREEN: Add warning UI
-11. REFACTOR: Extract validation to separate method
-
-**Dependencies**: Flutter Material
-
----
-
-### 3.8. WeeklyGoalSettingsScreen
+### 3.6. Presentation Layer: WeeklyGoalSettingsScreen
 
 **Location**: `lib/features/profile/presentation/screens/weekly_goal_settings_screen.dart`
 
-**Responsibility**: 주간 목표 설정 화면 통합
+**Responsibility**:
+- 주간 목표 조정 화면 렌더링
+- 입력 검증 및 사용자 피드백
+- ProfileNotifier 호출
 
-**Test Strategy**: Widget Test (Acceptance)
+**Test Strategy**: Manual QA (아래 QA Sheet 참고)
 
-**Test Scenarios (Red Phase)**:
-
-```dart
-// Test File: test/features/profile/presentation/screens/weekly_goal_settings_screen_test.dart
-
-group('WeeklyGoalSettingsScreen Integration', () {
-  testWidgets('should display current goals from provider', (tester) async {
-    // Arrange
-    final container = ProviderContainer(
-      overrides: [
-        profileNotifierProvider.overrideWith((ref) {
-          return MockProfileNotifier(
-            UserProfile(
-              userId: 'user1',
-              targetWeightKg: 70.0,
-              weeklyWeightRecordGoal: WeeklyGoalInput(value: 7),
-              weeklySymptomRecordGoal: WeeklyGoalInput(value: 7),
-            ),
-          );
-        }),
-      ],
-    );
-
-    // Act
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: MaterialApp(
-          home: WeeklyGoalSettingsScreen(),
-        ),
-      ),
-    );
-
-    // Assert
-    expect(find.text('주간 기록 목표 조정'), findsOneWidget);
-    expect(find.text('7'), findsNWidgets(2)); // weight + symptom
-  });
-
-  testWidgets('should save updated goals on button press', (tester) async {
-    // Arrange
-    final mockNotifier = MockProfileNotifier();
-    final container = ProviderContainer(
-      overrides: [
-        profileNotifierProvider.overrideWith((ref) => mockNotifier),
-      ],
-    );
-
-    when(() => mockNotifier.updateWeeklyGoals(
-      weightGoal: 5,
-      symptomGoal: 3,
-    )).thenAnswer((_) async {});
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: MaterialApp(
-          home: WeeklyGoalSettingsScreen(),
-        ),
-      ),
-    );
-
-    // Act
-    await tester.enterText(
-      find.byKey(Key('weight_goal_input')),
-      '5',
-    );
-    await tester.enterText(
-      find.byKey(Key('symptom_goal_input')),
-      '3',
-    );
-    await tester.tap(find.text('저장'));
-    await tester.pumpAndSettle();
-
-    // Assert
-    verify(() => mockNotifier.updateWeeklyGoals(
-      weightGoal: 5,
-      symptomGoal: 3,
-    )).called(1);
-  });
-
-  testWidgets('should show success message on save', (tester) async {
-    // Arrange
-    final container = ProviderContainer(
-      overrides: [
-        profileNotifierProvider.overrideWith((ref) {
-          return MockProfileNotifier();
-        }),
-      ],
-    );
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: MaterialApp(
-          home: WeeklyGoalSettingsScreen(),
-        ),
-      ),
-    );
-
-    // Act
-    await tester.tap(find.text('저장'));
-    await tester.pumpAndSettle();
-
-    // Assert
-    expect(find.text('저장되었습니다'), findsOneWidget);
-  });
-
-  testWidgets('should show error message on failure', (tester) async {
-    // Arrange
-    final mockNotifier = MockProfileNotifier();
-    when(() => mockNotifier.updateWeeklyGoals(
-      weightGoal: any(named: 'weightGoal'),
-      symptomGoal: any(named: 'symptomGoal'),
-    )).thenThrow(InvalidWeeklyGoalException());
-
-    final container = ProviderContainer(
-      overrides: [
-        profileNotifierProvider.overrideWith((ref) => mockNotifier),
-      ],
-    );
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: MaterialApp(
-          home: WeeklyGoalSettingsScreen(),
-        ),
-      ),
-    );
-
-    // Act
-    await tester.tap(find.text('저장'));
-    await tester.pumpAndSettle();
-
-    // Assert
-    expect(find.text('저장에 실패했습니다'), findsOneWidget);
-  });
-
-  testWidgets('should navigate back on successful save', (tester) async {
-    // Arrange
-    bool popped = false;
-    final container = ProviderContainer();
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: MaterialApp(
-          home: Builder(
-            builder: (context) => Scaffold(
-              body: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => WeeklyGoalSettingsScreen(),
-                    ),
-                  ).then((_) => popped = true);
-                },
-                child: Text('Open'),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
-
-    // Act
-    await tester.tap(find.text('저장'));
-    await tester.pumpAndSettle();
-
-    // Assert
-    expect(popped, true);
-  });
-});
-```
-
-**Implementation Order (TDD Cycle)**:
-1. RED: Write test for displaying goals
-2. GREEN: Build screen with input widgets
-3. RED: Write test for save button
-4. GREEN: Wire up onPressed handler
-5. RED: Write test for success message
-6. GREEN: Add SnackBar on success
-7. RED: Write test for error message
-8. GREEN: Add error handling UI
-9. RED: Write test for navigation
-10. GREEN: Implement Navigator.pop on success
-11. REFACTOR: Extract business logic, improve UX
+**Implementation Order**:
+1. Screen 기본 구조 구현 (Scaffold, AppBar)
+2. WeeklyGoalInputWidget 통합
+3. 저장 버튼 및 ProfileNotifier 연동
+4. AsyncValue 상태별 UI 처리 (loading/error/data)
+5. 성공 시 SnackBar 표시 후 Navigator.pop()
 
 **Dependencies**: ProfileNotifier, WeeklyGoalInputWidget
+
+**QA Sheet**:
+
+| Test Case | Steps | Expected Result |
+|-----------|-------|-----------------|
+| 화면 진입 | 설정 메뉴 → 주간 기록 목표 조정 선택 | 현재 목표 값이 입력 필드에 표시됨 |
+| 유효한 값 입력 | 체중 목표: 5, 부작용 목표: 3 입력 → 저장 | 저장 성공 메시지, 설정 화면으로 복귀 |
+| 0 입력 | 체중 목표: 0 입력 → 저장 | 경고 메시지 표시 후 저장 허용 |
+| 음수 입력 | 체중 목표: -1 입력 → 저장 | 에러 메시지: "0 이상의 값을 입력하세요" |
+| 7 초과 입력 | 체중 목표: 8 입력 → 저장 | 에러 메시지: "주간 목표는 최대 7회입니다" |
+| 비정수 입력 | 체중 목표: 3.5 입력 | 에러 메시지: "정수만 입력 가능합니다" |
+| 변경사항 없이 저장 | 기존 값 그대로 → 저장 | 저장 성공, 화면 복귀 |
+| 홈 대시보드 반영 | 목표 변경 후 홈 화면 이동 | 주간 진행도가 새 목표 기준으로 표시됨 |
+| 네트워크 오류 | 저장 중 DB 에러 발생 | 에러 메시지 및 재시도 옵션 표시 |
+
+---
+
+### 3.7. Presentation Layer: WeeklyGoalInputWidget
+
+**Location**: `lib/features/profile/presentation/widgets/weekly_goal_input_widget.dart`
+
+**Responsibility**:
+- 숫자 입력 필드 렌더링
+- 실시간 입력 검증
+- 입력값 콜백 전달
+
+**Test Strategy**: Manual QA
+
+**Implementation Order**:
+1. TextFormField 구현 (키보드 타입: 숫자)
+2. 실시간 검증 로직 (0~7 범위)
+3. 에러 메시지 표시
+4. onChanged 콜백 구현
+
+**Dependencies**: 없음 (Pure Widget)
 
 ---
 
 ## 4. TDD Workflow
 
-### Phase 1: Domain Layer (Inside-Out)
-1. Start: WeeklyGoalInput value object validation
-2. RED: Write validation tests → GREEN: Implement → REFACTOR
-3. RED: UserProfile entity tests → GREEN: Implement → REFACTOR
-4. Commit: "feat(domain): add weekly goal validation and entity"
+### Phase 1: Domain Layer (Outside-In)
+1. **Red**: UserProfile Entity 테스트 작성
+2. **Green**: Entity 검증 로직 구현
+3. **Refactor**: Entity 불변성 확인
+4. **Red**: ProfileRepository Interface 테스트 작성
+5. **Green**: Interface 메서드 추가
+6. **Refactor**: 메서드 문서화
 
-### Phase 2: Repository Layer (Integration)
-1. RED: ProfileRepository interface tests → GREEN: Define interface
-2. RED: IsarProfileRepository integration tests → GREEN: Implement → REFACTOR
-3. Commit: "feat(infrastructure): implement profile repository with weekly goal update"
-
-### Phase 3: Application Layer (State Management)
-1. RED: ProfileNotifier tests → GREEN: Implement → REFACTOR
-2. RED: DashboardNotifier invalidation tests → GREEN: Implement
-3. Commit: "feat(application): add weekly goal update state management"
-
-### Phase 4: Presentation Layer (Outside-In)
-1. RED: WeeklyGoalInputWidget tests → GREEN: Implement → REFACTOR
-2. RED: WeeklyGoalSettingsScreen tests → GREEN: Implement → REFACTOR
-3. Commit: "feat(presentation): add weekly goal settings UI"
-
-### Phase 5: End-to-End
-1. Manual testing via QA Sheet
-2. Fix edge cases discovered
-3. Commit: "test: fix edge cases for weekly goal settings"
-
-### Commit Points
-- After each layer completion
-- After fixing critical bugs
-- Before code review
-- Small, atomic commits with clear messages
+**Commit Point**: Domain Layer 완료 (Entity + Interface)
 
 ---
 
-## 5. Test Execution Order
+### Phase 2: Infrastructure Layer
+1. **Red**: UserProfileDto 변환 테스트 작성
+2. **Green**: DTO 변환 로직 구현
+3. **Refactor**: 변환 로직 최적화
+4. **Red**: IsarProfileRepository 테스트 작성 (Isar Test Instance)
+5. **Green**: Repository 구현 (Isar 트랜잭션)
+6. **Refactor**: 에러 핸들링 강화
 
-### Unit Tests (Run First, Fast)
-```bash
-# Domain Layer
-flutter test test/features/profile/domain/entities/weekly_goal_input_test.dart
-flutter test test/features/profile/domain/entities/user_profile_test.dart
+**Commit Point**: Infrastructure Layer 완료 (DTO + Repository)
 
-# Application Layer
-flutter test test/features/profile/application/notifiers/profile_notifier_test.dart
+---
+
+### Phase 3: Application Layer
+1. **Red**: ProfileNotifier 테스트 작성 (Mock Repository)
+2. **Green**: Notifier 메서드 구현
+3. **Refactor**: 상태 관리 로직 정리
+4. **Red**: DashboardNotifier invalidation 테스트 추가
+5. **Green**: invalidate 로직 추가
+6. **Refactor**: 의존성 정리
+
+**Commit Point**: Application Layer 완료 (Notifier + State Management)
+
+---
+
+### Phase 4: Presentation Layer
+1. WeeklyGoalInputWidget 구현
+2. WeeklyGoalSettingsScreen 구현
+3. Manual QA 수행 (QA Sheet 기반)
+4. UI 개선 및 UX 최적화
+
+**Commit Point**: Feature 완료 (All Layers Integrated)
+
+---
+
+### Phase 5: Integration Test
+1. End-to-End 시나리오 테스트
+   - 설정 화면 → 목표 변경 → 홈 대시보드 확인
+   - 변경사항 DB 저장 확인
+   - 진행도 재계산 확인
+2. Edge Case 검증
+   - 네트워크 오류
+   - 동시 업데이트
+   - 입력 검증
+
+**Commit Point**: Integration Test 통과
+
+---
+
+## 5. 핵심 원칙 준수
+
+### Layer Dependency
 ```
-
-### Integration Tests (Run Second, Slower)
-```bash
-# Infrastructure Layer
-flutter test test/features/profile/infrastructure/repositories/isar_profile_repository_test.dart
-
-# Cross-layer
-flutter test test/features/dashboard/application/notifiers/dashboard_notifier_test.dart
+Presentation → Application → Domain ← Infrastructure
 ```
+- Presentation은 ProfileNotifier만 의존
+- Application은 ProfileRepository Interface만 의존
+- Infrastructure는 Domain의 Interface 구현
 
-### Widget Tests (Run Third, UI)
-```bash
-# Presentation Layer
-flutter test test/features/profile/presentation/widgets/weekly_goal_input_widget_test.dart
-flutter test test/features/profile/presentation/screens/weekly_goal_settings_screen_test.dart
+### Repository Pattern
 ```
-
----
-
-## 6. QA Sheet (Presentation Layer Only)
-
-### Manual Test Cases
-
-| Test Case | Steps | Expected Result | Status |
-|-----------|-------|-----------------|--------|
-| TC-1: Display Current Goals | 1. 로그인<br>2. 설정 메뉴 진입<br>3. "주간 기록 목표 조정" 선택 | 현재 목표 값(7/7) 표시됨 | [ ] |
-| TC-2: Update Weight Goal | 1. 체중 목표를 5로 변경<br>2. 저장 버튼 클릭 | "저장되었습니다" 메시지, 설정 화면 복귀 | [ ] |
-| TC-3: Update Symptom Goal | 1. 부작용 목표를 3으로 변경<br>2. 저장 버튼 클릭 | "저장되었습니다" 메시지, 설정 화면 복귀 | [ ] |
-| TC-4: Validation - Negative | 1. -1 입력<br>2. 필드 외부 터치 | "0 이상의 값을 입력하세요" 에러 표시 | [ ] |
-| TC-5: Validation - Exceeds Max | 1. 8 입력<br>2. 필드 외부 터치 | "주간 목표는 최대 7회입니다" 에러 표시 | [ ] |
-| TC-6: Warning - Zero Value | 1. 0 입력<br>2. 필드 외부 터치 | "목표를 0으로 설정하시겠습니까?" 경고 표시 | [ ] |
-| TC-7: Dashboard Refresh | 1. 목표 변경 후 저장<br>2. 홈 화면 이동 | 변경된 목표 기준으로 달성률 표시 | [ ] |
-| TC-8: No Changes Save | 1. 값 변경하지 않고 저장 | 즉시 설정 화면 복귀 | [ ] |
-| TC-9: Cancel Navigation | 1. 값 변경<br>2. 뒤로가기 버튼 | 변경 취소 확인 대화상자 표시 | [ ] |
-| TC-10: Error Handling | 1. 비행기 모드 활성화<br>2. 저장 시도 | "저장에 실패했습니다" 메시지, 재시도 옵션 | [ ] |
-
----
-
-## 7. Performance Constraints
-
-- 화면 진입 시 현재 목표 조회: < 100ms
-- 저장 처리 완료: < 500ms
-- 대시보드 재계산 및 반영: < 1000ms
-- 입력 검증 실시간 피드백: < 50ms
-- 애니메이션 프레임율: 60fps 유지
-
----
-
-## 8. Edge Case Handling
-
-### Validation Edge Cases
-- **음수 입력**: 에러 메시지, 저장 불가
-- **7 초과 입력**: 에러 메시지, 저장 불가
-- **0 입력**: 경고 메시지, 저장 허용
-- **소수점 입력**: 반올림 또는 에러
-- **공백 입력**: 기존 값 유지
-
-### State Edge Cases
-- **변경 없이 저장**: 불필요한 DB 호출 생략
-- **저장 중 앱 종료**: 변경사항 폐기
-- **동시 수정 (Race Condition)**: 마지막 저장 승리
-- **네트워크 오류**: 로컬 저장 후 재시도 큐 추가
-
-### UI Edge Cases
-- **키보드 숨김 시 검증**: onEditingComplete 이벤트
-- **빠른 연속 저장**: 디바운싱 적용
-- **저장 중 뒤로가기**: 완료 대기 또는 취소 확인
-- **목표 변경 후 대시보드 미반영**: 캐시 무효화 확인
-
----
-
-## 9. Dependencies Summary
-
+ProfileNotifier → ProfileRepository Interface
+                → IsarProfileRepository Implementation
 ```
-WeeklyGoalInput (Pure Dart)
-  └─ UserProfile
-      └─ ProfileRepository (Interface)
-          ├─ IsarProfileRepository (Isar)
-          └─ ProfileNotifier (Riverpod)
-              └─ DashboardNotifier
-                  └─ WeeklyGoalSettingsScreen
-                      └─ WeeklyGoalInputWidget
+- Phase 1 전환 시 SupabaseProfileRepository로 1줄 변경
+
+### TDD Cycle
 ```
+Red (테스트 작성) → Green (최소 구현) → Refactor (리팩토링)
+```
+- 모든 Domain/Application/Infrastructure는 테스트 우선
+- Presentation은 Manual QA로 검증
+
+### Test Pyramid
+- Unit Test: 70% (Domain + Application + Infrastructure)
+- Integration Test: 20% (Repository + Notifier)
+- Manual QA: 10% (Presentation)
 
 ---
 
-## 10. Success Criteria
+## 6. 완료 기준
 
-### All Tests Pass
-- [ ] Unit tests: 100% pass
-- [ ] Integration tests: 100% pass
-- [ ] Widget tests: 100% pass
-
-### Code Quality
-- [ ] No warnings from `flutter analyze`
-- [ ] Test coverage > 80%
-- [ ] FIRST principles followed
-- [ ] AAA pattern consistently applied
-
-### Functionality
-- [ ] All acceptance criteria met (spec.md)
-- [ ] All edge cases handled
-- [ ] QA sheet completed
-- [ ] Performance constraints met
-
-### Architecture
-- [ ] Repository Pattern maintained
-- [ ] No layer violations
-- [ ] Clean separation of concerns
-- [ ] Phase 1 transition ready
-
----
-
-## 11. Notes
-
-- **Small Steps**: 각 TDD 사이클은 5-10분 내 완료
-- **Fast Feedback**: 유닛 테스트는 초 단위, 통합 테스트는 10초 이내
-- **Refactor Fearlessly**: 모든 테스트가 통과하면 안전하게 리팩토링
-- **Commit Often**: 각 Green Phase 후 커밋 고려
-- **Test Names**: "should [expected behavior] when [condition]" 형식
-- **Mock Sparingly**: Domain Layer는 mock 없이, Infrastructure는 필요 시만
-
----
-
-## 12. References
-
-- **Spec**: `/docs/015/spec.md`
-- **TDD Guidelines**: `/docs/tdd.md`
-- **Code Structure**: `/docs/code_structure.md`
-- **State Management**: `/docs/state-management.md`
-- **Database Schema**: `/docs/database.md`
+- [ ] UserProfile Entity 검증 로직 구현 및 테스트 통과
+- [ ] ProfileRepository Interface 정의
+- [ ] UserProfileDto 변환 로직 구현 및 테스트 통과
+- [ ] IsarProfileRepository 구현 및 Integration Test 통과
+- [ ] ProfileNotifier 상태 관리 구현 및 Unit Test 통과
+- [ ] DashboardNotifier invalidation 연동 확인
+- [ ] WeeklyGoalSettingsScreen Manual QA 완료
+- [ ] 홈 대시보드 진행도 재계산 확인
+- [ ] 모든 Edge Case 처리 확인
+- [ ] 코드 리뷰 및 리팩토링 완료

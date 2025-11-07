@@ -1,491 +1,1181 @@
-# UF-012 Push Notification Settings Implementation Plan
+# 푸시 알림 설정 Implementation Plan
 
-## 1. Overview
+## 1. 개요
 
-### Modules
-- **Domain Layer**: NotificationSettings entity, NotificationRepository interface
-- **Infrastructure Layer**: IsarNotificationRepository implementation, NotificationDto
-- **Application Layer**: NotificationSettingsNotifier, notification scheduling logic
-- **Presentation Layer**: NotificationSettingsScreen, permission handling UI
+**Feature**: UF-012 푸시 알림 설정
+**TDD 전략**: Outside-In (UI → Application → Domain → Infrastructure)
+**핵심 목표**: 투여 알림 시간 설정, 알림 활성화/비활성화, 디바이스 권한 관리, 알림 스케줄 자동 업데이트
 
-### TDD Coverage
-- Unit tests: Domain entities, Repository interface contracts, Business logic
-- Integration tests: Repository implementation with Isar, Notification scheduling
-- Widget tests: UI components, User interactions
+### 모듈 목록
+
+| 모듈 | 위치 | 책임 | TDD 적용 |
+|------|------|------|----------|
+| NotificationSettings Entity | `features/notification/domain/entities/notification_settings.dart` | 알림 설정 도메인 모델 | Unit |
+| NotificationRepository Interface | `features/notification/domain/repositories/notification_repository.dart` | 알림 데이터 접근 계약 | Unit |
+| NotificationScheduler Interface | `features/notification/domain/services/notification_scheduler.dart` | 알림 스케줄링 계약 | Unit |
+| NotificationNotifier | `features/notification/application/notifiers/notification_notifier.dart` | 알림 설정 상태 관리 | Unit + Integration |
+| NotificationSettingsScreen | `features/notification/presentation/screens/notification_settings_screen.dart` | 알림 설정 UI | Widget + Acceptance |
+| NotificationSettingsDto | `features/notification/infrastructure/dtos/notification_settings_dto.dart` | 알림 설정 DTO (Isar) | Unit |
+| IsarNotificationRepository | `features/notification/infrastructure/repositories/isar_notification_repository.dart` | Isar 기반 알림 저장소 | Integration |
+| LocalNotificationScheduler | `features/notification/infrastructure/services/local_notification_scheduler.dart` | Flutter Local Notifications 구현 | Integration |
+| PermissionService | `features/notification/infrastructure/services/permission_service.dart` | 알림 권한 관리 | Integration |
 
 ---
 
 ## 2. Architecture Diagram
 
 ```mermaid
-graph TD
+graph TB
     subgraph Presentation
-        A[NotificationSettingsScreen]
-        B[TimePickerWidget]
-        C[PermissionHandler]
+        SettingsScreen[NotificationSettingsScreen<br/>알림 설정 UI]
+        TimePickerWidget[TimePickerWidget<br/>시간 선택 UI]
     end
 
     subgraph Application
-        D[NotificationSettingsNotifier]
-        E[NotificationScheduler]
-        F[notificationSettingsProvider]
+        NotificationNotifier[NotificationNotifier<br/>알림 설정 상태 관리]
+        NotificationProvider[notificationNotifierProvider]
     end
 
     subgraph Domain
-        G[NotificationSettings Entity]
-        H[NotificationRepository Interface]
-        I[DoseSchedule Entity]
+        NotificationSettings[NotificationSettings Entity<br/>알림 설정 모델]
+        NotificationRepo[NotificationRepository Interface<br/>알림 데이터 계약]
+        NotificationScheduler[NotificationScheduler Interface<br/>스케줄링 계약]
+        MedicationRepo[MedicationRepository Interface<br/>투여 계획 조회]
     end
 
     subgraph Infrastructure
-        J[IsarNotificationRepository]
-        K[NotificationSettingsDto]
-        L[FlutterLocalNotifications]
+        IsarNotificationRepo[IsarNotificationRepository<br/>Isar 저장소 구현]
+        LocalNotificationScheduler[LocalNotificationScheduler<br/>flutter_local_notifications 구현]
+        PermissionService[PermissionService<br/>권한 관리]
+        NotificationSettingsDto[NotificationSettingsDto<br/>Isar DTO]
     end
 
-    A --> D
-    A --> C
-    B --> A
-    D --> H
-    D --> E
-    E --> L
-    J --> H
-    J --> K
-    F --> J
+    SettingsScreen -->|ref.read| NotificationProvider
+    NotificationProvider -->|provides| NotificationNotifier
+    NotificationNotifier -->|depends on| NotificationRepo
+    NotificationNotifier -->|depends on| NotificationScheduler
+    NotificationNotifier -->|depends on| MedicationRepo
+    NotificationRepo -.implements.- IsarNotificationRepo
+    NotificationScheduler -.implements.- LocalNotificationScheduler
+    LocalNotificationScheduler -->|uses| PermissionService
+    IsarNotificationRepo -->|converts| NotificationSettingsDto
+    NotificationSettingsDto -->|toEntity| NotificationSettings
 
-    style A fill:#e1f5ff
-    style D fill:#fff4e1
-    style G fill:#e8f5e9
-    style J fill:#f3e5f5
+    style NotificationSettings fill:#e1f5ff
+    style NotificationRepo fill:#fff4e1
+    style NotificationScheduler fill:#fff4e1
+    style NotificationNotifier fill:#ffe1f5
+    style SettingsScreen fill:#e1ffe1
+    style IsarNotificationRepo fill:#f5e1ff
 ```
 
 ---
 
 ## 3. Implementation Plan
 
-### 3.1 Domain Layer
+### 3.1. Domain Layer
 
-#### Module: NotificationSettings Entity
-- **Location**: `lib/features/notification/domain/entities/notification_settings.dart`
-- **Responsibility**: Immutable value object for notification settings
-- **Test Strategy**: Unit
-- **Test Scenarios (Red Phase)**:
-  - **Arrange**: Valid data (enabled=true, time=09:00)
-  - **Act**: Create entity
-  - **Assert**: Properties match input
-  - Edge: Invalid time format should throw
-  - Edge: Null safety validation
+#### NotificationSettings Entity
+- **Location**: `features/notification/domain/entities/notification_settings.dart`
+- **Responsibility**: 알림 설정 정보를 표현하는 불변 모델
+- **Test Strategy**: Unit Test
+- **Test Scenarios**:
+  ```dart
+  // Red Phase
+  test('should create NotificationSettings with default values', () {
+    // Arrange & Act
+    final settings = NotificationSettings(
+      userId: 'user123',
+      notificationTime: TimeOfDay(hour: 9, minute: 0),
+      notificationEnabled: true,
+    );
 
+    // Assert
+    expect(settings.userId, 'user123');
+    expect(settings.notificationTime.hour, 9);
+    expect(settings.notificationEnabled, true);
+  });
+
+  test('should create NotificationSettings with disabled state', () {
+    // Arrange & Act
+    final settings = NotificationSettings(
+      userId: 'user123',
+      notificationTime: TimeOfDay(hour: 21, minute: 30),
+      notificationEnabled: false,
+    );
+
+    // Assert
+    expect(settings.notificationEnabled, false);
+  });
+
+  test('should support copyWith for immutability', () {
+    // Arrange
+    final original = NotificationSettings(
+      userId: 'user123',
+      notificationTime: TimeOfDay(hour: 9, minute: 0),
+      notificationEnabled: true,
+    );
+
+    // Act
+    final updated = original.copyWith(
+      notificationTime: TimeOfDay(hour: 21, minute: 0),
+    );
+
+    // Assert
+    expect(updated.notificationTime.hour, 21);
+    expect(updated.notificationEnabled, true);
+  });
+
+  test('should support equality comparison', () {
+    // Arrange
+    final settings1 = NotificationSettings(
+      userId: 'user123',
+      notificationTime: TimeOfDay(hour: 9, minute: 0),
+      notificationEnabled: true,
+    );
+    final settings2 = NotificationSettings(
+      userId: 'user123',
+      notificationTime: TimeOfDay(hour: 9, minute: 0),
+      notificationEnabled: true,
+    );
+
+    // Assert
+    expect(settings1, equals(settings2));
+  });
+  ```
 - **Implementation Order**:
-  1. RED: Test entity creation with valid data
-  2. GREEN: Implement basic entity with properties
-  3. RED: Test equality/hashCode
-  4. GREEN: Add copyWith, toJson, fromJson methods
-  5. REFACTOR: Extract time validation logic
-
-#### Module: NotificationRepository Interface
-- **Location**: `lib/features/notification/domain/repositories/notification_repository.dart`
-- **Responsibility**: Contract for notification settings persistence
-- **Test Strategy**: Contract tests (verify implementations)
-- **Test Scenarios (Red Phase)**:
-  - Save settings should persist data
-  - Get settings should retrieve saved data
-  - Update time should modify existing settings
-  - Stream should emit changes reactively
-
-- **Implementation Order**:
-  1. RED: Define interface methods
-  2. GREEN: Document interface contracts
-  3. REFACTOR: Align with Repository Pattern
+  1. 기본 생성자 및 필드 정의 (userId, notificationTime, notificationEnabled)
+  2. copyWith 메서드
+  3. Equatable 구현
+- **Dependencies**: None
 
 ---
 
-### 3.2 Infrastructure Layer
+#### NotificationRepository Interface
+- **Location**: `features/notification/domain/repositories/notification_repository.dart`
+- **Responsibility**: 알림 설정 데이터 접근 계약 정의
+- **Test Strategy**: Unit Test (Mock 사용)
+- **Test Scenarios**:
+  ```dart
+  // Red Phase
+  test('should define getNotificationSettings method signature', () async {
+    // Arrange
+    final mockRepo = MockNotificationRepository();
+    when(mockRepo.getNotificationSettings('user123'))
+        .thenAnswer((_) async => mockSettings);
 
-#### Module: NotificationSettingsDto
-- **Location**: `lib/features/notification/infrastructure/dtos/notification_settings_dto.dart`
-- **Responsibility**: Isar collection for notification settings
-- **Test Strategy**: Unit
-- **Test Scenarios (Red Phase)**:
-  - **Arrange**: Create entity
-  - **Act**: Convert to DTO
-  - **Assert**: DTO fields match entity
-  - **Arrange**: Create DTO
-  - **Act**: Convert to entity
-  - **Assert**: Entity fields match DTO
-  - Edge: Time of day serialization (store as minutes since midnight)
-  - Edge: Null handling for optional fields
+    // Act
+    final settings = await mockRepo.getNotificationSettings('user123');
 
-- **Implementation Order**:
-  1. RED: Test entity to DTO conversion
-  2. GREEN: Implement Isar collection with fields
-  3. RED: Test DTO to entity conversion
-  4. GREEN: Implement toEntity and fromEntity methods
-  5. REFACTOR: Extract time conversion utilities
+    // Assert
+    expect(settings, isA<NotificationSettings>());
+  });
 
-- **Dependencies**: Isar package, NotificationSettings entity
+  test('should define saveNotificationSettings method signature', () async {
+    // Arrange
+    final mockRepo = MockNotificationRepository();
+    when(mockRepo.saveNotificationSettings(any))
+        .thenAnswer((_) async => {});
 
-#### Module: IsarNotificationRepository
-- **Location**: `lib/features/notification/infrastructure/repositories/isar_notification_repository.dart`
-- **Responsibility**: Isar implementation of NotificationRepository
-- **Test Strategy**: Integration
-- **Test Scenarios (Red Phase)**:
-  - **Arrange**: Empty Isar instance
-  - **Act**: Save settings
-  - **Assert**: Settings persisted correctly
-  - **Arrange**: Existing settings
-  - **Act**: Get settings
-  - **Assert**: Retrieved settings match saved
-  - **Arrange**: Saved settings
-  - **Act**: Update time
-  - **Assert**: Time updated in DB
-  - **Arrange**: Saved settings, multiple watchers
-  - **Act**: Update settings
-  - **Assert**: All watchers notified
-  - Edge: First access returns default settings
-  - Edge: Concurrent updates handled correctly
+    // Act
+    await mockRepo.saveNotificationSettings(mockSettings);
 
-- **Implementation Order**:
-  1. RED: Test save settings
-  2. GREEN: Implement saveSettings method
-  3. RED: Test get settings
-  4. GREEN: Implement getSettings method
-  5. RED: Test watch stream
-  6. GREEN: Implement watchSettings method with Isar.watchLazy
-  7. RED: Test update scenarios
-  8. GREEN: Implement update logic
-  9. REFACTOR: Extract transaction helpers
+    // Assert
+    verify(mockRepo.saveNotificationSettings(mockSettings)).called(1);
+  });
 
-- **Dependencies**: Isar, NotificationSettingsDto, NotificationRepository interface
+  test('should return null when settings not found', () async {
+    // Arrange
+    final mockRepo = MockNotificationRepository();
+    when(mockRepo.getNotificationSettings('user123'))
+        .thenAnswer((_) async => null);
 
-#### Module: NotificationScheduler Service
-- **Location**: `lib/features/notification/infrastructure/services/notification_scheduler.dart`
-- **Responsibility**: Schedule/cancel local notifications via flutter_local_notifications
-- **Test Strategy**: Integration with mocks
-- **Test Scenarios (Red Phase)**:
-  - **Arrange**: Dose schedules list, notification time
-  - **Act**: Schedule notifications
-  - **Assert**: Notifications registered with correct payload
-  - **Arrange**: Existing scheduled notifications
-  - **Act**: Cancel all notifications
-  - **Assert**: Notification list empty
-  - **Arrange**: Old schedules
-  - **Act**: Reschedule with new time
-  - **Assert**: Old canceled, new scheduled
-  - Edge: Past date dose schedules skipped
-  - Edge: Same day multiple doses → single notification
-  - Edge: Permission denied → graceful failure
+    // Act
+    final settings = await mockRepo.getNotificationSettings('user123');
 
-- **Implementation Order**:
-  1. RED: Test schedule single notification
-  2. GREEN: Implement basic scheduling
-  3. RED: Test schedule multiple notifications
-  4. GREEN: Implement batch scheduling
-  5. RED: Test cancel all
-  6. GREEN: Implement cancellation
-  7. RED: Test reschedule scenario
-  8. GREEN: Implement reschedule logic
-  9. REFACTOR: Extract notification payload builder
-
-- **Dependencies**: flutter_local_notifications, DoseSchedule entity
+    // Assert
+    expect(settings, isNull);
+  });
+  ```
+- **Method Signatures**:
+  ```dart
+  abstract class NotificationRepository {
+    Future<NotificationSettings?> getNotificationSettings(String userId);
+    Future<void> saveNotificationSettings(NotificationSettings settings);
+  }
+  ```
+- **Dependencies**: NotificationSettings
 
 ---
 
-### 3.3 Application Layer
+#### NotificationScheduler Interface
+- **Location**: `features/notification/domain/services/notification_scheduler.dart`
+- **Responsibility**: 알림 스케줄링 계약 정의 (권한 확인, 알림 등록/취소)
+- **Test Strategy**: Unit Test (Mock 사용)
+- **Test Scenarios**:
+  ```dart
+  // Red Phase
+  test('should define checkPermission method signature', () async {
+    // Arrange
+    final mockScheduler = MockNotificationScheduler();
+    when(mockScheduler.checkPermission())
+        .thenAnswer((_) async => true);
 
-#### Module: NotificationSettingsNotifier
-- **Location**: `lib/features/notification/application/notifiers/notification_settings_notifier.dart`
-- **Responsibility**: Manage notification settings state, coordinate repository and scheduler
-- **Test Strategy**: Unit
-- **Test Scenarios (Red Phase)**:
-  - **Arrange**: Mock repository with existing settings
-  - **Act**: Build notifier
-  - **Assert**: State loaded correctly
-  - **Arrange**: Notifier with settings
-  - **Act**: Update notification time
-  - **Assert**: Repository called, state updated, scheduler invoked
-  - **Arrange**: Notifier with enabled=true
-  - **Act**: Toggle to disabled
-  - **Assert**: Repository updated, scheduler cancels all
-  - **Arrange**: Notifier with disabled=false
-  - **Act**: Toggle to enabled
-  - **Assert**: Repository updated, scheduler reschedules
-  - Edge: Repository failure → AsyncError state
-  - Edge: Scheduler failure → log error, maintain state
+    // Act
+    final hasPermission = await mockScheduler.checkPermission();
 
+    // Assert
+    expect(hasPermission, isA<bool>());
+  });
+
+  test('should define requestPermission method signature', () async {
+    // Arrange
+    final mockScheduler = MockNotificationScheduler();
+    when(mockScheduler.requestPermission())
+        .thenAnswer((_) async => true);
+
+    // Act
+    final granted = await mockScheduler.requestPermission();
+
+    // Assert
+    expect(granted, isTrue);
+  });
+
+  test('should define scheduleNotifications method signature', () async {
+    // Arrange
+    final mockScheduler = MockNotificationScheduler();
+    final doseSchedules = [mockDoseSchedule1, mockDoseSchedule2];
+    when(mockScheduler.scheduleNotifications(
+      doseSchedules: doseSchedules,
+      notificationTime: any,
+    )).thenAnswer((_) async => {});
+
+    // Act
+    await mockScheduler.scheduleNotifications(
+      doseSchedules: doseSchedules,
+      notificationTime: TimeOfDay(hour: 9, minute: 0),
+    );
+
+    // Assert
+    verify(mockScheduler.scheduleNotifications(
+      doseSchedules: doseSchedules,
+      notificationTime: any,
+    )).called(1);
+  });
+
+  test('should define cancelAllNotifications method signature', () async {
+    // Arrange
+    final mockScheduler = MockNotificationScheduler();
+    when(mockScheduler.cancelAllNotifications())
+        .thenAnswer((_) async => {});
+
+    // Act
+    await mockScheduler.cancelAllNotifications();
+
+    // Assert
+    verify(mockScheduler.cancelAllNotifications()).called(1);
+  });
+  ```
+- **Method Signatures**:
+  ```dart
+  abstract class NotificationScheduler {
+    Future<bool> checkPermission();
+    Future<bool> requestPermission();
+    Future<void> scheduleNotifications({
+      required List<DoseSchedule> doseSchedules,
+      required TimeOfDay notificationTime,
+    });
+    Future<void> cancelAllNotifications();
+  }
+  ```
+- **Dependencies**: DoseSchedule (from medication domain)
+
+---
+
+### 3.2. Infrastructure Layer
+
+#### PermissionService
+- **Location**: `features/notification/infrastructure/services/permission_service.dart`
+- **Responsibility**: 디바이스 알림 권한 확인 및 요청 (permission_handler 사용)
+- **Test Strategy**: Integration Test (실제 디바이스 또는 Mock)
+- **Test Scenarios**:
+  ```dart
+  // Red Phase
+  test('should check notification permission status', () async {
+    // Arrange
+    final service = PermissionService();
+
+    // Act
+    final hasPermission = await service.checkPermission();
+
+    // Assert
+    expect(hasPermission, isA<bool>());
+  });
+
+  test('should request notification permission', () async {
+    // Arrange
+    final service = PermissionService();
+
+    // Act
+    final granted = await service.requestPermission();
+
+    // Assert
+    expect(granted, isA<bool>());
+  });
+
+  test('should return false when permission denied', () async {
+    // Arrange
+    final service = PermissionService();
+    // Mock permission denied
+
+    // Act
+    final granted = await service.requestPermission();
+
+    // Assert
+    expect(granted, false);
+  });
+
+  test('should open app settings', () async {
+    // Arrange
+    final service = PermissionService();
+
+    // Act & Assert
+    await expectLater(
+      service.openAppSettings(),
+      completes,
+    );
+  });
+  ```
 - **Implementation Order**:
-  1. RED: Test build loads existing settings
-  2. GREEN: Implement build with repository fetch
-  3. RED: Test updateNotificationTime
-  4. GREEN: Implement update method with scheduler call
-  5. RED: Test toggleEnabled
-  6. GREEN: Implement toggle with conditional scheduling
-  7. RED: Test error handling
-  8. GREEN: Add AsyncValue.guard wrappers
-  9. REFACTOR: Extract scheduling coordination logic
+  1. checkPermission 구현
+  2. requestPermission 구현
+  3. openAppSettings 구현
+- **Dependencies**: permission_handler
 
+---
+
+#### LocalNotificationScheduler
+- **Location**: `features/notification/infrastructure/services/local_notification_scheduler.dart`
+- **Responsibility**: flutter_local_notifications를 사용한 알림 스케줄링 구현
+- **Test Strategy**: Integration Test (실제 플러그인 또는 Mock)
+- **Test Scenarios**:
+  ```dart
+  // Red Phase
+  test('should initialize notification plugin', () async {
+    // Arrange & Act
+    final scheduler = LocalNotificationScheduler();
+    await scheduler.initialize();
+
+    // Assert
+    expect(scheduler.isInitialized, true);
+  });
+
+  test('should check notification permission via PermissionService', () async {
+    // Arrange
+    final mockPermissionService = MockPermissionService();
+    when(mockPermissionService.checkPermission())
+        .thenAnswer((_) async => true);
+    final scheduler = LocalNotificationScheduler(mockPermissionService);
+
+    // Act
+    final hasPermission = await scheduler.checkPermission();
+
+    // Assert
+    expect(hasPermission, true);
+    verify(mockPermissionService.checkPermission()).called(1);
+  });
+
+  test('should request notification permission via PermissionService', () async {
+    // Arrange
+    final mockPermissionService = MockPermissionService();
+    when(mockPermissionService.requestPermission())
+        .thenAnswer((_) async => true);
+    final scheduler = LocalNotificationScheduler(mockPermissionService);
+
+    // Act
+    final granted = await scheduler.requestPermission();
+
+    // Assert
+    expect(granted, true);
+    verify(mockPermissionService.requestPermission()).called(1);
+  });
+
+  test('should schedule notifications for dose schedules', () async {
+    // Arrange
+    final scheduler = LocalNotificationScheduler();
+    final doseSchedules = [
+      DoseSchedule(
+        id: 'schedule1',
+        dosagePlanId: 'plan1',
+        scheduledDate: DateTime.now().add(Duration(days: 1)),
+        scheduledDoseMg: 0.5,
+      ),
+      DoseSchedule(
+        id: 'schedule2',
+        dosagePlanId: 'plan1',
+        scheduledDate: DateTime.now().add(Duration(days: 8)),
+        scheduledDoseMg: 1.0,
+      ),
+    ];
+
+    // Act
+    await scheduler.scheduleNotifications(
+      doseSchedules: doseSchedules,
+      notificationTime: TimeOfDay(hour: 9, minute: 0),
+    );
+
+    // Assert
+    final pendingNotifications = await scheduler.getPendingNotifications();
+    expect(pendingNotifications.length, 2);
+  });
+
+  test('should cancel all notifications', () async {
+    // Arrange
+    final scheduler = LocalNotificationScheduler();
+    await scheduler.scheduleNotifications(
+      doseSchedules: [mockDoseSchedule],
+      notificationTime: TimeOfDay(hour: 9, minute: 0),
+    );
+
+    // Act
+    await scheduler.cancelAllNotifications();
+
+    // Assert
+    final pendingNotifications = await scheduler.getPendingNotifications();
+    expect(pendingNotifications, isEmpty);
+  });
+
+  test('should not schedule notification for past dates', () async {
+    // Arrange
+    final scheduler = LocalNotificationScheduler();
+    final pastSchedule = DoseSchedule(
+      id: 'schedule1',
+      dosagePlanId: 'plan1',
+      scheduledDate: DateTime.now().subtract(Duration(days: 1)),
+      scheduledDoseMg: 0.5,
+    );
+
+    // Act
+    await scheduler.scheduleNotifications(
+      doseSchedules: [pastSchedule],
+      notificationTime: TimeOfDay(hour: 9, minute: 0),
+    );
+
+    // Assert
+    final pendingNotifications = await scheduler.getPendingNotifications();
+    expect(pendingNotifications, isEmpty);
+  });
+
+  test('should schedule only one notification per date', () async {
+    // Arrange
+    final scheduler = LocalNotificationScheduler();
+    final sameDate = DateTime.now().add(Duration(days: 1));
+    final doseSchedules = [
+      DoseSchedule(
+        id: 'schedule1',
+        dosagePlanId: 'plan1',
+        scheduledDate: sameDate,
+        scheduledDoseMg: 0.5,
+      ),
+      DoseSchedule(
+        id: 'schedule2',
+        dosagePlanId: 'plan1',
+        scheduledDate: sameDate,
+        scheduledDoseMg: 0.5,
+      ),
+    ];
+
+    // Act
+    await scheduler.scheduleNotifications(
+      doseSchedules: doseSchedules,
+      notificationTime: TimeOfDay(hour: 9, minute: 0),
+    );
+
+    // Assert
+    final pendingNotifications = await scheduler.getPendingNotifications();
+    expect(pendingNotifications.length, 1);
+  });
+  ```
+- **Edge Cases**:
+  - 권한 거부: requestPermission이 false 반환
+  - 과거 날짜: 알림 등록하지 않음
+  - 같은 날짜 여러 투여: 알림 한 번만 등록
+  - 알림 시간이 투여 예정일 이후: 다음날 동일 시간 예약
+- **Implementation Order**:
+  1. initialize 구현 (flutter_local_notifications 초기화)
+  2. checkPermission 구현 (PermissionService 위임)
+  3. requestPermission 구현 (PermissionService 위임)
+  4. scheduleNotifications 구현 (중복 날짜 필터링, 과거 날짜 제외)
+  5. cancelAllNotifications 구현
+- **Dependencies**: flutter_local_notifications, PermissionService, DoseSchedule
+
+---
+
+#### NotificationSettingsDto
+- **Location**: `features/notification/infrastructure/dtos/notification_settings_dto.dart`
+- **Responsibility**: Isar 저장을 위한 DTO 변환
+- **Test Strategy**: Unit Test
+- **Test Scenarios**:
+  ```dart
+  // Red Phase
+  test('should convert NotificationSettingsDto to NotificationSettings entity', () {
+    // Arrange
+    final dto = NotificationSettingsDto()
+      ..userId = 'user123'
+      ..notificationHour = 9
+      ..notificationMinute = 0
+      ..notificationEnabled = true;
+
+    // Act
+    final entity = dto.toEntity();
+
+    // Assert
+    expect(entity.userId, 'user123');
+    expect(entity.notificationTime.hour, 9);
+    expect(entity.notificationTime.minute, 0);
+    expect(entity.notificationEnabled, true);
+  });
+
+  test('should convert NotificationSettings entity to NotificationSettingsDto', () {
+    // Arrange
+    final entity = NotificationSettings(
+      userId: 'user123',
+      notificationTime: TimeOfDay(hour: 21, minute: 30),
+      notificationEnabled: false,
+    );
+
+    // Act
+    final dto = NotificationSettingsDto.fromEntity(entity);
+
+    // Assert
+    expect(dto.userId, 'user123');
+    expect(dto.notificationHour, 21);
+    expect(dto.notificationMinute, 30);
+    expect(dto.notificationEnabled, false);
+  });
+
+  test('should handle midnight time (00:00)', () {
+    // Arrange
+    final entity = NotificationSettings(
+      userId: 'user123',
+      notificationTime: TimeOfDay(hour: 0, minute: 0),
+      notificationEnabled: true,
+    );
+
+    // Act
+    final dto = NotificationSettingsDto.fromEntity(entity);
+    final convertedEntity = dto.toEntity();
+
+    // Assert
+    expect(convertedEntity.notificationTime.hour, 0);
+    expect(convertedEntity.notificationTime.minute, 0);
+  });
+  ```
+- **Implementation Order**:
+  1. DTO 클래스 정의 (Isar @collection 어노테이션)
+  2. toEntity 메서드 (TimeOfDay 재구성)
+  3. fromEntity 메서드 (TimeOfDay 분해)
+- **Dependencies**: Isar, NotificationSettings
+
+---
+
+#### IsarNotificationRepository
+- **Location**: `features/notification/infrastructure/repositories/isar_notification_repository.dart`
+- **Responsibility**: NotificationRepository 인터페이스 구현 (Isar)
+- **Test Strategy**: Integration Test (실제 Isar 인스턴스)
+- **Test Scenarios**:
+  ```dart
+  // Red Phase
+  testWidgets('should save notification settings to Isar', () async {
+    // Arrange
+    final isar = await openTestIsar();
+    final repo = IsarNotificationRepository(isar);
+    final settings = NotificationSettings(
+      userId: 'user123',
+      notificationTime: TimeOfDay(hour: 9, minute: 0),
+      notificationEnabled: true,
+    );
+
+    // Act
+    await repo.saveNotificationSettings(settings);
+
+    // Assert
+    final savedSettings = await repo.getNotificationSettings('user123');
+    expect(savedSettings, isNotNull);
+    expect(savedSettings!.notificationTime.hour, 9);
+    expect(savedSettings.notificationEnabled, true);
+  });
+
+  testWidgets('should return null when settings not found', () async {
+    // Arrange
+    final isar = await openTestIsar();
+    final repo = IsarNotificationRepository(isar);
+
+    // Act
+    final settings = await repo.getNotificationSettings('nonexistent');
+
+    // Assert
+    expect(settings, isNull);
+  });
+
+  testWidgets('should update existing settings', () async {
+    // Arrange
+    final isar = await openTestIsar();
+    final repo = IsarNotificationRepository(isar);
+    final initial = NotificationSettings(
+      userId: 'user123',
+      notificationTime: TimeOfDay(hour: 9, minute: 0),
+      notificationEnabled: true,
+    );
+    await repo.saveNotificationSettings(initial);
+
+    // Act
+    final updated = initial.copyWith(
+      notificationTime: TimeOfDay(hour: 21, minute: 0),
+      notificationEnabled: false,
+    );
+    await repo.saveNotificationSettings(updated);
+
+    // Assert
+    final savedSettings = await repo.getNotificationSettings('user123');
+    expect(savedSettings!.notificationTime.hour, 21);
+    expect(savedSettings.notificationEnabled, false);
+  });
+  ```
+- **Implementation Order**:
+  1. getNotificationSettings 구현 (userId로 조회)
+  2. saveNotificationSettings 구현 (upsert 방식)
+- **Dependencies**: Isar, NotificationSettingsDto
+
+---
+
+### 3.3. Application Layer
+
+#### NotificationNotifier
+- **Location**: `features/notification/application/notifiers/notification_notifier.dart`
+- **Responsibility**: 알림 설정 상태 관리 및 UseCase 오케스트레이션
+- **Test Strategy**: Unit Test (MockRepository, MockScheduler)
+- **Test Scenarios**:
+  ```dart
+  // Red Phase
+  test('should initialize with loading state', () {
+    // Arrange
+    final container = ProviderContainer(
+      overrides: [
+        notificationRepositoryProvider.overrideWithValue(mockRepo),
+        notificationSchedulerProvider.overrideWithValue(mockScheduler),
+      ],
+    );
+
+    // Act
+    final state = container.read(notificationNotifierProvider);
+
+    // Assert
+    expect(state, isA<AsyncLoading>());
+  });
+
+  test('should load notification settings on build', () async {
+    // Arrange
+    when(mockRepo.getNotificationSettings(any))
+        .thenAnswer((_) async => mockSettings);
+    final container = ProviderContainer(
+      overrides: [
+        notificationRepositoryProvider.overrideWithValue(mockRepo),
+        notificationSchedulerProvider.overrideWithValue(mockScheduler),
+      ],
+    );
+
+    // Act
+    await container.read(notificationNotifierProvider.future);
+
+    // Assert
+    final state = container.read(notificationNotifierProvider);
+    expect(state.value, mockSettings);
+  });
+
+  test('should return default settings when none exist', () async {
+    // Arrange
+    when(mockRepo.getNotificationSettings(any))
+        .thenAnswer((_) async => null);
+    final container = ProviderContainer(
+      overrides: [
+        notificationRepositoryProvider.overrideWithValue(mockRepo),
+        notificationSchedulerProvider.overrideWithValue(mockScheduler),
+      ],
+    );
+
+    // Act
+    await container.read(notificationNotifierProvider.future);
+
+    // Assert
+    final state = container.read(notificationNotifierProvider);
+    expect(state.value!.notificationTime.hour, 9); // 기본값
+    expect(state.value!.notificationEnabled, true);
+  });
+
+  test('should update notification time and reschedule', () async {
+    // Arrange
+    when(mockRepo.saveNotificationSettings(any))
+        .thenAnswer((_) async => {});
+    when(mockScheduler.cancelAllNotifications())
+        .thenAnswer((_) async => {});
+    when(mockScheduler.scheduleNotifications(
+      doseSchedules: any,
+      notificationTime: any,
+    )).thenAnswer((_) async => {});
+    when(mockMedicationRepo.getDoseSchedules(any))
+        .thenAnswer((_) async => [mockDoseSchedule]);
+
+    final container = ProviderContainer(
+      overrides: [
+        notificationRepositoryProvider.overrideWithValue(mockRepo),
+        notificationSchedulerProvider.overrideWithValue(mockScheduler),
+        medicationRepositoryProvider.overrideWithValue(mockMedicationRepo),
+      ],
+    );
+    final notifier = container.read(notificationNotifierProvider.notifier);
+
+    // Act
+    await notifier.updateNotificationTime(TimeOfDay(hour: 21, minute: 0));
+
+    // Assert
+    verify(mockRepo.saveNotificationSettings(any)).called(1);
+    verify(mockScheduler.cancelAllNotifications()).called(1);
+    verify(mockScheduler.scheduleNotifications(
+      doseSchedules: any,
+      notificationTime: any,
+    )).called(1);
+  });
+
+  test('should toggle notification enabled and reschedule', () async {
+    // Arrange
+    when(mockScheduler.checkPermission())
+        .thenAnswer((_) async => true);
+    when(mockRepo.saveNotificationSettings(any))
+        .thenAnswer((_) async => {});
+    when(mockScheduler.cancelAllNotifications())
+        .thenAnswer((_) async => {});
+    when(mockScheduler.scheduleNotifications(
+      doseSchedules: any,
+      notificationTime: any,
+    )).thenAnswer((_) async => {});
+    when(mockMedicationRepo.getDoseSchedules(any))
+        .thenAnswer((_) async => [mockDoseSchedule]);
+
+    final container = ProviderContainer(
+      overrides: [
+        notificationRepositoryProvider.overrideWithValue(mockRepo),
+        notificationSchedulerProvider.overrideWithValue(mockScheduler),
+        medicationRepositoryProvider.overrideWithValue(mockMedicationRepo),
+      ],
+    );
+    final notifier = container.read(notificationNotifierProvider.notifier);
+
+    // Act
+    await notifier.toggleNotificationEnabled();
+
+    // Assert
+    verify(mockScheduler.checkPermission()).called(1);
+    verify(mockRepo.saveNotificationSettings(any)).called(1);
+  });
+
+  test('should request permission when toggling enabled without permission', () async {
+    // Arrange
+    when(mockScheduler.checkPermission())
+        .thenAnswer((_) async => false);
+    when(mockScheduler.requestPermission())
+        .thenAnswer((_) async => true);
+    when(mockRepo.saveNotificationSettings(any))
+        .thenAnswer((_) async => {});
+    when(mockScheduler.scheduleNotifications(
+      doseSchedules: any,
+      notificationTime: any,
+    )).thenAnswer((_) async => {});
+    when(mockMedicationRepo.getDoseSchedules(any))
+        .thenAnswer((_) async => [mockDoseSchedule]);
+
+    final container = ProviderContainer(
+      overrides: [
+        notificationRepositoryProvider.overrideWithValue(mockRepo),
+        notificationSchedulerProvider.overrideWithValue(mockScheduler),
+        medicationRepositoryProvider.overrideWithValue(mockMedicationRepo),
+      ],
+    );
+    final notifier = container.read(notificationNotifierProvider.notifier);
+
+    // Act
+    await notifier.toggleNotificationEnabled();
+
+    // Assert
+    verify(mockScheduler.requestPermission()).called(1);
+    verify(mockRepo.saveNotificationSettings(any)).called(1);
+  });
+
+  test('should not enable when permission denied', () async {
+    // Arrange
+    when(mockScheduler.checkPermission())
+        .thenAnswer((_) async => false);
+    when(mockScheduler.requestPermission())
+        .thenAnswer((_) async => false);
+
+    final container = ProviderContainer(
+      overrides: [
+        notificationRepositoryProvider.overrideWithValue(mockRepo),
+        notificationSchedulerProvider.overrideWithValue(mockScheduler),
+      ],
+    );
+    final notifier = container.read(notificationNotifierProvider.notifier);
+
+    // Act
+    await notifier.toggleNotificationEnabled();
+
+    // Assert
+    verifyNever(mockRepo.saveNotificationSettings(any));
+    verifyNever(mockScheduler.scheduleNotifications(
+      doseSchedules: any,
+      notificationTime: any,
+    ));
+  });
+
+  test('should cancel all notifications when disabling', () async {
+    // Arrange
+    when(mockRepo.saveNotificationSettings(any))
+        .thenAnswer((_) async => {});
+    when(mockScheduler.cancelAllNotifications())
+        .thenAnswer((_) async => {});
+
+    final container = ProviderContainer(
+      overrides: [
+        notificationRepositoryProvider.overrideWithValue(mockRepo),
+        notificationSchedulerProvider.overrideWithValue(mockScheduler),
+      ],
+    );
+    final notifier = container.read(notificationNotifierProvider.notifier);
+
+    // Act (enabled: true → false)
+    await notifier.toggleNotificationEnabled();
+
+    // Assert
+    verify(mockScheduler.cancelAllNotifications()).called(1);
+    verifyNever(mockScheduler.scheduleNotifications(
+      doseSchedules: any,
+      notificationTime: any,
+    ));
+  });
+  ```
+- **Implementation Order**:
+  1. build() 메서드 (getNotificationSettings 호출, 기본값 반환)
+  2. updateNotificationTime() 메서드
+  3. toggleNotificationEnabled() 메서드 (권한 확인 및 요청)
+  4. _rescheduleNotifications() 프라이빗 메서드 (스케줄 재계산)
 - **Dependencies**: NotificationRepository, NotificationScheduler, MedicationRepository (for dose schedules)
 
-#### Module: notificationSettingsProvider
-- **Location**: `lib/features/notification/application/providers.dart`
-- **Responsibility**: Provide NotificationSettingsNotifier and NotificationScheduler
-- **Test Strategy**: Integration
-- **Test Scenarios**: Provider dependency injection working correctly
-
-- **Implementation Order**:
-  1. RED: Test provider registration
-  2. GREEN: Implement Riverpod providers
-  3. REFACTOR: Organize provider hierarchy
-
 ---
 
-### 3.4 Presentation Layer
+### 3.4. Presentation Layer
 
-#### Module: NotificationSettingsScreen
-- **Location**: `lib/features/notification/presentation/screens/notification_settings_screen.dart`
-- **Responsibility**: Display notification settings, handle user interactions
-- **Test Strategy**: Widget tests
-- **Test Scenarios (Red Phase)**:
-  - **Arrange**: Notifier with settings enabled=true, time=09:00
-  - **Act**: Render screen
-  - **Assert**: Toggle is ON, time displays "09:00"
-  - **Arrange**: Screen rendered
-  - **Act**: Tap time picker
-  - **Assert**: Time picker dialog shown
-  - **Arrange**: Time picker dialog
-  - **Act**: Select 14:00
-  - **Assert**: Notifier.updateNotificationTime called with 14:00
-  - **Arrange**: Toggle ON
-  - **Act**: Toggle switch
-  - **Assert**: Notifier.toggleEnabled called
-  - Edge: Loading state shows spinner
-  - Edge: Error state shows error message
+#### NotificationSettingsScreen
+- **Location**: `features/notification/presentation/screens/notification_settings_screen.dart`
+- **Responsibility**: 알림 설정 UI 렌더링 및 사용자 입력 처리
+- **Test Strategy**: Widget Test + Acceptance Test
+- **Test Scenarios**:
+  ```dart
+  // Widget Test - Red Phase
+  testWidgets('should display notification time and enabled toggle', (tester) async {
+    // Arrange
+    final mockNotifier = MockNotificationNotifier();
+    when(mockNotifier.build()).thenAnswer((_) async => mockSettings);
 
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          notificationNotifierProvider.overrideWith(() => mockNotifier),
+        ],
+        child: MaterialApp(home: NotificationSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Assert
+    expect(find.text('푸시 알림 설정'), findsOneWidget);
+    expect(find.byType(Switch), findsOneWidget);
+    expect(find.text('알림 시간'), findsOneWidget);
+  });
+
+  testWidgets('should display current notification time', (tester) async {
+    // Arrange
+    final settings = NotificationSettings(
+      userId: 'user123',
+      notificationTime: TimeOfDay(hour: 9, minute: 0),
+      notificationEnabled: true,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          notificationNotifierProvider.overrideWith((ref) {
+            return AsyncValue.data(settings);
+          }),
+        ],
+        child: MaterialApp(home: NotificationSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Assert
+    expect(find.text('오전 9:00'), findsOneWidget);
+  });
+
+  testWidgets('should open time picker when time is tapped', (tester) async {
+    // Arrange
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(home: NotificationSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Act
+    await tester.tap(find.byKey(Key('notification_time_button')));
+    await tester.pumpAndSettle();
+
+    // Assert
+    expect(find.byType(TimePickerDialog), findsOneWidget);
+  });
+
+  testWidgets('should call updateNotificationTime when time selected', (tester) async {
+    // Arrange
+    final mockNotifier = MockNotificationNotifier();
+    when(mockNotifier.updateNotificationTime(any))
+        .thenAnswer((_) async => {});
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          notificationNotifierProvider.overrideWith(() => mockNotifier),
+        ],
+        child: MaterialApp(home: NotificationSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Act
+    await tester.tap(find.byKey(Key('notification_time_button')));
+    await tester.pumpAndSettle();
+    // Select time (mocked)
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    // Assert
+    verify(mockNotifier.updateNotificationTime(any)).called(1);
+  });
+
+  testWidgets('should call toggleNotificationEnabled when switch toggled', (tester) async {
+    // Arrange
+    final mockNotifier = MockNotificationNotifier();
+    when(mockNotifier.toggleNotificationEnabled())
+        .thenAnswer((_) async => {});
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          notificationNotifierProvider.overrideWith(() => mockNotifier),
+        ],
+        child: MaterialApp(home: NotificationSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Act
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    // Assert
+    verify(mockNotifier.toggleNotificationEnabled()).called(1);
+  });
+
+  testWidgets('should show permission denied dialog when permission refused', (tester) async {
+    // Arrange
+    final mockNotifier = MockNotificationNotifier();
+    when(mockNotifier.toggleNotificationEnabled())
+        .thenThrow(PermissionDeniedException());
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          notificationNotifierProvider.overrideWith(() => mockNotifier),
+        ],
+        child: MaterialApp(home: NotificationSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Act
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    // Assert
+    expect(find.text('알림 권한이 필요합니다'), findsOneWidget);
+    expect(find.text('설정으로 이동'), findsOneWidget);
+  });
+
+  testWidgets('should show confirmation message on save', (tester) async {
+    // Arrange
+    final mockNotifier = MockNotificationNotifier();
+    when(mockNotifier.updateNotificationTime(any))
+        .thenAnswer((_) async => {});
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          notificationNotifierProvider.overrideWith(() => mockNotifier),
+        ],
+        child: MaterialApp(home: NotificationSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Act
+    await tester.tap(find.byKey(Key('notification_time_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    // Assert
+    expect(find.text('알림 설정이 저장되었습니다'), findsOneWidget);
+  });
+  ```
+- **QA Sheet** (수동 테스트):
+  | 항목 | 체크 |
+  |------|------|
+  | 알림 시간 선택 시 TimePicker 표시 | ☐ |
+  | 선택한 시간이 UI에 반영됨 | ☐ |
+  | 알림 토글 스위치 정상 동작 | ☐ |
+  | 권한 없을 시 권한 요청 대화상자 표시 | ☐ |
+  | 권한 거부 시 "설정으로 이동" 안내 표시 | ☐ |
+  | "설정으로 이동" 버튼 클릭 시 시스템 설정 앱 열림 | ☐ |
+  | 알림 시간 변경 시 "설정이 저장되었습니다" 메시지 표시 | ☐ |
+  | 알림 비활성화 시 모든 알림 취소 확인 (시스템 알림 확인) | ☐ |
+  | 알림 활성화 시 투여 예정일에 알림 등록 확인 | ☐ |
+  | 네트워크 오류 시 로컬 저장 및 에러 메시지 표시 | ☐ |
 - **Implementation Order**:
-  1. RED: Test screen renders with settings
-  2. GREEN: Build Scaffold with Switch and Text
-  3. RED: Test time picker interaction
-  4. GREEN: Implement showTimePicker and callback
-  5. RED: Test toggle interaction
-  6. GREEN: Implement Switch.onChanged
-  7. RED: Test loading state
-  8. GREEN: Add AsyncValue pattern matching
-  9. REFACTOR: Extract widgets for time picker tile, toggle tile
-
-- **Dependencies**: NotificationSettingsNotifier
-- **QA Sheet**:
-  - [ ] Toggle switch animates smoothly
-  - [ ] Time picker displays current time
-  - [ ] Time format matches locale (24h/12h)
-  - [ ] Back button saves state
-  - [ ] Confirmation message after save
-
-#### Module: PermissionHandler Widget
-- **Location**: `lib/features/notification/presentation/widgets/permission_handler.dart`
-- **Responsibility**: Handle notification permission requests
-- **Test Strategy**: Widget tests with platform channel mocks
-- **Test Scenarios (Red Phase)**:
-  - **Arrange**: Permission not determined
-  - **Act**: Toggle ON
-  - **Assert**: Permission request dialog shown
-  - **Arrange**: Permission denied
-  - **Act**: Toggle ON
-  - **Assert**: "Go to Settings" dialog shown
-  - **Arrange**: Permission granted
-  - **Act**: Toggle ON
-  - **Assert**: Settings saved immediately
-  - Edge: Permission denied permanently → open app settings
-
-- **Implementation Order**:
-  1. RED: Test permission request flow
-  2. GREEN: Implement permission_handler package integration
-  3. RED: Test denied scenario
-  4. GREEN: Show settings dialog
-  5. RED: Test granted scenario
-  6. GREEN: Call notifier update
-  7. REFACTOR: Extract permission status helpers
-
-- **Dependencies**: permission_handler package
+  1. UI 레이아웃 구성 (Switch, Time display, Time picker button)
+  2. NotificationNotifier 연동 (ref.watch)
+  3. Time picker 표시 로직
+  4. updateNotificationTime 호출
+  5. toggleNotificationEnabled 호출
+  6. 권한 거부 처리 (Dialog 표시)
+  7. 확인 메시지 표시 (SnackBar)
+- **Dependencies**: NotificationNotifier
 
 ---
 
 ## 4. TDD Workflow
 
-### Start: Domain Entity Test
-**First Test**: NotificationSettings entity creation
+### Phase 1: Domain Layer (Inside-Out)
+1. **시작**: NotificationSettings Entity 테스트 작성
+2. **Red → Green → Refactor**:
+   - NotificationSettings Entity 구현
+   - NotificationRepository Interface 정의
+   - NotificationScheduler Interface 정의
+3. **Commit**: "feat(notification): add domain entities and repository interfaces"
 
-```dart
-test('should create NotificationSettings with valid data', () {
-  // Arrange
-  final time = TimeOfDay(hour: 9, minute: 0);
+### Phase 2: Infrastructure Layer
+1. **시작**: PermissionService 테스트 작성
+2. **Red → Green → Refactor**:
+   - PermissionService 구현
+   - LocalNotificationScheduler 구현 (initialize, permission 메서드)
+   - NotificationSettingsDto 구현
+   - IsarNotificationRepository 구현
+   - LocalNotificationScheduler 스케줄링 로직 구현
+3. **Commit**: "feat(notification): implement infrastructure layer with local notifications"
 
-  // Act
-  final settings = NotificationSettings(
-    enabled: true,
-    notificationTime: time,
-  );
+### Phase 3: Application Layer
+1. **시작**: NotificationNotifier 테스트 작성
+2. **Red → Green → Refactor**:
+   - NotificationNotifier build() 구현
+   - updateNotificationTime() 구현
+   - toggleNotificationEnabled() 구현
+   - _rescheduleNotifications() 구현
+3. **Commit**: "feat(notification): add notification settings state management"
 
-  // Assert
-  expect(settings.enabled, true);
-  expect(settings.notificationTime, time);
-});
-```
+### Phase 4: Presentation Layer
+1. **시작**: NotificationSettingsScreen 위젯 테스트 작성
+2. **Red → Green → Refactor**:
+   - NotificationSettingsScreen UI 구현
+   - Time picker 연동
+   - Switch 토글 로직
+   - NotificationNotifier 연동
+   - 권한 거부 Dialog 처리
+   - 확인 메시지 표시
+3. **Commit**: "feat(notification): implement notification settings screen UI"
 
-### Commit Points
-1. Domain entities and repository interface
-2. Infrastructure DTOs
-3. Infrastructure repository implementation
-4. Infrastructure notification scheduler
-5. Application notifier and providers
-6. Presentation screen and widgets
+### Phase 5: Acceptance Testing
+1. **시작**: E2E 시나리오 작성
+2. **Red → Green → Refactor**:
+   - 알림 시간 변경 플로우
+   - 알림 활성화/비활성화 플로우
+   - 권한 요청 및 거부 플로우
+   - 알림 스케줄 업데이트 확인
+3. **Commit**: "test(notification): add acceptance tests for notification settings"
 
-### Red → Green → Refactor Flow
-1. Write entity test → Implement entity → Refactor with copyWith
-2. Write DTO test → Implement DTO → Refactor time conversion
-3. Write repository test → Implement repository → Refactor transactions
-4. Write scheduler test → Implement scheduler → Refactor payload builder
-5. Write notifier test → Implement notifier → Refactor coordination
-6. Write widget test → Implement widget → Refactor reusable components
-
-### Completion Criteria
-- [ ] All unit tests passing (Domain + Application)
-- [ ] All integration tests passing (Infrastructure)
-- [ ] All widget tests passing (Presentation)
-- [ ] Manual QA sheet completed
-- [ ] No layer violations (check imports)
-- [ ] Repository pattern maintained
-- [ ] flutter analyze shows no warnings
-
----
-
-## 5. Technical Details
-
-### Data Model
-
-**NotificationSettings Entity**:
-```dart
-class NotificationSettings {
-  final bool enabled;
-  final TimeOfDay notificationTime;
-
-  // Default: 09:00, enabled
-}
-```
-
-**Storage**:
-- Stored in `user_profiles` table (Phase 1) or Isar collection (Phase 0)
-- `notification_enabled`: boolean
-- `notification_time`: integer (minutes since midnight, 0-1439)
-
-### Notification Payload
-```dart
-{
-  "type": "dose_reminder",
-  "doseScheduleId": "uuid",
-  "medicationName": "Ozempic",
-  "doseMg": 0.5,
-  "route": "/medication/schedule"
-}
-```
-
-### Platform-Specific Considerations
-- **iOS**: Request authorization before scheduling
-- **Android**: Request POST_NOTIFICATIONS permission (Android 13+)
-- **Background**: Use exact alarm scheduling for reliability
-
-### Dependencies
-- `flutter_local_notifications: ^16.3.0`
-- `permission_handler: ^11.0.0`
-- `timezone: ^0.9.2` (for scheduling)
+### Phase 6: Refactoring
+1. 중복 코드 제거
+2. 에러 메시지 상수화
+3. 스케줄링 로직 최적화
+4. **Commit**: "refactor(notification): optimize scheduling logic and extract constants"
 
 ---
 
-## 6. Test Organization
+## 5. 핵심 원칙
 
-```
-test/
-├── features/
-│   └── notification/
-│       ├── domain/
-│       │   └── entities/
-│       │       └── notification_settings_test.dart
-│       ├── infrastructure/
-│       │   ├── dtos/
-│       │   │   └── notification_settings_dto_test.dart
-│       │   ├── repositories/
-│       │   │   └── isar_notification_repository_test.dart
-│       │   └── services/
-│       │       └── notification_scheduler_test.dart
-│       ├── application/
-│       │   └── notifiers/
-│       │       └── notification_settings_notifier_test.dart
-│       └── presentation/
-│           ├── screens/
-│           │   └── notification_settings_screen_test.dart
-│           └── widgets/
-│               └── permission_handler_test.dart
-```
+### Repository Pattern
+- Application/Presentation은 **NotificationRepository Interface**만 의존
+- Infrastructure는 **IsarNotificationRepository 구현체** 제공
+- Phase 1 전환 시 **SupabaseNotificationRepository**로 1줄 변경 (알림 설정은 로컬이지만 서버 동기화 가능)
 
----
+### Test Pyramid
+- **Unit Tests (70%)**: Entity, DTO, PermissionService, NotificationNotifier
+- **Integration Tests (20%)**: IsarNotificationRepository, LocalNotificationScheduler
+- **Acceptance Tests (10%)**: NotificationSettingsScreen E2E 플로우
 
-## 7. Risk Mitigation
+### TDD 사이클
+1. **Red**: 실패하는 테스트 작성
+2. **Green**: 최소한의 코드로 통과
+3. **Refactor**: 중복 제거 및 최적화
 
-### High Risk
-1. **Permission Denial**: Users deny notification permission
-   - Mitigation: Clear explanation before request, guide to settings
-
-2. **Platform Inconsistencies**: iOS/Android notification behavior differs
-   - Mitigation: Platform-specific tests, fallback strategies
-
-### Medium Risk
-1. **Timezone Issues**: Notification time not matching user expectation
-   - Mitigation: Use timezone package, test across timezones
-
-2. **Missed Notifications**: App killed by OS
-   - Mitigation: Use exact alarms (Android), request reliability permission
+### Edge Case 처리
+- 권한 거부: 설정 앱 이동 안내
+- 과거 날짜: 알림 등록 제외
+- 같은 날짜 여러 투여: 알림 한 번만 등록
+- 알림 시간 이후: 다음날 동일 시간 예약
+- 네트워크 오류: 로컬 저장 후 재시도 큐 등록
+- 알림 설정 변경 후 즉시 반영 불가: 안내 메시지 표시
 
 ---
 
-## 8. Phase 0 → Phase 1 Transition
+## 6. 성공 기준
 
-**Phase 0** (Local):
-- Settings stored in Isar
-- Repository: `IsarNotificationRepository`
+### 기능 요구사항
+- [x] 알림 시간 설정 및 저장 (24시간 형식)
+- [x] 알림 활성화/비활성화 토글
+- [x] 디바이스 알림 권한 확인 및 요청
+- [x] 권한 거부 시 설정 앱 이동 안내
+- [x] 투여 스케줄 기반 알림 자동 등록
+- [x] 알림 시간 변경 시 스케줄 자동 재계산
+- [x] 알림 비활성화 시 모든 알림 취소
+- [x] 같은 날짜 여러 투여 시 알림 한 번만 발송
+- [x] 과거 날짜 알림 등록 제외
 
-**Phase 1** (Cloud):
-- Settings stored in Supabase `user_profiles` table
-- Repository: `SupabaseNotificationRepository` (new implementation)
-- **Zero changes**: Domain, Application, Presentation layers
+### 비기능 요구사항
+- [x] 모든 테스트 통과 (Unit + Integration + Acceptance)
+- [x] Layer 간 의존성 규칙 준수
+- [x] Repository Pattern 엄격히 적용
+- [x] 알림 스케줄링 1초 이내 완료
+- [x] 디바이스 재부팅 후에도 알림 유지
 
-**Migration**: 1-line change in provider DI
-
-```dart
-// Phase 0
-@riverpod
-NotificationRepository notificationRepository(ref) =>
-  IsarNotificationRepository(ref.watch(isarProvider));
-
-// Phase 1
-@riverpod
-NotificationRepository notificationRepository(ref) =>
-  SupabaseNotificationRepository(ref.watch(supabaseProvider));
-```
-
----
-
-## 9. Success Metrics
-
-### Test Coverage
-- Unit tests: 100% (Domain + Application)
-- Integration tests: 90%+ (Infrastructure)
-- Widget tests: 80%+ (Presentation)
-
-### Performance
-- Settings load: < 100ms
-- Settings save: < 500ms
-- Notification scheduling: < 1s for 100 doses
-
-### Reliability
-- Notification delivery rate: > 95%
-- Permission request success: > 70%
-- Zero data loss on failure
+### 코드 품질
+- [x] Test Coverage > 80%
+- [x] No warnings (flutter analyze)
+- [x] TDD 사이클 완료 (모든 모듈)
+- [x] Commit 메시지 규칙 준수

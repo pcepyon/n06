@@ -1,533 +1,833 @@
-# Data Sharing Mode Implementation Plan (F003)
+# Medication Schedule Management Implementation Plan
 
-## 1. Overview
+## 1. 개요
 
-**Feature**: Data Sharing Mode - Read-only medical report sharing
-**Location**: `features/data_sharing/`
-**TDD Strategy**: Outside-In (Feature-first approach)
-**Test Pyramid Target**: Unit 70% / Integration 20% / Acceptance 10%
+투여 스케줄 자동 생성 및 관리 기능의 TDD 기반 모듈화 설계
 
-### Modules Summary
-- **Presentation Layer**: Read-only UI, mode toggle controls
-- **Application Layer**: State management for sharing mode, data aggregation logic
-- **Domain Layer**: Data aggregation entities, repository interfaces
-- **Infrastructure Layer**: Data query implementations for multi-source aggregation
+### 모듈 목록
+- **DosagePlan Entity**: 투여 계획 비즈니스 모델
+- **DoseSchedule Entity**: 개별 투여 스케줄 비즈니스 모델
+- **DoseRecord Entity**: 투여 완료 기록 비즈니스 모델
+- **ScheduleGeneratorUseCase**: 스케줄 자동 생성 로직
+- **InjectionSiteRotationUseCase**: 주사 부위 순환 검증 로직
+- **MissedDoseAnalyzerUseCase**: 누락 용량 분석 로직
+- **MedicationRepository Interface**: 데이터 접근 추상화
+- **IsarMedicationRepository**: Isar 기반 저장소 구현
+- **MedicationNotifier**: 상태 관리 및 UseCase 조율
+- **MedicationScreen**: 스케줄 조회 및 투여 기록 UI
+- **DoseRecordDialog**: 투여 완료 기록 입력 UI
+
+### TDD 적용 범위
+- **Domain Layer**: 100% (모든 Entity, UseCase)
+- **Infrastructure Layer**: 80% (Repository 구현체, DTO)
+- **Application Layer**: 60% (Notifier 핵심 로직)
+- **Presentation Layer**: QA Sheet (수동 테스트)
 
 ---
 
 ## 2. Architecture Diagram
 
 ```mermaid
-graph TD
+graph TB
     subgraph Presentation Layer
-        A[DataSharingScreen] --> B[DataSharingController]
-        C[ShareReportCard] --> A
-        D[ReadOnlyChartWidget] --> A
+        MS[MedicationScreen]
+        DRD[DoseRecordDialog]
+        DPD[DosagePlanDialog]
     end
 
     subgraph Application Layer
-        B --> E[DataSharingNotifier]
-        E --> F[GenerateReportUseCase]
-        F --> G[AggregateDataUseCase]
+        MN[MedicationNotifier]
     end
 
     subgraph Domain Layer
-        G --> H[DataSharingRepository]
-        F --> I[MedicationRepository]
-        F --> J[TrackingRepository]
-        F --> K[ProfileRepository]
-
-        L[ShareReport Entity]
-        M[DateRange Entity]
+        DP[DosagePlan Entity]
+        DS[DoseSchedule Entity]
+        DR[DoseRecord Entity]
+        SGU[ScheduleGeneratorUseCase]
+        ISRU[InjectionSiteRotationUseCase]
+        MDAU[MissedDoseAnalyzerUseCase]
+        MRI[MedicationRepository Interface]
     end
 
     subgraph Infrastructure Layer
-        H --> N[IsarDataSharingRepository]
-        I --> O[IsarMedicationRepository]
-        J --> P[IsarTrackingRepository]
-        K --> Q[IsarProfileRepository]
+        IMR[IsarMedicationRepository]
+        DPDto[DosagePlanDto]
+        DSDto[DoseScheduleDto]
+        DRDto[DoseRecordDto]
+        Isar[(Isar DB)]
     end
 
-    E --> L
-    F --> M
+    MS --> MN
+    DRD --> MN
+    DPD --> MN
+
+    MN --> SGU
+    MN --> ISRU
+    MN --> MDAU
+    MN --> MRI
+
+    SGU --> DP
+    SGU --> DS
+    ISRU --> DR
+    MDAU --> DS
+    MDAU --> DR
+
+    MRI -.implements.-> IMR
+    IMR --> DPDto
+    IMR --> DSDto
+    IMR --> DRDto
+    IMR --> Isar
+
+    DPDto -.toEntity.-> DP
+    DSDto -.toEntity.-> DS
+    DRDto -.toEntity.-> DR
 ```
 
 ---
 
 ## 3. Implementation Plan
 
-### Module 1: DateRange Entity (Domain)
-**Location**: `features/data_sharing/domain/entities/date_range.dart`
-**Responsibility**: Immutable value object for period selection
-**Test Strategy**: Unit tests only
-**Test Scenarios (Red Phase)**:
-- Given valid start/end dates, when creating DateRange, then returns valid instance
-- Given start date after end date, when creating DateRange, then throws InvalidDateRangeException
-- Given preset period (1M/3M/ALL), when calling factory, then returns correct range
-- Given two DateRange instances with same dates, when comparing, then equals returns true
+### 3.1. DosagePlan Entity
+
+**Location**: `lib/features/tracking/domain/entities/dosage_plan.dart`
+
+**Responsibility**: 투여 계획 비즈니스 규칙 및 데이터 캡슐화
+
+**Test Strategy**: Unit Test
+
+**Test Scenarios**:
+```dart
+// Red Phase Tests
+test('should create valid dosage plan with required fields')
+test('should throw exception when start date is in future')
+test('should throw exception when cycle days is less than 1')
+test('should throw exception when initial dose is negative')
+test('should validate escalation plan is monotonically increasing')
+test('should throw exception when escalation plan has decreasing doses')
+test('should calculate current dose based on elapsed weeks')
+test('should return initial dose when no escalation plan exists')
+test('should return correct dose during escalation period')
+test('should return max dose after escalation completes')
+test('should detect if plan is active')
+test('should copy plan with updated fields')
+```
 
 **Implementation Order**:
-1. Red: Test DateRange creation with valid dates
-2. Green: Implement basic DateRange constructor
-3. Red: Test invalid date range (start > end)
-4. Green: Add validation logic
-5. Red: Test factory methods (oneMonth, threeMonths, all)
-6. Green: Implement factory constructors
-7. Refactor: Extract validation to private method
+1. 기본 생성자 및 필수 필드 검증
+2. 증량 계획 검증 로직 (단조 증가)
+3. 현재 용량 계산 메서드
+4. copyWith 메서드
 
-**Dependencies**: None
+**Dependencies**:
+- `EscalationStep` value object
+
+**Edge Cases**:
+- 시작일이 미래인 경우
+- 증량 계획이 역순인 경우
+- 주기가 0 이하인 경우
+- 음수 용량
 
 ---
 
-### Module 2: ShareReport Entity (Domain)
-**Location**: `features/data_sharing/domain/entities/share_report.dart`
-**Responsibility**: Aggregated read-only report data structure
-**Test Strategy**: Unit tests only
-**Test Scenarios (Red Phase)**:
-- Given report data, when creating ShareReport, then all fields populated correctly
-- Given empty data, when creating ShareReport, then returns report with zero values
-- Given report, when calling toMap, then returns serializable map
-- Given adherence data, when calculating percentage, then returns correct value (0-100)
+### 3.2. DoseSchedule Entity
+
+**Location**: `lib/features/tracking/domain/entities/dose_schedule.dart`
+
+**Responsibility**: 개별 스케줄 항목 표현
+
+**Test Strategy**: Unit Test
+
+**Test Scenarios**:
+```dart
+// Red Phase Tests
+test('should create dose schedule with valid data')
+test('should compare schedules by date')
+test('should detect if schedule is overdue')
+test('should detect if schedule is today')
+test('should detect if schedule is upcoming')
+test('should calculate days until scheduled date')
+test('should copy schedule with updated fields')
+```
 
 **Implementation Order**:
-1. Red: Test ShareReport creation with full data
-2. Green: Implement ShareReport class with required fields
-3. Red: Test adherence calculation logic
-4. Green: Implement adherence percentage calculation
-5. Red: Test serialization (toMap/fromMap)
-6. Green: Implement serialization methods
-7. Refactor: Extract calculation logic to computed properties
+1. 기본 생성자 및 필드
+2. 날짜 비교 메서드 (Comparable 구현)
+3. 상태 검증 메서드 (overdue, today, upcoming)
+4. copyWith 메서드
 
-**Dependencies**: DateRange, DoseRecord, WeightLog, SymptomLog (existing entities)
+**Dependencies**: 없음
 
 ---
 
-### Module 3: DataSharingRepository Interface (Domain)
-**Location**: `features/data_sharing/domain/repositories/data_sharing_repository.dart`
-**Responsibility**: Define contract for aggregated data queries
-**Test Strategy**: Mock-based unit tests in Application layer
-**Test Scenarios (Red Phase)**:
-- Interface defines method signature for getShareReport(DateRange)
-- Interface defines method signature for getAdherenceRate(DateRange)
-- Interface defines method signature for getInjectionSiteHistory(DateRange)
+### 3.3. DoseRecord Entity
+
+**Location**: `lib/features/tracking/domain/entities/dose_record.dart`
+
+**Responsibility**: 투여 완료 기록 및 검증
+
+**Test Strategy**: Unit Test
+
+**Test Scenarios**:
+```dart
+// Red Phase Tests
+test('should create dose record with required fields')
+test('should throw exception when administered date is in future')
+test('should throw exception when actual dose is negative')
+test('should validate injection site is valid')
+test('should throw exception for invalid injection site')
+test('should detect if record is completed')
+test('should calculate days since administration')
+test('should copy record with updated fields')
+```
 
 **Implementation Order**:
-1. Red: Test interface contract in mock repository
-2. Green: Define abstract repository interface
-3. Refactor: Add documentation comments
+1. 기본 생성자 및 필수 필드 검증
+2. 주사 부위 enum 정의 (abdomen, thigh, arm)
+3. 날짜 검증 (미래 날짜 불가)
+4. copyWith 메서드
 
-**Dependencies**: ShareReport, DateRange
+**Dependencies**:
+- `InjectionSite` enum
+
+**Edge Cases**:
+- 투여일이 미래인 경우
+- 잘못된 주사 부위 문자열
+- 음수 용량
 
 ---
 
-### Module 4: AggregateDataUseCase (Domain)
-**Location**: `features/data_sharing/domain/usecases/aggregate_data_usecase.dart`
-**Responsibility**: Business logic for multi-source data aggregation
-**Test Strategy**: Unit tests with mocked repositories
-**Test Scenarios (Red Phase)**:
-- Given date range, when executing usecase, then calls all repository methods
-- Given medication repo returns empty, when aggregating, then adherence is 0%
-- Given weight logs exist, when aggregating, then weight change calculated correctly
-- Given symptom logs exist, when aggregating, then severity trends extracted
-- Given missing data sources, when aggregating, then partial report returned without error
+### 3.4. ScheduleGeneratorUseCase
+
+**Location**: `lib/features/tracking/domain/usecases/schedule_generator_usecase.dart`
+
+**Responsibility**: 투여 계획 기반 전체 스케줄 자동 생성
+
+**Test Strategy**: Unit Test
+
+**Test Scenarios**:
+```dart
+// Red Phase Tests
+test('should generate schedule for simple plan without escalation')
+  // Arrange: plan with 7-day cycle, 0.25mg, no escalation
+  // Act: generateSchedules(plan, endDate)
+  // Assert: schedules every 7 days with 0.25mg
+
+test('should generate schedule with escalation plan')
+  // Arrange: plan with escalation [4 weeks: 0.5mg, 8 weeks: 1.0mg]
+  // Act: generateSchedules(plan, 12 weeks)
+  // Assert:
+  //   - Weeks 1-4: 0.25mg
+  //   - Weeks 5-8: 0.5mg
+  //   - Weeks 9-12: 1.0mg
+
+test('should complete generation within 1 second for 6 months')
+  // Arrange: plan with complex escalation
+  // Act: time = measureTime { generateSchedules(plan, 6 months) }
+  // Assert: time < 1000ms
+
+test('should recalculate schedules from specific date')
+  // Arrange: existing schedules, plan changed at week 5
+  // Act: recalculateFrom(plan, changeDate, endDate)
+  // Assert: schedules before changeDate unchanged, after recalculated
+
+test('should handle edge case when change date matches schedule date')
+test('should generate empty list when end date before start date')
+test('should apply notification time to all schedules')
+```
 
 **Implementation Order**:
-1. Red: Test usecase calls medication repository
-2. Green: Inject medication repository and call getDoseRecords
-3. Red: Test usecase calls tracking repository
-4. Green: Inject tracking repository and call getWeightLogs/getSymptomLogs
-5. Red: Test adherence calculation logic
-6. Green: Implement adherence rate calculation
-7. Red: Test weight change calculation
-8. Green: Implement weight trend analysis
-9. Red: Test symptom pattern extraction
-10. Green: Implement symptom frequency analysis
-11. Refactor: Extract calculations to private methods
+1. 단순 반복 스케줄 생성 (증량 없음)
+2. 증량 계획 적용 로직
+3. 재계산 로직 (변경 시점 이후만)
+4. 성능 최적화 (1초 이내)
 
-**Dependencies**: DataSharingRepository, MedicationRepository, TrackingRepository
+**Dependencies**:
+- `DosagePlan`
+- `DoseSchedule`
+
+**Performance Requirement**: 6개월 스케줄 생성 < 1초
 
 ---
 
-### Module 5: IsarDataSharingRepository (Infrastructure)
-**Location**: `features/data_sharing/infrastructure/repositories/isar_data_sharing_repository.dart`
-**Responsibility**: Implement data aggregation queries for Isar
-**Test Strategy**: Integration tests with Isar test database
-**Test Scenarios (Red Phase)**:
-- Given Isar DB with dose records, when querying by date range, then returns filtered records
-- Given multiple data sources, when generating report, then aggregates correctly
-- Given date range with no data, when querying, then returns empty report
-- Given concurrent queries, when executing, then completes within 1 second
+### 3.5. InjectionSiteRotationUseCase
+
+**Location**: `lib/features/tracking/domain/usecases/injection_site_rotation_usecase.dart`
+
+**Responsibility**: 주사 부위 순환 규칙 검증 및 경고
+
+**Test Strategy**: Unit Test
+
+**Test Scenarios**:
+```dart
+// Red Phase Tests
+test('should return no warning when no recent records')
+  // Arrange: newSite = abdomen, recentRecords = []
+  // Act: result = checkRotation(newSite, recentRecords)
+  // Assert: result.needsWarning == false
+
+test('should return warning when same site used within 7 days')
+  // Arrange: newSite = abdomen, recentRecords = [abdomen 3 days ago]
+  // Act: result = checkRotation(newSite, recentRecords)
+  // Assert:
+  //   - result.needsWarning == true
+  //   - result.message contains "3일"
+
+test('should return no warning when same site used 8 days ago')
+  // Arrange: newSite = abdomen, recentRecords = [abdomen 8 days ago]
+  // Act: result = checkRotation(newSite, recentRecords)
+  // Assert: result.needsWarning == false
+
+test('should return no warning when different site used recently')
+  // Arrange: newSite = thigh, recentRecords = [abdomen 2 days ago]
+  // Act: result = checkRotation(newSite, recentRecords)
+  // Assert: result.needsWarning == false
+
+test('should handle multiple recent records of same site')
+  // Arrange: newSite = arm, recentRecords = [arm 2d ago, arm 5d ago]
+  // Act: result = checkRotation(newSite, recentRecords)
+  // Assert: result.message mentions most recent (2d ago)
+
+test('should visualize site usage for last 30 days')
+  // Arrange: records with various sites over 30 days
+  // Act: siteHistory = getSiteHistory(allRecords)
+  // Assert: siteHistory grouped by site, sorted by date
+```
 
 **Implementation Order**:
-1. Red: Test getShareReport returns data within date range
-2. Green: Implement Isar query with date filtering
-3. Red: Test adherence calculation uses scheduled vs actual doses
-4. Green: Implement adherence query joining schedules and records
-5. Red: Test injection site history aggregation
-6. Green: Implement groupBy query for site history
-7. Red: Test performance (1 second constraint)
-8. Green: Add query optimization (indexes, lazy loading)
-9. Refactor: Extract query builders to private methods
+1. 기본 7일 간격 검증
+2. 경고 메시지 생성 로직
+3. 부위별 사용 이력 시각화 데이터 생성
 
-**Dependencies**: Isar, DoseRecordDto, WeightLogDto, SymptomLogDto
+**Dependencies**:
+- `DoseRecord`
+- `InjectionSite`
+
+**Business Rules**:
+- 같은 부위 최소 7일 간격 권장
+- 경고 표시하되 진행 허용
+- 최근 30일 이력 시각화
 
 ---
 
-### Module 6: DataSharingNotifier (Application)
-**Location**: `features/data_sharing/application/notifiers/data_sharing_notifier.dart`
-**Responsibility**: Manage sharing mode state and report data
-**Test Strategy**: Unit tests with mocked repositories and usecases
-**Test Scenarios (Red Phase)**:
-- Given initial state, when building, then isActive is false
-- Given enterSharingMode called, when state changes, then isActive is true
-- Given period selected, when generating report, then calls usecase with correct range
-- Given report generated, when exitSharingMode, then clears report and sets isActive false
-- Given loading state, when report generation fails, then state is AsyncError
+### 3.6. MissedDoseAnalyzerUseCase
+
+**Location**: `lib/features/tracking/domain/usecases/missed_dose_analyzer_usecase.dart`
+
+**Responsibility**: 누락 용량 분석 및 안내 생성
+
+**Test Strategy**: Unit Test
+
+**Test Scenarios**:
+```dart
+// Red Phase Tests
+test('should return no missed doses when all completed')
+  // Arrange: schedules all have matching records
+  // Act: result = analyzeMissedDoses(schedules, records)
+  // Assert: result.missedDoses.isEmpty
+
+test('should detect missed dose within 5 days')
+  // Arrange: schedule 3 days ago, no record
+  // Act: result = analyzeMissedDoses(schedules, records)
+  // Assert:
+  //   - result.missedDoses.length == 1
+  //   - result.guidanceType == GuidanceType.immediateAdministration
+
+test('should detect missed dose over 5 days')
+  // Arrange: schedule 7 days ago, no record
+  // Act: result = analyzeMissedDoses(schedules, records)
+  // Assert:
+  //   - result.missedDoses.length == 1
+  //   - result.guidanceType == GuidanceType.waitForNext
+
+test('should recommend expert consultation for 7+ days missed')
+  // Arrange: schedule 10 days ago, no record
+  // Act: result = analyzeMissedDoses(schedules, records)
+  // Assert: result.requiresExpertConsultation == true
+
+test('should handle multiple missed doses')
+  // Arrange: 3 schedules missed (2d, 6d, 11d ago)
+  // Act: result = analyzeMissedDoses(schedules, records)
+  // Assert: result.missedDoses.length == 3, sorted by date
+
+test('should calculate days elapsed for each missed dose')
+```
 
 **Implementation Order**:
-1. Red: Test initial state is inactive
-2. Green: Implement build method returning DataSharingState(isActive: false)
-3. Red: Test enterSharingMode toggles isActive
-4. Green: Implement enterSharingMode method
-5. Red: Test report generation calls usecase
-6. Green: Inject usecase and call in enterSharingMode
-7. Red: Test exitSharingMode clears state
-8. Green: Implement exitSharingMode method
-9. Red: Test error handling on failed generation
-10. Green: Add AsyncValue.guard wrapper
-11. Refactor: Extract state transitions to private methods
+1. 누락 감지 로직 (스케줄-기록 매칭)
+2. 일수 계산 및 분류 (5일 기준)
+3. 안내 메시지 생성 로직
 
-**Dependencies**: AggregateDataUseCase, DataSharingRepository
+**Dependencies**:
+- `DoseSchedule`
+- `DoseRecord`
+
+**Business Rules**:
+- 5일 이내: 즉시 투여 안내
+- 5일 초과: 다음 예정일 대기
+- 7일 이상: 전문가 상담 권장
 
 ---
 
-### Module 7: DataSharingScreen (Presentation)
-**Location**: `features/data_sharing/presentation/screens/data_sharing_screen.dart`
-**Responsibility**: Render read-only report UI
-**Test Strategy**: Widget tests + Manual QA
-**Test Scenarios (Red Phase)**:
-- Given screen loaded, when rendering, then shows period selector
-- Given report data, when rendering, then displays all charts
-- Given isActive true, when rendering, then hides edit buttons
-- Given exit button tapped, when handling, then calls notifier.exitSharingMode
-- Given chart tapped, when handling, then shows detail popup (read-only)
+### 3.7. MedicationRepository Interface
+
+**Location**: `lib/features/tracking/domain/repositories/medication_repository.dart`
+
+**Responsibility**: 투여 데이터 접근 추상화
+
+**Test Strategy**: Integration Test (구현체 테스트)
+
+**Test Scenarios**: N/A (인터페이스)
 
 **Implementation Order**:
-1. Red: Test screen renders period selector
-2. Green: Build basic screen scaffold with DropdownButton
-3. Red: Test screen shows loading indicator when AsyncLoading
-4. Green: Add Consumer for notifier state and loading widget
-5. Red: Test screen displays charts when AsyncData
-6. Green: Build chart widgets (weight trend, symptom heatmap, adherence gauge)
-7. Red: Test edit buttons are hidden
-8. Green: Remove/hide FloatingActionButton and edit icons
-9. Red: Test exit button calls notifier method
-10. Green: Wire up exit button onPressed
-11. Refactor: Extract chart widgets to separate files
+```dart
+abstract class MedicationRepository {
+  // DosagePlan
+  Future<DosagePlan?> getActiveDosagePlan(String userId);
+  Future<void> saveDosagePlan(DosagePlan plan);
+  Future<void> updateDosagePlan(DosagePlan plan);
 
-**Dependencies**: DataSharingNotifier, ChartWidgets
+  // DoseSchedule
+  Future<List<DoseSchedule>> getDoseSchedules(String planId);
+  Future<void> saveDoseSchedules(List<DoseSchedule> schedules);
+  Future<void> deleteDoseSchedulesFrom(String planId, DateTime fromDate);
+
+  // DoseRecord
+  Future<List<DoseRecord>> getDoseRecords(String planId);
+  Future<List<DoseRecord>> getRecentDoseRecords(String planId, int days);
+  Future<void> saveDoseRecord(DoseRecord record);
+  Future<void> deleteDoseRecord(String recordId);
+
+  // Plan Change History
+  Future<void> savePlanChangeHistory(String planId, Map<String, dynamic> oldPlan, Map<String, dynamic> newPlan);
+
+  // Streams (real-time)
+  Stream<List<DoseRecord>> watchDoseRecords(String planId);
+  Stream<DosagePlan?> watchActiveDosagePlan(String userId);
+}
+```
+
+**Dependencies**: Domain entities
+
+---
+
+### 3.8. IsarMedicationRepository
+
+**Location**: `lib/features/tracking/infrastructure/repositories/isar_medication_repository.dart`
+
+**Responsibility**: Isar 기반 데이터 저장 및 조회
+
+**Test Strategy**: Integration Test
+
+**Test Scenarios**:
+```dart
+// Red Phase Tests
+test('should save and retrieve dosage plan')
+  // Arrange: plan entity
+  // Act: await repo.saveDosagePlan(plan)
+  //      result = await repo.getActiveDosagePlan(userId)
+  // Assert: result == plan
+
+test('should return null when no active plan exists')
+test('should update existing dosage plan')
+test('should save batch dose schedules efficiently')
+  // Arrange: 100 schedules
+  // Act: time = measureTime { await repo.saveDoseSchedules(schedules) }
+  // Assert: time < 500ms
+
+test('should delete schedules from specific date')
+  // Arrange: 20 schedules, delete from date at index 10
+  // Act: await repo.deleteDoseSchedulesFrom(planId, date)
+  // Assert: only first 10 remain
+
+test('should get recent dose records within N days')
+  // Arrange: records from 30 days ago to today
+  // Act: recent = await repo.getRecentDoseRecords(planId, 7)
+  // Assert: recent.length matches last 7 days only
+
+test('should watch dose records stream updates')
+  // Arrange: subscription to stream
+  // Act: save new record
+  // Assert: stream emits updated list
+
+test('should save plan change history')
+test('should convert DTO to Entity correctly')
+test('should convert Entity to DTO correctly')
+```
+
+**Implementation Order**:
+1. DTO 정의 (DosagePlanDto, DoseScheduleDto, DoseRecordDto)
+2. 기본 CRUD 구현
+3. 배치 저장 최적화
+4. Stream 구현
+5. toEntity/fromEntity 변환
+
+**Dependencies**:
+- `Isar`
+- DTO classes
+- Domain entities
+- `MedicationRepository` interface
+
+**Performance Requirements**:
+- 배치 저장 (100개) < 500ms
+- 조회 쿼리 < 100ms
+
+---
+
+### 3.9. DTOs
+
+**Location**: `lib/features/tracking/infrastructure/dtos/`
+
+**Files**:
+- `dosage_plan_dto.dart`
+- `dose_schedule_dto.dart`
+- `dose_record_dto.dart`
+
+**Test Strategy**: Unit Test
+
+**Test Scenarios**:
+```dart
+// DosagePlanDto
+test('should convert entity to DTO preserving all fields')
+test('should convert DTO to entity preserving all fields')
+test('should serialize escalation plan to JSON')
+test('should deserialize escalation plan from JSON')
+
+// DoseScheduleDto
+test('should convert entity to DTO')
+test('should convert DTO to entity')
+test('should handle null notification time')
+
+// DoseRecordDto
+test('should convert entity to DTO')
+test('should convert DTO to entity')
+test('should handle optional fields (site, note)')
+```
+
+**Implementation Order**:
+1. Isar annotations 정의
+2. fromEntity 메서드
+3. toEntity 메서드
+4. JSON 직렬화 (escalation_plan)
+
+---
+
+### 3.10. MedicationNotifier
+
+**Location**: `lib/features/tracking/application/notifiers/medication_notifier.dart`
+
+**Responsibility**: 상태 관리 및 UseCase 조율
+
+**Test Strategy**: Unit Test (mocked repository)
+
+**Test Scenarios**:
+```dart
+// Red Phase Tests
+test('should load medication state on build')
+  // Arrange: mock repo returns plan, schedules, records
+  // Act: state = await notifier.build()
+  // Assert: state contains plan, schedules, records
+
+test('should record dose and update state')
+  // Arrange: initial state with schedules
+  // Act: await notifier.recordDose(record)
+  // Assert:
+  //   - repo.saveDoseRecord called
+  //   - state updated with new record
+
+test('should check injection site rotation before recording')
+  // Arrange: recent record with same site
+  // Act: warning = await notifier.checkInjectionSite(newSite)
+  // Assert: warning.needsWarning == true
+
+test('should update dosage plan and recalculate schedules')
+  // Arrange: existing plan and schedules
+  // Act: await notifier.updateDosagePlan(newPlan)
+  // Assert:
+  //   - ScheduleGeneratorUseCase called
+  //   - Old schedules from change date deleted
+  //   - New schedules saved
+  //   - Change history saved
+
+test('should analyze missed doses')
+  // Arrange: schedules with some missed
+  // Act: analysis = notifier.getMissedDoseAnalysis()
+  // Assert: analysis contains missed doses and guidance
+
+test('should delete dose record and refresh state')
+test('should handle errors gracefully')
+  // Arrange: repo throws exception
+  // Act: await notifier.recordDose(record)
+  // Assert: state.hasError == true
+```
+
+**Implementation Order**:
+1. build 메서드 (초기 로드)
+2. recordDose 메서드 (부위 검증 포함)
+3. updateDosagePlan 메서드 (재계산 로직)
+4. getMissedDoseAnalysis computed property
+5. deleteDoseRecord 메서드
+
+**Dependencies**:
+- `MedicationRepository`
+- `ScheduleGeneratorUseCase`
+- `InjectionSiteRotationUseCase`
+- `MissedDoseAnalyzerUseCase`
+
+---
+
+### 3.11. MedicationScreen (Presentation)
+
+**Location**: `lib/features/tracking/presentation/screens/medication_screen.dart`
+
+**Responsibility**: 스케줄 조회 및 투여 기록 UI
+
+**Test Strategy**: Manual QA (QA Sheet)
 
 **QA Sheet**:
-- [ ] Period selector shows 1M/3M/ALL options
-- [ ] All charts render without layout overflow
-- [ ] No edit buttons visible in sharing mode
-- [ ] Exit button returns to home screen
-- [ ] Charts are tappable for detail view
-- [ ] Detail popup shows read-only data
-- [ ] Back button shows confirmation dialog
-- [ ] Data loads within 2 seconds
-- [ ] Screen orientation locks to portrait (optional)
+```markdown
+## 스케줄 조회
+- [ ] 앱 실행 시 활성 투여 계획의 스케줄이 로드됨
+- [ ] 캘린더 뷰에서 투여 예정일에 마커 표시
+- [ ] 리스트 뷰에서 날짜순 정렬된 스케줄 표시
+- [ ] 각 스케줄에 예정 용량, 완료 상태 표시
+- [ ] 다음 투여 예정일이 강조 표시됨
+- [ ] 완료된 투여는 체크 표시
+- [ ] 누락된 투여는 경고 색상 표시
+
+## 투여 완료 기록
+- [ ] 투여 완료 버튼 클릭 시 부위 선택 화면 표시
+- [ ] 복부/허벅지/상완 선택 가능
+- [ ] 7일 이내 같은 부위 재사용 시 경고 표시
+- [ ] 경고 무시하고 진행 가능
+- [ ] 메모 입력 가능 (선택)
+- [ ] 저장 시 완료 상태 즉시 UI 업데이트
+- [ ] 부위별 투여 이력 시각화 확인 가능
+
+## 스케줄 변경
+- [ ] 특정 투여일 수정 가능
+- [ ] 용량 수정 가능
+- [ ] 변경 시 이후 스케줄 자동 재계산 (1초 이내)
+- [ ] 재계산 완료 알림 표시
+- [ ] 변경 이력 저장됨
+
+## 누락 관리
+- [ ] 5일 이내 누락 시 "즉시 투여" 알림 표시
+- [ ] 5일 초과 누락 시 "다음 예정일 대기" 안내
+- [ ] 7일 이상 누락 시 전문가 상담 권장 표시
+
+## 성능
+- [ ] 스케줄 생성 1초 이내
+- [ ] 스케줄 재계산 1초 이내
+- [ ] UI 반응 즉시 (로딩 없음)
+```
+
+**Implementation Order**:
+1. 스케줄 리스트 뷰
+2. 캘린더 뷰
+3. 투여 완료 다이얼로그 연동
+4. 누락 안내 UI
+5. 부위별 이력 시각화
+
+**Dependencies**:
+- `MedicationNotifier`
 
 ---
 
-### Module 8: ShareReportCard Widget (Presentation)
-**Location**: `features/data_sharing/presentation/widgets/share_report_card.dart`
-**Responsibility**: Reusable card component for report sections
-**Test Strategy**: Widget tests only
-**Test Scenarios (Red Phase)**:
-- Given title and data, when rendering card, then displays correctly
-- Given large dataset, when rendering, then handles overflow gracefully
-- Given null data, when rendering, then shows placeholder message
+### 3.12. DoseRecordDialog (Presentation)
 
-**Implementation Order**:
-1. Red: Test card renders title and content
-2. Green: Build Card widget with Text and child
-3. Red: Test card handles overflow
-4. Green: Add SingleChildScrollView wrapper
-5. Red: Test card shows placeholder for null data
-6. Green: Add conditional rendering for empty state
-7. Refactor: Extract styling to theme
+**Location**: `lib/features/tracking/presentation/widgets/dose_record_dialog.dart`
 
-**Dependencies**: None
+**Responsibility**: 투여 완료 기록 입력 UI
 
----
+**Test Strategy**: Manual QA (QA Sheet)
 
-### Module 9: ReadOnlyChartWidget (Presentation)
-**Location**: `features/data_sharing/presentation/widgets/read_only_chart_widget.dart`
-**Responsibility**: Non-interactive chart wrapper
-**Test Strategy**: Widget tests + Visual regression
-**Test Scenarios (Red Phase)**:
-- Given chart data, when rendering, then displays chart
-- Given touch input, when user taps, then no edit actions triggered
-- Given long press, when user holds, then no context menu shown
+**QA Sheet**:
+```markdown
+## 부위 선택
+- [ ] 복부/허벅지/상완 버튼 표시
+- [ ] 선택 시 버튼 강조 표시
+- [ ] 경고 메시지 표시 영역 존재
+- [ ] 경고 무시 가능
 
-**Implementation Order**:
-1. Red: Test chart renders with data
-2. Green: Wrap fl_chart with AbsorbPointer
-3. Red: Test touch events are blocked
-4. Green: Verify AbsorbPointer prevents gestures
-5. Refactor: Extract chart config to constants
+## 메모 입력
+- [ ] 선택적 메모 입력 필드
+- [ ] 100자 제한
+- [ ] 멀티라인 지원
 
-**Dependencies**: fl_chart package
+## 저장
+- [ ] 부위 미선택 시 저장 버튼 비활성화
+- [ ] 저장 중 로딩 인디케이터
+- [ ] 성공 시 다이얼로그 닫힘
+- [ ] 실패 시 에러 메시지 표시
+```
 
----
-
-### Module 10: DataSharingController (Presentation)
-**Location**: `features/data_sharing/presentation/controllers/data_sharing_controller.dart`
-**Responsibility**: Handle UI events and navigation
-**Test Strategy**: Unit tests for controller logic
-**Test Scenarios (Red Phase)**:
-- Given period changed, when onPeriodSelected, then calls notifier.enterSharingMode(range)
-- Given exit requested, when onExit, then shows confirmation dialog
-- Given confirmation accepted, when confirmed, then calls notifier.exitSharingMode and pops screen
-- Given back button pressed, when onWillPop, then shows confirmation dialog
-
-**Implementation Order**:
-1. Red: Test onPeriodSelected calls notifier
-2. Green: Implement onPeriodSelected method
-3. Red: Test onExit shows dialog
-4. Green: Add showDialog call in onExit
-5. Red: Test confirmed exit pops screen
-6. Green: Wire up Navigator.pop in dialog callback
-7. Refactor: Extract dialog to separate method
-
-**Dependencies**: DataSharingNotifier
+**Dependencies**:
+- `MedicationNotifier`
 
 ---
 
 ## 4. TDD Workflow
 
-### Phase 1: Domain Layer (Inside-Out)
-**Start**: DateRange entity test
-**Order**:
-1. DateRange entity (Red → Green → Refactor)
-2. ShareReport entity (Red → Green → Refactor)
-3. DataSharingRepository interface (Red → Green → Refactor)
-4. AggregateDataUseCase (Red → Green → Refactor)
-**Commit Point**: "feat(domain): add data sharing domain entities and usecases"
+### Phase 1: Domain Layer (Week 1)
+1. **Day 1-2**: Entities
+   - DosagePlan Entity 테스트 작성 → 구현 → 리팩토링
+   - DoseSchedule Entity 테스트 작성 → 구현 → 리팩토링
+   - DoseRecord Entity 테스트 작성 → 구현 → 리팩토링
+   - **Commit**: "feat: add medication domain entities"
 
-### Phase 2: Infrastructure Layer
-**Start**: IsarDataSharingRepository test
-**Order**:
-1. Setup Isar test database
-2. IsarDataSharingRepository (Red → Green → Refactor)
-3. Integration test for data aggregation performance
-**Commit Point**: "feat(infra): implement data sharing repository with Isar"
+2. **Day 3**: ScheduleGeneratorUseCase
+   - 단순 반복 테스트 → 구현
+   - 증량 계획 테스트 → 구현
+   - 성능 테스트 → 최적화
+   - **Commit**: "feat: add schedule generator use case"
 
-### Phase 3: Application Layer
-**Start**: DataSharingNotifier test
-**Order**:
-1. DataSharingNotifier (Red → Green → Refactor)
-2. Provider setup and DI wiring
-**Commit Point**: "feat(app): add data sharing state management"
+3. **Day 4**: InjectionSiteRotationUseCase
+   - 7일 간격 검증 테스트 → 구현
+   - 경고 메시지 테스트 → 구현
+   - 이력 시각화 테스트 → 구현
+   - **Commit**: "feat: add injection site rotation use case"
 
-### Phase 4: Presentation Layer (Outside-In)
-**Start**: DataSharingScreen acceptance test
-**Order**:
-1. ShareReportCard widget (Red → Green → Refactor)
-2. ReadOnlyChartWidget (Red → Green → Refactor)
-3. DataSharingController (Red → Green → Refactor)
-4. DataSharingScreen integration (Red → Green → Refactor)
-**Commit Point**: "feat(ui): implement data sharing screen with read-only mode"
+4. **Day 5**: MissedDoseAnalyzerUseCase
+   - 누락 감지 테스트 → 구현
+   - 안내 타입 분류 테스트 → 구현
+   - 전문가 상담 조건 테스트 → 구현
+   - **Commit**: "feat: add missed dose analyzer use case"
 
-### Phase 5: End-to-End Integration
-**Start**: Full feature acceptance test
-**Order**:
-1. Navigation integration test
-2. Performance test (2 second data load)
-3. Manual QA execution
-**Commit Point**: "test(e2e): add data sharing feature acceptance tests"
+### Phase 2: Infrastructure Layer (Week 2)
+1. **Day 1-2**: DTOs
+   - DosagePlanDto 테스트 → 구현
+   - DoseScheduleDto 테스트 → 구현
+   - DoseRecordDto 테스트 → 구현
+   - **Commit**: "feat: add medication DTOs"
 
-### Phase 6: Refactoring
-**Focus**: Code quality and maintainability
-**Tasks**:
-1. Extract magic numbers to constants
-2. Improve error messages
-3. Add logging for debugging
-4. Optimize query performance if needed
-**Commit Point**: "refactor(data-sharing): improve code quality and performance"
+2. **Day 3-4**: Repository 구현
+   - IsarMedicationRepository 기본 CRUD 테스트 → 구현
+   - 배치 저장 테스트 → 구현
+   - Stream 테스트 → 구현
+   - **Commit**: "feat: add Isar medication repository"
 
-### Completion Criteria
-- [ ] All unit tests pass (70% coverage target)
-- [ ] All integration tests pass (20% coverage target)
-- [ ] All widget tests pass
-- [ ] Manual QA sheet 100% complete
-- [ ] Performance constraint met (data load < 2s)
-- [ ] No violations of layer dependencies
-- [ ] Repository pattern maintained
-- [ ] Code review approved
+3. **Day 5**: Repository 최적화
+   - 성능 테스트 통과
+   - 인덱스 최적화
+   - **Commit**: "perf: optimize medication repository"
 
----
+### Phase 3: Application Layer (Week 3)
+1. **Day 1-3**: MedicationNotifier
+   - 초기 로드 테스트 → 구현
+   - recordDose 테스트 → 구현
+   - updateDosagePlan 테스트 → 구현
+   - getMissedDoseAnalysis 테스트 → 구현
+   - **Commit**: "feat: add medication notifier"
 
-## 5. Test Files Structure
+2. **Day 4-5**: Notifier 리팩토링 및 에러 핸들링
+   - 에러 처리 테스트 → 구현
+   - 상태 일관성 테스트 → 구현
+   - **Commit**: "refactor: improve medication notifier error handling"
 
-```
-test/
-├── features/
-│   └── data_sharing/
-│       ├── domain/
-│       │   ├── entities/
-│       │   │   ├── date_range_test.dart
-│       │   │   └── share_report_test.dart
-│       │   └── usecases/
-│       │       └── aggregate_data_usecase_test.dart
-│       ├── infrastructure/
-│       │   └── repositories/
-│       │       └── isar_data_sharing_repository_test.dart
-│       ├── application/
-│       │   └── notifiers/
-│       │       └── data_sharing_notifier_test.dart
-│       └── presentation/
-│           ├── screens/
-│           │   └── data_sharing_screen_test.dart
-│           ├── widgets/
-│           │   ├── share_report_card_test.dart
-│           │   └── read_only_chart_widget_test.dart
-│           └── controllers/
-│               └── data_sharing_controller_test.dart
-└── integration_test/
-    └── data_sharing_feature_test.dart
-```
+### Phase 4: Presentation Layer (Week 4)
+1. **Day 1-2**: MedicationScreen
+   - 스케줄 리스트 뷰 구현
+   - 캘린더 뷰 구현
+   - **Commit**: "feat: add medication screen"
+
+2. **Day 3**: DoseRecordDialog
+   - 부위 선택 UI 구현
+   - 메모 입력 UI 구현
+   - **Commit**: "feat: add dose record dialog"
+
+3. **Day 4**: 통합 및 QA
+   - 전체 플로우 수동 테스트
+   - QA Sheet 체크리스트 검증
+   - 버그 수정
+
+4. **Day 5**: 최종 리팩토링 및 문서화
+   - 코드 정리
+   - 주석 추가
+   - **Commit**: "docs: add medication feature documentation"
 
 ---
 
-## 6. Key TDD Principles Applied
+## 5. Commit Strategy
 
-### FIRST Principles
-- **Fast**: Unit tests < 10ms, Integration tests < 100ms
-- **Independent**: Each test sets up own test data
-- **Repeatable**: No external dependencies (time, network)
-- **Self-validating**: Assert expectations clearly
-- **Timely**: Tests written before implementation
+### Commit 포인트
+- 각 Entity 완성 시
+- 각 UseCase 완성 시
+- 각 DTO 완성 시
+- Repository 기능 그룹 완성 시 (CRUD, Stream 등)
+- Notifier 메서드 완성 시
+- 각 UI 컴포넌트 완성 시
 
-### AAA Pattern Example
-```dart
-test('should return report with adherence 100% when all doses completed', () {
-  // Arrange
-  final dateRange = DateRange.oneMonth();
-  final mockRepo = MockDataSharingRepository();
-  final usecase = AggregateDataUseCase(mockRepo);
-  when(mockRepo.getDoseRecords(dateRange)).thenReturn([/* all completed */]);
-
-  // Act
-  final report = await usecase.execute(dateRange);
-
-  // Assert
-  expect(report.adherenceRate, 100.0);
-});
+### Commit Message 규칙
+```
+feat: add [component name]
+test: add [test description]
+refactor: improve [component name]
+perf: optimize [performance aspect]
+fix: resolve [bug description]
+docs: update [documentation]
 ```
 
-### Red → Green → Refactor Cycle
-- **Red**: Write minimal failing test
-- **Green**: Write simplest code to pass (hardcode OK initially)
-- **Refactor**: Remove duplication, improve naming
+---
 
-### Test Pyramid Balance
-- **Unit**: 70% (Domain entities, usecases, notifier logic)
-- **Integration**: 20% (Repository with Isar, notifier with repos)
-- **Acceptance**: 10% (Full screen navigation, QA sheet)
+## 6. Performance Targets
+
+| 작업 | 목표 | 측정 방법 |
+|------|------|-----------|
+| 스케줄 생성 (6개월) | < 1초 | Stopwatch |
+| 스케줄 재계산 | < 1초 | Stopwatch |
+| 배치 저장 (100개) | < 500ms | Stopwatch |
+| 단일 조회 | < 100ms | Stopwatch |
+| UI 반응 | < 100ms | Manual |
 
 ---
 
-## 7. Performance Constraints
+## 7. Test Coverage Goals
 
-### BR-PERF-001: Data Load Time
-- **Requirement**: Report generation < 2 seconds
-- **Test**: Integration test with 1000 records
-- **Implementation**: Isar indexes on date fields, lazy loading charts
-
-### BR-PERF-002: UI Responsiveness
-- **Requirement**: Chart render < 500ms
-- **Test**: Widget test with flamechart profiling
-- **Implementation**: Async chart building, placeholder during load
+- **Domain Layer**: 100%
+- **Infrastructure Layer**: 80%
+- **Application Layer**: 60%
+- **Overall**: 70%
 
 ---
 
-## 8. Dependencies
+## 8. Integration Points
 
-### External Packages
-- `fl_chart`: Chart rendering (read-only mode)
-- `isar`: Local database queries
-- `riverpod`: State management
+### 온보딩 (F000)
+- 온보딩 완료 시 `MedicationNotifier.createInitialPlan()` 호출
+- 투여 계획 정보 전달
 
-### Internal Features
-- **F001 (Medication)**: DoseRecord, DoseSchedule entities
-- **F002 (Tracking)**: WeightLog, SymptomLog entities
-- **F000 (Profile)**: UserProfile entity
-- **Core**: DateUtils, Formatters
+### 대시보드 (F006)
+- 다음 투여 예정일 조회: `MedicationNotifier.getNextScheduledDose()`
+- 투여 완료율 조회: `MedicationNotifier.getCompletionRate()`
 
----
-
-## 9. Edge Cases Handling
-
-### EC-001: Empty Data Period
-- **Test**: Given date range with no records, then show "No data available" message
-- **Implementation**: ShareReport factory with zero values
-
-### EC-002: Partial Data
-- **Test**: Given only weight logs (no symptoms), then show weight chart only
-- **Implementation**: Conditional rendering in DataSharingScreen
-
-### EC-003: Large Dataset (Phase 1)
-- **Test**: Given 10,000 records, then pagination loads 100 at a time
-- **Implementation**: Lazy query with limit/offset in repository
-
-### EC-004: Concurrent Access
-- **Test**: Given sharing mode active, then home screen actions disabled
-- **Implementation**: Global flag in app state, dialog on navigation attempt
+### 알림 (UF-012)
+- 투여 예정일 알림 스케줄링: `DoseSchedule.notificationTime` 기반
 
 ---
 
-## 10. Migration Path (Phase 0 → Phase 1)
+## 9. Risk Mitigation
 
-### Phase 0 (Current)
-```dart
-@riverpod
-DataSharingRepository dataSharingRepository(ref) {
-  return IsarDataSharingRepository(ref.watch(isarProvider));
-}
-```
+### 성능 리스크
+- **위험**: 대량 스케줄 생성 시 1초 초과
+- **완화**: 알고리즘 최적화, 배치 처리, 성능 테스트 조기 작성
 
-### Phase 1 (Future)
-```dart
-@riverpod
-DataSharingRepository dataSharingRepository(ref) {
-  return SupabaseDataSharingRepository(ref.watch(supabaseProvider));
-}
-```
+### 데이터 일관성 리스크
+- **위험**: 스케줄-기록 불일치
+- **완화**: 트랜잭션 처리, 재계산 시 검증 로직
 
-**Impact**: Infrastructure Layer only
-**Zero changes**: Domain, Application, Presentation
+### 사용자 경험 리스크
+- **위험**: 부위 순환 경고 무시 시 안전성
+- **완화**: 경고 메시지 명확화, 진행 허용하되 로그 기록
 
 ---
 
-## Notes for AI Agent
+## 10. Definition of Done
 
-### Start with
-1. Create test file for DateRange entity
-2. Write first Red test for valid date range creation
-3. Run test, see it fail
-4. Implement minimal DateRange class
-5. Run test, see it pass
-6. Commit with message: "test: add DateRange entity valid creation test"
-
-### Pattern to follow
-- Each module = One TDD cycle (Red → Green → Refactor)
-- Each test = One assertion (specific, not generic)
-- Each commit = One atomic change (test + implementation)
-
-### Avoid
-- Writing multiple tests before implementation
-- Skipping Refactor phase
-- Testing implementation details (test behavior)
-- Large commits mixing multiple modules
+각 모듈 완료 조건:
+- [ ] 모든 테스트 통과 (coverage 목표 달성)
+- [ ] 코드 리뷰 완료
+- [ ] 성능 요구사항 충족
+- [ ] 문서 업데이트
+- [ ] QA Sheet 검증 (Presentation Layer)
+- [ ] 컴파일 경고 없음
+- [ ] Layer 의존성 규칙 준수
