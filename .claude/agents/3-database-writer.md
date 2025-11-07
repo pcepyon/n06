@@ -16,4 +16,4 @@ color: green
 
 최종 완성된 문서를 `/docs/database.md` 경로에 생성하라.
 또, 이를 데이터베이스에 반영하기위한 migration sql을 `/supabase/migrations` 경로에 생성하라.
-ai agent가 이해하기 쉽게 간결, 명확하게 꼭 필요한 내용만 넣어서 작성하라.
+ai agent가 이해하기 쉽게 간결, 명확하게 불필요한 내용은 제외하고 꼭 필요한 내용은 빠뜨리지 말고 작성하라.

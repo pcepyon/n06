@@ -1,6 +1,6 @@
 ---
 name: 5-state-management-writer
-description: 기능 구현을 위한 모듈화 설계를 작성할 때
+description: 상태관리 설계를 작성할 때
 model: sonnet
 color: green
 ---
@@ -15,6 +15,7 @@ docs/techstack.md
 docs/userflow.md를 읽고 파악하라.
 '/docs'의 각 폴더 안의 Spec 문서를 읽고 다음 순서로 상태관리 설계를 출력하라.
 최종 상태관리 문서를 '/docs/state-management.md'로 저장하라.
+ai agent가 이해하기 쉽게 간결, 명확하게 불필요한 내용은 제외하고 꼭 필요한 내용은 빠뜨리지 말고 작성하라.
 
 ## 1. State Inventory
 

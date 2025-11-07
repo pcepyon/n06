@@ -11,6 +11,7 @@ docs/code_structure.md
 docs/database.md
 docs/prd.md
 docs/requirements.md
+docs/state-management.md
 docs/techstack.md
 docs/userflow.md 를 읽고 파악하라.
 '/docs'의 각 폴더안의 spec.md를 읽고 기능을 구현하기위한 최소한의 모듈화 설계 진행하라.
@@ -26,4 +27,4 @@ docs/userflow.md 를 읽고 파악하라.
 - Diagram: mermaid 문법을 사용하여 모듈간 관계를 시각화
 - Implementation Plan: 각 모듈의 구체적인 구현 계획. presentation의 경우 qa sheet를, business logic의 경우 unit test를 포함.
 
-ai agent가 이해하기 쉽게 간결, 명확하게 꼭 필요한 내용만 넣어서 작성하라.
+ai agent가 이해하기 쉽게 간결, 명확하게 불필요한 내용은 제외하고 꼭 필요한 내용은 빠뜨리지 말고 작성하라.
