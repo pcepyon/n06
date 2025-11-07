@@ -18,7 +18,8 @@
 | UserDto | `features/authentication/infrastructure/dtos/user_dto.dart` | 사용자 DTO (Isar) | Unit |
 | ConsentDto | `features/authentication/infrastructure/dtos/consent_record_dto.dart` | 동의 정보 DTO | Unit |
 | IsarAuthRepository | `features/authentication/infrastructure/repositories/isar_auth_repository.dart` | Isar 기반 인증 저장소 | Integration |
-| OAuthService | `features/authentication/infrastructure/services/oauth_service.dart` | OAuth 2.0 통신 | Integration |
+| KakaoAuthDataSource | `features/authentication/infrastructure/datasources/kakao_auth_datasource.dart` | Kakao SDK 통신 | Integration |
+| NaverAuthDataSource | `features/authentication/infrastructure/datasources/naver_auth_datasource.dart` | Naver SDK 통신 | Integration |
 | SecureStorageService | `core/services/secure_storage_service.dart` | 토큰 암호화 저장 | Unit |
 
 ---
@@ -44,7 +45,8 @@ graph TB
 
     subgraph Infrastructure
         IsarAuthRepo[IsarAuthRepository<br/>Isar 저장소 구현]
-        OAuthService[OAuthService<br/>OAuth 2.0 통신]
+        KakaoDataSource[KakaoAuthDataSource<br/>Kakao SDK 통신]
+        NaverDataSource[NaverAuthDataSource<br/>Naver SDK 통신]
         SecureStorage[SecureStorageService<br/>토큰 암호화 저장]
         UserDto[UserDto<br/>Isar DTO]
         ConsentDto[ConsentRecordDto<br/>Isar DTO]
@@ -54,7 +56,8 @@ graph TB
     AuthProvider -->|provides| AuthNotifier
     AuthNotifier -->|depends on| AuthRepo
     AuthRepo -.implements.- IsarAuthRepo
-    IsarAuthRepo -->|uses| OAuthService
+    IsarAuthRepo -->|uses| KakaoDataSource
+    IsarAuthRepo -->|uses| NaverDataSource
     IsarAuthRepo -->|uses| SecureStorage
     IsarAuthRepo -->|converts| UserDto
     IsarAuthRepo -->|converts| ConsentDto
@@ -246,70 +249,260 @@ graph TB
 
 ---
 
-#### OAuthService
-- **Location**: `features/authentication/infrastructure/services/oauth_service.dart`
-- **Responsibility**: 카카오/네이버 OAuth 2.0 SDK 통신 (재시도 로직 제외)
+#### KakaoAuthDataSource
+- **Location**: `features/authentication/infrastructure/datasources/kakao_auth_datasource.dart`
+- **Responsibility**: Kakao SDK를 통한 OAuth 2.0 인증 (공식 가이드 준수)
 - **Test Strategy**: Integration Test (실제 SDK 또는 Mock)
 - **Test Scenarios**:
   ```dart
   // Red Phase
-  test('should authenticate with Kakao and return OAuthResult', () async {
+  test('should authenticate with Kakao and return OAuthToken', () async {
     // Arrange
-    final service = OAuthService();
+    final dataSource = KakaoAuthDataSource();
 
     // Act
-    final result = await service.authenticateWithKakao();
+    final token = await dataSource.login();
 
     // Assert
-    expect(result.accessToken, isNotEmpty);
-    expect(result.refreshToken, isNotEmpty);
-    expect(result.expiresAt, isA<DateTime>());
-    expect(result.userInfo['name'], isNotEmpty);
-    expect(result.userInfo['email'], isNotEmpty);
+    expect(token, isA<OAuthToken>());
+    expect(token.accessToken, isNotEmpty);
+    expect(token.refreshToken, isNotEmpty);
+    expect(token.expiresIn, greaterThan(0));
   });
 
-  test('should authenticate with Naver and return OAuthResult', () async {
-    final service = OAuthService();
-    final result = await service.authenticateWithNaver();
+  test('should get Kakao user information', () async {
+    final dataSource = KakaoAuthDataSource();
 
-    expect(result.accessToken, isNotEmpty);
-    expect(result.refreshToken, isNotEmpty);
-    expect(result.userInfo['name'], isNotEmpty);
+    final user = await dataSource.getUser();
+
+    expect(user, isA<User>());  // Kakao SDK User 타입
+    expect(user.id, isNotNull);
+    expect(user.kakaoAccount?.profile?.nickname, isNotEmpty);
   });
 
-  test('should throw exception when user cancels OAuth', () {});
-  test('should handle Naver-specific OAuth errors', () {});
-  test('should refresh Kakao access token', () {});
-  test('should refresh Naver access token', () {});
-  test('should handle token expiry gracefully', () {});
-  test('should revoke token on logout', () {});
+  test('should throw PlatformException with CANCELED code when user cancels', () async {
+    // 사용자 취소 시나리오 모킹
+    expect(
+      () => dataSource.login(),
+      throwsA(isA<PlatformException>()
+        .having((e) => e.code, 'code', 'CANCELED')),
+    );
+  });
+
+  test('should fallback to account login when KakaoTalk login fails', () async {
+    // KakaoTalk 로그인 실패 → Account 로그인 성공 시나리오
+    final token = await dataSource.login();
+    expect(token.accessToken, isNotEmpty);
+  });
+
+  test('should check KakaoTalk installation', () async {
+    final isInstalled = await isKakaoTalkInstalled();
+    expect(isInstalled, isA<bool>());
+  });
+
+  test('should logout and discard SDK token', () async {
+    await dataSource.logout();
+    // 에러 발생해도 토큰은 항상 삭제됨
+  });
+
+  test('should validate token', () async {
+    final isValid = await dataSource.isTokenValid();
+    expect(isValid, isA<bool>());
+  });
   ```
-- **OAuthResult Type Definition**:
+- **Implementation Details**:
   ```dart
-  class OAuthResult {
-    final String accessToken;
-    final String refreshToken;
-    final DateTime expiresAt;
-    final Map<String, dynamic> userInfo; // name, email, profileImageUrl
+  import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
+  import 'package:flutter/services.dart';
 
-    OAuthResult({
-      required this.accessToken,
-      required this.refreshToken,
-      required this.expiresAt,
-      required this.userInfo,
-    });
+  class KakaoAuthDataSource {
+    /// 카카오 로그인 (공식 권장 패턴)
+    /// - KakaoTalk 설치 확인
+    /// - KakaoTalk 로그인 시도 → 실패 시 Account 로그인으로 fallback
+    /// - 사용자 취소는 PlatformException(code: CANCELED) 발생
+    Future<OAuthToken> login() async {
+      if (await isKakaoTalkInstalled()) {
+        try {
+          return await UserApi.instance.loginWithKakaoTalk();
+        } catch (error) {
+          // 사용자 취소는 그대로 전파
+          if (error is PlatformException && error.code == 'CANCELED') {
+            rethrow;
+          }
+          // 그 외 에러는 Account 로그인으로 fallback
+          return await UserApi.instance.loginWithKakaoAccount();
+        }
+      } else {
+        return await UserApi.instance.loginWithKakaoAccount();
+      }
+    }
+
+    /// 카카오 사용자 정보 조회
+    Future<User> getUser() async {
+      return await UserApi.instance.me();
+    }
+
+    /// 카카오 로그아웃 (SDK 토큰 삭제)
+    /// SDK는 항상 토큰을 삭제하므로 에러 무시
+    Future<void> logout() async {
+      try {
+        await UserApi.instance.logout();
+      } catch (error) {
+        print('Kakao logout completed: $error');
+      }
+    }
+
+    /// 토큰 유효성 검증
+    Future<bool> isTokenValid() async {
+      if (await AuthApi.instance.hasToken()) {
+        try {
+          await UserApi.instance.accessTokenInfo();
+          return true;
+        } catch (error) {
+          return false;
+        }
+      }
+      return false;
+    }
   }
   ```
 - **Edge Cases**:
-  - 사용자가 OAuth 취소: `OAuthCancelledException`
-  - 토큰 만료: `TokenExpiredException`
+  - KakaoTalk 미설치: Account 로그인으로 자동 전환
+  - KakaoTalk 로그인 실패: Account 로그인으로 fallback
+  - 사용자 취소: `PlatformException(code: CANCELED)` 전파
 - **Implementation Order**:
-  1. OAuthResult 타입 정의
-  2. Kakao SDK 통합
-  3. Naver SDK 통합
-  4. 토큰 갱신 로직
-  5. 토큰 해제 로직
-- **Dependencies**: kakao_flutter_sdk, flutter_naver_login, dio
+  1. login() 메서드 구현 (KakaoTalk 체크 + fallback)
+  2. getUser() 메서드 구현
+  3. logout() 메서드 구현
+  4. isTokenValid() 메서드 구현
+- **Dependencies**: kakao_flutter_sdk, flutter/services
+- **Note**: 재시도 로직은 IsarAuthRepository에서 처리
+
+---
+
+#### NaverAuthDataSource
+- **Location**: `features/authentication/infrastructure/datasources/naver_auth_datasource.dart`
+- **Responsibility**: Naver SDK를 통한 OAuth 2.0 인증 (공식 패키지 준수)
+- **Test Strategy**: Integration Test (실제 SDK 또는 Mock)
+- **Test Scenarios**:
+  ```dart
+  // Red Phase
+  test('should authenticate with Naver and return NaverLoginResult', () async {
+    // Arrange
+    final dataSource = NaverAuthDataSource();
+
+    // Act
+    final result = await dataSource.login();
+
+    // Assert
+    expect(result, isA<NaverLoginResult>());
+    expect(result.status, NaverLoginStatus.loggedIn);
+    expect(result.account, isNotNull);
+  });
+
+  test('should get Naver user information', () async {
+    final dataSource = NaverAuthDataSource();
+
+    final account = await dataSource.getUser();
+
+    expect(account, isA<NaverAccountResult>());
+    expect(account.name, isNotEmpty);
+    expect(account.email, isNotEmpty);
+  });
+
+  test('should get current access token', () async {
+    final dataSource = NaverAuthDataSource();
+
+    final token = await dataSource.getCurrentToken();
+
+    expect(token, isA<NaverToken>());
+    expect(token.isValid(), true);
+    expect(token.accessToken, isNotEmpty);
+    expect(token.refreshToken, isNotEmpty);
+  });
+
+  test('should throw exception when login fails', () async {
+    // 로그인 실패 시나리오 모킹
+    expect(
+      () => dataSource.login(),
+      throwsA(isA<Exception>()),
+    );
+  });
+
+  test('should logout and delete token', () async {
+    final dataSource = NaverAuthDataSource();
+
+    await dataSource.logout();
+    // 로컬 토큰은 항상 삭제됨
+  });
+
+  test('should handle NaverLoginStatus.error', () async {
+    // status가 error인 경우 예외 발생
+    expect(
+      () => dataSource.login(),
+      throwsA(contains('Naver login failed')),
+    );
+  });
+  ```
+- **Implementation Details**:
+  ```dart
+  import 'package:flutter_naver_login/flutter_naver_login.dart';
+
+  class NaverAuthDataSource {
+    /// 네이버 로그인
+    /// - NaverLoginStatus 체크
+    /// - loggedIn이 아니면 예외 발생
+    Future<NaverLoginResult> login() async {
+      final NaverLoginResult result = await FlutterNaverLogin.logIn();
+
+      if (result.status == NaverLoginStatus.error) {
+        throw Exception('Naver login failed');
+      } else if (result.status != NaverLoginStatus.loggedIn) {
+        throw Exception('Naver login cancelled or failed');
+      }
+
+      return result;
+    }
+
+    /// 네이버 로그아웃 및 토큰 삭제
+    /// 로컬 토큰은 항상 삭제되므로 에러 무시
+    Future<void> logout() async {
+      try {
+        await FlutterNaverLogin.logOutAndDeleteToken();
+      } catch (error) {
+        print('Naver logout completed: $error');
+      }
+    }
+
+    /// 네이버 사용자 정보 조회
+    /// 파라미터 없음 - SDK가 자동으로 현재 토큰 사용
+    Future<NaverAccountResult> getUser() async {
+      return await FlutterNaverLogin.getCurrentAccount();
+    }
+
+    /// 현재 토큰 정보 가져오기
+    Future<NaverToken> getCurrentToken() async {
+      final NaverToken token =
+        await FlutterNaverLogin.getCurrentAccessToken();
+
+      if (!token.isValid()) {
+        throw Exception('Naver token expired');
+      }
+
+      return token;
+    }
+  }
+  ```
+- **Edge Cases**:
+  - 로그인 실패: `NaverLoginStatus.error` 체크
+  - 사용자 취소: status가 loggedIn이 아닌 경우
+  - 토큰 만료: `NaverToken.isValid()` 체크
+- **Implementation Order**:
+  1. login() 메서드 구현 (status 검증)
+  2. getUser() 메서드 구현
+  3. getCurrentToken() 메서드 구현
+  4. logout() 메서드 구현
+- **Dependencies**: flutter_naver_login
 - **Note**: 재시도 로직은 IsarAuthRepository에서 처리
 
 ---
@@ -349,7 +542,7 @@ graph TB
 
 #### IsarAuthRepository
 - **Location**: `features/authentication/infrastructure/repositories/isar_auth_repository.dart`
-- **Responsibility**: AuthRepository 인터페이스 구현 (Isar + OAuth + 재시도 로직)
+- **Responsibility**: AuthRepository 인터페이스 구현 (Isar + DataSource + 재시도 로직)
 - **Test Strategy**: Integration Test (실제 Isar 인스턴스)
 - **Test Scenarios**:
   ```dart
@@ -357,11 +550,31 @@ graph TB
   testWidgets('should login with Kakao and save user with consent to Isar', () async {
     // Arrange
     final isar = await openTestIsar();
-    final oauthService = MockOAuthService();
+    final kakaoDataSource = MockKakaoAuthDataSource();
+    final naverDataSource = MockNaverAuthDataSource();
     final secureStorage = MockSecureStorageService();
-    final repo = IsarAuthRepository(isar, oauthService, secureStorage);
+    final repo = IsarAuthRepository(
+      isar,
+      kakaoDataSource,
+      naverDataSource,
+      secureStorage,
+    );
 
-    when(oauthService.authenticateWithKakao()).thenAnswer((_) async => mockOAuthResult);
+    final mockToken = OAuthToken(
+      accessToken: 'kakao_access_token',
+      refreshToken: 'kakao_refresh_token',
+      expiresIn: 7200,
+    );
+    final mockUser = User(
+      id: 123456789,
+      kakaoAccount: KakaoAccount(
+        profile: Profile(nickname: '홍길동'),
+        email: 'test@kakao.com',
+      ),
+    );
+
+    when(kakaoDataSource.login()).thenAnswer((_) async => mockToken);
+    when(kakaoDataSource.getUser()).thenAnswer((_) async => mockUser);
 
     // Act
     final user = await repo.loginWithKakao(
@@ -373,6 +586,7 @@ graph TB
     expect(user.oauthProvider, 'kakao');
     expect(user.lastLoginAt, isNotNull);
     verify(secureStorage.saveAccessToken(any, any)).called(1);
+    verify(secureStorage.saveRefreshToken(any)).called(1);
     final savedUser = await isar.userDtos.get(user.id);
     expect(savedUser, isNotNull);
     final consent = await isar.consentRecordDtos.filter().userIdEqualTo(user.id).findFirst();
@@ -382,11 +596,32 @@ graph TB
 
   testWidgets('should login with Naver and save user to Isar', () async {
     final isar = await openTestIsar();
-    final oauthService = MockOAuthService();
+    final kakaoDataSource = MockKakaoAuthDataSource();
+    final naverDataSource = MockNaverAuthDataSource();
     final secureStorage = MockSecureStorageService();
-    final repo = IsarAuthRepository(isar, oauthService, secureStorage);
+    final repo = IsarAuthRepository(
+      isar,
+      kakaoDataSource,
+      naverDataSource,
+      secureStorage,
+    );
 
-    when(oauthService.authenticateWithNaver()).thenAnswer((_) async => mockNaverResult);
+    final mockResult = NaverLoginResult(
+      status: NaverLoginStatus.loggedIn,
+      account: NaverAccountResult(
+        id: 'naver_123',
+        name: '김철수',
+        email: 'test@naver.com',
+      ),
+    );
+    final mockToken = NaverToken(
+      accessToken: 'naver_access_token',
+      refreshToken: 'naver_refresh_token',
+      expiresAt: DateTime.now().add(Duration(hours: 2)),
+    );
+
+    when(naverDataSource.login()).thenAnswer((_) async => mockResult);
+    when(naverDataSource.getCurrentToken()).thenAnswer((_) async => mockToken);
 
     final user = await repo.loginWithNaver(
       agreedToTerms: true,
@@ -399,16 +634,26 @@ graph TB
 
   testWidgets('should update lastLoginAt for returning user', () {});
   testWidgets('should return true for first login', () async {
-    final repo = IsarAuthRepository(isar, oauthService, secureStorage);
+    final repo = IsarAuthRepository(
+      isar,
+      kakaoDataSource,
+      naverDataSource,
+      secureStorage,
+    );
 
     expect(await repo.isFirstLogin(), true);
   });
   testWidgets('should return false for returning user', () async {});
   testWidgets('should logout and delete all tokens even on network error', () async {
-    final mockOAuthService = MockOAuthService();
-    when(mockOAuthService.revokeToken()).thenThrow(NetworkException('Timeout'));
+    final kakaoDataSource = MockKakaoAuthDataSource();
+    when(kakaoDataSource.logout()).thenThrow(Exception('Network error'));
 
-    final repo = IsarAuthRepository(isar, mockOAuthService, secureStorage);
+    final repo = IsarAuthRepository(
+      isar,
+      kakaoDataSource,
+      naverDataSource,
+      secureStorage,
+    );
 
     await repo.logout(); // 예외 발생하지 않아야 함
 
@@ -418,46 +663,221 @@ graph TB
   testWidgets('should refresh access token and update storage', () {});
   testWidgets('should throw exception on OAuth failure', () {});
   testWidgets('should retry exactly 3 times on network error', () async {
-    final mockOAuthService = MockOAuthService();
-    when(mockOAuthService.authenticateWithKakao())
-        .thenThrow(NetworkException('Connection failed'));
+    final kakaoDataSource = MockKakaoAuthDataSource();
+    when(kakaoDataSource.login())
+        .thenThrow(Exception('Network error'));
 
-    final repo = IsarAuthRepository(isar, mockOAuthService, secureStorage);
+    final repo = IsarAuthRepository(
+      isar,
+      kakaoDataSource,
+      naverDataSource,
+      secureStorage,
+    );
 
     expect(
       () => repo.loginWithKakao(agreedToTerms: true, agreedToPrivacy: true),
       throwsA(isA<MaxRetriesExceededException>()),
     );
 
-    verify(mockOAuthService.authenticateWithKakao()).called(3);
+    verify(kakaoDataSource.login()).called(3);
   });
   testWidgets('should succeed on second retry', () async {
-    final mockOAuthService = MockOAuthService();
-    when(mockOAuthService.authenticateWithKakao())
-        .thenThrow(NetworkException('Connection failed'))
-        .thenAnswer((_) async => mockOAuthResult);
+    final kakaoDataSource = MockKakaoAuthDataSource();
+    final mockToken = OAuthToken(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      expiresIn: 7200,
+    );
+    final mockUser = User(id: 123);
+
+    when(kakaoDataSource.login())
+        .thenThrow(Exception('Network error'))
+        .thenAnswer((_) async => mockToken);
+    when(kakaoDataSource.getUser()).thenAnswer((_) async => mockUser);
 
     final user = await repo.loginWithKakao(agreedToTerms: true, agreedToPrivacy: true);
 
     expect(user, isNotNull);
-    verify(mockOAuthService.authenticateWithKakao()).called(2);
+    verify(kakaoDataSource.login()).called(2);
+  });
+  testWidgets('should handle PlatformException CANCELED without retry', () async {
+    final kakaoDataSource = MockKakaoAuthDataSource();
+    when(kakaoDataSource.login())
+        .thenThrow(PlatformException(code: 'CANCELED'));
+
+    final repo = IsarAuthRepository(
+      isar,
+      kakaoDataSource,
+      naverDataSource,
+      secureStorage,
+    );
+
+    expect(
+      () => repo.loginWithKakao(agreedToTerms: true, agreedToPrivacy: true),
+      throwsA(isA<OAuthCancelledException>()),
+    );
+
+    verify(kakaoDataSource.login()).called(1); // 재시도 없음
   });
   testWidgets('should validate access token expiry', () {});
   ```
 - **Edge Cases**:
-  - OAuth 취소: 예외 전파
+  - OAuth 취소 (PlatformException CANCELED): 재시도 없이 예외 전파
   - 네트워크 오류: 정확히 3회 재시도 (exponential backoff)
   - 토큰 갱신 실패: 재로그인 유도
   - 로그아웃 중 네트워크 오류: 로컬 토큰 삭제는 반드시 수행
 - **Implementation Order**:
-  1. loginWithKakao 구현 (동의 정보 저장 포함, 재시도 로직 포함)
-  2. loginWithNaver 구현 (동의 정보 저장 포함, 재시도 로직 포함)
+  1. loginWithKakao 구현 (DataSource 호출, 토큰 저장, 동의 정보 저장, 재시도 로직)
+  2. loginWithNaver 구현 (DataSource 호출, 토큰 저장, 동의 정보 저장, 재시도 로직)
   3. isFirstLogin 구현
   4. logout 구현 (네트워크 오류 무시)
   5. getCurrentUser 구현
   6. isAccessTokenValid 구현
   7. refreshAccessToken 구현
-- **Dependencies**: Isar, OAuthService, SecureStorageService, UserDto, ConsentRecordDto
+- **Implementation Details**:
+  ```dart
+  class IsarAuthRepository implements AuthRepository {
+    final Isar _isar;
+    final KakaoAuthDataSource _kakaoDataSource;
+    final NaverAuthDataSource _naverDataSource;
+    final SecureStorageService _secureStorage;
+
+    IsarAuthRepository(
+      this._isar,
+      this._kakaoDataSource,
+      this._naverDataSource,
+      this._secureStorage,
+    );
+
+    @override
+    Future<User> loginWithKakao({
+      required bool agreedToTerms,
+      required bool agreedToPrivacy,
+    }) async {
+      // 재시도 로직 (PlatformException CANCELED는 재시도 제외)
+      return await _retryOnNetworkError(() async {
+        // 1. DataSource에서 로그인
+        final token = await _kakaoDataSource.login();
+
+        // 2. 토큰 저장
+        await _secureStorage.saveAccessToken(
+          token.accessToken,
+          DateTime.now().add(Duration(seconds: token.expiresIn)),
+        );
+        await _secureStorage.saveRefreshToken(token.refreshToken);
+
+        // 3. 사용자 정보 가져오기
+        final kakaoUser = await _kakaoDataSource.getUser();
+
+        // 4. Domain Entity로 변환
+        final user = User(
+          id: kakaoUser.id.toString(),
+          oauthProvider: 'kakao',
+          oauthUserId: kakaoUser.id.toString(),
+          name: kakaoUser.kakaoAccount?.profile?.nickname ?? '',
+          email: kakaoUser.kakaoAccount?.email ?? '',
+          profileImageUrl: kakaoUser.kakaoAccount?.profile?.profileImageUrl,
+          lastLoginAt: DateTime.now(),
+        );
+
+        // 5. Isar에 저장
+        await _saveUserToIsar(user);
+        await _saveConsentToIsar(user.id, agreedToTerms, agreedToPrivacy);
+
+        return user;
+      }, shouldRetry: (error) {
+        // PlatformException CANCELED는 재시도하지 않음
+        if (error is PlatformException && error.code == 'CANCELED') {
+          return false;
+        }
+        return true;
+      });
+    }
+
+    @override
+    Future<User> loginWithNaver({
+      required bool agreedToTerms,
+      required bool agreedToPrivacy,
+    }) async {
+      return await _retryOnNetworkError(() async {
+        // 1. DataSource에서 로그인
+        final result = await _naverDataSource.login();
+
+        // 2. 토큰 가져오기
+        final token = await _naverDataSource.getCurrentToken();
+
+        // 3. 토큰 저장
+        await _secureStorage.saveAccessToken(
+          token.accessToken,
+          token.expiresAt,
+        );
+        await _secureStorage.saveRefreshToken(token.refreshToken);
+
+        // 4. 사용자 정보 가져오기 (result.account 사용 가능)
+        final account = result.account!;
+
+        // 5. Domain Entity로 변환
+        final user = User(
+          id: account.id,
+          oauthProvider: 'naver',
+          oauthUserId: account.id,
+          name: account.name ?? '',
+          email: account.email ?? '',
+          profileImageUrl: account.profileImage,
+          lastLoginAt: DateTime.now(),
+        );
+
+        // 6. Isar에 저장
+        await _saveUserToIsar(user);
+        await _saveConsentToIsar(user.id, agreedToTerms, agreedToPrivacy);
+
+        return user;
+      });
+    }
+
+    @override
+    Future<void> logout() async {
+      try {
+        // 현재 사용자 확인 후 적절한 DataSource 호출
+        final user = await getCurrentUser();
+        if (user?.oauthProvider == 'kakao') {
+          await _kakaoDataSource.logout();
+        } else if (user?.oauthProvider == 'naver') {
+          await _naverDataSource.logout();
+        }
+      } catch (error) {
+        // 네트워크 오류 무시
+        print('Logout network error ignored: $error');
+      } finally {
+        // 로컬 토큰은 반드시 삭제
+        await _secureStorage.deleteAllTokens();
+      }
+    }
+
+    // 재시도 로직 헬퍼 메서드
+    Future<T> _retryOnNetworkError<T>(
+      Future<T> Function() operation, {
+      bool Function(dynamic)? shouldRetry,
+      int maxRetries = 3,
+    }) async {
+      for (int i = 0; i < maxRetries; i++) {
+        try {
+          return await operation();
+        } catch (error) {
+          if (shouldRetry != null && !shouldRetry(error)) {
+            rethrow;
+          }
+          if (i == maxRetries - 1) {
+            throw MaxRetriesExceededException('Max retries exceeded');
+          }
+          await Future.delayed(Duration(milliseconds: 100 * (i + 1)));
+        }
+      }
+      throw MaxRetriesExceededException('Max retries exceeded');
+    }
+  }
+  ```
+- **Dependencies**: Isar, KakaoAuthDataSource, NaverAuthDataSource, SecureStorageService, UserDto, ConsentRecordDto
 
 ---
 
@@ -682,11 +1102,11 @@ graph TB
 1. **시작**: SecureStorageService 테스트 작성
 2. **Red → Green → Refactor**:
    - SecureStorageService 구현 (토큰 만료 시간 관리 포함)
-   - OAuthResult 타입 정의
-   - OAuthService 구현 (Kakao, Naver 모두)
+   - KakaoAuthDataSource 구현 (공식 패턴 준수: KakaoTalk 체크, fallback, PlatformException 처리)
+   - NaverAuthDataSource 구현 (공식 패턴 준수: NaverLoginStatus 체크, getCurrentAccount)
    - UserDto / ConsentRecordDto 구현
-   - IsarAuthRepository 구현 (재시도 로직, 동의 정보 저장 통합)
-3. **Commit**: "feat(auth): implement infrastructure layer with Isar and OAuth"
+   - IsarAuthRepository 구현 (DataSource 통합, 재시도 로직, 동의 정보 저장)
+3. **Commit**: "feat(auth): implement infrastructure layer with Kakao/Naver DataSources"
 
 ### Phase 3: Application Layer
 1. **시작**: AuthNotifier 테스트 작성
@@ -777,13 +1197,19 @@ graph TB
 - [ ] TDD 사이클 완료 (모든 모듈)
 - [ ] Commit 메시지 규칙 준수
 
-### 검증 항목 (plancheck.md 기반)
+### 검증 항목 (공식 문서 기반)
 - [ ] User Entity에 lastLoginAt 필드 추가
 - [ ] AuthRepository에 isFirstLogin() 및 isAccessTokenValid() 메서드 추가
 - [ ] 로그인 메서드에 동의 정보 파라미터 추가 (agreedToTerms, agreedToPrivacy)
 - [ ] SecureStorageService에 토큰 만료 시간 저장 및 검증 메서드 추가
-- [ ] OAuthResult 타입 명시적 정의
-- [ ] OAuthService는 SDK 통신만, 재시도 로직은 IsarAuthRepository에 집중
+- [ ] KakaoAuthDataSource: OAuthToken 반환 (nullable 아님)
+- [ ] KakaoAuthDataSource: isKakaoTalkInstalled() 체크 및 fallback 로직 구현
+- [ ] KakaoAuthDataSource: PlatformException(code: CANCELED) 처리
+- [ ] NaverAuthDataSource: NaverLoginResult 반환 및 status 검증
+- [ ] NaverAuthDataSource: getCurrentAccount() 메서드 (파라미터 없음)
+- [ ] NaverAuthDataSource: getCurrentToken()으로 NaverToken 가져오기
+- [ ] IsarAuthRepository: 2개 DataSource 의존성 주입
+- [ ] IsarAuthRepository: PlatformException CANCELED는 재시도 제외
 - [ ] IsarAuthRepository에서 동의 정보 자동 저장
 - [ ] 네이버 OAuth 관련 상세 테스트 케이스 추가
 - [ ] 로그아웃 네트워크 오류 처리 테스트 추가
