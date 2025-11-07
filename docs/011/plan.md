@@ -5,9 +5,11 @@
 프로필 및 목표 수정 기능(UF-008)을 위한 모듈 목록:
 
 - **Domain Layer**: UserProfile Entity, ProfileRepository Interface, UpdateProfileUseCase
-- **Application Layer**: ProfileNotifier (상태 관리)
+- **Application Layer**: ProfileNotifier (상태 관리, 홈 대시보드 갱신)
 - **Infrastructure Layer**: IsarProfileRepository (Repository 구현), UserProfileDto (DTO)
 - **Presentation Layer**: ProfileEditScreen, ProfileEditForm Widget
+
+**외부 의존성**: WeightLogRepository (현재 체중 불일치 감지용)
 
 **TDD 적용 범위**: Domain, Application, Infrastructure Layer
 
@@ -24,25 +26,31 @@ graph TD
 
     subgraph Application
         Notifier[ProfileNotifier]
+        DashboardNotifier[DashboardNotifier]
     end
 
     subgraph Domain
         Entity[UserProfile Entity]
         RepoInterface[ProfileRepository Interface]
         UseCase[UpdateProfileUseCase]
+        WeightRepo[WeightLogRepository Interface]
     end
 
     subgraph Infrastructure
         RepoImpl[IsarProfileRepository]
         DTO[UserProfileDto]
+        WeightRepoImpl[IsarWeightLogRepository]
     end
 
     Screen --> Notifier
     Form --> Screen
     Notifier --> RepoInterface
     Notifier --> UseCase
+    Notifier -.invalidate.-> DashboardNotifier
     UseCase --> RepoInterface
+    UseCase --> WeightRepo
     RepoInterface <|.. RepoImpl
+    WeightRepo <|.. WeightRepoImpl
     RepoImpl --> DTO
     DTO --> Entity
 ```
@@ -129,6 +137,7 @@ graph TD
 **Responsibility**:
 - 프로필 CRUD 인터페이스 정의
 - Domain Layer가 Infrastructure에 의존하지 않도록 추상화
+- 체중 기록 조회 (현재 체중 불일치 감지용)
 
 **Test Strategy**: Unit Test (UseCase, Notifier 테스트 시 Mock 사용)
 
@@ -150,6 +159,11 @@ graph TD
    - given: Mock Repository
    - when: watchUserProfile 호출
    - then: Stream<UserProfile> 반환
+
+4. getLatestWeightLog 호출 가능
+   - given: Mock Repository
+   - when: getLatestWeightLog 호출
+   - then: 최근 체중 기록 반환
 ```
 
 **Implementation Order**:
@@ -168,7 +182,7 @@ graph TD
 **Responsibility**:
 - 프로필 업데이트 비즈니스 로직 수행
 - 검증 후 Repository 호출
-- 홈 대시보드 데이터 재계산 트리거 (이벤트 발행)
+- 현재 체중 변경 시 최근 체중 기록과 불일치 감지
 
 **Test Strategy**: Unit Test
 
@@ -195,6 +209,11 @@ graph TD
    - given: Repository가 예외 발생
    - when: execute 호출
    - then: 동일한 예외 전파됨
+
+5. 현재 체중 변경 시 최근 체중 기록과 불일치 감지
+   - given: 현재 체중이 변경되고, 최근 체중 기록과 다름
+   - when: execute 호출
+   - then: WeightMismatchWarning 반환 (확인 필요 플래그)
 ```
 
 **Implementation Order**:
@@ -202,7 +221,9 @@ graph TD
 2. Code: UpdateProfileUseCase 클래스, execute 메서드
 3. Test: 검증 실패 케이스
 4. Code: 검증 로직 추가
-5. Refactor: 검증 로직을 Entity로 이동
+5. Test: 현재 체중 불일치 감지
+6. Code: getLatestWeightLog 조회 및 비교 로직 추가
+7. Refactor: 검증 로직을 Entity로 이동
 
 **Dependencies**: UserProfile, ProfileRepository
 
@@ -261,6 +282,7 @@ graph TD
 - ProfileRepository 인터페이스 구현
 - Isar를 통한 데이터 저장/조회
 - DTO ↔ Entity 변환 관리
+- 트랜잭션을 통한 원자성 보장
 
 **Test Strategy**: Integration Test (실제 Isar 사용)
 
@@ -292,16 +314,28 @@ graph TD
    - given: 동일 userId의 프로필 2개
    - when: 순차적으로 저장
    - then: 마지막 저장본만 존재
+
+6. getLatestWeightLog 조회
+   - given: 체중 기록이 존재하는 DB
+   - when: getLatestWeightLog 호출
+   - then: 가장 최근 체중 기록 반환
+
+7. 트랜잭션 사용한 저장
+   - given: updateUserProfile 호출
+   - when: isar.writeTxn() 사용
+   - then: 트랜잭션으로 안전하게 저장됨
 ```
 
 **Implementation Order**:
 1. Test: 기본 저장 및 조회
-2. Code: IsarProfileRepository 클래스, getUserProfile, updateUserProfile
+2. Code: IsarProfileRepository 클래스, getUserProfile, updateUserProfile (isar.writeTxn 사용)
 3. Test: 업데이트 동작
 4. Code: 업데이트 로직
 5. Test: watchUserProfile 스트림
 6. Code: watch 메서드 구현
-7. Refactor: 에러 핸들링 추가
+7. Test: getLatestWeightLog 조회
+8. Code: getLatestWeightLog 메서드 구현
+9. Refactor: 에러 핸들링 추가
 
 **Dependencies**: ProfileRepository, UserProfileDto, Isar
 
@@ -315,6 +349,8 @@ graph TD
 - 프로필 상태 관리
 - UI 이벤트를 UseCase/Repository 호출로 변환
 - AsyncValue를 통한 로딩/에러 상태 관리
+- 프로필 업데이트 후 홈 대시보드 상태 갱신 (ref.invalidate)
+- 변경사항 감지 및 최적화
 
 **Test Strategy**: Unit Test (Mock Repository, UseCase)
 
@@ -351,6 +387,21 @@ graph TD
    - given: 업데이트 진행 중
    - when: updateProfile 재호출
    - then: 첫 번째 완료 후 두 번째 실행
+
+7. 변경사항 없이 저장 시도
+   - given: 수정되지 않은 프로필
+   - when: updateProfile 호출
+   - then: Repository 호출 없이 즉시 반환
+
+8. 현재 체중 변경 시 불일치 감지
+   - given: 최근 체중 기록과 다른 현재 체중
+   - when: updateProfile 호출
+   - then: 확인 메시지 필요 상태 반환 (WeightMismatchWarning)
+
+9. 프로필 업데이트 후 홈 대시보드 갱신
+   - given: 프로필 업데이트 성공
+   - when: updateProfile 완료
+   - then: ref.invalidate()로 대시보드 Provider 갱신
 ```
 
 **Implementation Order**:
@@ -360,7 +411,11 @@ graph TD
 4. Code: updateProfile 메서드
 5. Test: 에러 핸들링
 6. Code: AsyncValue.guard 적용
-7. Refactor: 로직 분리, 상수 추출
+7. Test: 변경사항 감지
+8. Code: hasChanges() 메서드 추가
+9. Test: 홈 대시보드 갱신
+10. Code: ref.invalidate() 추가
+11. Refactor: 로직 분리, 상수 추출
 
 **Dependencies**: ProfileRepository, UpdateProfileUseCase, Riverpod
 
@@ -374,6 +429,8 @@ graph TD
 - 프로필 수정 UI 렌더링
 - ProfileNotifier 상태 구독
 - 사용자 입력 수집 및 검증
+- 저장 완료 확인 메시지 표시
+- 현재 체중 변경 시 확인 다이얼로그 표시
 
 **Test Strategy**: Widget Test
 
@@ -399,15 +456,25 @@ graph TD
    - when: 저장 시도
    - then: 에러 메시지 표시
 
-5. 저장 성공 시 네비게이션
+5. 저장 성공 시 네비게이션 및 확인 메시지
    - given: updateProfile 성공
    - when: 저장 완료
-   - then: 이전 화면으로 이동
+   - then: "저장되었습니다" 스낵바 표시 후 이전 화면으로 이동
 
 6. 저장 실패 시 스낵바 표시
    - given: updateProfile 실패
    - when: 에러 발생
    - then: 에러 스낵바 표시
+
+7. 현재 체중 변경 시 확인 다이얼로그
+   - given: 최근 체중 기록과 다른 현재 체중
+   - when: 저장 시도
+   - then: 확인 다이얼로그 표시
+
+8. 변경사항 없이 저장 시도
+   - given: 수정되지 않은 폼
+   - when: 저장 버튼 탭
+   - then: 저장 없이 이전 화면으로 이동
 ```
 
 **Implementation Order**:
@@ -417,7 +484,13 @@ graph TD
 4. Code: ProfileEditForm Widget
 5. Test: 저장 동작
 6. Code: 저장 버튼 핸들러
-7. Refactor: UI 컴포넌트 분리
+7. Test: 저장 완료 스낵바
+8. Code: 저장 완료 시 스낵바 표시
+9. Test: 현재 체중 확인 다이얼로그
+10. Code: 확인 다이얼로그 표시 로직
+11. Test: 변경사항 없을 때 처리
+12. Code: 변경사항 감지 및 즉시 복귀
+13. Refactor: UI 컴포넌트 분리
 
 **Dependencies**: ProfileNotifier, Flutter Widgets
 
@@ -433,9 +506,12 @@ graph TD
 - [ ] 주간 감량 목표가 실시간으로 재계산되는가?
 - [ ] 주간 감량 목표 1kg 초과 시 경고가 표시되는가?
 - [ ] 저장 버튼 클릭 시 로딩 표시가 나타나는가?
+- [ ] 저장 완료 시 확인 메시지가 표시되는가?
 - [ ] 저장 완료 시 설정 화면으로 돌아가는가?
 - [ ] 저장 실패 시 에러 메시지가 표시되는가?
-- [ ] 변경사항 없이 저장 시 정상 동작하는가?
+- [ ] 변경사항 없이 저장 시 즉시 복귀하는가?
+- [ ] 현재 체중 변경 시 확인 다이얼로그가 표시되는가?
+- [ ] 저장 완료 후 홈 대시보드가 업데이트되는가?
 
 ---
 

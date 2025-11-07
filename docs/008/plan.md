@@ -51,6 +51,8 @@ graph TD
     NextSchedule[NextSchedule Entity]
     WeeklySummary[WeeklySummary Entity]
     TimelineEvent[TimelineEvent Entity]
+    BadgeDefinition[BadgeDefinition Entity]
+    UserBadge[UserBadge Entity]
 
     %% Infrastructure Layer
     BadgeRepository[BadgeRepository<br/>Interface]
@@ -99,8 +101,12 @@ graph TD
     CalculateContinuousRecordDaysUseCase --> DashboardData
     CalculateWeeklyProgressUseCase --> WeeklyProgress
     VerifyBadgeConditionsUseCase --> BadgeRepository
+    VerifyBadgeConditionsUseCase --> BadgeDefinition
+    VerifyBadgeConditionsUseCase --> UserBadge
 
     IsarBadgeRepository --> BadgeRepository
+    IsarBadgeRepository --> BadgeDefinition
+    IsarBadgeRepository --> UserBadge
 ```
 
 ---
@@ -148,6 +154,21 @@ group('TimelineEvent', () {
   test('should create milestone event', () {});
   test('should sort events by date', () {});
 });
+
+// badge_definition_test.dart
+group('BadgeDefinition', () {
+  test('should create valid BadgeDefinition instance', () {});
+  test('should define badge type correctly', () {});
+  test('should support equality comparison', () {});
+});
+
+// user_badge_test.dart
+group('UserBadge', () {
+  test('should create valid UserBadge instance', () {});
+  test('should track progress percentage', () {});
+  test('should mark as achieved', () {});
+  test('should support equality comparison', () {});
+});
 ```
 
 **Implementation Order (TDD):**
@@ -156,6 +177,8 @@ group('TimelineEvent', () {
 3. NextSchedule Entity
 4. WeeklySummary Entity
 5. TimelineEvent Entity
+6. BadgeDefinition Entity (뱃지 정의)
+7. UserBadge Entity (사용자 뱃지 획득 상태)
 
 **Dependencies**: None (Pure Dart)
 
@@ -244,6 +267,7 @@ group('VerifyBadgeConditionsUseCase', () {
   test('should verify "첫 투여 완료" badge', () {});
   test('should calculate progress percentage correctly', () {});
   test('should mark badge as achieved when condition met', () {});
+  test('should handle multiple badge conditions by priority', () {}); // 우선순위 처리
 });
 ```
 
@@ -399,6 +423,11 @@ group('DashboardNotifier', () {
 2. refresh() method
 3. _loadDashboardData() private method
 4. Badge verification logic integration
+5. 실시간 갱신 메커니즘 (TrackingRepository Stream 구독 또는 명시적 refresh() 트리거)
+
+**실시간 갱신 전략:**
+- Phase 0: 퀵 액션 완료 후 DashboardNotifier.refresh() 명시적 호출
+- Phase 1: Supabase Realtime을 통한 자동 갱신으로 전환
 
 **Dependencies**:
 - All Repositories
@@ -538,6 +567,16 @@ group('BadgeWidget', () {
 });
 ```
 
+#### CelebrationAnimationWidget
+```dart
+group('CelebrationAnimationWidget', () {
+  testWidgets('should show celebration animation on trigger', (tester) async {});
+  testWidgets('should auto-dismiss after animation completes', (tester) async {});
+  testWidgets('should not show when no achievement', (tester) async {});
+  testWidgets('should match golden file', (tester) async {});
+});
+```
+
 **Implementation Order:**
 1. GreetingWidget
 2. WeeklyProgressWidget
@@ -546,10 +585,12 @@ group('BadgeWidget', () {
 5. WeeklyReportWidget
 6. TimelineWidget
 7. BadgeWidget
+8. CelebrationAnimationWidget
 
 **Dependencies**:
 - Application Notifiers/Providers
 - Riverpod ConsumerWidget
+- Lottie or Confetti Package (CelebrationAnimationWidget용)
 
 ---
 
@@ -569,9 +610,10 @@ group('DashboardScreen Acceptance Tests', () {
   testWidgets('should show error message on failure', (tester) async {});
   testWidgets('should refresh on pull-to-refresh', (tester) async {});
   testWidgets('should navigate on quick action tap', (tester) async {});
-  testWidgets('should show achievement animation', (tester) async {});
+  testWidgets('should show celebration animation on dose completion', (tester) async {});
   testWidgets('should show 100% achievement highlight', (tester) async {});
   testWidgets('should display empty state for new user', (tester) async {});
+  testWidgets('should update statistics in real-time after quick action', (tester) async {});
   testWidgets('should match golden file (full screen)', (tester) async {});
 });
 ```
@@ -595,12 +637,19 @@ group('DashboardScreen Acceptance Tests', () {
 2. AsyncValue State Handling (Loading/Data/Error)
 3. Pull-to-Refresh
 4. Navigation Integration
-5. Achievement Animation
+5. CelebrationAnimationWidget (투여 완료 시 축하 효과)
+6. Achievement Highlight (주간 목표 100% 달성 시 시각적 강조)
+
+**축하 효과 구현 방안:**
+- CelebrationAnimationWidget: Lottie 애니메이션 또는 Confetti 효과
+- 트리거 조건: 퀵 액션 완료 후 DashboardNotifier에서 achievement 플래그 설정
+- 표시 위치: DashboardScreen 중앙 오버레이
 
 **Dependencies**:
 - DashboardNotifier
 - All Widgets
 - Router (core/routing)
+- Lottie or Confetti Package (축하 효과용)
 
 ---
 

@@ -74,6 +74,44 @@ graph TD
 - 주간 목표 데이터 모델 정의
 - 주간 목표 검증 로직 (0~7 범위)
 
+**기존 Entity 구조**:
+```dart
+class UserProfile {
+  final String id;
+  final String userId;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  // 기존 필드들...
+}
+```
+
+**추가 필드**:
+```dart
+class UserProfile {
+  // 기존 필드...
+
+  final int weeklyWeightRecordGoal;   // 신규 추가 (기본값: 7)
+  final int weeklySymptomRecordGoal;  // 신규 추가 (기본값: 7)
+
+  UserProfile({
+    required this.id,
+    required this.userId,
+    required this.weeklyWeightRecordGoal,
+    required this.weeklySymptomRecordGoal,
+    required this.createdAt,
+    required this.updatedAt,
+  }) {
+    if (weeklyWeightRecordGoal < 0 || weeklyWeightRecordGoal > 7) {
+      throw ArgumentError('주간 체중 기록 목표는 0~7 범위여야 합니다');
+    }
+    if (weeklySymptomRecordGoal < 0 || weeklySymptomRecordGoal > 7) {
+      throw ArgumentError('주간 부작용 기록 목표는 0~7 범위여야 합니다');
+    }
+  }
+}
+```
+
 **Test Strategy**: Unit Test
 
 **Test Scenarios (Red Phase)**:
@@ -245,7 +283,27 @@ describe('IsarProfileRepository.updateWeeklyGoals')
 **Responsibility**:
 - UserProfile 상태 관리
 - updateWeeklyGoals 메서드 제공
-- DashboardNotifier invalidation 트리거
+- DashboardNotifier 재계산 트리거
+
+**DashboardNotifier 연동 로직**:
+```dart
+Future<void> updateWeeklyGoals(int weightGoal, int symptomGoal) async {
+  state = const AsyncValue.loading();
+
+  try {
+    await _repository.updateWeeklyGoals(_userId, weightGoal, symptomGoal);
+
+    // DashboardNotifier 재계산 트리거
+    ref.invalidate(dashboardNotifierProvider);
+
+    // 업데이트된 프로필 조회
+    final updatedProfile = await _repository.getProfile(_userId);
+    state = AsyncValue.data(updatedProfile);
+  } catch (e, st) {
+    state = AsyncValue.error(e, st);
+  }
+}
+```
 
 **Test Strategy**: Unit Test (Mock Repository)
 
@@ -287,7 +345,149 @@ describe('ProfileNotifier.updateWeeklyGoals')
 
 ---
 
-### 3.6. Presentation Layer: WeeklyGoalSettingsScreen
+### 3.6. Application Layer: 주간 집계 및 달성률 계산 로직
+
+**Location**: `lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
+
+**Responsibility**:
+- BR-3: 주간 기록 건수 계산
+- BR-2: 달성률 계산 (100% 상한선 적용)
+
+**BR-3 주간 집계 로직**:
+```dart
+int calculateWeeklyRecordCount(List<WeightLog> logs) {
+  final now = DateTime.now();
+  // 월요일 00:00 계산
+  final weekStart = now.subtract(Duration(days: now.weekday - 1));
+  final weekStartDate = DateTime(weekStart.year, weekStart.month, weekStart.day);
+
+  // 일요일 23:59 계산
+  final weekEnd = weekStartDate.add(Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+
+  // log_date 기준으로 필터링 (created_at 아님)
+  final uniqueDates = logs
+    .where((log) =>
+      log.logDate.isAfter(weekStartDate) &&
+      log.logDate.isBefore(weekEnd))
+    .map((log) => log.logDate.toIso8601String().substring(0, 10)) // YYYY-MM-DD만 추출
+    .toSet(); // 중복 날짜 제거
+
+  return uniqueDates.length;
+}
+```
+
+**BR-2 달성률 계산 로직**:
+```dart
+double calculateAchievementRate(int actualCount, int goalCount) {
+  if (goalCount == 0) return 0.0;
+
+  final rate = (actualCount / goalCount) * 100;
+
+  // 100% 상한선 적용 (목표 감소 시 초과 방지)
+  return rate > 100 ? 100.0 : rate;
+}
+```
+
+**Test Strategy**: Unit Test
+
+**Test Scenarios (Red Phase)**:
+```dart
+describe('주간 집계 로직 (BR-3)')
+  test('월요일 00:00 ~ 일요일 23:59 범위 기록만 집계')
+    // Arrange: 지난주 기록 1건, 이번주 기록 3건, 다음주 기록 1건
+    // Act: calculateWeeklyRecordCount(logs)
+    // Assert: 3 반환
+
+  test('같은 날짜 중복 기록은 1건으로 계산')
+    // Arrange: 2025-01-06 기록 3건 (같은 날짜)
+    // Act: calculateWeeklyRecordCount(logs)
+    // Assert: 1 반환
+
+  test('log_date 기준 집계 (created_at 무시)')
+    // Arrange: log_date = 2025-01-06, created_at = 2025-01-07
+    // Act: calculateWeeklyRecordCount(logs)
+    // Assert: 2025-01-06이 속한 주로 집계
+
+describe('달성률 계산 로직 (BR-2)')
+  test('달성률 100% 초과 시 100.0 반환')
+    // Arrange: actualCount = 5, goalCount = 3
+    // Act: calculateAchievementRate(5, 3)
+    // Assert: 100.0 반환 (166.67%가 아님)
+
+  test('목표 0인 경우 0.0 반환')
+    // Arrange: actualCount = 5, goalCount = 0
+    // Act: calculateAchievementRate(5, 0)
+    // Assert: 0.0 반환
+
+  test('정상 달성률 계산')
+    // Arrange: actualCount = 3, goalCount = 7
+    // Act: calculateAchievementRate(3, 7)
+    // Assert: 42.86 반환
+```
+
+**Implementation Order (TDD Cycle)**:
+1. Red: 주간 집계 테스트 작성
+2. Green: calculateWeeklyRecordCount 구현
+3. Refactor: 날짜 계산 로직 최적화
+4. Red: 달성률 계산 테스트 작성
+5. Green: calculateAchievementRate 구현
+6. Refactor: 엣지 케이스 처리
+
+**Dependencies**: WeightLog Entity, SymptomLog Entity
+
+---
+
+### 3.7. Presentation Layer: SettingsScreen (Navigation)
+
+**Location**: `lib/features/settings/presentation/screens/settings_screen.dart`
+
+**Responsibility**:
+- 설정 메뉴 목록 표시
+- WeeklyGoalSettingsScreen으로 라우팅
+
+**구현 내용**:
+```dart
+class SettingsScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('설정')),
+      body: ListView(
+        children: [
+          ListTile(
+            title: Text('주간 기록 목표 조정'),
+            trailing: Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => WeeklyGoalSettingsScreen(),
+                ),
+              );
+            },
+          ),
+          // 기타 설정 메뉴...
+        ],
+      ),
+    );
+  }
+}
+```
+
+**Test Strategy**: Manual QA
+
+**QA Sheet**:
+| Test Case | Steps | Expected Result |
+|-----------|-------|-----------------|
+| 설정 화면 진입 | 홈 화면 → 설정 아이콘 터치 | 설정 메뉴 목록 표시 |
+| 주간 목표 메뉴 선택 | "주간 기록 목표 조정" 터치 | WeeklyGoalSettingsScreen 표시 |
+| 뒤로가기 | 설정 화면 → 뒤로가기 버튼 | 이전 화면으로 복귀 |
+
+**Dependencies**: WeeklyGoalSettingsScreen
+
+---
+
+### 3.8. Presentation Layer: WeeklyGoalSettingsScreen
 
 **Location**: `lib/features/profile/presentation/screens/weekly_goal_settings_screen.dart`
 
@@ -295,6 +495,64 @@ describe('ProfileNotifier.updateWeeklyGoals')
 - 주간 목표 조정 화면 렌더링
 - 입력 검증 및 사용자 피드백
 - ProfileNotifier 호출
+- Edge Case 처리 (목표 0 확인, 에러 재시도)
+
+**목표 0 입력 확인 다이얼로그**:
+```dart
+Future<void> _onSave(BuildContext context, int weightGoal, int symptomGoal) async {
+  // 목표 0 입력 시 확인
+  if (weightGoal == 0 || symptomGoal == 0) {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('목표 0 설정'),
+        content: Text('목표를 0으로 설정하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('확인'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+  }
+
+  // 저장 로직...
+  await ref.read(profileNotifierProvider.notifier).updateWeeklyGoals(weightGoal, symptomGoal);
+}
+```
+
+**네트워크 오류 재시도 UI**:
+```dart
+@override
+Widget build(BuildContext context) {
+  final profileState = ref.watch(profileNotifierProvider);
+
+  return profileState.when(
+    data: (profile) => _buildForm(profile),
+    loading: () => Center(child: CircularProgressIndicator()),
+    error: (error, stack) => Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('저장 중 오류가 발생했습니다'),
+          SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => ref.read(profileNotifierProvider.notifier)
+              .updateWeeklyGoals(_weightGoal, _symptomGoal),
+            child: Text('재시도'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+```
 
 **Test Strategy**: Manual QA (아래 QA Sheet 참고)
 
@@ -303,7 +561,9 @@ describe('ProfileNotifier.updateWeeklyGoals')
 2. WeeklyGoalInputWidget 통합
 3. 저장 버튼 및 ProfileNotifier 연동
 4. AsyncValue 상태별 UI 처리 (loading/error/data)
-5. 성공 시 SnackBar 표시 후 Navigator.pop()
+5. 목표 0 입력 시 확인 다이얼로그 구현
+6. 에러 상태 재시도 버튼 구현
+7. 성공 시 SnackBar 표시 후 Navigator.pop()
 
 **Dependencies**: ProfileNotifier, WeeklyGoalInputWidget
 
@@ -312,18 +572,23 @@ describe('ProfileNotifier.updateWeeklyGoals')
 | Test Case | Steps | Expected Result |
 |-----------|-------|-----------------|
 | 화면 진입 | 설정 메뉴 → 주간 기록 목표 조정 선택 | 현재 목표 값이 입력 필드에 표시됨 |
+| 투여 목표 수정 불가 (BR-4) | 화면 확인 | 투여 목표는 표시 전용(읽기 전용)으로 표시되며 수정 불가 |
 | 유효한 값 입력 | 체중 목표: 5, 부작용 목표: 3 입력 → 저장 | 저장 성공 메시지, 설정 화면으로 복귀 |
-| 0 입력 | 체중 목표: 0 입력 → 저장 | 경고 메시지 표시 후 저장 허용 |
+| 0 입력 확인 다이얼로그 | 체중 목표: 0 입력 → 저장 | "목표를 0으로 설정하시겠습니까?" 다이얼로그 표시 |
+| 0 입력 취소 | 다이얼로그 → 취소 선택 | 저장 취소, 화면 유지 |
+| 0 입력 확인 | 다이얼로그 → 확인 선택 | 저장 성공, 목표 0으로 설정됨 |
 | 음수 입력 | 체중 목표: -1 입력 → 저장 | 에러 메시지: "0 이상의 값을 입력하세요" |
 | 7 초과 입력 | 체중 목표: 8 입력 → 저장 | 에러 메시지: "주간 목표는 최대 7회입니다" |
 | 비정수 입력 | 체중 목표: 3.5 입력 | 에러 메시지: "정수만 입력 가능합니다" |
 | 변경사항 없이 저장 | 기존 값 그대로 → 저장 | 저장 성공, 화면 복귀 |
 | 홈 대시보드 반영 | 목표 변경 후 홈 화면 이동 | 주간 진행도가 새 목표 기준으로 표시됨 |
-| 네트워크 오류 | 저장 중 DB 에러 발생 | 에러 메시지 및 재시도 옵션 표시 |
+| 달성률 100% 상한선 | 목표 감소 (7→3) 후 홈 화면 확인 | 달성률 100% 표시 (초과하지 않음) |
+| 네트워크 오류 재시도 | 저장 중 DB 에러 발생 | 에러 메시지 및 "재시도" 버튼 표시 |
+| 재시도 성공 | 재시도 버튼 클릭 | 저장 성공, 화면 복귀 |
 
 ---
 
-### 3.7. Presentation Layer: WeeklyGoalInputWidget
+### 3.9. Presentation Layer: WeeklyGoalInputWidget
 
 **Location**: `lib/features/profile/presentation/widgets/weekly_goal_input_widget.dart`
 
@@ -383,10 +648,14 @@ describe('ProfileNotifier.updateWeeklyGoals')
 ---
 
 ### Phase 4: Presentation Layer
-1. WeeklyGoalInputWidget 구현
-2. WeeklyGoalSettingsScreen 구현
-3. Manual QA 수행 (QA Sheet 기반)
-4. UI 개선 및 UX 최적화
+1. SettingsScreen 구현 (Navigation)
+2. WeeklyGoalInputWidget 구현
+3. WeeklyGoalSettingsScreen 기본 구조 구현
+4. Smoke Test (화면 렌더링 확인)
+5. ProfileNotifier 연동
+6. Edge Case 처리 (0 입력 확인 다이얼로그, 에러 재시도)
+7. Manual QA 수행 (QA Sheet 기반)
+8. UI/UX 최적화
 
 **Commit Point**: Feature 완료 (All Layers Integrated)
 
@@ -439,13 +708,27 @@ Red (테스트 작성) → Green (최소 구현) → Refactor (리팩토링)
 
 ## 6. 완료 기준
 
+### Domain & Infrastructure
 - [ ] UserProfile Entity 검증 로직 구현 및 테스트 통과
 - [ ] ProfileRepository Interface 정의
 - [ ] UserProfileDto 변환 로직 구현 및 테스트 통과
 - [ ] IsarProfileRepository 구현 및 Integration Test 통과
+
+### Application Layer
 - [ ] ProfileNotifier 상태 관리 구현 및 Unit Test 통과
 - [ ] DashboardNotifier invalidation 연동 확인
+- [ ] BR-3 주간 집계 로직 구현 및 테스트 통과
+- [ ] BR-2 달성률 계산 로직 구현 및 테스트 통과 (100% 상한선 확인)
+
+### Presentation Layer
+- [ ] SettingsScreen 구현 및 WeeklyGoalSettingsScreen 진입 확인
 - [ ] WeeklyGoalSettingsScreen Manual QA 완료
+- [ ] 목표 0 입력 시 확인 다이얼로그 동작 확인
+- [ ] 네트워크 오류 재시도 옵션 동작 확인
+- [ ] BR-4 투여 목표 수정 불가 UI 확인 (읽기 전용)
+
+### Integration Test
 - [ ] 홈 대시보드 진행도 재계산 확인
+- [ ] 달성률 100% 초과 시 상한선 처리 확인
 - [ ] 모든 Edge Case 처리 확인
 - [ ] 코드 리뷰 및 리팩토링 완료

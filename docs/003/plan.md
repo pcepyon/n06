@@ -11,11 +11,14 @@
 - **ScheduleGeneratorUseCase**: 스케줄 자동 생성 로직
 - **InjectionSiteRotationUseCase**: 주사 부위 순환 검증 로직
 - **MissedDoseAnalyzerUseCase**: 누락 용량 분석 로직
+- **DoseNotificationUseCase**: 투여 알림 스케줄링 로직
 - **MedicationRepository Interface**: 데이터 접근 추상화
 - **IsarMedicationRepository**: Isar 기반 저장소 구현
+- **NotificationService**: 플랫폼별 푸시 알림 구현
 - **MedicationNotifier**: 상태 관리 및 UseCase 조율
 - **MedicationScreen**: 스케줄 조회 및 투여 기록 UI
 - **DoseRecordDialog**: 투여 완료 기록 입력 UI
+- **PlanHistoryDialog**: 증량 계획 변경 이력 조회 UI
 
 ### TDD 적용 범위
 - **Domain Layer**: 100% (모든 Entity, UseCase)
@@ -46,11 +49,13 @@ graph TB
         SGU[ScheduleGeneratorUseCase]
         ISRU[InjectionSiteRotationUseCase]
         MDAU[MissedDoseAnalyzerUseCase]
+        DNU[DoseNotificationUseCase]
         MRI[MedicationRepository Interface]
     end
 
     subgraph Infrastructure Layer
         IMR[IsarMedicationRepository]
+        NS[NotificationService]
         DPDto[DosagePlanDto]
         DSDto[DoseScheduleDto]
         DRDto[DoseRecordDto]
@@ -64,6 +69,7 @@ graph TB
     MN --> SGU
     MN --> ISRU
     MN --> MDAU
+    MN --> DNU
     MN --> MRI
 
     SGU --> DP
@@ -71,6 +77,8 @@ graph TB
     ISRU --> DR
     MDAU --> DS
     MDAU --> DR
+    DNU --> DS
+    DNU --> NS
 
     MRI -.implements.-> IMR
     IMR --> DPDto
@@ -104,6 +112,8 @@ test('should throw exception when cycle days is less than 1')
 test('should throw exception when initial dose is negative')
 test('should validate escalation plan is monotonically increasing')
 test('should throw exception when escalation plan has decreasing doses')
+test('should throw exception when escalation exceeds max dose (2.4mg for Ozempic)')
+test('should validate escalation time order is maintained')
 test('should calculate current dose based on elapsed weeks')
 test('should return initial dose when no escalation plan exists')
 test('should return correct dose during escalation period')
@@ -114,18 +124,28 @@ test('should copy plan with updated fields')
 
 **Implementation Order**:
 1. 기본 생성자 및 필수 필드 검증
-2. 증량 계획 검증 로직 (단조 증가)
+2. 증량 계획 검증 로직:
+   - `validateEscalationPlan()` 메서드 구현
+   - 단조 증가 검증
+   - 시간 순서 검증
+   - 최대 용량 범위 검증 (MAX_DOSE = 2.4mg 상수 정의)
 3. 현재 용량 계산 메서드
 4. copyWith 메서드
 
 **Dependencies**:
 - `EscalationStep` value object
 
+**Business Rules**:
+- BR-004: 증량은 단조 증가만 허용 (감량 불가)
+- 증량 시점은 시간 순서 유지 필수
+- 증량 단계는 최대 용량 범위 내 제한 (Ozempic: 2.4mg)
+
 **Edge Cases**:
 - 시작일이 미래인 경우
 - 증량 계획이 역순인 경우
 - 주기가 0 이하인 경우
 - 음수 용량
+- 최대 용량 초과
 
 ---
 
@@ -175,6 +195,7 @@ test('should throw exception when administered date is in future')
 test('should throw exception when actual dose is negative')
 test('should validate injection site is valid')
 test('should throw exception for invalid injection site')
+test('should throw exception when recording duplicate dose for same date')
 test('should detect if record is completed')
 test('should calculate days since administration')
 test('should copy record with updated fields')
@@ -184,15 +205,20 @@ test('should copy record with updated fields')
 1. 기본 생성자 및 필수 필드 검증
 2. 주사 부위 enum 정의 (abdomen, thigh, arm)
 3. 날짜 검증 (미래 날짜 불가)
-4. copyWith 메서드
+4. 중복 투여 검증 (same planId + scheduledDate)
+5. copyWith 메서드
 
 **Dependencies**:
 - `InjectionSite` enum
+
+**Business Rules**:
+- BR-005: 각 투여일은 1회만 완료 기록 허용
 
 **Edge Cases**:
 - 투여일이 미래인 경우
 - 잘못된 주사 부위 문자열
 - 음수 용량
+- 같은 날 중복 투여 기록 시도
 
 ---
 
@@ -368,7 +394,99 @@ test('should calculate days elapsed for each missed dose')
 
 ---
 
-### 3.7. MedicationRepository Interface
+### 3.7. DoseNotificationUseCase
+
+**Location**: `lib/features/tracking/domain/usecases/dose_notification_usecase.dart`
+
+**Responsibility**: 투여 알림 스케줄링 및 페이로드 생성
+
+**Test Strategy**: Unit Test
+
+**Test Scenarios**:
+```dart
+// Red Phase Tests
+test('should schedule notification for dose schedule')
+  // Arrange: schedule with notificationTime
+  // Act: result = scheduleNotification(schedule)
+  // Assert: notification scheduled with correct time and payload
+
+test('should include dose amount in notification message')
+  // Arrange: schedule with 0.5mg
+  // Act: payload = createNotificationPayload(schedule)
+  // Assert: payload.message contains "0.5mg"
+
+test('should create deep link to dose scheduler screen')
+  // Arrange: schedule with id
+  // Act: payload = createNotificationPayload(schedule)
+  // Assert: payload.deepLink == "/medication/schedule/{id}"
+
+test('should cancel notification when schedule deleted')
+  // Arrange: existing notification
+  // Act: cancelNotification(scheduleId)
+  // Assert: notification removed from system
+
+test('should reschedule notification when schedule updated')
+  // Arrange: existing schedule with notification
+  // Act: rescheduleNotification(updatedSchedule)
+  // Assert: old notification cancelled, new one scheduled
+
+test('should not schedule notification for past schedules')
+  // Arrange: schedule date in past
+  // Act: result = scheduleNotification(schedule)
+  // Assert: result.skipped == true
+```
+
+**Implementation Order**:
+1. 알림 페이로드 생성 로직
+2. 스케줄링 인터페이스 정의
+3. 취소 로직
+4. 재스케줄링 로직
+
+**Dependencies**:
+- `DoseSchedule`
+- `NotificationService` (Infrastructure Layer)
+
+**Business Rules**:
+- 투여 예정일 당일 지정 시간에 알림 발송
+- 알림 메시지에 예정 용량 정보 포함
+- 알림 클릭 시 투여 스케줄러 화면 이동
+
+---
+
+### 3.8. NotificationService
+
+**Location**: `lib/features/tracking/infrastructure/services/notification_service.dart`
+
+**Responsibility**: 플랫폼별 푸시 알림 구현
+
+**Test Strategy**: Integration Test (플랫폼 의존)
+
+**Test Scenarios**:
+```dart
+// Integration Tests
+test('should request notification permission')
+test('should schedule local notification at specific time')
+test('should cancel scheduled notification by id')
+test('should handle notification click and return deep link')
+test('should persist notifications across app restarts')
+```
+
+**Implementation Order**:
+1. 권한 요청 로직
+2. 로컬 알림 스케줄링 (flutter_local_notifications)
+3. 알림 취소 로직
+4. 딥링크 핸들링
+
+**Dependencies**:
+- `flutter_local_notifications` package
+
+**Platform Support**:
+- iOS: UNUserNotificationCenter
+- Android: NotificationManager
+
+---
+
+### 3.9. MedicationRepository Interface
 
 **Location**: `lib/features/tracking/domain/repositories/medication_repository.dart`
 
@@ -396,9 +514,11 @@ abstract class MedicationRepository {
   Future<List<DoseRecord>> getRecentDoseRecords(String planId, int days);
   Future<void> saveDoseRecord(DoseRecord record);
   Future<void> deleteDoseRecord(String recordId);
+  Future<bool> isDuplicateDoseRecord(String planId, DateTime scheduledDate);
 
   // Plan Change History
   Future<void> savePlanChangeHistory(String planId, Map<String, dynamic> oldPlan, Map<String, dynamic> newPlan);
+  Future<List<PlanChangeHistory>> getPlanChangeHistory(String planId);
 
   // Streams (real-time)
   Stream<List<DoseRecord>> watchDoseRecords(String planId);
@@ -410,7 +530,7 @@ abstract class MedicationRepository {
 
 ---
 
-### 3.8. IsarMedicationRepository
+### 3.10. IsarMedicationRepository
 
 **Location**: `lib/features/tracking/infrastructure/repositories/isar_medication_repository.dart`
 
@@ -450,16 +570,33 @@ test('should watch dose records stream updates')
   // Assert: stream emits updated list
 
 test('should save plan change history')
+test('should retrieve plan change history ordered by date')
+  // Arrange: multiple history entries
+  // Act: history = await repo.getPlanChangeHistory(planId)
+  // Assert: history ordered by date DESC
+
+test('should detect duplicate dose record')
+  // Arrange: existing record for planId + date
+  // Act: isDup = await repo.isDuplicateDoseRecord(planId, date)
+  // Assert: isDup == true
+
+test('should return false for non-duplicate dose record')
+  // Arrange: no existing record for planId + date
+  // Act: isDup = await repo.isDuplicateDoseRecord(planId, date)
+  // Assert: isDup == false
+
 test('should convert DTO to Entity correctly')
 test('should convert Entity to DTO correctly')
 ```
 
 **Implementation Order**:
-1. DTO 정의 (DosagePlanDto, DoseScheduleDto, DoseRecordDto)
+1. DTO 정의 (DosagePlanDto, DoseScheduleDto, DoseRecordDto, PlanChangeHistoryDto)
 2. 기본 CRUD 구현
-3. 배치 저장 최적화
-4. Stream 구현
-5. toEntity/fromEntity 변환
+3. 중복 방지 로직 (Unique Index: planId + scheduledDate)
+4. 이력 조회 구현
+5. 배치 저장 최적화
+6. Stream 구현
+7. toEntity/fromEntity 변환
 
 **Dependencies**:
 - `Isar`
@@ -473,7 +610,7 @@ test('should convert Entity to DTO correctly')
 
 ---
 
-### 3.9. DTOs
+### 3.11. DTOs
 
 **Location**: `lib/features/tracking/infrastructure/dtos/`
 
@@ -481,6 +618,7 @@ test('should convert Entity to DTO correctly')
 - `dosage_plan_dto.dart`
 - `dose_schedule_dto.dart`
 - `dose_record_dto.dart`
+- `plan_change_history_dto.dart`
 
 **Test Strategy**: Unit Test
 
@@ -501,17 +639,24 @@ test('should handle null notification time')
 test('should convert entity to DTO')
 test('should convert DTO to entity')
 test('should handle optional fields (site, note)')
+test('should enforce unique index on planId + scheduledDate')
+
+// PlanChangeHistoryDto
+test('should convert history to DTO')
+test('should convert DTO to history entity')
+test('should serialize old/new plan data to JSON')
 ```
 
 **Implementation Order**:
 1. Isar annotations 정의
-2. fromEntity 메서드
-3. toEntity 메서드
-4. JSON 직렬화 (escalation_plan)
+2. Unique Index 설정 (DoseRecordDto: planId + scheduledDate)
+3. fromEntity 메서드
+4. toEntity 메서드
+5. JSON 직렬화 (escalation_plan, plan change history)
 
 ---
 
-### 3.10. MedicationNotifier
+### 3.12. MedicationNotifier
 
 **Location**: `lib/features/tracking/application/notifiers/medication_notifier.dart`
 
@@ -531,8 +676,13 @@ test('should record dose and update state')
   // Arrange: initial state with schedules
   // Act: await notifier.recordDose(record)
   // Assert:
+  //   - repo.isDuplicateDoseRecord checked
   //   - repo.saveDoseRecord called
   //   - state updated with new record
+
+test('should throw exception when recording duplicate dose')
+  // Arrange: existing record for same date
+  // Act & Assert: expect(() => notifier.recordDose(record), throwsException)
 
 test('should check injection site rotation before recording')
   // Arrange: recent record with same site
@@ -553,6 +703,23 @@ test('should analyze missed doses')
   // Act: analysis = notifier.getMissedDoseAnalysis()
   // Assert: analysis contains missed doses and guidance
 
+test('should schedule notification when creating dose schedule')
+  // Arrange: new schedule
+  // Act: await notifier.createDoseSchedule(schedule)
+  // Assert:
+  //   - DoseNotificationUseCase.scheduleNotification called
+  //   - schedule saved to repo
+
+test('should cancel notification when deleting dose schedule')
+  // Arrange: existing schedule with notification
+  // Act: await notifier.deleteDoseSchedule(scheduleId)
+  // Assert: DoseNotificationUseCase.cancelNotification called
+
+test('should get plan change history')
+  // Arrange: plan with history
+  // Act: history = await notifier.getPlanHistory()
+  // Assert: history contains all changes ordered by date
+
 test('should delete dose record and refresh state')
 test('should handle errors gracefully')
   // Arrange: repo throws exception
@@ -562,20 +729,23 @@ test('should handle errors gracefully')
 
 **Implementation Order**:
 1. build 메서드 (초기 로드)
-2. recordDose 메서드 (부위 검증 포함)
+2. recordDose 메서드 (중복 체크 + 부위 검증 포함)
 3. updateDosagePlan 메서드 (재계산 로직)
 4. getMissedDoseAnalysis computed property
-5. deleteDoseRecord 메서드
+5. scheduleNotification/cancelNotification 메서드
+6. getPlanHistory 메서드
+7. deleteDoseRecord 메서드
 
 **Dependencies**:
 - `MedicationRepository`
 - `ScheduleGeneratorUseCase`
 - `InjectionSiteRotationUseCase`
 - `MissedDoseAnalyzerUseCase`
+- `DoseNotificationUseCase`
 
 ---
 
-### 3.11. MedicationScreen (Presentation)
+### 3.13. MedicationScreen (Presentation)
 
 **Location**: `lib/features/tracking/presentation/screens/medication_screen.dart`
 
@@ -615,6 +785,17 @@ test('should handle errors gracefully')
 - [ ] 5일 초과 누락 시 "다음 예정일 대기" 안내
 - [ ] 7일 이상 누락 시 전문가 상담 권장 표시
 
+## 투여 알림
+- [ ] 투여 예정일 알림이 지정 시간에 발송됨
+- [ ] 알림 메시지에 예정 용량 표시
+- [ ] 알림 클릭 시 투여 스케줄러 화면 이동
+- [ ] 알림 권한 요청 표시
+
+## 계획 변경 이력
+- [ ] 계획 변경 이력 조회 가능
+- [ ] 이력에 날짜, 변경 전/후 계획 표시
+- [ ] 이력은 날짜 역순 정렬
+
 ## 성능
 - [ ] 스케줄 생성 1초 이내
 - [ ] 스케줄 재계산 1초 이내
@@ -627,13 +808,15 @@ test('should handle errors gracefully')
 3. 투여 완료 다이얼로그 연동
 4. 누락 안내 UI
 5. 부위별 이력 시각화
+6. 계획 변경 이력 다이얼로그 연동
+7. 알림 권한 요청 UI
 
 **Dependencies**:
 - `MedicationNotifier`
 
 ---
 
-### 3.12. DoseRecordDialog (Presentation)
+### 3.14. DoseRecordDialog (Presentation)
 
 **Location**: `lib/features/tracking/presentation/widgets/dose_record_dialog.dart`
 
@@ -660,6 +843,40 @@ test('should handle errors gracefully')
 - [ ] 성공 시 다이얼로그 닫힘
 - [ ] 실패 시 에러 메시지 표시
 ```
+
+**Dependencies**:
+- `MedicationNotifier`
+
+---
+
+### 3.15. PlanHistoryDialog (Presentation)
+
+**Location**: `lib/features/tracking/presentation/widgets/plan_history_dialog.dart`
+
+**Responsibility**: 증량 계획 변경 이력 조회 UI
+
+**Test Strategy**: Manual QA (QA Sheet)
+
+**QA Sheet**:
+```markdown
+## 이력 조회
+- [ ] 계획 변경 이력 버튼 클릭 시 다이얼로그 표시
+- [ ] 이력이 날짜 역순으로 정렬됨
+- [ ] 각 이력에 변경 날짜 표시
+- [ ] 각 이력에 변경 전/후 계획 표시 (용량, 주기 등)
+- [ ] 이력이 없을 경우 "변경 이력이 없습니다" 메시지 표시
+- [ ] 스크롤 가능 (이력이 많을 경우)
+
+## 이력 내용
+- [ ] 변경된 필드만 강조 표시
+- [ ] 날짜 포맷 일관성 (YYYY-MM-DD HH:mm)
+- [ ] 증량 계획 변경 시 전/후 비교 표시
+```
+
+**Implementation Order**:
+1. 이력 리스트 뷰
+2. 변경 전/후 비교 UI
+3. 빈 상태 처리
 
 **Dependencies**:
 - `MedicationNotifier`
@@ -693,20 +910,35 @@ test('should handle errors gracefully')
    - 전문가 상담 조건 테스트 → 구현
    - **Commit**: "feat: add missed dose analyzer use case"
 
+5. **Day 6**: DoseNotificationUseCase
+   - 알림 페이로드 생성 테스트 → 구현
+   - 스케줄링 로직 테스트 → 구현
+   - 취소/재스케줄 테스트 → 구현
+   - **Commit**: "feat: add dose notification use case"
+
 ### Phase 2: Infrastructure Layer (Week 2)
 1. **Day 1-2**: DTOs
    - DosagePlanDto 테스트 → 구현
    - DoseScheduleDto 테스트 → 구현
-   - DoseRecordDto 테스트 → 구현
+   - DoseRecordDto 테스트 → 구현 (Unique Index 포함)
+   - PlanChangeHistoryDto 테스트 → 구현
    - **Commit**: "feat: add medication DTOs"
 
 2. **Day 3-4**: Repository 구현
    - IsarMedicationRepository 기본 CRUD 테스트 → 구현
+   - 중복 방지 로직 테스트 → 구현
+   - 이력 조회 테스트 → 구현
    - 배치 저장 테스트 → 구현
    - Stream 테스트 → 구현
    - **Commit**: "feat: add Isar medication repository"
 
-3. **Day 5**: Repository 최적화
+3. **Day 5**: NotificationService
+   - 알림 권한 요청 구현
+   - 로컬 알림 스케줄링 구현
+   - 딥링크 핸들링 구현
+   - **Commit**: "feat: add notification service"
+
+4. **Day 6**: Repository 최적화
    - 성능 테스트 통과
    - 인덱스 최적화
    - **Commit**: "perf: optimize medication repository"
@@ -714,13 +946,16 @@ test('should handle errors gracefully')
 ### Phase 3: Application Layer (Week 3)
 1. **Day 1-3**: MedicationNotifier
    - 초기 로드 테스트 → 구현
-   - recordDose 테스트 → 구현
+   - recordDose 테스트 → 구현 (중복 체크 포함)
    - updateDosagePlan 테스트 → 구현
    - getMissedDoseAnalysis 테스트 → 구현
+   - scheduleNotification/cancelNotification 테스트 → 구현
+   - getPlanHistory 테스트 → 구현
    - **Commit**: "feat: add medication notifier"
 
 2. **Day 4-5**: Notifier 리팩토링 및 에러 핸들링
    - 에러 처리 테스트 → 구현
+   - 중복 투여 에러 핸들링 테스트 → 구현
    - 상태 일관성 테스트 → 구현
    - **Commit**: "refactor: improve medication notifier error handling"
 
@@ -728,15 +963,20 @@ test('should handle errors gracefully')
 1. **Day 1-2**: MedicationScreen
    - 스케줄 리스트 뷰 구현
    - 캘린더 뷰 구현
+   - 알림 권한 요청 UI 구현
    - **Commit**: "feat: add medication screen"
 
-2. **Day 3**: DoseRecordDialog
+2. **Day 3**: DoseRecordDialog & PlanHistoryDialog
    - 부위 선택 UI 구현
    - 메모 입력 UI 구현
-   - **Commit**: "feat: add dose record dialog"
+   - 계획 변경 이력 다이얼로그 구현
+   - **Commit**: "feat: add dose record and plan history dialogs"
 
 3. **Day 4**: 통합 및 QA
    - 전체 플로우 수동 테스트
+   - 알림 기능 테스트
+   - 중복 투여 방지 테스트
+   - 이력 조회 테스트
    - QA Sheet 체크리스트 검증
    - 버그 수정
 

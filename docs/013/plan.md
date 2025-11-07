@@ -5,10 +5,10 @@
 과거 기록 수정/삭제 기능은 사용자가 잘못 입력하거나 변경이 필요한 체중, 증상, 투여 기록을 수정하거나 삭제할 수 있는 기능. 기록 변경 시 관련 통계와 인사이트를 자동으로 재계산하여 데이터 일관성 유지. 4-Layer Architecture + Repository Pattern + TDD 적용.
 
 **모듈 구조:**
-- **Domain Layer**: 기록 수정 검증 로직, 통계 재계산 트리거 UseCase
+- **Domain Layer**: 기록 수정 검증 로직, 통계 재계산 트리거 UseCase, 감사 추적 UseCase, Repository Interface
 - **Application Layer**: RecordEditNotifier (AsyncNotifier), 통계 재계산 오케스트레이션
-- **Infrastructure Layer**: 기존 Repository 재사용 (TrackingRepository, MedicationRepository)
-- **Presentation Layer**: RecordEditScreen, RecordDeleteDialog, 기록 목록 화면 수정
+- **Infrastructure Layer**: Repository 구현체 (IsarTrackingRepository, IsarMedicationRepository, IsarAuditRepository)
+- **Presentation Layer**: RecordEditDialog (날짜 수정 포함), RecordDeleteDialog, 기록 목록 화면 수정
 
 **TDD 적용 범위:**
 - Domain UseCase: Unit Test 100%
@@ -33,7 +33,7 @@ graph TD
     WeightRecordEditNotifier[WeightRecordEditNotifier<br/>AsyncNotifierProvider]
     SymptomRecordEditNotifier[SymptomRecordEditNotifier<br/>AsyncNotifierProvider]
     DoseRecordEditNotifier[DoseRecordEditNotifier<br/>AsyncNotifierProvider]
-    RecalculateStatisticsNotifier[RecalculateStatisticsNotifier<br/>Provider]
+    RecalculateStatisticsNotifier[RecalculateStatisticsNotifier<br/>AsyncNotifierProvider]
 
     %% Domain Layer
     ValidateWeightEditUseCase[ValidateWeightEditUseCase]
@@ -42,12 +42,14 @@ graph TD
     RecalculateDashboardStatisticsUseCase[RecalculateDashboardStatisticsUseCase]
     RecalculateContinuousRecordDaysUseCase[RecalculateContinuousRecordDaysUseCase]
     RecalculateBadgeProgressUseCase[RecalculateBadgeProgressUseCase]
+    LogRecordChangeUseCase[LogRecordChangeUseCase]
 
-    %% Infrastructure Layer (재사용)
+    %% Domain Layer - Repository Interfaces
     TrackingRepository[TrackingRepository<br/>Interface]
     MedicationRepository[MedicationRepository<br/>Interface]
     DashboardRepository[DashboardRepository<br/>Interface]
     BadgeRepository[BadgeRepository<br/>Interface]
+    AuditRepository[AuditRepository<br/>Interface]
 
     %% Dependencies
     RecordListScreen --> RecordDetailSheet
@@ -82,13 +84,84 @@ graph TD
     RecalculateStatisticsNotifier --> BadgeRepository
 
     ValidateDateUniqueConstraintUseCase --> TrackingRepository
+
+    WeightRecordEditNotifier --> LogRecordChangeUseCase
+    SymptomRecordEditNotifier --> LogRecordChangeUseCase
+    DoseRecordEditNotifier --> LogRecordChangeUseCase
+
+    LogRecordChangeUseCase --> AuditRepository
 ```
 
 ---
 
-## 3. Implementation Plan
+## 3. Domain Layer - Repository Interfaces
 
-### 3.1 Domain Layer - Validation UseCases
+**Location**: `lib/features/{feature}/domain/repositories/`
+
+**Purpose**: Repository 인터페이스 정의 (Domain Layer에 위치, Infrastructure Layer에서 구현)
+
+### TrackingRepository Interface
+```dart
+abstract class TrackingRepository {
+  // 체중 기록
+  Future<WeightLog?> getWeightLog(String id);
+  Future<WeightLog?> getWeightLogByDate(String userId, DateTime date);
+  Future<List<WeightLog>> getWeightLogs(String userId);
+  Future<void> updateWeightLog(String id, double weightKg);
+  Future<void> deleteWeightLog(String id);
+
+  // 증상 기록 (연쇄 삭제 명시)
+  Future<SymptomLog?> getSymptomLog(String id);
+  Future<List<SymptomLog>> getSymptomLogs(String userId);
+  Future<void> updateSymptomLog(String id, SymptomLog updatedLog);
+  /// 증상 기록 삭제 시 연관된 컨텍스트 태그, 피드백도 함께 삭제
+  Future<void> deleteSymptomLog(String id, {bool cascade = true});
+}
+```
+
+### MedicationRepository Interface
+```dart
+abstract class MedicationRepository {
+  Future<DoseRecord?> getDoseRecord(String id);
+  Future<List<DoseRecord>> getDoseRecords(DosagePlanQuery query);
+  Future<void> updateDoseRecord(String id, double doseMg, String injectionSite, String? note);
+  Future<void> deleteDoseRecord(String id);
+}
+```
+
+### DashboardRepository Interface
+```dart
+abstract class DashboardRepository {
+  Future<DashboardData> getDashboardData(String userId);
+  Future<void> updateWeeklyProgress(String userId, WeeklyProgress progress);
+  Future<void> updateContinuousRecordDays(String userId, int days);
+  Future<void> updateWeeklySummary(String userId, WeeklySummary summary);
+}
+```
+
+### BadgeRepository Interface
+```dart
+abstract class BadgeRepository {
+  Future<List<UserBadge>> getUserBadges(String userId);
+  Future<UserBadge?> getUserBadge(String userId, String badgeId);
+  Future<void> updateBadgeProgress(String userId, String badgeId, int percentage);
+  Future<void> achieveBadge(String userId, String badgeId);
+}
+```
+
+### AuditRepository Interface
+```dart
+abstract class AuditRepository {
+  Future<void> logChange(AuditLog log);
+  Future<List<AuditLog>> getChangeLogs(String userId, String recordId);
+}
+```
+
+---
+
+## 4. Implementation Plan
+
+### 4.1 Domain Layer - Validation UseCases
 
 **Location**: `lib/features/tracking/domain/usecases/`
 
@@ -279,16 +352,67 @@ group('ValidateDateUniqueConstraintUseCase', () {
 });
 ```
 
+#### LogRecordChangeUseCase (감사 추적)
+```dart
+group('LogRecordChangeUseCase', () {
+  late LogRecordChangeUseCase useCase;
+  late MockAuditRepository mockAuditRepo;
+
+  setUp(() {
+    mockAuditRepo = MockAuditRepository();
+    useCase = LogRecordChangeUseCase(mockAuditRepo);
+  });
+
+  test('should log weight record update', () async {
+    final auditLog = AuditLog(
+      id: 'audit1',
+      userId: 'user123',
+      recordId: 'log1',
+      recordType: 'weight',
+      changeType: 'update',
+      oldValue: {'weightKg': 70.0},
+      newValue: {'weightKg': 68.5},
+      timestamp: DateTime.now(),
+    );
+
+    when(() => mockAuditRepo.logChange(auditLog))
+        .thenAnswer((_) async => {});
+
+    await useCase.execute(auditLog);
+
+    verify(() => mockAuditRepo.logChange(auditLog)).called(1);
+  });
+
+  test('should log record deletion', () async {
+    final auditLog = AuditLog(
+      id: 'audit2',
+      userId: 'user123',
+      recordId: 'log1',
+      recordType: 'weight',
+      changeType: 'delete',
+      oldValue: {'weightKg': 70.0, 'logDate': '2025-01-01'},
+      newValue: null,
+      timestamp: DateTime.now(),
+    );
+
+    await useCase.execute(auditLog);
+
+    verify(() => mockAuditRepo.logChange(auditLog)).called(1);
+  });
+});
+```
+
 **Implementation Order (TDD):**
 1. ValidateWeightEditUseCase
 2. ValidateSymptomEditUseCase
 3. ValidateDateUniqueConstraintUseCase
+4. LogRecordChangeUseCase
 
 **Dependencies**: Repository Interface (Domain)
 
 ---
 
-### 3.2 Domain Layer - Statistics Recalculation UseCases
+### 4.2 Domain Layer - Statistics Recalculation UseCases
 
 **Location**: `lib/features/dashboard/domain/usecases/`
 
@@ -469,7 +593,7 @@ group('RecalculateBadgeProgressUseCase', () {
 
 ---
 
-### 3.3 Application Layer - Record Edit Notifiers
+### 4.3 Application Layer - Record Edit Notifiers
 
 **Location**: `lib/features/tracking/application/notifiers/`
 
@@ -508,16 +632,27 @@ group('WeightRecordEditNotifier', () {
     container.dispose();
   });
 
-  test('should update weight log successfully', () async {
+  test('should update weight log successfully with audit logging', () async {
     // Arrange
     final recordId = 'log1';
     final newWeight = 68.5;
     final userId = 'user123';
+    final originalLog = WeightLog(
+      id: recordId,
+      userId: userId,
+      logDate: DateTime.now(),
+      weightKg: 70.0,
+      createdAt: DateTime.now(),
+    );
+    when(() => mockRepository.getWeightLog(recordId))
+        .thenAnswer((_) async => originalLog);
     when(() => mockValidateUseCase.execute(newWeight))
         .thenReturn(ValidationResult.success());
     when(() => mockRepository.updateWeightLog(recordId, newWeight))
         .thenAnswer((_) async => {});
     when(() => mockRecalculateNotifier.recalculate(userId))
+        .thenAnswer((_) async => {});
+    when(() => mockLogRecordChangeUseCase.execute(any()))
         .thenAnswer((_) async => {});
 
     // Act
@@ -529,6 +664,7 @@ group('WeightRecordEditNotifier', () {
     expect(state.hasValue, true);
     verify(() => mockRepository.updateWeightLog(recordId, newWeight)).called(1);
     verify(() => mockRecalculateNotifier.recalculate(userId)).called(1);
+    verify(() => mockLogRecordChangeUseCase.execute(any())).called(1);
   });
 
   test('should emit error when validation fails', () async {
@@ -609,23 +745,23 @@ group('WeightRecordEditNotifier', () {
     verify(() => mockRepository.updateWeightLog(existingRecordId, newWeight)).called(1);
   });
 
-  test('should rollback on recalculation failure', () async {
+  test('should rollback on recalculation failure and restore original state', () async {
     final recordId = 'log1';
     final newWeight = 68.5;
     final userId = 'user123';
-    final originalWeight = 70.0;
+    final originalLog = WeightLog(
+      id: recordId,
+      userId: userId,
+      logDate: DateTime.now(),
+      weightKg: 70.0,
+      createdAt: DateTime.now(),
+    );
 
+    when(() => mockRepository.getWeightLog(recordId))
+        .thenAnswer((_) async => originalLog);
     when(() => mockValidateUseCase.execute(newWeight))
         .thenReturn(ValidationResult.success());
-    when(() => mockRepository.getWeightLog(recordId))
-        .thenAnswer((_) async => WeightLog(
-          id: recordId,
-          userId: userId,
-          logDate: DateTime.now(),
-          weightKg: originalWeight,
-          createdAt: DateTime.now(),
-        ));
-    when(() => mockRepository.updateWeightLog(recordId, newWeight))
+    when(() => mockRepository.updateWeightLog(recordId, any()))
         .thenAnswer((_) async => {});
     when(() => mockRecalculateNotifier.recalculate(userId))
         .thenThrow(Exception('Recalculation failed'));
@@ -633,8 +769,42 @@ group('WeightRecordEditNotifier', () {
     final notifier = container.read(weightRecordEditNotifierProvider.notifier);
     await notifier.updateWeight(recordId: recordId, newWeight: newWeight, userId: userId);
 
-    // Should rollback to original weight
-    verify(() => mockRepository.updateWeightLog(recordId, originalWeight)).called(1);
+    final state = container.read(weightRecordEditNotifierProvider);
+    expect(state.hasError, true);
+
+    // Should update twice: once with new weight, once rollback to original
+    verifyInOrder([
+      () => mockRepository.updateWeightLog(recordId, newWeight),
+      () => mockRepository.updateWeightLog(recordId, originalLog.weightKg),
+    ]);
+  });
+
+  test('should handle repository update failure without rollback', () async {
+    final recordId = 'log1';
+    final newWeight = 68.5;
+    final userId = 'user123';
+
+    when(() => mockRepository.getWeightLog(recordId))
+        .thenAnswer((_) async => WeightLog(
+          id: recordId,
+          userId: userId,
+          logDate: DateTime.now(),
+          weightKg: 70.0,
+          createdAt: DateTime.now(),
+        ));
+    when(() => mockValidateUseCase.execute(newWeight))
+        .thenReturn(ValidationResult.success());
+    when(() => mockRepository.updateWeightLog(recordId, newWeight))
+        .thenThrow(Exception('Database error'));
+
+    final notifier = container.read(weightRecordEditNotifierProvider.notifier);
+    await notifier.updateWeight(recordId: recordId, newWeight: newWeight, userId: userId);
+
+    final state = container.read(weightRecordEditNotifierProvider);
+    expect(state.hasError, true);
+
+    // Repository update failed, so recalculation should not be called
+    verifyNever(() => mockRecalculateNotifier.recalculate(any()));
   });
 });
 ```
@@ -715,10 +885,10 @@ group('SymptomRecordEditNotifier', () {
     verifyNever(() => mockRepository.updateSymptomLog(any(), any()));
   });
 
-  test('should delete symptom log including tags', () async {
+  test('should cascade delete symptom log including tags and feedback', () async {
     final recordId = 'symptom1';
     final userId = 'user123';
-    when(() => mockRepository.deleteSymptomLog(recordId))
+    when(() => mockRepository.deleteSymptomLog(recordId, cascade: true))
         .thenAnswer((_) async => {});
     when(() => mockRecalculateNotifier.recalculate(userId))
         .thenAnswer((_) async => {});
@@ -726,7 +896,8 @@ group('SymptomRecordEditNotifier', () {
     final notifier = container.read(symptomRecordEditNotifierProvider.notifier);
     await notifier.deleteSymptom(recordId: recordId, userId: userId);
 
-    verify(() => mockRepository.deleteSymptomLog(recordId)).called(1);
+    // Verify cascade delete with tags and feedback
+    verify(() => mockRepository.deleteSymptomLog(recordId, cascade: true)).called(1);
     verify(() => mockRecalculateNotifier.recalculate(userId)).called(1);
   });
 });
@@ -737,22 +908,72 @@ group('SymptomRecordEditNotifier', () {
 group('DoseRecordEditNotifier', () {
   late MockMedicationRepository mockRepository;
   late MockRecalculateStatisticsNotifier mockRecalculateNotifier;
+  late MockLogRecordChangeUseCase mockLogRecordChangeUseCase;
   late ProviderContainer container;
 
   setUp(() {
     mockRepository = MockMedicationRepository();
     mockRecalculateNotifier = MockRecalculateStatisticsNotifier();
+    mockLogRecordChangeUseCase = MockLogRecordChangeUseCase();
 
     container = ProviderContainer(
       overrides: [
         medicationRepositoryProvider.overrideWithValue(mockRepository),
         recalculateStatisticsNotifierProvider.overrideWithValue(mockRecalculateNotifier),
+        logRecordChangeUseCaseProvider.overrideWithValue(mockLogRecordChangeUseCase),
       ],
     );
   });
 
   tearDown(() {
     container.dispose();
+  });
+
+  test('should update dose record successfully', () async {
+    final recordId = 'dose1';
+    final newDoseMg = 0.75;
+    final newInjectionSite = '허벅지';
+    final note = '투여 부위 변경';
+    final userId = 'user123';
+
+    when(() => mockRepository.updateDoseRecord(recordId, newDoseMg, newInjectionSite, note))
+        .thenAnswer((_) async => {});
+    when(() => mockRecalculateNotifier.recalculate(userId))
+        .thenAnswer((_) async => {});
+    when(() => mockLogRecordChangeUseCase.execute(any()))
+        .thenAnswer((_) async => {});
+
+    final notifier = container.read(doseRecordEditNotifierProvider.notifier);
+    await notifier.updateDoseRecord(
+      recordId: recordId,
+      newDoseMg: newDoseMg,
+      newInjectionSite: newInjectionSite,
+      note: note,
+      userId: userId,
+    );
+
+    verify(() => mockRepository.updateDoseRecord(recordId, newDoseMg, newInjectionSite, note)).called(1);
+    verify(() => mockRecalculateNotifier.recalculate(userId)).called(1);
+    verify(() => mockLogRecordChangeUseCase.execute(any())).called(1);
+  });
+
+  test('should validate dose amount is positive', () async {
+    final recordId = 'dose1';
+    final invalidDose = 0.0;
+    final userId = 'user123';
+
+    final notifier = container.read(doseRecordEditNotifierProvider.notifier);
+    await notifier.updateDoseRecord(
+      recordId: recordId,
+      newDoseMg: invalidDose,
+      newInjectionSite: '복부',
+      userId: userId,
+    );
+
+    final state = container.read(doseRecordEditNotifierProvider);
+    expect(state.hasError, true);
+    expect(state.error.toString(), contains('투여량은 0보다 커야 합니다'));
+    verifyNever(() => mockRepository.updateDoseRecord(any(), any(), any(), any()));
   });
 
   test('should delete dose record without affecting schedule', () async {
@@ -762,6 +983,8 @@ group('DoseRecordEditNotifier', () {
         .thenAnswer((_) async => {});
     when(() => mockRecalculateNotifier.recalculate(userId))
         .thenAnswer((_) async => {});
+    when(() => mockLogRecordChangeUseCase.execute(any()))
+        .thenAnswer((_) async => {});
 
     final notifier = container.read(doseRecordEditNotifierProvider.notifier);
     await notifier.deleteDoseRecord(recordId: recordId, userId: userId);
@@ -770,6 +993,7 @@ group('DoseRecordEditNotifier', () {
     // Schedule should NOT be affected
     verifyNever(() => mockRepository.updateDosagePlan(any()));
     verify(() => mockRecalculateNotifier.recalculate(userId)).called(1);
+    verify(() => mockLogRecordChangeUseCase.execute(any())).called(1);
   });
 
   test('should handle repository failure gracefully', () async {
@@ -797,7 +1021,7 @@ group('DoseRecordEditNotifier', () {
 
 ---
 
-### 3.4 Application Layer - Statistics Recalculation Notifier
+### 4.4 Application Layer - Statistics Recalculation Notifier
 
 **Location**: `lib/features/dashboard/application/notifiers/recalculate_statistics_notifier.dart`
 
@@ -931,7 +1155,7 @@ group('RecalculateStatisticsNotifier', () {
 
 ---
 
-### 3.5 Presentation Layer - Edit Dialogs
+### 4.5 Presentation Layer - Edit Dialogs
 
 **Location**: `lib/features/tracking/presentation/widgets/`
 
@@ -1020,6 +1244,51 @@ group('WeightEditDialog', () {
     await tester.pump();
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
+
+  testWidgets('should allow changing log date', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WeightEditDialog(
+          currentWeight: 70.0,
+          currentDate: DateTime(2025, 1, 1),
+        ),
+      ),
+    );
+
+    // 날짜 선택 버튼 탭
+    await tester.tap(find.byIcon(Icons.calendar_today));
+    await tester.pumpAndSettle();
+
+    // 새로운 날짜 선택
+    await tester.tap(find.text('2'));
+    await tester.tap(find.text('확인'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('2025-01-02'), findsOneWidget);
+  });
+
+  testWidgets('should validate date uniqueness and show overwrite dialog', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WeightEditDialog(
+          currentWeight: 70.0,
+          currentDate: DateTime(2025, 1, 1),
+        ),
+      ),
+    );
+
+    // 중복 날짜 선택
+    await tester.tap(find.byIcon(Icons.calendar_today));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('3')); // 이미 기록이 있는 날짜
+    await tester.tap(find.text('확인'));
+    await tester.pumpAndSettle();
+
+    // 덮어쓰기 확인 다이얼로그 표시
+    expect(find.text('이미 기록이 존재합니다'), findsOneWidget);
+    expect(find.text('덮어쓰기'), findsOneWidget);
+    expect(find.text('취소'), findsOneWidget);
   });
 });
 ```
@@ -1210,16 +1479,127 @@ group('RecordDeleteDialog', () {
 });
 ```
 
+#### DoseEditDialog
+```dart
+group('DoseEditDialog', () {
+  testWidgets('should display current dose data', (tester) async {
+    final record = DoseRecord(
+      id: 'dose1',
+      dosagePlanId: 'plan1',
+      administeredAt: DateTime.now(),
+      actualDoseMg: 0.5,
+      injectionSite: '복부',
+      isCompleted: true,
+    );
+    await tester.pumpWidget(MaterialApp(home: DoseEditDialog(record: record)));
+
+    expect(find.text('0.5'), findsOneWidget);
+    expect(find.text('복부'), findsOneWidget);
+  });
+
+  testWidgets('should allow changing dose amount', (tester) async {
+    final record = DoseRecord(
+      id: 'dose1',
+      dosagePlanId: 'plan1',
+      administeredAt: DateTime.now(),
+      actualDoseMg: 0.5,
+      injectionSite: '복부',
+      isCompleted: true,
+    );
+    await tester.pumpWidget(MaterialApp(home: DoseEditDialog(record: record)));
+
+    final textField = find.byType(TextField).first;
+    await tester.enterText(textField, '0.75');
+    await tester.pump();
+
+    expect(find.text('0.75'), findsOneWidget);
+  });
+
+  testWidgets('should allow changing injection site', (tester) async {
+    final record = DoseRecord(
+      id: 'dose1',
+      dosagePlanId: 'plan1',
+      administeredAt: DateTime.now(),
+      actualDoseMg: 0.5,
+      injectionSite: '복부',
+      isCompleted: true,
+    );
+    await tester.pumpWidget(MaterialApp(home: DoseEditDialog(record: record)));
+
+    await tester.tap(find.text('복부'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('허벅지'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('허벅지'), findsOneWidget);
+  });
+
+  testWidgets('should validate dose is positive', (tester) async {
+    final record = DoseRecord(
+      id: 'dose1',
+      dosagePlanId: 'plan1',
+      administeredAt: DateTime.now(),
+      actualDoseMg: 0.5,
+      injectionSite: '복부',
+      isCompleted: true,
+    );
+    await tester.pumpWidget(MaterialApp(home: DoseEditDialog(record: record)));
+
+    await tester.enterText(find.byType(TextField).first, '0');
+    await tester.pump();
+
+    expect(find.text('투여량은 0보다 커야 합니다'), findsOneWidget);
+  });
+
+  testWidgets('should call onSave with updated data', (tester) async {
+    double? savedDose;
+    String? savedSite;
+    final record = DoseRecord(
+      id: 'dose1',
+      dosagePlanId: 'plan1',
+      administeredAt: DateTime.now(),
+      actualDoseMg: 0.5,
+      injectionSite: '복부',
+      isCompleted: true,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DoseEditDialog(
+          record: record,
+          onSave: (dose, site, note) {
+            savedDose = dose;
+            savedSite = site;
+          },
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField).first, '0.75');
+    await tester.tap(find.text('복부'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('허벅지'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('저장'));
+    await tester.pump();
+
+    expect(savedDose, 0.75);
+    expect(savedSite, '허벅지');
+  });
+});
+```
+
 **Implementation Order:**
-1. WeightEditDialog (가장 복잡: 실시간 검증 + 경고)
+1. WeightEditDialog (가장 복잡: 실시간 검증 + 경고 + 날짜 수정)
 2. SymptomEditDialog (중간: 여러 필드 + 태그 관리)
-3. RecordDeleteDialog (단순: 확인만)
+3. DoseEditDialog (중간: 투여량 + 부위 수정)
+4. RecordDeleteDialog (단순: 확인만)
 
 **Dependencies**: Application Notifiers
 
 ---
 
-### 3.6 Presentation Layer - Record Detail Sheet
+### 4.6 Presentation Layer - Record Detail Sheet
 
 **Location**: `lib/features/tracking/presentation/widgets/record_detail_sheet.dart`
 
@@ -1440,7 +1820,7 @@ group('RecordDetailSheet', () {
 
 ---
 
-### 3.7 Presentation Layer - Record List Screen Updates
+### 4.7 Presentation Layer - Record List Screen Updates
 
 **Location**: `lib/features/tracking/presentation/screens/record_list_screen.dart`
 
@@ -1625,13 +2005,14 @@ group('RecordListScreen Edit/Delete Flow', () {
 
 ---
 
-## 4. TDD Workflow
+## 5. TDD Workflow
 
 ### Phase 1: Domain Layer (Inside-Out)
 1. **Start**: Validation UseCases 테스트 작성
    - ValidateWeightEditUseCase (Red → Green → Refactor)
    - ValidateSymptomEditUseCase (Red → Green → Refactor)
    - ValidateDateUniqueConstraintUseCase (Red → Green → Refactor)
+   - LogRecordChangeUseCase (Red → Green → Refactor)
 2. **Statistics Recalculation UseCases**:
    - RecalculateDashboardStatisticsUseCase (Red → Green → Refactor)
    - RecalculateBadgeProgressUseCase (Red → Green → Refactor)
@@ -1648,8 +2029,9 @@ group('RecordListScreen Edit/Delete Flow', () {
 
 ### Phase 3: Presentation Layer (Outside-In)
 1. **Edit Dialogs**:
-   - WeightEditDialog (Red → Green → Refactor + Widget Test)
+   - WeightEditDialog (Red → Green → Refactor + Widget Test) - 날짜 수정 포함
    - SymptomEditDialog (Red → Green → Refactor + Widget Test)
+   - DoseEditDialog (Red → Green → Refactor + Widget Test) - 투여 기록 수정
    - RecordDeleteDialog (Red → Green → Refactor + Widget Test)
 2. **Detail Sheet**:
    - RecordDetailSheet (Red → Green → Refactor + Widget Test)
@@ -1667,7 +2049,7 @@ group('RecordListScreen Edit/Delete Flow', () {
 
 ---
 
-## 5. 핵심 원칙
+## 6. 핵심 원칙
 
 ### Test First
 - 모든 테스트 케이스를 먼저 작성하고 실패를 확인한 후 구현
@@ -1700,5 +2082,33 @@ group('RecordListScreen Edit/Delete Flow', () {
 
 ### Data Consistency
 - 모든 수정/삭제 작업은 통계 재계산을 트리거
-- Rollback 메커니즘으로 데이터 무결성 보장
+- Rollback 메커니즘으로 데이터 무결성 보장 (재계산 실패 시 원본 복구, Repository 실패 시 중단)
 - Badge 획득 조건 재검증으로 정확도 유지
+
+### Audit Trail
+- 모든 수정/삭제 작업은 감사 로그 생성 (BR-5 준수)
+- LogRecordChangeUseCase를 통한 변경 이력 추적
+- AuditRepository를 통한 감사 데이터 저장
+
+---
+
+## 7. Critical Fixes Applied
+
+본 plan은 plancheck.md의 Critical 및 Medium 이슈를 반영하여 다음과 같이 수정되었습니다:
+
+### Architecture Fixes
+1. **Repository Interface 위치 수정**: Infrastructure Layer → Domain Layer로 이동
+2. **RecalculateStatisticsNotifier Provider 타입 수정**: Provider → AsyncNotifierProvider
+
+### Missing Features Added
+3. **투여 기록 수정 기능 추가**: DoseRecordEditNotifier에 updateDoseRecord() 메서드 및 DoseEditDialog 추가
+4. **날짜 수정 기능 추가**: WeightEditDialog에 날짜 선택 UI 및 중복 검증 로직 추가
+5. **감사 추적 (Audit Trail) 구현**: LogRecordChangeUseCase, AuditRepository 추가
+
+### Implementation Improvements
+6. **증상 기록 연쇄 삭제 명시**: TrackingRepository.deleteSymptomLog(cascade: true) 파라미터 추가
+7. **Rollback 메커니즘 구체화**:
+   - 재계산 실패 시 원본 데이터 복구
+   - Repository 실패 시 재계산 스킵
+   - 원본 데이터 백업 및 복구 로직 명시
+8. **Repository 인터페이스 명시**: DashboardRepository, BadgeRepository 메서드 시그니처 추가

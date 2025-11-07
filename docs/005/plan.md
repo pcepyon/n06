@@ -75,13 +75,13 @@ graph TD
   - `test('should return empty lists when no data exists')`
 
 **Implementation Order**:
-1. 엔티티 클래스 정의 (필드: 기간, 투여 기록 목록, 체중 기록 목록, 부작용 기록 목록)
+1. 엔티티 클래스 정의 (필드: 기간, 투여 기록 목록, 체중 기록 목록, 부작용 기록 목록, 증상 체크 목록, 투여 스케줄 목록)
 2. 순응도 계산 메서드
 3. 데이터 필터링 메서드
 4. Immutability 보장 (copyWith)
 
 **Dependencies**:
-- `DoseRecord`, `WeightLog`, `SymptomLog` (기존 엔티티)
+- `DoseRecord`, `WeightLog`, `SymptomLog`, `SymptomCheck`, `MedicationSchedule` (기존 엔티티)
 
 ---
 
@@ -120,9 +120,12 @@ graph TD
   - `test('should fetch dose records within date range')`
   - `test('should fetch weight logs within date range')`
   - `test('should fetch symptom logs within date range')`
+  - `test('should fetch symptom checks within date range')`
+  - `test('should fetch medication schedules within date range')`
   - `test('should return empty report when no data exists')`
   - `test('should aggregate injection site history correctly')`
-  - `test('should calculate adherence rate from schedules and records')`
+  - `test('should calculate adherence rate using schedules and dose records')`
+  - `test('should handle missed doses correctly')`
   - Edge Cases:
     - `test('should handle partial data (only doses, no weights)')`
     - `test('should handle date range with future dates')`
@@ -132,9 +135,11 @@ graph TD
 1. Repository 구현 클래스 생성
 2. 기간별 투여 기록 조회 로직
 3. 기간별 체중/부작용 기록 조회 로직
-4. 주사 부위 이력 집계 로직
-5. 순응도 계산 로직
-6. SharedDataReport 생성 및 반환
+4. 기간별 증상 체크 기록 조회 로직
+5. 투여 스케줄 조회 로직 (계획된 투여 횟수 산출용)
+6. 주사 부위 이력 집계 로직
+7. 순응도 계산 로직 (실제 투여 횟수 / 계획된 투여 횟수 * 100)
+8. SharedDataReport 생성 및 반환
 
 **Dependencies**:
 - `Isar`
@@ -159,6 +164,8 @@ graph TD
   - `test('should group symptoms by context tags')`
   - `test('should identify dose escalation points')`
   - `test('should calculate average symptom severity')`
+  - `test('should calculate adherence rate from schedules and dose records')`
+  - `test('should handle missed doses correctly')`
   - Edge Cases:
     - `test('should return zero trend when only one weight record exists')`
     - `test('should handle empty symptom logs gracefully')`
@@ -224,20 +231,35 @@ graph TD
   - `testWidgets('should display weight trend chart')`
   - `testWidgets('should display symptom severity chart')`
   - `testWidgets('should display injection site history table')`
+  - `testWidgets('should display symptom check summary')`
   - `testWidgets('should display exit sharing mode button')`
   - `testWidgets('should navigate to home when exiting sharing mode')`
+  - `testWidgets('should show confirmation dialog on back button press')`
+  - `testWidgets('should exit sharing mode when confirmed in dialog')`
+  - `testWidgets('should stay in sharing mode when cancelled in dialog')`
+  - `testWidgets('should show detail popup when chart is tapped')`
+  - `testWidgets('should display correct data for tapped chart point')`
+  - `testWidgets('should dismiss detail popup when tapping outside')`
   - Edge Cases:
     - `testWidgets('should show empty state when no data exists')`
     - `testWidgets('should show loading indicator during data fetch')`
-    - `testWidgets('should prevent back navigation with confirmation dialog')`
 
 **Implementation Order**:
 1. Screen Scaffold 생성
 2. Period Selector 위젯 통합
-3. 리포트 섹션 레이아웃 (투여 타임라인, 순응도, 주사 부위, 체중 그래프, 부작용 그래프)
-4. 읽기 전용 모드 UI 적용 (편집 버튼 숨김)
-5. 공유 종료 버튼 및 확인 다이얼로그
-6. 데이터 없음 상태 처리
+3. PopScope 위젯 통합 (백 버튼 인터셉트)
+4. 확인 다이얼로그 구현 ("공유를 종료하시겠습니까?")
+5. 리포트 섹션 레이아웃 (우선순위 순서):
+   1) 투여 기록 타임라인 + 순응도
+   2) 주사 부위 순환 이력
+   3) 체중 변화 그래프
+   4) 부작용 강도 추이 + 발생 패턴
+   5) 증상 체크 이력
+6. 읽기 전용 모드 UI 적용 (편집 버튼 숨김)
+7. 공유 종료 버튼
+8. 차트 터치 이벤트 핸들러 구현
+9. 상세 데이터 팝업 위젯 (해당 시점의 투여/체중/부작용 정보)
+10. 데이터 없음 상태 처리
 
 **Dependencies**:
 - `DataSharingNotifier`

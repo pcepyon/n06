@@ -90,19 +90,22 @@ graph TB
       oauthUserId: 'kakao_123',
       name: '홍길동',
       email: 'test@example.com',
+      lastLoginAt: DateTime.now(),
     );
 
     // Assert
     expect(user.id, 'user123');
     expect(user.oauthProvider, 'kakao');
+    expect(user.lastLoginAt, isNotNull);
   });
 
   test('should create User with optional profileImageUrl', () {});
+  test('should create User with null lastLoginAt for first login', () {});
   test('should support copyWith for immutability', () {});
   test('should support equality comparison', () {});
   ```
 - **Implementation Order**:
-  1. 기본 생성자 및 필드 정의
+  1. 기본 생성자 및 필드 정의 (lastLoginAt 포함)
   2. copyWith 메서드
   3. Equatable 구현
 - **Dependencies**: None
@@ -147,10 +150,16 @@ graph TB
   test('should define loginWithKakao method signature', () async {
     // Arrange
     final mockRepo = MockAuthRepository();
-    when(mockRepo.loginWithKakao()).thenAnswer((_) async => mockUser);
+    when(mockRepo.loginWithKakao(
+      agreedToTerms: true,
+      agreedToPrivacy: true,
+    )).thenAnswer((_) async => mockUser);
 
     // Act
-    final user = await mockRepo.loginWithKakao();
+    final user = await mockRepo.loginWithKakao(
+      agreedToTerms: true,
+      agreedToPrivacy: true,
+    );
 
     // Assert
     expect(user, isA<User>());
@@ -159,17 +168,32 @@ graph TB
   test('should define loginWithNaver method signature', () {});
   test('should define logout method signature', () {});
   test('should define getCurrentUser method signature', () {});
-  test('should define saveConsentRecord method signature', () {});
+  test('should define isFirstLogin method signature', () async {
+    final mockRepo = MockAuthRepository();
+    when(mockRepo.isFirstLogin()).thenAnswer((_) async => true);
+
+    final isFirst = await mockRepo.isFirstLogin();
+
+    expect(isFirst, isA<bool>());
+  });
+  test('should define isAccessTokenValid method signature', () {});
   test('should define refreshAccessToken method signature', () {});
   ```
 - **Method Signatures**:
   ```dart
   abstract class AuthRepository {
-    Future<User> loginWithKakao();
-    Future<User> loginWithNaver();
+    Future<User> loginWithKakao({
+      required bool agreedToTerms,
+      required bool agreedToPrivacy,
+    });
+    Future<User> loginWithNaver({
+      required bool agreedToTerms,
+      required bool agreedToPrivacy,
+    });
     Future<void> logout();
     Future<User?> getCurrentUser();
-    Future<void> saveConsentRecord(ConsentRecord consent);
+    Future<bool> isFirstLogin();
+    Future<bool> isAccessTokenValid();
     Future<String> refreshAccessToken(String refreshToken);
   }
   ```
@@ -181,17 +205,18 @@ graph TB
 
 #### SecureStorageService
 - **Location**: `core/services/secure_storage_service.dart`
-- **Responsibility**: FlutterSecureStorage를 통한 토큰 암호화 저장
+- **Responsibility**: FlutterSecureStorage를 통한 토큰 암호화 저장 및 만료 시간 관리
 - **Test Strategy**: Unit Test (MockSecureStorage)
 - **Test Scenarios**:
   ```dart
   // Red Phase
-  test('should save access token securely', () async {
+  test('should save access token with expiry time', () async {
     // Arrange
     final service = SecureStorageService();
+    final expiresAt = DateTime.now().add(Duration(hours: 2));
 
     // Act
-    await service.saveAccessToken('token123');
+    await service.saveAccessToken('token123', expiresAt);
 
     // Assert
     final token = await service.getAccessToken();
@@ -201,25 +226,34 @@ graph TB
   test('should save refresh token securely', () {});
   test('should delete all tokens on logout', () {});
   test('should return null when no token exists', () {});
-  test('should save token expiry time', () {});
+  test('should detect expired access token', () async {
+    final service = SecureStorageService();
+    final expiredTime = DateTime.now().subtract(Duration(hours: 1));
+    await service.saveAccessToken('token123', expiredTime);
+
+    expect(await service.isAccessTokenExpired(), true);
+  });
+  test('should return null for expired token', () async {});
+  test('should return token if still valid', () async {});
   ```
 - **Implementation Order**:
   1. FlutterSecureStorage 인스턴스 생성
-  2. saveAccessToken / getAccessToken
+  2. saveAccessToken / getAccessToken (만료 시간 포함)
   3. saveRefreshToken / getRefreshToken
-  4. deleteAllTokens
+  4. isAccessTokenExpired / getAccessTokenIfValid
+  5. deleteAllTokens
 - **Dependencies**: flutter_secure_storage
 
 ---
 
 #### OAuthService
 - **Location**: `features/authentication/infrastructure/services/oauth_service.dart`
-- **Responsibility**: 카카오/네이버 OAuth 2.0 통신 처리
+- **Responsibility**: 카카오/네이버 OAuth 2.0 SDK 통신 (재시도 로직 제외)
 - **Test Strategy**: Integration Test (실제 SDK 또는 Mock)
 - **Test Scenarios**:
   ```dart
   // Red Phase
-  test('should authenticate with Kakao and return tokens', () async {
+  test('should authenticate with Kakao and return OAuthResult', () async {
     // Arrange
     final service = OAuthService();
 
@@ -229,25 +263,54 @@ graph TB
     // Assert
     expect(result.accessToken, isNotEmpty);
     expect(result.refreshToken, isNotEmpty);
-    expect(result.userInfo, isA<Map<String, dynamic>>());
+    expect(result.expiresAt, isA<DateTime>());
+    expect(result.userInfo['name'], isNotEmpty);
+    expect(result.userInfo['email'], isNotEmpty);
   });
 
-  test('should authenticate with Naver and return tokens', () {});
+  test('should authenticate with Naver and return OAuthResult', () async {
+    final service = OAuthService();
+    final result = await service.authenticateWithNaver();
+
+    expect(result.accessToken, isNotEmpty);
+    expect(result.refreshToken, isNotEmpty);
+    expect(result.userInfo['name'], isNotEmpty);
+  });
+
   test('should throw exception when user cancels OAuth', () {});
-  test('should retry on network failure (max 3 times)', () {});
-  test('should refresh access token using refresh token', () {});
+  test('should handle Naver-specific OAuth errors', () {});
+  test('should refresh Kakao access token', () {});
+  test('should refresh Naver access token', () {});
   test('should handle token expiry gracefully', () {});
+  test('should revoke token on logout', () {});
+  ```
+- **OAuthResult Type Definition**:
+  ```dart
+  class OAuthResult {
+    final String accessToken;
+    final String refreshToken;
+    final DateTime expiresAt;
+    final Map<String, dynamic> userInfo; // name, email, profileImageUrl
+
+    OAuthResult({
+      required this.accessToken,
+      required this.refreshToken,
+      required this.expiresAt,
+      required this.userInfo,
+    });
+  }
   ```
 - **Edge Cases**:
   - 사용자가 OAuth 취소: `OAuthCancelledException`
-  - 네트워크 오류: 3회 재시도 후 `NetworkException`
   - 토큰 만료: `TokenExpiredException`
 - **Implementation Order**:
-  1. Kakao SDK 통합
-  2. Naver SDK 통합
-  3. 재시도 로직
+  1. OAuthResult 타입 정의
+  2. Kakao SDK 통합
+  3. Naver SDK 통합
   4. 토큰 갱신 로직
+  5. 토큰 해제 로직
 - **Dependencies**: kakao_flutter_sdk, flutter_naver_login, dio
+- **Note**: 재시도 로직은 IsarAuthRepository에서 처리
 
 ---
 
@@ -286,12 +349,12 @@ graph TB
 
 #### IsarAuthRepository
 - **Location**: `features/authentication/infrastructure/repositories/isar_auth_repository.dart`
-- **Responsibility**: AuthRepository 인터페이스 구현 (Isar + OAuth)
+- **Responsibility**: AuthRepository 인터페이스 구현 (Isar + OAuth + 재시도 로직)
 - **Test Strategy**: Integration Test (실제 Isar 인스턴스)
 - **Test Scenarios**:
   ```dart
   // Red Phase
-  testWidgets('should login with Kakao and save user to Isar', () async {
+  testWidgets('should login with Kakao and save user with consent to Isar', () async {
     // Arrange
     final isar = await openTestIsar();
     final oauthService = MockOAuthService();
@@ -301,33 +364,99 @@ graph TB
     when(oauthService.authenticateWithKakao()).thenAnswer((_) async => mockOAuthResult);
 
     // Act
-    final user = await repo.loginWithKakao();
+    final user = await repo.loginWithKakao(
+      agreedToTerms: true,
+      agreedToPrivacy: true,
+    );
 
     // Assert
     expect(user.oauthProvider, 'kakao');
-    verify(secureStorage.saveAccessToken(any)).called(1);
+    expect(user.lastLoginAt, isNotNull);
+    verify(secureStorage.saveAccessToken(any, any)).called(1);
     final savedUser = await isar.userDtos.get(user.id);
     expect(savedUser, isNotNull);
+    final consent = await isar.consentRecordDtos.filter().userIdEqualTo(user.id).findFirst();
+    expect(consent, isNotNull);
+    expect(consent?.termsOfService, true);
   });
 
-  testWidgets('should save consent record to Isar', () {});
-  testWidgets('should logout and delete all tokens', () {});
+  testWidgets('should login with Naver and save user to Isar', () async {
+    final isar = await openTestIsar();
+    final oauthService = MockOAuthService();
+    final secureStorage = MockSecureStorageService();
+    final repo = IsarAuthRepository(isar, oauthService, secureStorage);
+
+    when(oauthService.authenticateWithNaver()).thenAnswer((_) async => mockNaverResult);
+
+    final user = await repo.loginWithNaver(
+      agreedToTerms: true,
+      agreedToPrivacy: true,
+    );
+
+    expect(user.oauthProvider, 'naver');
+    verify(secureStorage.saveAccessToken(any, any)).called(1);
+  });
+
+  testWidgets('should update lastLoginAt for returning user', () {});
+  testWidgets('should return true for first login', () async {
+    final repo = IsarAuthRepository(isar, oauthService, secureStorage);
+
+    expect(await repo.isFirstLogin(), true);
+  });
+  testWidgets('should return false for returning user', () async {});
+  testWidgets('should logout and delete all tokens even on network error', () async {
+    final mockOAuthService = MockOAuthService();
+    when(mockOAuthService.revokeToken()).thenThrow(NetworkException('Timeout'));
+
+    final repo = IsarAuthRepository(isar, mockOAuthService, secureStorage);
+
+    await repo.logout(); // 예외 발생하지 않아야 함
+
+    verify(secureStorage.deleteAllTokens()).called(1);
+  });
   testWidgets('should get current user from Isar', () {});
   testWidgets('should refresh access token and update storage', () {});
   testWidgets('should throw exception on OAuth failure', () {});
-  testWidgets('should retry 3 times on network error', () {});
+  testWidgets('should retry exactly 3 times on network error', () async {
+    final mockOAuthService = MockOAuthService();
+    when(mockOAuthService.authenticateWithKakao())
+        .thenThrow(NetworkException('Connection failed'));
+
+    final repo = IsarAuthRepository(isar, mockOAuthService, secureStorage);
+
+    expect(
+      () => repo.loginWithKakao(agreedToTerms: true, agreedToPrivacy: true),
+      throwsA(isA<MaxRetriesExceededException>()),
+    );
+
+    verify(mockOAuthService.authenticateWithKakao()).called(3);
+  });
+  testWidgets('should succeed on second retry', () async {
+    final mockOAuthService = MockOAuthService();
+    when(mockOAuthService.authenticateWithKakao())
+        .thenThrow(NetworkException('Connection failed'))
+        .thenAnswer((_) async => mockOAuthResult);
+
+    final user = await repo.loginWithKakao(agreedToTerms: true, agreedToPrivacy: true);
+
+    expect(user, isNotNull);
+    verify(mockOAuthService.authenticateWithKakao()).called(2);
+  });
+  testWidgets('should validate access token expiry', () {});
   ```
 - **Edge Cases**:
   - OAuth 취소: 예외 전파
-  - 네트워크 오류: 3회 재시도
+  - 네트워크 오류: 정확히 3회 재시도 (exponential backoff)
   - 토큰 갱신 실패: 재로그인 유도
+  - 로그아웃 중 네트워크 오류: 로컬 토큰 삭제는 반드시 수행
 - **Implementation Order**:
-  1. loginWithKakao 구현
-  2. loginWithNaver 구현
-  3. saveConsentRecord 구현
-  4. logout 구현
+  1. loginWithKakao 구현 (동의 정보 저장 포함, 재시도 로직 포함)
+  2. loginWithNaver 구현 (동의 정보 저장 포함, 재시도 로직 포함)
+  3. isFirstLogin 구현
+  4. logout 구현 (네트워크 오류 무시)
   5. getCurrentUser 구현
-  6. refreshAccessToken 구현
+  6. isAccessTokenValid 구현
+  7. refreshAccessToken 구현
 - **Dependencies**: Isar, OAuthService, SecureStorageService, UserDto, ConsentRecordDto
 
 ---
@@ -336,7 +465,7 @@ graph TB
 
 #### AuthNotifier
 - **Location**: `features/authentication/application/notifiers/auth_notifier.dart`
-- **Responsibility**: 인증 상태 관리 및 UseCase 오케스트레이션
+- **Responsibility**: 인증 상태 관리, 최초 로그인 판단, 토큰 갱신 오케스트레이션
 - **Test Strategy**: Unit Test (MockAuthRepository)
 - **Test Scenarios**:
   ```dart
@@ -367,31 +496,60 @@ graph TB
   });
 
   test('should login with Kakao and update state', () async {
-    when(mockRepo.loginWithKakao()).thenAnswer((_) async => mockUser);
+    when(mockRepo.loginWithKakao(
+      agreedToTerms: true,
+      agreedToPrivacy: true,
+    )).thenAnswer((_) async => mockUser);
 
     final container = ProviderContainer(
       overrides: [authRepositoryProvider.overrideWithValue(mockRepo)],
     );
     final notifier = container.read(authNotifierProvider.notifier);
 
-    await notifier.loginWithKakao();
+    await notifier.loginWithKakao(
+      agreedToTerms: true,
+      agreedToPrivacy: true,
+    );
 
     final state = container.read(authNotifierProvider);
     expect(state.value, mockUser);
   });
 
-  test('should login with Naver and update state', () {});
+  test('should login with Naver and update state', () async {
+    when(mockRepo.loginWithNaver(
+      agreedToTerms: true,
+      agreedToPrivacy: true,
+    )).thenAnswer((_) async => mockNaverUser);
+
+    await notifier.loginWithNaver(
+      agreedToTerms: true,
+      agreedToPrivacy: true,
+    );
+
+    final state = container.read(authNotifierProvider);
+    expect(state.value?.oauthProvider, 'naver');
+  });
+
   test('should logout and clear state', () {});
   test('should handle OAuth cancellation gracefully', () {});
   test('should handle network error and show message', () {});
-  test('should refresh token automatically on expiry', () {});
+  test('should refresh token automatically before expiry', () async {
+    when(mockRepo.isAccessTokenValid()).thenAnswer((_) async => false);
+    when(mockRepo.refreshAccessToken(any)).thenAnswer((_) async => 'newToken');
+
+    await notifier.ensureValidToken();
+
+    verify(mockRepo.refreshAccessToken(any)).called(1);
+  });
+  test('should logout if refresh token is also expired', () async {});
   ```
 - **Implementation Order**:
   1. build() 메서드 (getCurrentUser 호출)
-  2. loginWithKakao()
-  3. loginWithNaver()
+  2. loginWithKakao() (동의 정보 파라미터 포함)
+  3. loginWithNaver() (동의 정보 파라미터 포함)
   4. logout()
-  5. 에러 핸들링
+  5. ensureValidToken() (자동 토큰 갱신)
+  6. 에러 핸들링
 - **Dependencies**: AuthRepository
 
 ---
@@ -400,7 +558,7 @@ graph TB
 
 #### LoginScreen
 - **Location**: `features/authentication/presentation/screens/login_screen.dart`
-- **Responsibility**: 로그인 UI 렌더링 및 사용자 입력 처리
+- **Responsibility**: 로그인 UI 렌더링, 사용자 입력 처리, 최초 로그인 여부에 따른 네비게이션
 - **Test Strategy**: Widget Test + Acceptance Test
 - **Test Scenarios**:
   ```dart
@@ -420,7 +578,7 @@ graph TB
   testWidgets('should disable login buttons when terms not agreed', (tester) async {});
   testWidgets('should enable login buttons when terms agreed', (tester) async {});
 
-  testWidgets('should call loginWithKakao when button pressed', (tester) async {
+  testWidgets('should call loginWithKakao with consent when button pressed', (tester) async {
     final mockNotifier = MockAuthNotifier();
 
     await tester.pumpWidget(
@@ -432,14 +590,59 @@ graph TB
       ),
     );
 
+    // 동의 체크박스 선택
+    await tester.tap(find.byKey(Key('terms_checkbox')));
+    await tester.tap(find.byKey(Key('privacy_checkbox')));
+    await tester.pump();
+
     await tester.tap(find.byKey(Key('kakao_login_button')));
     await tester.pump();
 
-    verify(mockNotifier.loginWithKakao()).called(1);
+    verify(mockNotifier.loginWithKakao(
+      agreedToTerms: true,
+      agreedToPrivacy: true,
+    )).called(1);
   });
 
-  testWidgets('should navigate to onboarding on first login', (tester) async {});
-  testWidgets('should navigate to home dashboard on returning user', (tester) async {});
+  testWidgets('should call loginWithNaver when button pressed', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authNotifierProvider.overrideWith(() => mockNotifier),
+        ],
+        child: MaterialApp(home: LoginScreen()),
+      ),
+    );
+
+    await tester.tap(find.byKey(Key('terms_checkbox')));
+    await tester.tap(find.byKey(Key('privacy_checkbox')));
+    await tester.pump();
+
+    await tester.tap(find.byKey(Key('naver_login_button')));
+    await tester.pump();
+
+    verify(mockNotifier.loginWithNaver(
+      agreedToTerms: true,
+      agreedToPrivacy: true,
+    )).called(1);
+  });
+
+  testWidgets('should navigate to onboarding on first login', (tester) async {
+    when(mockRepo.isFirstLogin()).thenAnswer((_) async => true);
+
+    await tester.tap(find.byKey(Key('kakao_login_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(OnboardingScreen), findsOneWidget);
+  });
+  testWidgets('should navigate to home dashboard on returning user', (tester) async {
+    when(mockRepo.isFirstLogin()).thenAnswer((_) async => false);
+
+    await tester.tap(find.byKey(Key('kakao_login_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(HomeDashboardScreen), findsOneWidget);
+  });
   testWidgets('should show error message on OAuth cancellation', (tester) async {});
   testWidgets('should show network error message and retry option', (tester) async {});
   ```
@@ -453,13 +656,13 @@ graph TB
   | OAuth 취소 시 안내 메시지 표시 | ☐ |
   | 네트워크 오류 시 재시도 옵션 표시 | ☐ |
   | 최초 로그인 시 온보딩 화면으로 이동 | ☐ |
-  | 재방문 사용자 자동 로그인 후 홈 대시보드 이동 | ☐ |
+  | 재방문 사용자 로그인 후 홈 대시보드로 이동 | ☐ |
 - **Implementation Order**:
   1. UI 레이아웃 구성
   2. 동의 체크박스 상태 관리
   3. 로그인 버튼 활성화 로직
-  4. AuthNotifier 연동
-  5. 네비게이션 로직
+  4. AuthNotifier 연동 (동의 정보 전달)
+  5. 최초 로그인 여부 확인 및 네비게이션 분기 로직
   6. 에러 처리 UI
 - **Dependencies**: AuthNotifier
 
@@ -478,17 +681,19 @@ graph TB
 ### Phase 2: Infrastructure Layer
 1. **시작**: SecureStorageService 테스트 작성
 2. **Red → Green → Refactor**:
-   - SecureStorageService 구현
-   - OAuthService 구현 (Kakao 먼저)
+   - SecureStorageService 구현 (토큰 만료 시간 관리 포함)
+   - OAuthResult 타입 정의
+   - OAuthService 구현 (Kakao, Naver 모두)
    - UserDto / ConsentRecordDto 구현
-   - IsarAuthRepository 구현
+   - IsarAuthRepository 구현 (재시도 로직, 동의 정보 저장 통합)
 3. **Commit**: "feat(auth): implement infrastructure layer with Isar and OAuth"
 
 ### Phase 3: Application Layer
 1. **시작**: AuthNotifier 테스트 작성
 2. **Red → Green → Refactor**:
    - AuthNotifier build() 구현
-   - loginWithKakao / loginWithNaver 구현
+   - loginWithKakao / loginWithNaver 구현 (동의 정보 파라미터 포함)
+   - ensureValidToken() 구현 (자동 토큰 갱신)
    - logout 구현
 3. **Commit**: "feat(auth): add authentication state management"
 
@@ -497,24 +702,25 @@ graph TB
 2. **Red → Green → Refactor**:
    - LoginScreen UI 구현
    - 동의 체크박스 로직
-   - AuthNotifier 연동
-   - 네비게이션 로직
+   - AuthNotifier 연동 (동의 정보 전달)
+   - 최초 로그인 여부 확인 및 네비게이션 분기 로직
 3. **Commit**: "feat(auth): implement login screen UI"
 
 ### Phase 5: Acceptance Testing
 1. **시작**: E2E 시나리오 작성
 2. **Red → Green → Refactor**:
-   - 최초 로그인 → 온보딩 플로우
-   - 재방문 자동 로그인 → 홈 대시보드 플로우
+   - 최초 로그인 (Kakao/Naver) → 온보딩 플로우
+   - 재방문 로그인 → 홈 대시보드 플로우
    - OAuth 취소 처리
-   - 네트워크 오류 재시도
+   - 네트워크 오류 3회 재시도
+   - 로그아웃 중 네트워크 오류 처리
 3. **Commit**: "test(auth): add acceptance tests for login flows"
 
 ### Phase 6: Refactoring
 1. 중복 코드 제거
 2. 에러 메시지 상수화
-3. 재시도 로직 추출
-4. **Commit**: "refactor(auth): extract retry logic and error messages"
+3. 토큰 만료 검증 로직 최적화
+4. **Commit**: "refactor(auth): optimize token validation and error handling"
 
 ---
 
@@ -537,32 +743,48 @@ graph TB
 
 ### Edge Case 처리
 - OAuth 취소: 사용자 친화적 메시지
-- 네트워크 오류: 3회 재시도 + 재시도 옵션
-- 토큰 만료: 자동 갱신 또는 재로그인 유도
-- 동시 다중 기기 로그인: 독립 세션 허용
+- 네트워크 오류: Repository에서 정확히 3회 재시도 (exponential backoff)
+- 토큰 만료: SecureStorageService에서 만료 시간 검증, 자동 갱신 또는 재로그인 유도
+- 로그아웃 중 네트워크 오류: 로컬 토큰 삭제는 반드시 수행
+- 최초 로그인 판단: lastLoginAt 필드로 확인, 온보딩/홈 네비게이션 분기
+- 동의 정보 저장: 로그인 프로세스 내 통합 처리
 
 ---
 
 ## 6. 성공 기준
 
 ### 기능 요구사항
-- [x] 카카오/네이버 OAuth 2.0 로그인 성공
-- [x] 토큰 암호화 저장 (FlutterSecureStorage)
-- [x] 동의 정보 Isar DB 저장
-- [x] 최초 로그인 시 온보딩 화면 이동
-- [x] 재방문 사용자 자동 로그인
-- [x] 토큰 갱신 자동 처리
-- [x] 네트워크 오류 재시도 (3회)
+- [ ] 카카오/네이버 OAuth 2.0 로그인 성공 (동의 정보 포함)
+- [ ] 토큰 암호화 저장 (FlutterSecureStorage, 만료 시간 포함)
+- [ ] 동의 정보 로그인 시점에 Isar DB 저장
+- [ ] 최초 로그인 판단 (lastLoginAt 필드 기반)
+- [ ] 최초 로그인 시 온보딩 화면 이동
+- [ ] 재방문 사용자 홈 대시보드 이동
+- [ ] 토큰 만료 자동 검증 및 갱신 처리
+- [ ] 네트워크 오류 정확히 3회 재시도
+- [ ] 로그아웃 중 네트워크 오류 발생해도 로컬 토큰 삭제
 
 ### 비기능 요구사항
-- [x] 모든 테스트 통과 (Unit + Integration + Acceptance)
-- [x] Layer 간 의존성 규칙 준수
-- [x] Repository Pattern 엄격히 적용
-- [x] 보안: HTTPS 통신, 토큰 암호화
-- [x] 성능: OAuth 흐름 3초 이내 완료
+- [ ] 모든 테스트 통과 (Unit + Integration + Acceptance)
+- [ ] Layer 간 의존성 규칙 준수
+- [ ] Repository Pattern 엄격히 적용
+- [ ] 보안: HTTPS 통신, 토큰 암호화
+- [ ] 성능: OAuth 흐름 3초 이내 완료
 
 ### 코드 품질
-- [x] Test Coverage > 80%
-- [x] No warnings (flutter analyze)
-- [x] TDD 사이클 완료 (모든 모듈)
-- [x] Commit 메시지 규칙 준수
+- [ ] Test Coverage > 80%
+- [ ] No warnings (flutter analyze)
+- [ ] TDD 사이클 완료 (모든 모듈)
+- [ ] Commit 메시지 규칙 준수
+
+### 검증 항목 (plancheck.md 기반)
+- [ ] User Entity에 lastLoginAt 필드 추가
+- [ ] AuthRepository에 isFirstLogin() 및 isAccessTokenValid() 메서드 추가
+- [ ] 로그인 메서드에 동의 정보 파라미터 추가 (agreedToTerms, agreedToPrivacy)
+- [ ] SecureStorageService에 토큰 만료 시간 저장 및 검증 메서드 추가
+- [ ] OAuthResult 타입 명시적 정의
+- [ ] OAuthService는 SDK 통신만, 재시도 로직은 IsarAuthRepository에 집중
+- [ ] IsarAuthRepository에서 동의 정보 자동 저장
+- [ ] 네이버 OAuth 관련 상세 테스트 케이스 추가
+- [ ] 로그아웃 네트워크 오류 처리 테스트 추가
+- [ ] LoginScreen에서 최초 로그인 여부에 따른 네비게이션 분기

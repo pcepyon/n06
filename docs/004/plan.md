@@ -276,6 +276,10 @@ abstract class TrackingRepository {
   Future<void> updateSymptomLog(String id, SymptomLog updatedLog);
   Stream<List<SymptomLog>> watchSymptomLogs(String userId);
 
+  // 태그 기반 조회
+  Future<List<SymptomLog>> getSymptomLogsByTag(String tagName);
+  Future<List<String>> getAllTags(String userId);
+
   // 경과일 계산을 위한 최근 증량일 조회
   Future<DateTime?> getLatestDoseEscalationDate(String userId);
 }
@@ -406,6 +410,26 @@ test('should convert SymptomLogDto to entity with tags', () {
   // Assert
   expect(entity.tags, ['기름진음식', '과식']);
 });
+
+// TC-SL-DTO-03: isPersistent24h 필드 변환
+test('should preserve isPersistent24h in DTO conversion', () {
+  // Arrange
+  final entity = SymptomLog(
+    id: 'sl-001',
+    userId: 'user-001',
+    logDate: DateTime.now(),
+    symptomName: '구토',
+    severity: 9,
+    isPersistent24h: true,
+  );
+
+  // Act
+  final dto = SymptomLogDto.fromEntity(entity);
+  final converted = dto.toEntity();
+
+  // Assert
+  expect(converted.isPersistent24h, isTrue);
+});
 ```
 
 **Implementation Order**:
@@ -522,6 +546,55 @@ test('should get latest dose escalation date', () async {
 
   // Assert
   expect(escalationDate, isNotNull);
+});
+
+// TC-ITR-07: 태그 정규화 (중복 방지)
+test('should normalize context tags across multiple logs', () async {
+  // Arrange
+  final repository = IsarTrackingRepository(isar);
+  final log1 = SymptomLog(
+    id: 'sl-001',
+    userId: 'user-001',
+    logDate: DateTime.now(),
+    symptomName: '메스꺼움',
+    severity: 4,
+    tags: ['기름진음식'],
+  );
+  final log2 = SymptomLog(
+    id: 'sl-002',
+    userId: 'user-001',
+    logDate: DateTime.now(),
+    symptomName: '복통',
+    severity: 3,
+    tags: ['기름진음식'],
+  );
+
+  // Act
+  await repository.saveSymptomLog(log1);
+  await repository.saveSymptomLog(log2);
+
+  // Assert
+  final tagDto = await isar.symptomContextTagDtos
+      .filter()
+      .tagNameEqualTo('기름진음식')
+      .findAll();
+
+  expect(tagDto.length, 2); // 2개의 연결 레코드
+});
+
+// TC-ITR-08: 태그 기반 조회
+test('should get symptom logs by tag', () async {
+  // Arrange
+  final repository = IsarTrackingRepository(isar);
+  await repository.saveSymptomLog(SymptomLog(..., tags: ['기름진음식']));
+  await repository.saveSymptomLog(SymptomLog(..., tags: ['기름진음식']));
+  await repository.saveSymptomLog(SymptomLog(..., tags: ['과식']));
+
+  // Act
+  final logs = await repository.getSymptomLogsByTag('기름진음식');
+
+  // Assert
+  expect(logs.length, 2);
 });
 ```
 
@@ -668,6 +741,69 @@ test('should delete WeightLog', () async {
   // Assert
   verify(() => mockRepo.deleteWeightLog('wl-001')).called(1);
 });
+
+// TC-TN-07: 중복 체중 기록 확인
+test('should check for existing weight log on date', () async {
+  // Arrange
+  final mockRepo = MockTrackingRepository();
+  final existingLog = WeightLog(
+    id: 'wl-001',
+    userId: 'user-001',
+    logDate: DateTime(2025, 11, 7),
+    weightKg: 75.5,
+    createdAt: DateTime.now(),
+  );
+  when(() => mockRepo.getWeightLog('user-001', DateTime(2025, 11, 7)))
+      .thenAnswer((_) async => existingLog);
+
+  final container = ProviderContainer(
+    overrides: [trackingRepositoryProvider.overrideWithValue(mockRepo)],
+  );
+  final notifier = container.read(trackingNotifierProvider.notifier);
+
+  // Act
+  final hasLog = await notifier.hasWeightLogOnDate('user-001', DateTime(2025, 11, 7));
+
+  // Assert
+  expect(hasLog, isTrue);
+  verify(() => mockRepo.getWeightLog('user-001', DateTime(2025, 11, 7))).called(1);
+});
+
+// TC-TN-08: 중복 없는 날짜 확인
+test('should return false when no weight log exists on date', () async {
+  // Arrange
+  final mockRepo = MockTrackingRepository();
+  when(() => mockRepo.getWeightLog('user-001', DateTime(2025, 11, 7)))
+      .thenAnswer((_) async => null); // 기록 없음
+
+  final container = ProviderContainer(
+    overrides: [trackingRepositoryProvider.overrideWithValue(mockRepo)],
+  );
+  final notifier = container.read(trackingNotifierProvider.notifier);
+
+  // Act
+  final hasLog = await notifier.hasWeightLogOnDate('user-001', DateTime(2025, 11, 7));
+
+  // Assert
+  expect(hasLog, isFalse);
+});
+
+// NOTE: spec.md의 Sequence Diagram과 달리,
+// 경과일 계산은 Application Layer(TrackingNotifier)에서 수행함.
+// 이유: 비즈니스 로직이므로 Presentation Layer에 두면 안 됨.
+```
+
+**TrackingNotifier Methods**:
+```dart
+// 중복 체크 메서드 추가
+Future<bool> hasWeightLogOnDate(String userId, DateTime date) async {
+  final existing = await _repository.getWeightLog(userId, date);
+  return existing != null;
+}
+
+Future<WeightLog?> getWeightLog(String userId, DateTime date) async {
+  return await _repository.getWeightLog(userId, date);
+}
 ```
 
 **Implementation Order**:
@@ -677,7 +813,9 @@ test('should delete WeightLog', () async {
 4. GREEN: `saveWeightLog` 구현
 5. RED: TC-TN-03, 04 작성 (경과일 계산)
 6. GREEN: `_calculateDaysSinceEscalation` 로직 추가
-7. REFACTOR: 중복 제거
+7. RED: TC-TN-07, 08 작성 (중복 체크)
+8. GREEN: `hasWeightLogOnDate`, `getWeightLog` 메서드 추가
+9. REFACTOR: 중복 제거
 
 **Dependencies**: `TrackingRepository`, `MedicationRepository` (경과일 계산)
 
@@ -854,6 +992,57 @@ testWidgets('should complete recording within 3 touches', (tester) async {
   // Assert
   // 터치 카운터 검증 (실제로는 interaction 추적)
 });
+
+// TC-WRS-06: 중복 날짜 기록 시 확인 다이얼로그 표시
+testWidgets('should show overwrite confirmation for duplicate date', (tester) async {
+  // Arrange
+  final mockNotifier = MockTrackingNotifier();
+  when(() => mockNotifier.getWeightLog(any(), any()))
+      .thenAnswer((_) async => WeightLog(...)); // 기존 기록 존재
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [trackingNotifierProvider.overrideWith(() => mockNotifier)],
+      child: MaterialApp(home: WeightRecordScreen()),
+    ),
+  );
+
+  // Act
+  await tester.enterText(find.byType(TextField), '75.5');
+  await tester.tap(find.text('저장'));
+  await tester.pumpAndSettle();
+
+  // Assert
+  expect(find.text('이미 기록이 있습니다. 덮어쓰시겠어요?'), findsOneWidget);
+  expect(find.text('취소'), findsOneWidget);
+  expect(find.text('확인'), findsOneWidget);
+});
+
+// TC-WRS-07: 덮어쓰기 확인 시 업데이트 호출
+testWidgets('should update WeightLog on overwrite confirmation', (tester) async {
+  // Arrange
+  final mockNotifier = MockTrackingNotifier();
+  when(() => mockNotifier.getWeightLog(any(), any()))
+      .thenAnswer((_) async => WeightLog(...));
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [trackingNotifierProvider.overrideWith(() => mockNotifier)],
+      child: MaterialApp(home: WeightRecordScreen()),
+    ),
+  );
+
+  await tester.enterText(find.byType(TextField), '75.5');
+  await tester.tap(find.text('저장'));
+  await tester.pumpAndSettle();
+
+  // Act
+  await tester.tap(find.text('확인')); // 덮어쓰기 확인
+  await tester.pumpAndSettle();
+
+  // Assert
+  verify(() => mockNotifier.updateWeightLog(any(), any())).called(1);
+});
 ```
 
 **Implementation Order**:
@@ -981,6 +1170,117 @@ testWidgets('should display daysSinceEscalation automatically', (tester) async {
   // Assert
   expect(find.text('용량 증량 후 6일째'), findsOneWidget); // 11/7 - 11/1 = 6일
 });
+
+// TC-SRS-07: 24시간 지속 여부 저장
+testWidgets('should save isPersistent24h based on user selection', (tester) async {
+  // Arrange
+  final mockNotifier = MockTrackingNotifier();
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [trackingNotifierProvider.overrideWith(() => mockNotifier)],
+      child: MaterialApp(home: SymptomRecordScreen()),
+    ),
+  );
+
+  // Act
+  await tester.tap(find.text('구토'));
+  await tester.drag(find.byType(Slider), Offset(100, 0)); // 심각도 9점
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('예')); // 24시간 지속 선택
+  await tester.tap(find.text('저장'));
+  await tester.pumpAndSettle();
+
+  // Assert
+  final capturedLog = verify(() => mockNotifier.saveSymptomLog(captureAny())).captured.single;
+  expect(capturedLog.isPersistent24h, isTrue);
+});
+
+// TC-SRS-08: 중증 + 24시간 지속 시 증상 체크 화면 안내
+testWidgets('should navigate to symptom check for severe persistent symptoms', (tester) async {
+  // Arrange
+  final mockNotifier = MockTrackingNotifier();
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [trackingNotifierProvider.overrideWith(() => mockNotifier)],
+      child: MaterialApp(home: SymptomRecordScreen()),
+    ),
+  );
+
+  // Act
+  await tester.tap(find.text('구토'));
+  await tester.drag(find.byType(Slider), Offset(100, 0)); // 심각도 9점
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('예')); // 24시간 지속
+  await tester.tap(find.text('저장'));
+  await tester.pumpAndSettle();
+
+  // Assert
+  expect(find.text('증상 체크 화면으로 이동하시겠어요?'), findsOneWidget);
+  expect(find.text('이동'), findsOneWidget);
+  expect(find.text('나중에'), findsOneWidget);
+});
+
+// TC-SRS-09: 증상 체크 화면 이동
+testWidgets('should navigate to F005 on confirmation', (tester) async {
+  // Arrange
+  final mockNotifier = MockTrackingNotifier();
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [trackingNotifierProvider.overrideWith(() => mockNotifier)],
+      child: MaterialApp(
+        home: SymptomRecordScreen(),
+        routes: {
+          '/symptom-check': (context) => SymptomCheckScreen(), // F005
+        },
+      ),
+    ),
+  );
+
+  await tester.tap(find.text('구토'));
+  await tester.drag(find.byType(Slider), Offset(100, 0));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('예'));
+  await tester.tap(find.text('저장'));
+  await tester.pumpAndSettle();
+
+  // Act
+  await tester.tap(find.text('이동'));
+  await tester.pumpAndSettle();
+
+  // Assert
+  expect(find.byType(SymptomCheckScreen), findsOneWidget); // F005
+});
+
+// TC-SRS-10: 증상 체크 생략
+testWidgets('should allow skipping symptom check', (tester) async {
+  // Arrange
+  final mockNotifier = MockTrackingNotifier();
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [trackingNotifierProvider.overrideWith(() => mockNotifier)],
+      child: MaterialApp(
+        home: SymptomRecordScreen(),
+        routes: {
+          '/home': (context) => HomeScreen(),
+        },
+      ),
+    ),
+  );
+
+  await tester.tap(find.text('구토'));
+  await tester.drag(find.byType(Slider), Offset(100, 0));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('예'));
+  await tester.tap(find.text('저장'));
+  await tester.pumpAndSettle();
+
+  // Act
+  await tester.tap(find.text('나중에'));
+  await tester.pumpAndSettle();
+
+  // Assert
+  expect(find.byType(HomeScreen), findsOneWidget);
+});
 ```
 
 **Implementation Order**:
@@ -990,20 +1290,38 @@ testWidgets('should display daysSinceEscalation automatically', (tester) async {
 4. GREEN: 심각도별 조건 분기
 5. RED: TC-SRS-05 작성 (가이드 표시)
 6. GREEN: F004 연동 (CopingGuide 표시)
-7. REFACTOR: 중복 제거
+7. RED: TC-SRS-07 작성 (isPersistent24h 저장)
+8. GREEN: 24시간 지속 여부 저장 로직
+9. RED: TC-SRS-08~10 작성 (F005 연동)
+10. GREEN: severity >= 7 && isPersistent24h == true 시 증상 체크 화면 안내
+11. REFACTOR: 중복 제거
 
-**Dependencies**: `TrackingNotifier`, `CopingGuideWidget` (F004)
+**Dependencies**:
+- `TrackingNotifier`
+- `CopingGuideWidget` (F004)
+- `SymptomCheckScreen` (F005)
+- `HomeScreen`
+
+**F005 Navigation Logic**:
+- BR-F002-04에 따라 severity >= 7 && isPersistent24h == true일 때만 안내
+- Navigator.push()로 SymptomCheckScreen으로 이동
+- 사용자가 거부 시 HomeScreen으로 복귀
 
 **QA Sheet**:
 - [ ] 증상 다중 선택 동작 확인
 - [ ] 심각도 슬라이더 정확도 (1-10점)
 - [ ] 심각도 7-10점 시 추가 질문 표시
+- [ ] 24시간 지속 여부 "예/아니오" 선택 동작
+- [ ] isPersistent24h 필드 정확히 저장되는지 확인
 - [ ] 컨텍스트 태그 선택 동작
 - [ ] 저장 후 대처 가이드 자동 표시
 - [ ] "도움이 되었나요?" 피드백 수집
 - [ ] 경과일 자동 계산 및 표시
 - [ ] 3회 터치 이내 기록 완료
 - [ ] 증량 이력 없을 때 경과일 미표시
+- [ ] severity >= 7 && isPersistent24h == true 시 증상 체크 화면 안내 표시
+- [ ] 증상 체크 화면 이동 동작 확인
+- [ ] 증상 체크 생략 시 홈 화면 이동 확인
 
 ---
 
@@ -1130,21 +1448,25 @@ testWidgets('should disable future dates in calendar', (tester) async {
    → REFACTOR: 로직 정리
    → COMMIT: "feat: add SymptomLogDto with tag support"
 
-6. IsarTrackingRepository (TC-ITR-01~06)
+6. IsarTrackingRepository (TC-ITR-01~08)
    → RED: 저장/조회 테스트
    → GREEN: Isar 연동
    → RED: Stream 테스트
    → GREEN: Watch 구현
+   → RED: 태그 정규화 테스트 (TC-ITR-07~08)
+   → GREEN: 태그 기반 조회 메서드 구현
    → REFACTOR: 중복 제거
-   → COMMIT: "feat: implement IsarTrackingRepository with tests"
+   → COMMIT: "feat: implement IsarTrackingRepository with tag support"
 
-7. TrackingNotifier (TC-TN-01~06)
+7. TrackingNotifier (TC-TN-01~08)
    → RED: 상태 관리 테스트
    → GREEN: Notifier 구현
    → RED: 경과일 계산 테스트
    → GREEN: 로직 추가
+   → RED: 중복 체크 테스트 (TC-TN-07~08)
+   → GREEN: hasWeightLogOnDate 메서드 추가
    → REFACTOR: 코드 정리
-   → COMMIT: "feat: add TrackingNotifier with daysSinceEscalation"
+   → COMMIT: "feat: add TrackingNotifier with duplicate check"
 
 8. Derived Providers (TC-DP-01~03)
    → RED: 연속 기록일 테스트
@@ -1152,21 +1474,27 @@ testWidgets('should disable future dates in calendar', (tester) async {
    → REFACTOR: 최적화
    → COMMIT: "feat: add continuousRecordDaysProvider"
 
-9. WeightRecordScreen (TC-WRS-01~05)
+9. WeightRecordScreen (TC-WRS-01~07)
    → RED: 렌더링 테스트
    → GREEN: UI 구현
    → RED: 검증 테스트
    → GREEN: Validation 연동
+   → RED: 중복 확인 다이얼로그 테스트 (TC-WRS-06~07)
+   → GREEN: 중복 기록 확인 및 덮어쓰기 로직
    → REFACTOR: UI 정리
-   → COMMIT: "feat: add WeightRecordScreen with validation"
+   → COMMIT: "feat: add WeightRecordScreen with duplicate handling"
 
-10. SymptomRecordScreen (TC-SRS-01~06)
+10. SymptomRecordScreen (TC-SRS-01~10)
     → RED: 심각도 분기 테스트
     → GREEN: 조건 분기 구현
     → RED: 가이드 표시 테스트
     → GREEN: F004 연동
+    → RED: isPersistent24h 저장 테스트 (TC-SRS-07)
+    → GREEN: 24시간 지속 여부 저장 로직
+    → RED: F005 연동 테스트 (TC-SRS-08~10)
+    → GREEN: 증상 체크 화면 안내 및 네비게이션
     → REFACTOR: 코드 정리
-    → COMMIT: "feat: add SymptomRecordScreen with coping guide"
+    → COMMIT: "feat: add SymptomRecordScreen with F005 integration"
 
 11. DateSelectionWidget (TC-DSW-01~04)
     → RED: 퀵 버튼 테스트
