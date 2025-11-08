@@ -5,11 +5,11 @@ import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/tracking/domain/usecases/analyze_plan_change_impact_usecase.dart';
 
 class EditDosagePlanScreen extends ConsumerWidget {
-  final DosagePlan initialPlan;
+  final DosagePlan? initialPlan;
 
   const EditDosagePlanScreen({
     super.key,
-    required this.initialPlan,
+    this.initialPlan,
   });
 
   @override
@@ -29,11 +29,11 @@ class EditDosagePlanScreen extends ConsumerWidget {
 }
 
 class _EditDosagePlanForm extends ConsumerStatefulWidget {
-  final DosagePlan initialPlan;
+  final DosagePlan? initialPlan;
 
   const _EditDosagePlanForm({
     super.key,
-    required this.initialPlan,
+    this.initialPlan,
   });
 
   @override
@@ -49,16 +49,17 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
   @override
   void initState() {
     super.initState();
+    final plan = widget.initialPlan;
     _medicationNameController = TextEditingController(
-      text: widget.initialPlan.medicationName,
+      text: plan?.medicationName ?? '',
     );
     _cycleDaysController = TextEditingController(
-      text: widget.initialPlan.cycleDays.toString(),
+      text: plan?.cycleDays.toString() ?? '7',
     );
     _initialDoseController = TextEditingController(
-      text: widget.initialPlan.initialDoseMg.toString(),
+      text: plan?.initialDoseMg.toString() ?? '0.25',
     );
-    _selectedStartDate = widget.initialPlan.startDate;
+    _selectedStartDate = plan?.startDate ?? DateTime.now();
   }
 
   @override
@@ -89,8 +90,14 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
         return;
       }
 
+      final plan = widget.initialPlan;
+      if (plan == null) {
+        _showErrorSnackBar('투여 계획이 로드되지 않았습니다');
+        return;
+      }
+
       // Create updated plan
-      final updatedPlan = widget.initialPlan.copyWith(
+      final updatedPlan = plan.copyWith(
         medicationName: _medicationNameController.text.trim(),
         cycleDays: cycleDays,
         initialDoseMg: initialDose,
@@ -103,7 +110,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
 
       // Analyze impact
       final impact = analyzeImpactUseCase.execute(
-        oldPlan: widget.initialPlan,
+        oldPlan: plan,
         newPlan: updatedPlan,
         fromDate: DateTime.now(),
       );
@@ -117,7 +124,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
       // Update using usecase
       final updateUseCase = ref.read(updateDosagePlanUseCaseProvider);
       final result = await updateUseCase.execute(
-        oldPlan: widget.initialPlan,
+        oldPlan: plan,
         newPlan: updatedPlan,
       );
 

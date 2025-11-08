@@ -3,20 +3,19 @@ import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:n06/features/tracking/domain/entities/plan_change_history.dart';
 
+/// Repository interface for medication-related data
+///
+/// This repository handles:
+/// - Dose records (actual medication administration)
+/// - Dose schedules (scheduled medication times)
+/// - Dosage plans (medication plans)
+/// - Plan change history (audit trail)
+///
+/// Note: For cleaner separation of concerns, consider using:
+/// - DosagePlanRepository for dosage plan-specific operations
+/// - DoseScheduleRepository for schedule-specific operations
 abstract class MedicationRepository {
-  // DosagePlan
-  Future<DosagePlan?> getActiveDosagePlan(String userId);
-  Future<void> saveDosagePlan(DosagePlan plan);
-  Future<void> updateDosagePlan(DosagePlan plan);
-  Future<DosagePlan?> getDosagePlan(String planId);
-
-  // DoseSchedule
-  Future<List<DoseSchedule>> getDoseSchedules(String planId);
-  Future<void> saveDoseSchedules(List<DoseSchedule> schedules);
-  Future<void> deleteDoseSchedulesFrom(String planId, DateTime fromDate);
-  Future<void> updateDoseSchedule(DoseSchedule schedule);
-
-  // DoseRecord
+  // DoseRecord operations
   Future<List<DoseRecord>> getDoseRecords(String planId);
   Future<List<DoseRecord>> getRecentDoseRecords(String planId, int days);
   Future<void> saveDoseRecord(DoseRecord record);
@@ -24,7 +23,19 @@ abstract class MedicationRepository {
   Future<bool> isDuplicateDoseRecord(String planId, DateTime scheduledDate);
   Future<DoseRecord?> getDoseRecordByDate(String planId, DateTime date);
 
-  // Plan Change History
+  // DoseSchedule operations
+  Future<List<DoseSchedule>> getDoseSchedules(String planId);
+  Future<void> saveDoseSchedules(List<DoseSchedule> schedules);
+  Future<void> deleteDoseSchedulesFrom(String planId, DateTime fromDate);
+  Future<void> updateDoseSchedule(DoseSchedule schedule);
+
+  // DosagePlan operations (backward compatibility)
+  Future<DosagePlan?> getActiveDosagePlan(String userId);
+  Future<void> saveDosagePlan(DosagePlan plan);
+  Future<void> updateDosagePlan(DosagePlan plan);
+  Future<DosagePlan?> getDosagePlan(String planId);
+
+  // Plan Change History operations (backward compatibility)
   Future<void> savePlanChangeHistory(
     String planId,
     Map<String, dynamic> oldPlan,

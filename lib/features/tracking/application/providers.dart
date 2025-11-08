@@ -3,8 +3,12 @@ import 'package:n06/features/tracking/application/notifiers/emergency_check_noti
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/weight_record_edit_notifier.dart';
+import 'package:n06/features/tracking/application/notifiers/symptom_record_edit_notifier.dart';
+import 'package:n06/features/tracking/application/notifiers/dose_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/usecases/update_dosage_plan_usecase.dart';
 import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
+import 'package:n06/features/tracking/domain/repositories/dosage_plan_repository.dart';
+import 'package:n06/features/tracking/domain/repositories/dose_schedule_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/emergency_check_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/medication_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
@@ -16,12 +20,26 @@ import 'package:n06/features/tracking/domain/usecases/schedule_generator_usecase
 import 'package:n06/features/tracking/domain/usecases/validate_dosage_plan_usecase.dart';
 import 'package:n06/features/tracking/infrastructure/services/notification_service.dart';
 
-// Repository Provider
+// Repository Providers
 final medicationRepositoryProvider = Provider<MedicationRepository>((ref) {
   // This should be provided by core/providers if Isar is available
   // For now, we'll create a simple implementation
   throw UnimplementedError(
       'medicationRepositoryProvider must be provided by app initialization');
+});
+
+final dosagePlanRepositoryProvider = Provider<DosagePlanRepository>((ref) {
+  // This should be provided by core/providers if Isar is available
+  // For now, we'll create a simple implementation
+  throw UnimplementedError(
+      'dosagePlanRepositoryProvider must be provided by app initialization');
+});
+
+final doseScheduleRepositoryProvider = Provider<DoseScheduleRepository>((ref) {
+  // This should be provided by core/providers if Isar is available
+  // For now, we'll create a simple implementation
+  throw UnimplementedError(
+      'doseScheduleRepositoryProvider must be provided by app initialization');
 });
 
 final trackingRepositoryProvider = Provider<TrackingRepository>((ref) {
@@ -127,4 +145,14 @@ final emergencyCheckNotifierProvider =
 // UF-011: Weight Record Edit Notifier Provider
 final weightRecordEditNotifierProvider = AsyncNotifierProvider<WeightRecordEditNotifier, void>(
   () => WeightRecordEditNotifier(),
+);
+
+// UF-011: Symptom Record Edit Notifier Provider
+final symptomRecordEditNotifierProvider = AsyncNotifierProvider<SymptomRecordEditNotifier, void>(
+  () => SymptomRecordEditNotifier(),
+);
+
+// UF-011: Dose Record Edit Notifier Provider
+final doseRecordEditNotifierProvider = AsyncNotifierProvider<DoseRecordEditNotifier, void>(
+  () => DoseRecordEditNotifier(),
 );

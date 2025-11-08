@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:isar/isar.dart';
 import 'package:n06/features/tracking/domain/entities/plan_change_history.dart';
 
@@ -37,13 +39,10 @@ class PlanChangeHistoryDto {
   }
 
   static String _mapToJson(Map<String, dynamic> map) {
-    // Simple JSON serialization
-    return map.toString();
+    return jsonEncode(map);
   }
 
   static Map<String, dynamic> _jsonToMap(String json) {
-    // For now, return empty map
-    // In real implementation, use proper JSON serialization
-    return {};
+    return jsonDecode(json) as Map<String, dynamic>;
   }
 }

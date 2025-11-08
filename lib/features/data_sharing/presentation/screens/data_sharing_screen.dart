@@ -5,11 +5,11 @@ import 'package:n06/features/data_sharing/application/providers.dart';
 import 'package:n06/features/data_sharing/domain/repositories/date_range.dart';
 
 class DataSharingScreen extends ConsumerStatefulWidget {
-  final String userId;
+  final String? userId;
 
   const DataSharingScreen({
     Key? key,
-    required this.userId,
+    this.userId,
   }) : super(key: key);
 
   @override
@@ -24,10 +24,13 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     super.initState();
     // Enter sharing mode on screen initialization
     Future.microtask(() {
-      ref.read(dataSharingNotifierProvider.notifier).enterSharingMode(
-            widget.userId,
-            _selectedPeriod,
-          );
+      final userId = widget.userId;
+      if (userId != null) {
+        ref.read(dataSharingNotifierProvider.notifier).enterSharingMode(
+              userId,
+              _selectedPeriod,
+            );
+      }
     });
   }
 

@@ -4,6 +4,7 @@ import 'package:n06/features/tracking/domain/usecases/validate_weight_edit_useca
 import 'package:n06/features/tracking/domain/usecases/validate_date_unique_constraint_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/log_record_change_usecase.dart';
 import 'package:n06/features/tracking/application/providers.dart';
+import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';
 import 'package:uuid/uuid.dart';
 
 class WeightRecordEditNotifier extends AsyncNotifier<void> {
@@ -99,6 +100,9 @@ class WeightRecordEditNotifier extends AsyncNotifier<void> {
           ));
         }
       }
+
+      // Invalidate dashboard to trigger statistics recalculation
+      ref.invalidate(dashboardNotifierProvider);
     });
   }
 
@@ -133,6 +137,9 @@ class WeightRecordEditNotifier extends AsyncNotifier<void> {
         newValue: null,
         timestamp: DateTime.now(),
       ));
+
+      // Invalidate dashboard to trigger statistics recalculation
+      ref.invalidate(dashboardNotifierProvider);
     });
   }
 }

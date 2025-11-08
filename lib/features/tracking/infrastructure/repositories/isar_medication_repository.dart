@@ -9,12 +9,18 @@ import 'package:n06/features/tracking/infrastructure/dtos/dose_record_dto.dart';
 import 'package:n06/features/tracking/infrastructure/dtos/dose_schedule_dto.dart';
 import 'package:n06/features/tracking/infrastructure/dtos/plan_change_history_dto.dart';
 
+/// Isar-based implementation of MedicationRepository
+///
+/// Handles dose records, dose schedules, dosage plans, and change history.
+/// For cleaner separation of concerns, consider using the dedicated repositories:
+/// - IsarDosagePlanRepository for dosage plan operations
+/// - IsarDoseScheduleRepository for schedule operations
 class IsarMedicationRepository implements MedicationRepository {
   final Isar isar;
 
   IsarMedicationRepository(this.isar);
 
-  // ===== DosagePlan =====
+  // ===== DosagePlan (Backward Compatibility) =====
 
   @override
   Future<DosagePlan?> getActiveDosagePlan(String userId) async {
@@ -49,7 +55,7 @@ class IsarMedicationRepository implements MedicationRepository {
     await isar.writeTxn(() => isar.dosagePlanDtos.put(dto));
   }
 
-  // ===== DoseSchedule =====
+  // ===== DoseSchedule (Backward Compatibility) =====
 
   @override
   Future<List<DoseSchedule>> getDoseSchedules(String planId) async {

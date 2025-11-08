@@ -7,13 +7,13 @@ import 'package:n06/features/onboarding/presentation/widgets/summary_screen.dart
 
 /// 온보딩 4단계 화면 네비게이션
 class OnboardingScreen extends StatefulWidget {
-  final String userId;
-  final VoidCallback onComplete;
+  final String? userId;
+  final VoidCallback? onComplete;
 
   const OnboardingScreen({
     Key? key,
-    required this.userId,
-    required this.onComplete,
+    this.userId,
+    this.onComplete,
   }) : super(key: key);
 
   @override
