@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class QuickActionWidget extends StatelessWidget {
   const QuickActionWidget({super.key});
@@ -20,24 +21,23 @@ class QuickActionWidget extends StatelessWidget {
               icon: Icons.scale,
               label: '체중 기록',
               color: Colors.blue,
-              onTap: () {
-                // 체중 기록 화면으로 이동
-              },
+              onTap: () => context.push('/tracking/weight'),
             ),
             _QuickActionButton(
               icon: Icons.favorite,
               label: '부작용 기록',
               color: Colors.pink,
-              onTap: () {
-                // 부작용 기록 화면으로 이동
-              },
+              onTap: () => context.push('/tracking/symptom'),
             ),
             _QuickActionButton(
               icon: Icons.check_circle,
               label: '투여 완료',
               color: Colors.green,
               onTap: () {
-                // 투여 완료 화면으로 이동
+                // 투여 완료 처리 (특정 라우트 없음, 다이얼로그나 inline 처리)
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('투여 완료 기능은 준비 중입니다')),
+                );
               },
             ),
           ],

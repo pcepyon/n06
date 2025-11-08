@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import 'package:go_router/go_router.dart';
 import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/presentation/widgets/date_selection_widget.dart';
@@ -178,7 +179,7 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
             onPressed: () {
               Navigator.of(context).pop();
               // F005 증상 체크 화면으로 이동
-              Navigator.of(context).pushNamed('/emergency-check');
+              context.push('/emergency/check');
             },
             child: const Text('이동'),
           ),
