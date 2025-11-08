@@ -17,7 +17,7 @@ class DataSharingAggregator {
     final startWeight = sortedWeights.first.weightKg;
     final endWeight = sortedWeights.last.weightKg;
     final change = endWeight - startWeight;
-    final changePercentage = startWeight > 0 ? (change / startWeight) * 100 : 0;
+    final changePercentage = (startWeight > 0 ? (change / startWeight) * 100 : 0).toDouble();
 
     return WeightTrend(
       startWeight: startWeight,

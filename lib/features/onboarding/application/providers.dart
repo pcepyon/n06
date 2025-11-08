@@ -1,5 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:isar/isar.dart';
+import 'package:n06/core/providers.dart';
 import 'package:n06/features/onboarding/domain/repositories/user_repository.dart';
 import 'package:n06/features/onboarding/domain/repositories/profile_repository.dart';
 import 'package:n06/features/onboarding/domain/repositories/medication_repository.dart';
@@ -14,12 +14,6 @@ import 'package:n06/features/onboarding/infrastructure/repositories/isar_schedul
 import 'package:n06/features/onboarding/infrastructure/services/transaction_service.dart';
 
 part 'providers.g.dart';
-
-/// Isar 인스턴스 Provider (from core)
-@riverpod
-Isar isar(IsarRef ref) {
-  throw UnimplementedError('isarProvider must be implemented in core');
-}
 
 /// UserRepository Provider
 @riverpod

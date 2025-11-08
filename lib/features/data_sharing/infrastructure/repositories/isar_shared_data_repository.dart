@@ -3,6 +3,7 @@ import 'package:n06/features/data_sharing/domain/entities/emergency_symptom_chec
 import 'package:n06/features/data_sharing/domain/entities/shared_data_report.dart';
 import 'package:n06/features/data_sharing/domain/repositories/date_range.dart';
 import 'package:n06/features/data_sharing/domain/repositories/shared_data_repository.dart';
+import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/infrastructure/dtos/dose_record_dto.dart';
 import 'package:n06/features/tracking/infrastructure/dtos/dose_schedule_dto.dart';
 import 'package:n06/features/tracking/infrastructure/dtos/weight_log_dto.dart';
@@ -29,7 +30,7 @@ class IsarSharedDataRepository implements SharedDataRepository {
     final doseRecords = doseRecordDtos.map((dto) => dto.toEntity()).toList();
 
     // Fetch dose schedules within date range (for adherence calculation)
-    final doseScheduleDtos = await isar.doseScheduleDtos.findAll();
+    final doseScheduleDtos = await isar.doseScheduleDtos.where().findAll();
     final doseSchedulesInRange = doseScheduleDtos.where((dto) {
       return !dto.scheduledDate.isBefore(startDate) &&
           !dto.scheduledDate.isAfter(endDate);
@@ -81,7 +82,7 @@ class IsarSharedDataRepository implements SharedDataRepository {
       dateRangeEnd: endDate,
       doseRecords: doseRecords,
       weightLogs: weightLogsInRange,
-      symptomLogs: symptomLogsCasted as List<dynamic>,
+      symptomLogs: symptomLogsCasted.cast<SymptomLog>(),
       emergencyChecks: emergencyChecks,
       doseSchedules: doseSchedules,
     );

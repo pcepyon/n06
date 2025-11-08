@@ -42,6 +42,29 @@ class UserBadgeDto {
       ..updatedAt = entity.updatedAt;
   }
 
+  UserBadgeDto copyWith({
+    Id? isarId,
+    String? id,
+    String? userId,
+    String? badgeId,
+    String? status,
+    int? progressPercentage,
+    DateTime? achievedAt,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return UserBadgeDto()
+      ..isarId = isarId ?? this.isarId
+      ..id = id ?? this.id
+      ..userId = userId ?? this.userId
+      ..badgeId = badgeId ?? this.badgeId
+      ..status = status ?? this.status
+      ..progressPercentage = progressPercentage ?? this.progressPercentage
+      ..achievedAt = achievedAt ?? this.achievedAt
+      ..createdAt = createdAt ?? this.createdAt
+      ..updatedAt = updatedAt ?? this.updatedAt;
+  }
+
   static BadgeStatus _stringToStatus(String value) {
     return BadgeStatus.values.firstWhere(
       (e) => e.toString().split('.').last == value,

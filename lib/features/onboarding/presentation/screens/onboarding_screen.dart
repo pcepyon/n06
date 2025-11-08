@@ -136,7 +136,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 // Step 4: 요약 및 확인
                 SummaryScreen(
-                  userId: widget.userId,
+                  userId: widget.userId ?? '',
                   name: _name,
                   currentWeight: _currentWeight,
                   targetWeight: _targetWeight,
@@ -146,7 +146,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   cycleDays: _cycleDays,
                   initialDose: _initialDose,
                   escalationPlan: _escalationPlan,
-                  onComplete: widget.onComplete,
+                  onComplete: widget.onComplete ?? () {},
                 ),
               ],
             ),

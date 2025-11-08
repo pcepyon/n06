@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/features/data_sharing/application/notifiers/data_sharing_notifier.dart';
-import 'package:n06/features/data_sharing/application/providers.dart';
 import 'package:n06/features/data_sharing/domain/repositories/date_range.dart';
 
 class DataSharingScreen extends ConsumerStatefulWidget {
@@ -74,7 +73,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
           ElevatedButton(
             onPressed: () {
               ref.read(dataSharingNotifierProvider.notifier).enterSharingMode(
-                    widget.userId,
+                    widget.userId ?? '',
                     _selectedPeriod,
                   );
             },
@@ -190,7 +189,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                     setState(() => _selectedPeriod = period);
                     if (selected) {
                       ref.read(dataSharingNotifierProvider.notifier).changePeriod(
-                            widget.userId,
+                            widget.userId ?? '',
                             period,
                           );
                     }

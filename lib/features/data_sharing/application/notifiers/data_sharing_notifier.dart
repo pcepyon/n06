@@ -1,7 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/features/data_sharing/domain/entities/shared_data_report.dart';
 import 'package:n06/features/data_sharing/domain/repositories/date_range.dart';
-import 'package:n06/features/data_sharing/domain/repositories/shared_data_repository.dart';
 import 'package:n06/features/data_sharing/application/providers.dart';
 
 part 'data_sharing_notifier.g.dart';
