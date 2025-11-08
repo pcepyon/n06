@@ -32,6 +32,7 @@ class _EditDosagePlanForm extends ConsumerStatefulWidget {
   final DosagePlan? initialPlan;
 
   const _EditDosagePlanForm({
+    // ignore: unused_element_parameter
     super.key,
     this.initialPlan,
   });

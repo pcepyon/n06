@@ -35,6 +35,7 @@ class HomeDashboardScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
+                  // ignore: unused_result
                   ref.refresh(dashboardNotifierProvider);
                 },
                 child: const Text('다시 시도'),

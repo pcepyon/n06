@@ -3,8 +3,6 @@ import 'package:n06/features/dashboard/domain/entities/dashboard_data.dart';
 import 'package:n06/features/dashboard/domain/entities/weekly_progress.dart';
 import 'package:n06/features/dashboard/domain/entities/next_schedule.dart';
 import 'package:n06/features/dashboard/domain/entities/weekly_summary.dart';
-import 'package:n06/features/dashboard/domain/entities/timeline_event.dart';
-import 'package:n06/features/dashboard/domain/entities/user_badge.dart';
 
 void main() {
   group('DashboardData', () {

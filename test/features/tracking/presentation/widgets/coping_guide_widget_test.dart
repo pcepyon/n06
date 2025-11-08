@@ -227,14 +227,12 @@ void main() {
       testWidgets('should handle user rating feedback',
           (tester) async {
         // Arrange
-        bool feedbackSelected = false;
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
               body: CopingGuideWidget(
                 symptomName: '메스꺼움',
                 severity: 5,
-                onFeedback: () => feedbackSelected = true,
               ),
             ),
           ),
@@ -245,7 +243,7 @@ void main() {
         await tester.pump();
 
         // Assert
-        expect(feedbackSelected || find.text('피드백해주셔서 감사합니다!').evaluate().isNotEmpty, true);
+        expect(find.text('피드백해주셔서 감사합니다!'), findsOneWidget);
       });
     });
 

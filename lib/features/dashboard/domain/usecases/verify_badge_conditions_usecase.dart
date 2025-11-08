@@ -1,6 +1,5 @@
 import 'package:n06/features/dashboard/domain/entities/user_badge.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
-import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 
 class VerifyBadgeConditionsUseCase {
   /// 각 뱃지의 획득 조건을 검증하고 진행도를 계산합니다.

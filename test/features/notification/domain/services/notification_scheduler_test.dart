@@ -50,8 +50,8 @@ void main() {
         scheduledDoseMg: 0.5,
       );
       when(mockScheduler.scheduleNotifications(
-        doseSchedules: anyNamed('doseSchedules'),
-        notificationTime: anyNamed('notificationTime'),
+        doseSchedules: [doseSchedule],
+        notificationTime: const TimeOfDay(hour: 9, minute: 0),
       )).thenAnswer((_) async => {});
 
       // Act
@@ -62,8 +62,8 @@ void main() {
 
       // Assert
       verify(mockScheduler.scheduleNotifications(
-        doseSchedules: anyNamed('doseSchedules'),
-        notificationTime: anyNamed('notificationTime'),
+        doseSchedules: [doseSchedule],
+        notificationTime: const TimeOfDay(hour: 9, minute: 0),
       )).called(1);
     });
 

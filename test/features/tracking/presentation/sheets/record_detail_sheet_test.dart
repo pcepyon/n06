@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
@@ -23,7 +22,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: RecordDetailSheet.weight(log: weightLog),
+              body: RecordDetailSheet.weight(log: weightLog, userId: 'user123'),
             ),
           ),
         );
@@ -49,7 +48,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: RecordDetailSheet.symptom(log: symptomLog),
+              body: RecordDetailSheet.symptom(log: symptomLog, userId: 'user123'),
             ),
           ),
         );
@@ -77,7 +76,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: RecordDetailSheet.dose(record: doseRecord),
+              body: RecordDetailSheet.dose(record: doseRecord, userId: 'user123'),
             ),
           ),
         );
@@ -101,7 +100,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: RecordDetailSheet.weight(log: weightLog),
+              body: RecordDetailSheet.weight(log: weightLog, userId: 'user123'),
             ),
           ),
         );
@@ -126,7 +125,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: RecordDetailSheet.symptom(log: symptomLog),
+              body: RecordDetailSheet.symptom(log: symptomLog, userId: 'user123'),
             ),
           ),
         );
@@ -151,7 +150,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: RecordDetailSheet.weight(log: weightLog),
+              body: RecordDetailSheet.weight(log: weightLog, userId: 'user123'),
             ),
           ),
         );
@@ -175,7 +174,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: RecordDetailSheet.symptom(log: symptomLog),
+              body: RecordDetailSheet.symptom(log: symptomLog, userId: 'user123'),
             ),
           ),
         );
@@ -199,7 +198,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: RecordDetailSheet.dose(record: doseRecord),
+              body: RecordDetailSheet.dose(record: doseRecord, userId: 'user123'),
             ),
           ),
         );
@@ -222,7 +221,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: RecordDetailSheet.weight(log: weightLog),
+              body: RecordDetailSheet.weight(log: weightLog, userId: 'user123'),
             ),
           ),
         );
@@ -248,7 +247,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: RecordDetailSheet.weight(log: weightLog),
+              body: RecordDetailSheet.weight(log: weightLog, userId: 'user123'),
             ),
           ),
         );
@@ -271,7 +270,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: RecordDetailSheet.weight(log: weightLog),
+              body: RecordDetailSheet.weight(log: weightLog, userId: 'user123'),
             ),
           ),
         );
@@ -295,7 +294,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: RecordDetailSheet.symptom(log: symptomLog),
+              body: RecordDetailSheet.symptom(log: symptomLog, userId: 'user123'),
             ),
           ),
         );
@@ -320,7 +319,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: RecordDetailSheet.dose(record: doseRecord),
+              body: RecordDetailSheet.dose(record: doseRecord, userId: 'user123'),
             ),
           ),
         );

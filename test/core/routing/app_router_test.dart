@@ -7,7 +7,6 @@ void main() {
     test('TC-GR-01: should start at login route', () {
       // Arrange
       final router = appRouter;
-      final expectedInitialLocation = '/login';
       final namedRoutes = _extractNamedRoutes(router);
 
       // Act
@@ -398,5 +397,5 @@ Map<String, String> _extractNamedRoutes(GoRouter router) {
       routes[route.name!] = route.path;
     }
   }
-  return routes;;
+  return routes;
 }
