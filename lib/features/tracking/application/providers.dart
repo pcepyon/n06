@@ -2,13 +2,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/features/tracking/application/notifiers/emergency_check_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart';
+import 'package:n06/features/tracking/application/usecases/update_dosage_plan_usecase.dart';
 import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
 import 'package:n06/features/tracking/domain/repositories/emergency_check_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/medication_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
+import 'package:n06/features/tracking/domain/usecases/analyze_plan_change_impact_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/injection_site_rotation_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/missed_dose_analyzer_usecase.dart';
+import 'package:n06/features/tracking/domain/usecases/recalculate_dose_schedule_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/schedule_generator_usecase.dart';
+import 'package:n06/features/tracking/domain/usecases/validate_dosage_plan_usecase.dart';
 import 'package:n06/features/tracking/infrastructure/services/notification_service.dart';
 
 // Repository Provider
@@ -40,6 +44,34 @@ final injectionSiteRotationUseCaseProvider = Provider((ref) {
 
 final missedDoseAnalyzerUseCaseProvider = Provider((ref) {
   return MissedDoseAnalyzerUseCase();
+});
+
+// UF-009: UpdateDosagePlan UseCase Providers
+final validateDosagePlanUseCaseProvider = Provider((ref) {
+  return ValidateDosagePlanUseCase();
+});
+
+final recalculateDoseScheduleUseCaseProvider = Provider((ref) {
+  return RecalculateDoseScheduleUseCase();
+});
+
+final analyzePlanChangeImpactUseCaseProvider = Provider((ref) {
+  return AnalyzePlanChangeImpactUseCase();
+});
+
+final updateDosagePlanUseCaseProvider = Provider((ref) {
+  final medicationRepository = ref.watch(medicationRepositoryProvider);
+  final validateUseCase = ref.watch(validateDosagePlanUseCaseProvider);
+  final analyzeImpactUseCase = ref.watch(analyzePlanChangeImpactUseCaseProvider);
+  final recalculateScheduleUseCase =
+      ref.watch(recalculateDoseScheduleUseCaseProvider);
+
+  return UpdateDosagePlanUseCase(
+    medicationRepository: medicationRepository,
+    validateUseCase: validateUseCase,
+    analyzeImpactUseCase: analyzeImpactUseCase,
+    recalculateScheduleUseCase: recalculateScheduleUseCase,
+  );
 });
 
 // Service Providers
