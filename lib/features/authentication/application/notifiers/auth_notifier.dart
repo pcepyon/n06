@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/features/authentication/domain/entities/user.dart';
 import 'package:n06/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:n06/features/authentication/infrastructure/repositories/isar_auth_repository.dart';
+import 'package:n06/features/authentication/application/providers.dart';
 
 part 'auth_notifier.g.dart';
 
@@ -84,8 +85,8 @@ class AuthNotifier extends _$AuthNotifier {
   Future<void> logout() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repository = ref.read(authRepositoryProvider);
-      await repository.logout();
+      final useCase = ref.read(logoutUseCaseProvider);
+      await useCase.execute();
       return null;
     });
   }

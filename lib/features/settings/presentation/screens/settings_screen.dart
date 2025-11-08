@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
+import 'package:n06/features/authentication/presentation/widgets/logout_confirm_dialog.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
 import 'package:n06/features/settings/presentation/widgets/settings_menu_item.dart';
 
@@ -211,27 +212,52 @@ class SettingsScreen extends ConsumerWidget {
   /// Handle logout with confirmation dialog
   /// Business Rule 5: Confirmation step needed
   Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    // Show logout confirmation dialog
+    await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('로그아웃 하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('확인'),
-          ),
-        ],
+      builder: (context) => LogoutConfirmDialog(
+        onConfirm: () {
+          // Proceed with logout
+          _performLogout(context, ref);
+        },
+      ),
+    );
+  }
+
+  /// Perform the actual logout operation
+  Future<void> _performLogout(BuildContext context, WidgetRef ref) async {
+    if (!context.mounted) return;
+
+    // Show loading indicator during logout
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
       ),
     );
 
-    if (confirmed == true && context.mounted) {
+    try {
+      // Call logout on the notifier
       await ref.read(authNotifierProvider.notifier).logout();
+
       if (context.mounted) {
+        // Close loading dialog
+        Navigator.pop(context);
+        // Navigate to login screen
         context.go('/login');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        // Close loading dialog
+        Navigator.pop(context);
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('로그아웃 중 오류가 발생했습니다: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
