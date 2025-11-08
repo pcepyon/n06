@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/infrastructure/dtos/weight_log_dto.dart';
@@ -13,6 +14,7 @@ void main() {
     late IsarTrackingRepository repository;
 
     setUp(() async {
+      final tempDir = await getTemporaryDirectory();
       // In-memory Isar instance for testing
       isar = await Isar.open(
         [
@@ -20,7 +22,7 @@ void main() {
           SymptomLogDtoSchema,
           SymptomContextTagDtoSchema,
         ],
-        directory: '',
+        directory: tempDir.path,
       );
       repository = IsarTrackingRepository(isar);
     });

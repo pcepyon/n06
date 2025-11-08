@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 import 'package:n06/features/notification/domain/entities/notification_settings.dart';
@@ -9,29 +10,27 @@ void main() {
   late Isar testIsar;
   late IsarNotificationRepository repository;
 
-  setUpAll(() async {
+  setUp(() async {
+    final tempDir = await getTemporaryDirectory();
     // Isar 테스트 환경 초기화
-    if (Isar.instanceNames.isEmpty) {
-      testIsar = await Isar.open(
-        [NotificationSettingsDtoSchema],
-        inspector: false,
-      );
-    } else {
-      testIsar = Isar.getInstance();
-    }
+    testIsar = await Isar.open(
+      [NotificationSettingsDtoSchema],
+      directory: tempDir.path,
+      inspector: false,
+    );
     repository = IsarNotificationRepository(testIsar);
   });
 
-  tearDownAll(() async {
+  tearDown(() async {
     await testIsar.close(deleteFromDisk: true);
   });
 
   group('IsarNotificationRepository', () {
     test('should save notification settings to Isar', () async {
       // Arrange
-      const settings = NotificationSettings(
+      final settings = NotificationSettings(
         userId: 'user123',
-        notificationTime: TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const TimeOfDay(hour: 9, minute: 0),
         notificationEnabled: true,
       );
 
@@ -57,17 +56,17 @@ void main() {
 
     test('should update existing settings', () async {
       // Arrange
-      const initial = NotificationSettings(
+      final initial = NotificationSettings(
         userId: 'user456',
-        notificationTime: TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const TimeOfDay(hour: 9, minute: 0),
         notificationEnabled: true,
       );
       await repository.saveNotificationSettings(initial);
 
       // Act
-      const updated = NotificationSettings(
+      final updated = NotificationSettings(
         userId: 'user456',
-        notificationTime: TimeOfDay(hour: 21, minute: 0),
+        notificationTime: const TimeOfDay(hour: 21, minute: 0),
         notificationEnabled: false,
       );
       await repository.saveNotificationSettings(updated);
@@ -81,14 +80,14 @@ void main() {
 
     test('should preserve existing settings for different users', () async {
       // Arrange
-      const settings1 = NotificationSettings(
+      final settings1 = NotificationSettings(
         userId: 'user789',
-        notificationTime: TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const TimeOfDay(hour: 9, minute: 0),
         notificationEnabled: true,
       );
-      const settings2 = NotificationSettings(
+      final settings2 = NotificationSettings(
         userId: 'user999',
-        notificationTime: TimeOfDay(hour: 14, minute: 30),
+        notificationTime: const TimeOfDay(hour: 14, minute: 30),
         notificationEnabled: false,
       );
 

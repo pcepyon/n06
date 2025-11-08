@@ -1,9 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
-import 'package:n06/features/tracking/domain/entities/dose_record.dart';
-import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
-import 'package:n06/features/tracking/domain/entities/weight_log.dart';
-import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:n06/features/data_sharing/domain/repositories/date_range.dart';
 import 'package:n06/features/data_sharing/infrastructure/repositories/isar_shared_data_repository.dart';
 import 'package:n06/features/tracking/infrastructure/dtos/dose_record_dto.dart';
@@ -18,7 +15,8 @@ void main() {
     final userId = 'test-user-123';
     final now = DateTime.now();
 
-    setUpAll(() async {
+    setUp(() async {
+      final tempDir = await getTemporaryDirectory();
       isar = await Isar.open(
         [
           DoseRecordDtoSchema,
@@ -26,25 +24,14 @@ void main() {
           WeightLogDtoSchema,
           SymptomLogDtoSchema,
         ],
+        directory: tempDir.path,
         inspector: true,
       );
-    });
-
-    tearDownAll(() async {
-      await isar.close(deleteFromDisk: true);
-    });
-
-    setUp(() {
       repository = IsarSharedDataRepository(isar);
     });
 
     tearDown(() async {
-      await isar.writeTxn(() async {
-        await isar.doseRecordDtos.clear();
-        await isar.doseScheduleDtos.clear();
-        await isar.weightLogDtos.clear();
-        await isar.symptomLogDtos.clear();
-      });
+      await isar.close(deleteFromDisk: true);
     });
 
     test('should fetch dose records within date range', () async {
@@ -54,20 +41,16 @@ void main() {
 
       await isar.writeTxn(() async {
         await isar.doseRecordDtos.putAll([
-          DoseRecordDto(
-            id: '1',
-            dosagePlanId: 'plan1',
-            administeredAt: startDate.add(const Duration(days: 5)),
-            actualDoseMg: 0.25,
-            isCompleted: true,
-          ),
-          DoseRecordDto(
-            id: '2',
-            dosagePlanId: 'plan1',
-            administeredAt: endDate.add(const Duration(days: 10)), // Outside range
-            actualDoseMg: 0.25,
-            isCompleted: true,
-          ),
+          DoseRecordDto()
+            ..dosagePlanId = 'plan1'
+            ..administeredAt = startDate.add(const Duration(days: 5))
+            ..actualDoseMg = 0.25
+            ..isCompleted = true,
+          DoseRecordDto()
+            ..dosagePlanId = 'plan1'
+            ..administeredAt = endDate.add(const Duration(days: 10)) // Outside range
+            ..actualDoseMg = 0.25
+            ..isCompleted = true,
         ]);
       });
 
@@ -85,18 +68,14 @@ void main() {
 
       await isar.writeTxn(() async {
         await isar.weightLogDtos.putAll([
-          WeightLogDto(
-            id: '1',
-            userId: userId,
-            logDate: startDate.add(const Duration(days: 5)),
-            weightKg: 75.5,
-          ),
-          WeightLogDto(
-            id: '2',
-            userId: userId,
-            logDate: startDate.subtract(const Duration(days: 40)), // Outside 30-day range
-            weightKg: 76.0,
-          ),
+          WeightLogDto()
+            ..userId = userId
+            ..logDate = startDate.add(const Duration(days: 5))
+            ..weightKg = 75.5,
+          WeightLogDto()
+            ..userId = userId
+            ..logDate = startDate.subtract(const Duration(days: 40)) // Outside 30-day range
+            ..weightKg = 76.0,
         ]);
       });
 
@@ -114,20 +93,16 @@ void main() {
 
       await isar.writeTxn(() async {
         await isar.symptomLogDtos.putAll([
-          SymptomLogDto(
-            id: '1',
-            userId: userId,
-            logDate: startDate.add(const Duration(days: 5)),
-            symptomName: '메스꺼움',
-            severity: 5,
-          ),
-          SymptomLogDto(
-            id: '2',
-            userId: userId,
-            logDate: startDate.subtract(const Duration(days: 40)),
-            symptomName: '두통',
-            severity: 3,
-          ),
+          SymptomLogDto()
+            ..userId = userId
+            ..logDate = startDate.add(const Duration(days: 5))
+            ..symptomName = '메스꺼움'
+            ..severity = 5,
+          SymptomLogDto()
+            ..userId = userId
+            ..logDate = startDate.subtract(const Duration(days: 40))
+            ..symptomName = '두통'
+            ..severity = 3,
         ]);
       });
 
@@ -156,13 +131,11 @@ void main() {
 
       await isar.writeTxn(() async {
         await isar.doseRecordDtos.put(
-          DoseRecordDto(
-            id: '1',
-            dosagePlanId: 'plan1',
-            administeredAt: startDate.add(const Duration(days: 5)),
-            actualDoseMg: 0.25,
-            isCompleted: true,
-          ),
+          DoseRecordDto()
+            ..dosagePlanId = 'plan1'
+            ..administeredAt = startDate.add(const Duration(days: 5))
+            ..actualDoseMg = 0.25
+            ..isCompleted = true,
         );
       });
 
@@ -181,18 +154,14 @@ void main() {
 
       await isar.writeTxn(() async {
         await isar.doseScheduleDtos.putAll([
-          DoseScheduleDto(
-            id: '1',
-            dosagePlanId: 'plan1',
-            scheduledDate: startDate.add(const Duration(days: 0)),
-            scheduledDoseMg: 0.25,
-          ),
-          DoseScheduleDto(
-            id: '2',
-            dosagePlanId: 'plan1',
-            scheduledDate: startDate.add(const Duration(days: 7)),
-            scheduledDoseMg: 0.25,
-          ),
+          DoseScheduleDto()
+            ..dosagePlanId = 'plan1'
+            ..scheduledDate = startDate.add(const Duration(days: 0))
+            ..scheduledDoseMg = 0.25,
+          DoseScheduleDto()
+            ..dosagePlanId = 'plan1'
+            ..scheduledDate = startDate.add(const Duration(days: 7))
+            ..scheduledDoseMg = 0.25,
         ]);
       });
 
@@ -207,27 +176,21 @@ void main() {
       // Arrange - Add records from different months
       await isar.writeTxn(() async {
         await isar.doseRecordDtos.putAll([
-          DoseRecordDto(
-            id: '1',
-            dosagePlanId: 'plan1',
-            administeredAt: DateTime(2024, 1, 15),
-            actualDoseMg: 0.25,
-            isCompleted: true,
-          ),
-          DoseRecordDto(
-            id: '2',
-            dosagePlanId: 'plan1',
-            administeredAt: DateTime(2024, 6, 15),
-            actualDoseMg: 0.5,
-            isCompleted: true,
-          ),
-          DoseRecordDto(
-            id: '3',
-            dosagePlanId: 'plan1',
-            administeredAt: DateTime(2024, 12, 15),
-            actualDoseMg: 1.0,
-            isCompleted: true,
-          ),
+          DoseRecordDto()
+            ..dosagePlanId = 'plan1'
+            ..administeredAt = DateTime(2024, 1, 15)
+            ..actualDoseMg = 0.25
+            ..isCompleted = true,
+          DoseRecordDto()
+            ..dosagePlanId = 'plan1'
+            ..administeredAt = DateTime(2024, 6, 15)
+            ..actualDoseMg = 0.5
+            ..isCompleted = true,
+          DoseRecordDto()
+            ..dosagePlanId = 'plan1'
+            ..administeredAt = DateTime(2024, 12, 15)
+            ..actualDoseMg = 1.0
+            ..isCompleted = true,
         ]);
       });
 
@@ -245,18 +208,14 @@ void main() {
 
       await isar.writeTxn(() async {
         await isar.weightLogDtos.putAll([
-          WeightLogDto(
-            id: '1',
-            userId: userId,
-            logDate: startDate.add(const Duration(days: 5)),
-            weightKg: 75.5,
-          ),
-          WeightLogDto(
-            id: '2',
-            userId: otherUserId,
-            logDate: startDate.add(const Duration(days: 5)),
-            weightKg: 80.0,
-          ),
+          WeightLogDto()
+            ..userId = userId
+            ..logDate = startDate.add(const Duration(days: 5))
+            ..weightKg = 75.5,
+          WeightLogDto()
+            ..userId = otherUserId
+            ..logDate = startDate.add(const Duration(days: 5))
+            ..weightKg = 80.0,
         ]);
       });
 

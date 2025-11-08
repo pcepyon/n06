@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/tracking/domain/entities/plan_change_history.dart';
 import 'package:n06/features/tracking/infrastructure/dtos/dosage_plan_dto.dart';
@@ -12,13 +13,14 @@ void main() {
     late IsarDosagePlanRepository repository;
 
     setUp(() async {
+      final tempDir = await getTemporaryDirectory();
       // In-memory Isar instance for testing
       isar = await Isar.open(
         [
           DosagePlanDtoSchema,
           PlanChangeHistoryDtoSchema,
         ],
-        directory: '',
+        directory: tempDir.path,
       );
       repository = IsarDosagePlanRepository(isar);
     });

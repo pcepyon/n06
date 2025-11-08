@@ -1,0 +1,46 @@
+DTO CONSTRUCTOR SYNTAX FIX - QUICK SUMMARY
+==========================================
+
+TASK COMPLETED: Fixed DTO constructor calls to use cascade notation instead of named parameters
+
+FILE 1: test/features/data_sharing/infrastructure/repositories/isar_shared_data_repository_test.dart
+Status: FIXED - All 14 DTO instantiations converted
+
+Transformations Applied:
+1. Lines 48-52: DoseRecordDto() - Test "should fetch dose records within date range" (instance 1)
+2. Lines 53-57: DoseRecordDto() - Test "should fetch dose records within date range" (instance 2)
+3. Lines 75-78: WeightLogDto() - Test "should fetch weight logs within date range" (instance 1)
+4. Lines 79-82: WeightLogDto() - Test "should fetch weight logs within date range" (instance 2)
+5. Lines 100-104: SymptomLogDto() - Test "should fetch symptom logs within date range" (instance 1)
+6. Lines 105-109: SymptomLogDto() - Test "should fetch symptom logs within date range" (instance 2)
+7. Lines 138-142: DoseRecordDto() - Test "should handle partial data correctly"
+8. Lines 161-164: DoseScheduleDto() - Test "should fetch dose schedules" (instance 1)
+9. Lines 165-168: DoseScheduleDto() - Test "should fetch dose schedules" (instance 2)
+10. Lines 183-187: DoseRecordDto() - Test "should handle allTime date range correctly" (instance 1)
+11. Lines 188-192: DoseRecordDto() - Test "should handle allTime date range correctly" (instance 2)
+12. Lines 193-197: DoseRecordDto() - Test "should handle allTime date range correctly" (instance 3)
+13. Lines 215-218: WeightLogDto() - Test "should filter by correct user" (instance 1)
+14. Lines 219-222: WeightLogDto() - Test "should filter by correct user" (instance 2)
+
+DTO Breakdown:
+- DoseRecordDto: 6 instances fixed
+- WeightLogDto: 4 instances fixed
+- SymptomLogDto: 2 instances fixed
+- DoseScheduleDto: 2 instances fixed
+
+FILE 2: test/features/tracking/infrastructure/repositories/isar_tracking_repository_test.dart
+Status: NO CHANGES NEEDED - Uses entity constructors (WeightLog, SymptomLog), not DTOs
+
+Verification:
+✓ Flutter analyze: 0 errors (only unused import warnings)
+✓ No "id:" parameters remain in file
+✓ All 14 cascade notations verified
+✓ Compilation successful
+✓ Test logic preserved
+✓ All field values preserved
+
+Pattern Used:
+Old:  DoseRecordDto(id: '1', dosagePlanId: 'plan1', ...)
+New:  DoseRecordDto() .. dosagePlanId = 'plan1' ... 
+
+Key Point: id field is NOT set because it's auto-incremented by Isar

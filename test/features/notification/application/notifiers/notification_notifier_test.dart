@@ -6,8 +6,13 @@ import 'package:n06/features/notification/application/notifiers/notification_not
 import 'package:n06/features/notification/domain/entities/notification_settings.dart';
 import 'package:n06/features/notification/domain/repositories/notification_repository.dart';
 import 'package:n06/features/notification/domain/services/notification_scheduler.dart';
+import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:n06/features/tracking/domain/repositories/medication_repository.dart';
+
+// Type-safe matchers for null safety
+T anyOfType<T>() => any as T;
+T anyNamedOfType<T>(String name) => anyNamed(name) as T;
 
 class MockNotificationRepository extends Mock
     implements NotificationRepository {}
@@ -121,15 +126,15 @@ void main() {
 
       when(mockRepository.getNotificationSettings('user123'))
           .thenAnswer((_) async => mockSettings);
-      when(mockRepository.saveNotificationSettings(any))
+      when(mockRepository.saveNotificationSettings(anyOfType<NotificationSettings>()))
           .thenAnswer((_) async => {});
       when(mockScheduler.cancelAllNotifications())
           .thenAnswer((_) async => {});
       when(mockScheduler.scheduleNotifications(
-        doseSchedules: anyNamed('doseSchedules'),
-        notificationTime: anyNamed('notificationTime'),
+        doseSchedules: anyNamedOfType<List<DoseSchedule>>('doseSchedules'),
+        notificationTime: anyNamedOfType<TimeOfDay>('notificationTime'),
       )).thenAnswer((_) async => {});
-      when(mockMedicationRepository.getDoseSchedules(any))
+      when(mockMedicationRepository.getDoseSchedules(anyOfType<String>()))
           .thenAnswer((_) async => [doseSchedule]);
 
       final container = ProviderContainer(
@@ -151,11 +156,11 @@ void main() {
       );
 
       // Assert
-      verify(mockRepository.saveNotificationSettings(any)).called(1);
+      verify(mockRepository.saveNotificationSettings(anyOfType<NotificationSettings>())).called(1);
       verify(mockScheduler.cancelAllNotifications()).called(1);
       verify(mockScheduler.scheduleNotifications(
-        doseSchedules: anyNamed('doseSchedules'),
-        notificationTime: anyNamed('notificationTime'),
+        doseSchedules: anyNamedOfType<List<DoseSchedule>>('doseSchedules'),
+        notificationTime: anyNamedOfType<TimeOfDay>('notificationTime'),
       )).called(1);
     });
 
@@ -177,15 +182,15 @@ void main() {
           .thenAnswer((_) async => mockSettings);
       when(mockScheduler.checkPermission())
           .thenAnswer((_) async => true);
-      when(mockRepository.saveNotificationSettings(any))
+      when(mockRepository.saveNotificationSettings(anyOfType<NotificationSettings>()))
           .thenAnswer((_) async => {});
       when(mockScheduler.cancelAllNotifications())
           .thenAnswer((_) async => {});
       when(mockScheduler.scheduleNotifications(
-        doseSchedules: anyNamed('doseSchedules'),
-        notificationTime: anyNamed('notificationTime'),
+        doseSchedules: anyNamedOfType<List<DoseSchedule>>('doseSchedules'),
+        notificationTime: anyNamedOfType<TimeOfDay>('notificationTime'),
       )).thenAnswer((_) async => {});
-      when(mockMedicationRepository.getDoseSchedules(any))
+      when(mockMedicationRepository.getDoseSchedules(anyOfType<String>()))
           .thenAnswer((_) async => [doseSchedule]);
 
       final container = ProviderContainer(
@@ -206,7 +211,7 @@ void main() {
 
       // Assert
       verify(mockScheduler.checkPermission()).called(1);
-      verify(mockRepository.saveNotificationSettings(any)).called(1);
+      verify(mockRepository.saveNotificationSettings(anyOfType<NotificationSettings>())).called(1);
     });
 
     test('should request permission when toggling without permission', () async {
@@ -229,13 +234,13 @@ void main() {
           .thenAnswer((_) async => false);
       when(mockScheduler.requestPermission())
           .thenAnswer((_) async => true);
-      when(mockRepository.saveNotificationSettings(any))
+      when(mockRepository.saveNotificationSettings(anyOfType<NotificationSettings>()))
           .thenAnswer((_) async => {});
       when(mockScheduler.scheduleNotifications(
-        doseSchedules: anyNamed('doseSchedules'),
-        notificationTime: anyNamed('notificationTime'),
+        doseSchedules: anyNamedOfType<List<DoseSchedule>>('doseSchedules'),
+        notificationTime: anyNamedOfType<TimeOfDay>('notificationTime'),
       )).thenAnswer((_) async => {});
-      when(mockMedicationRepository.getDoseSchedules(any))
+      when(mockMedicationRepository.getDoseSchedules(anyOfType<String>()))
           .thenAnswer((_) async => [doseSchedule]);
 
       final container = ProviderContainer(
@@ -256,7 +261,7 @@ void main() {
 
       // Assert
       verify(mockScheduler.requestPermission()).called(1);
-      verify(mockRepository.saveNotificationSettings(any)).called(1);
+      verify(mockRepository.saveNotificationSettings(anyOfType<NotificationSettings>())).called(1);
     });
 
     test('should not enable when permission denied', () async {
@@ -291,7 +296,7 @@ void main() {
       await notifier.toggleNotificationEnabled();
 
       // Assert
-      verifyNever(mockRepository.saveNotificationSettings(any));
+      verifyNever(mockRepository.saveNotificationSettings(anyOfType<NotificationSettings>()));
     });
 
     test('should cancel all notifications when disabling', () async {
@@ -306,7 +311,7 @@ void main() {
           .thenAnswer((_) async => mockSettings);
       when(mockScheduler.checkPermission())
           .thenAnswer((_) async => true);
-      when(mockRepository.saveNotificationSettings(any))
+      when(mockRepository.saveNotificationSettings(anyOfType<NotificationSettings>()))
           .thenAnswer((_) async => {});
       when(mockScheduler.cancelAllNotifications())
           .thenAnswer((_) async => {});
