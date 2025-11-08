@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/features/tracking/application/notifiers/emergency_check_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart';
+import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
+import 'package:n06/features/tracking/domain/repositories/emergency_check_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/medication_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
 import 'package:n06/features/tracking/domain/usecases/injection_site_rotation_usecase.dart';
@@ -19,6 +22,11 @@ final medicationRepositoryProvider = Provider<MedicationRepository>((ref) {
 final trackingRepositoryProvider = Provider<TrackingRepository>((ref) {
   throw UnimplementedError(
       'trackingRepositoryProvider must be provided by app initialization');
+});
+
+final emergencyCheckRepositoryProvider = Provider<EmergencyCheckRepository>((ref) {
+  throw UnimplementedError(
+      'emergencyCheckRepositoryProvider must be provided by app initialization');
 });
 
 // UseCase Providers
@@ -70,4 +78,10 @@ final trackingNotifierProvider =
       userId: null,
     );
   },
+);
+
+// Emergency Check Notifier Provider (F005)
+final emergencyCheckNotifierProvider =
+    AsyncNotifierProvider.autoDispose<EmergencyCheckNotifier, List<EmergencySymptomCheck>>(
+  () => EmergencyCheckNotifier(),
 );
