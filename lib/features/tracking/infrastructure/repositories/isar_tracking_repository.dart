@@ -181,7 +181,24 @@ class IsarTrackingRepository implements TrackingRepository {
   }
 
   @override
-  Future<void> deleteSymptomLog(String id) async {
+  Future<SymptomLog?> getSymptomLogById(String id) async {
+    final symptomLogId = int.tryParse(id);
+    if (symptomLogId == null) return null;
+
+    final dto = await _isar.symptomLogDtos.get(symptomLogId);
+    if (dto == null) return null;
+
+    final tags = await _isar.symptomContextTagDtos
+        .filter()
+        .symptomLogIsarIdEqualTo(symptomLogId)
+        .findAll();
+
+    final tagNames = tags.map((t) => t.tagName).toList();
+    return dto.toEntity(tags: tagNames);
+  }
+
+  @override
+  Future<void> deleteSymptomLog(String id, {bool cascade = true}) async {
     final symptomLogId = int.tryParse(id);
     if (symptomLogId != null) {
       await _isar.writeTxn(() async {

@@ -18,12 +18,13 @@ abstract class TrackingRepository {
 
   // 증상 기록
   Future<void> saveSymptomLog(SymptomLog log);
+  Future<SymptomLog?> getSymptomLogById(String id);
   Future<List<SymptomLog>> getSymptomLogs(
     String userId, {
     DateTime? startDate,
     DateTime? endDate,
   });
-  Future<void> deleteSymptomLog(String id);
+  Future<void> deleteSymptomLog(String id, {bool cascade = true});
   Future<void> updateSymptomLog(String id, SymptomLog updatedLog);
   Stream<List<SymptomLog>> watchSymptomLogs(String userId);
 

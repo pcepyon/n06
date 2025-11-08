@@ -9,6 +9,12 @@ GLP-1 치료 관리 MVP - Feature 013
 ## 개요
 과거에 기록한 데이터(체중, 부작용, 투여 기록)를 수정하거나 삭제할 수 있는 기능을 구현합니다. 기록 변경 시 관련 통계와 인사이트를 자동으로 재계산하여 데이터 일관성을 유지합니다.
 
+## 최종 상태
+✅ **완료**: Application Layer + Presentation Layer 구현 완료
+- Application: 3개 Notifier (WeightRecordEditNotifier, SymptomRecordEditNotifier, DoseRecordEditNotifier) - 이미 구현됨
+- Presentation: 4개 Dialog + 1개 Sheet 신규 구현
+- Domain/Infrastructure: 필수 메서드 추가
+
 ## 구현 상태
 
 ### ✅ 완료 (Complete)

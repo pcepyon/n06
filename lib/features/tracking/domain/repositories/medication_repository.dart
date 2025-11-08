@@ -22,6 +22,8 @@ abstract class MedicationRepository {
   Future<void> deleteDoseRecord(String recordId);
   Future<bool> isDuplicateDoseRecord(String planId, DateTime scheduledDate);
   Future<DoseRecord?> getDoseRecordByDate(String planId, DateTime date);
+  Future<DoseRecord?> getDoseRecord(String recordId);
+  Future<void> updateDoseRecord(String recordId, double doseMg, String injectionSite, String? note);
 
   // DoseSchedule operations
   Future<List<DoseSchedule>> getDoseSchedules(String planId);

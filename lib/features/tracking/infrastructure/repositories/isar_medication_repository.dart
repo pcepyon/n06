@@ -178,6 +178,38 @@ class IsarMedicationRepository implements MedicationRepository {
     return dto?.toEntity();
   }
 
+  @override
+  Future<DoseRecord?> getDoseRecord(String recordId) async {
+    final dto = await isar.doseRecordDtos
+        .filter()
+        .recordIdEqualTo(recordId)
+        .findFirst();
+
+    return dto?.toEntity();
+  }
+
+  @override
+  Future<void> updateDoseRecord(
+    String recordId,
+    double doseMg,
+    String injectionSite,
+    String? note,
+  ) async {
+    await isar.writeTxn(() async {
+      final dto = await isar.doseRecordDtos
+          .filter()
+          .recordIdEqualTo(recordId)
+          .findFirst();
+
+      if (dto != null) {
+        dto.actualDoseMg = doseMg;
+        dto.injectionSite = injectionSite;
+        dto.note = note;
+        await isar.doseRecordDtos.put(dto);
+      }
+    });
+  }
+
   // ===== Plan Change History =====
 
   @override
