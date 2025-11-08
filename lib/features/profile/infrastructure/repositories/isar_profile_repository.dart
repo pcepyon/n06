@@ -41,4 +41,29 @@ class IsarProfileRepository implements ProfileRepository {
       return dtos.first.toEntity();
     });
   }
+
+  @override
+  Future<void> updateWeeklyGoals(
+    String userId,
+    int weeklyWeightRecordGoal,
+    int weeklySymptomRecordGoal,
+  ) async {
+    final existingDto = await isar.userProfileDtos
+        .filter()
+        .userIdEqualTo(userId)
+        .findFirst();
+
+    if (existingDto == null) {
+      throw Exception('User profile not found for user: $userId');
+    }
+
+    // Update the goals
+    existingDto.weeklyWeightRecordGoal = weeklyWeightRecordGoal;
+    existingDto.weeklySymptomRecordGoal = weeklySymptomRecordGoal;
+
+    // Save with transaction
+    await isar.writeTxn(() async {
+      await isar.userProfileDtos.put(existingDto);
+    });
+  }
 }

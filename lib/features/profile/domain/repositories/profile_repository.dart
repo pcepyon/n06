@@ -12,4 +12,21 @@ abstract class ProfileRepository {
 
   /// Watch user profile changes
   Stream<UserProfile> watchUserProfile(String userId);
+
+  /// Update weekly goals for recording targets
+  ///
+  /// Updates the weekly weight record goal and weekly symptom record goal
+  /// for the user profile. Goals must be in range 0-7.
+  ///
+  /// Parameters:
+  ///   - userId: Target user ID
+  ///   - weeklyWeightRecordGoal: Target number of weight logs per week (0-7)
+  ///   - weeklySymptomRecordGoal: Target number of symptom logs per week (0-7)
+  ///
+  /// Throws [Exception] if user profile not found
+  Future<void> updateWeeklyGoals(
+    String userId,
+    int weeklyWeightRecordGoal,
+    int weeklySymptomRecordGoal,
+  );
 }
