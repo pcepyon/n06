@@ -5,6 +5,7 @@ abstract class TrackingRepository {
   // 체중 기록
   Future<void> saveWeightLog(WeightLog log);
   Future<WeightLog?> getWeightLog(String userId, DateTime logDate);
+  Future<WeightLog?> getWeightLogById(String id);
   Future<List<WeightLog>> getWeightLogs(
     String userId, {
     DateTime? startDate,
@@ -12,6 +13,7 @@ abstract class TrackingRepository {
   });
   Future<void> deleteWeightLog(String id);
   Future<void> updateWeightLog(String id, double newWeight);
+  Future<void> updateWeightLogWithDate(String id, double newWeight, DateTime newDate);
   Stream<List<WeightLog>> watchWeightLogs(String userId);
 
   // 증상 기록

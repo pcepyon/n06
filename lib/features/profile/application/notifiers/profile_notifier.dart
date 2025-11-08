@@ -1,7 +1,10 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/profile/domain/repositories/profile_repository.dart';
+import 'package:n06/features/profile/domain/usecases/update_profile_usecase.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
+import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';
+import 'package:n06/features/tracking/application/providers.dart';
 
 part 'profile_notifier.g.dart';
 
@@ -40,12 +43,24 @@ class ProfileNotifier extends _$ProfileNotifier {
     });
   }
 
-  /// Update user profile
+  /// Update user profile using UpdateProfileUseCase
+  ///
+  /// Also invalidates dashboard notifier to refresh dashboard data
   Future<void> updateProfile(UserProfile profile) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final repository = ref.read(profileRepositoryProvider);
-      await repository.saveUserProfile(profile);
+      final trackingRepository = ref.read(trackingRepositoryProvider);
+      final useCase = UpdateProfileUseCase(
+        profileRepository: repository,
+        trackingRepository: trackingRepository,
+      );
+
+      await useCase.execute(profile);
+
+      // Invalidate dashboard to refresh dashboard data
+      ref.invalidate(dashboardNotifierProvider);
+
       return profile;
     });
   }

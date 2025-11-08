@@ -90,6 +90,27 @@ class IsarTrackingRepository implements TrackingRepository {
   }
 
   @override
+  Future<WeightLog?> getWeightLogById(String id) async {
+    final weightLogId = int.tryParse(id);
+    if (weightLogId == null) return null;
+    final dto = await _isar.weightLogDtos.get(weightLogId);
+    return dto?.toEntity();
+  }
+
+  @override
+  Future<void> updateWeightLogWithDate(String id, double newWeight, DateTime newDate) async {
+    final weightLogId = int.tryParse(id);
+    if (weightLogId != null) {
+      final dto = await _isar.weightLogDtos.get(weightLogId);
+      if (dto != null) {
+        dto.weightKg = newWeight;
+        dto.logDate = newDate;
+        await _isar.writeTxn(() => _isar.weightLogDtos.put(dto));
+      }
+    }
+  }
+
+  @override
   Stream<List<WeightLog>> watchWeightLogs(String userId) {
     return _isar.weightLogDtos
         .filter()

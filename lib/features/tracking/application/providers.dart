@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/features/tracking/application/notifiers/emergency_check_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart';
+import 'package:n06/features/tracking/application/notifiers/weight_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/usecases/update_dosage_plan_usecase.dart';
 import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
 import 'package:n06/features/tracking/domain/repositories/emergency_check_repository.dart';
@@ -31,6 +32,11 @@ final trackingRepositoryProvider = Provider<TrackingRepository>((ref) {
 final emergencyCheckRepositoryProvider = Provider<EmergencyCheckRepository>((ref) {
   throw UnimplementedError(
       'emergencyCheckRepositoryProvider must be provided by app initialization');
+});
+
+final auditRepositoryProvider = Provider((ref) {
+  throw UnimplementedError(
+      'auditRepositoryProvider must be provided by app initialization');
 });
 
 // UseCase Providers
@@ -116,4 +122,9 @@ final trackingNotifierProvider =
 final emergencyCheckNotifierProvider =
     AsyncNotifierProvider.autoDispose<EmergencyCheckNotifier, List<EmergencySymptomCheck>>(
   () => EmergencyCheckNotifier(),
+);
+
+// UF-011: Weight Record Edit Notifier Provider
+final weightRecordEditNotifierProvider = AsyncNotifierProvider<WeightRecordEditNotifier, void>(
+  () => WeightRecordEditNotifier(),
 );
