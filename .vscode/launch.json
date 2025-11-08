@@ -1,0 +1,105 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "macOS (Debug)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "debugConsole",
+      "deviceId": "macos",
+      "toolArgs": ["--start-paused"]
+    },
+    {
+      "name": "macOS (Release)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "debugConsole",
+      "deviceId": "macos",
+      "flutterMode": "release"
+    },
+    {
+      "name": "macOS (Profile)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "debugConsole",
+      "deviceId": "macos",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "Android (Debug)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "debugConsole",
+      "deviceId": "android",
+      "toolArgs": ["--start-paused"]
+    },
+    {
+      "name": "Android (Release)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "debugConsole",
+      "deviceId": "android",
+      "flutterMode": "release"
+    },
+    {
+      "name": "Android (Profile)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "debugConsole",
+      "deviceId": "android",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "Tests (Unit & Widget)",
+      "request": "launch",
+      "type": "dart",
+      "program": "test",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "debugConsole"
+    },
+    {
+      "name": "Tests (Specific File)",
+      "request": "launch",
+      "type": "dart",
+      "program": "${file}",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "debugConsole"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Tests + macOS App",
+      "configurations": [
+        "Tests (Unit & Widget)",
+        "macOS (Debug)"
+      ]
+    },
+    {
+      "name": "Tests + Android App",
+      "configurations": [
+        "Tests (Unit & Widget)",
+        "Android (Debug)"
+      ]
+    }
+  ]
+}

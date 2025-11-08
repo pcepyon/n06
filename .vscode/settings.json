@@ -1,0 +1,18 @@
+{
+  "[dart]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "Dart-Code.dart-code"
+  },
+  "dart.openDevTools": "always",
+  "dart.devToolsLocation": "external",
+  "dart.devToolsTheme": "dark",
+  "dart.previewFlutterUiGuides": true,
+  "dart.lineLength": 100,
+  "dart.checkForSdkUpdates": true,
+  "search.exclude": {
+    "**/.git": true,
+    "**/.dart_tool": true,
+    "**/build": true,
+    "**/.idea": true
+  }
+}
