@@ -30,6 +30,24 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Kakao SDK -->
+        <meta-data
+            android:name="com.kakao.sdk.AppKey"
+            android:value="32dfc3999b53af153dbcefa7014093bc" />
+
+        <!-- Kakao Login Redirect -->
+        <activity
+            android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:host="oauth"
+                      android:scheme="kakao32dfc3999b53af153dbcefa7014093bc" />
+            </intent-filter>
+        </activity>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

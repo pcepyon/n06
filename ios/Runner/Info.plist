@@ -45,5 +45,37 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Kakao & Naver URL Schemes -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<!-- Kakao -->
+		<string>kakaokompassauth</string>
+		<string>kakaolink</string>
+		<!-- Naver -->
+		<string>naversearchapp</string>
+		<string>naversearchthirdlogin</string>
+	</array>
+	<!-- Custom URL Schemes -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<!-- Kakao -->
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>kakao32dfc3999b53af153dbcefa7014093bc</string>
+			</array>
+		</dict>
+		<!-- Naver (Bundle ID 기반) -->
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.glp1.n06</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

@@ -29,8 +29,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Kakao SDK
-  // Replace with your actual Kakao Native App Key
-  KakaoSdk.init(nativeAppKey: 'YOUR_KAKAO_NATIVE_APP_KEY');
+  KakaoSdk.init(nativeAppKey: '32dfc3999b53af153dbcefa7014093bc');
 
   // Initialize Isar with all required collection schemas
   final isar = await Isar.open(
