@@ -1,0 +1,238 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
+import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
+import 'package:n06/features/settings/presentation/widgets/settings_menu_item.dart';
+
+/// Settings screen for user to manage profile, dose plan, and notifications
+class SettingsScreen extends ConsumerWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authNotifierProvider);
+
+    // Business Rule 1: Check if user is authenticated
+    return authState.when(
+      loading: () => Scaffold(
+        appBar: AppBar(
+          title: const Text('설정'),
+          elevation: 0,
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (error, stackTrace) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (context.mounted) {
+            context.go('/login');
+          }
+        });
+        return const SizedBox.shrink();
+      },
+      data: (user) {
+        if (user == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              context.go('/login');
+            }
+          });
+          return const SizedBox.shrink();
+        }
+
+        final profileState = ref.watch(profileNotifierProvider);
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('설정'),
+            elevation: 0,
+          ),
+          body: profileState.when(
+            loading: () => const Center(
+              child: CircularProgressIndicator(),
+            ),
+            error: (error, stackTrace) => _buildError(context, ref, error),
+            data: (profile) {
+              if (profile == null) {
+                return _buildError(context, ref, Exception('Profile not found'));
+              }
+              return _buildSettings(context, ref, profile);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  /// Build settings menu UI
+  Widget _buildSettings(
+    BuildContext context,
+    WidgetRef ref,
+    dynamic profile,
+  ) {
+    final userName = profile.userId;
+
+    return ListView(
+      children: [
+        // User information section
+        Container(
+          padding: const EdgeInsets.all(16.0),
+          color: Colors.grey[50],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '사용자 정보',
+                style: Theme.of(context).textTheme.titleSmall,
+                textAlign: TextAlign.left,
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                title: const Text('이름'),
+                subtitle: Text(userName),
+                contentPadding: EdgeInsets.zero,
+              ),
+              ListTile(
+                title: const Text('목표 체중'),
+                subtitle: Text('${profile.targetWeight.value}kg'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Settings menu items
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '설정',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 16),
+              // Business Rule 3: Clear labels and descriptions
+              SettingsMenuItem(
+                title: '프로필 및 목표 수정',
+                subtitle: '이름과 목표 체중을 변경할 수 있습니다',
+                onTap: () => context.push('/profile/edit'),
+              ),
+              SettingsMenuItem(
+                title: '투여 계획 수정',
+                subtitle: '약물 투여 계획을 변경할 수 있습니다',
+                onTap: () => context.push('/dose-plan/edit'),
+              ),
+              SettingsMenuItem(
+                title: '주간 기록 목표 조정',
+                subtitle: '주간 체중 및 증상 기록 목표를 설정합니다',
+                onTap: () => context.push('/weekly-goal/edit'),
+              ),
+              SettingsMenuItem(
+                title: '푸시 알림 설정',
+                subtitle: '알림 시간과 방식을 설정합니다',
+                onTap: () => context.push('/notification/settings'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 32),
+
+        // Divider
+        Divider(
+          height: 1,
+          color: Colors.grey[300],
+        ),
+        const SizedBox(height: 24),
+
+        // Business Rule 4: Logout at bottom
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: SettingsMenuItem(
+            title: '로그아웃',
+            subtitle: '앱에서 로그아웃합니다',
+            onTap: () => _handleLogout(context, ref),
+          ),
+        ),
+        const SizedBox(height: 32),
+      ],
+    );
+  }
+
+  /// Build error UI with retry option
+  Widget _buildError(BuildContext context, WidgetRef ref, Object error) {
+    // Edge Case 1: Check for session expired
+    final isSessionExpired = error.toString().contains('Unauthorized') ||
+        error.toString().contains('401') ||
+        error.toString().contains('session');
+
+    if (isSessionExpired) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.go('/login');
+      });
+      return const SizedBox.shrink();
+    }
+
+    // Edge Case 2: Network error with retry option
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 60,
+              color: Colors.red[300],
+            ),
+            const SizedBox(height: 16),
+            const Text('프로필 정보를 불러올 수 없습니다'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                final authState = ref.read(authNotifierProvider);
+                if (authState.hasValue && authState.value != null) {
+                  ref
+                      .read(profileNotifierProvider.notifier)
+                      .loadProfile(authState.value!.id);
+                }
+              },
+              child: const Text('다시 시도'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Handle logout with confirmation dialog
+  /// Business Rule 5: Confirmation step needed
+  Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('로그아웃 하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await ref.read(authNotifierProvider.notifier).logout();
+      if (context.mounted) {
+        context.go('/login');
+      }
+    }
+  }
+}
