@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:isar/isar.dart';
 import 'package:n06/core/services/secure_storage_service.dart';
@@ -56,16 +58,49 @@ class IsarAuthRepository implements AuthRepository {
     required bool agreedToTerms,
     required bool agreedToPrivacy,
   }) async {
+    if (kDebugMode) {
+      developer.log(
+        '📱 loginWithKakao called in repository',
+        name: 'IsarAuthRepository',
+      );
+    }
+
     return await _retryOnNetworkError(() async {
+      if (kDebugMode) {
+        developer.log('1️⃣ Starting Kakao datasource login...', name: 'IsarAuthRepository');
+      }
+
       // 1. DataSource에서 로그인
       final token = await _kakaoDataSource.login();
 
+      if (kDebugMode) {
+        developer.log(
+          '✅ Token received (expires: ${token.expiresAt})',
+          name: 'IsarAuthRepository',
+        );
+      }
+
       // 2. 토큰 저장
+      if (kDebugMode) {
+        developer.log('2️⃣ Saving tokens to secure storage...', name: 'IsarAuthRepository');
+      }
+
       await _secureStorage.saveAccessToken(token.accessToken, token.expiresAt);
       await _secureStorage.saveRefreshToken(token.refreshToken!);
 
       // 3. 사용자 정보 가져오기
+      if (kDebugMode) {
+        developer.log('3️⃣ Fetching user info...', name: 'IsarAuthRepository');
+      }
+
       final kakaoUser = await _kakaoDataSource.getUser();
+
+      if (kDebugMode) {
+        developer.log(
+          '✅ User info received (id: ${kakaoUser.id})',
+          name: 'IsarAuthRepository',
+        );
+      }
 
       // 4. Domain Entity로 변환
       final user = User(
@@ -79,16 +114,21 @@ class IsarAuthRepository implements AuthRepository {
       );
 
       // 5. Isar에 저장
+      if (kDebugMode) {
+        developer.log('4️⃣ Saving user to Isar...', name: 'IsarAuthRepository');
+      }
+
       await _saveUserToIsar(user);
       await _saveConsentToIsar(user.id, agreedToTerms, agreedToPrivacy);
 
-      return user;
-    }, shouldRetry: (error) {
-      // PlatformException CANCELED는 재시도하지 않음
-      if (error is PlatformException && error.code == 'CANCELED') {
-        return false;
+      if (kDebugMode) {
+        developer.log(
+          '✅ Login completed successfully (user: ${user.id})',
+          name: 'IsarAuthRepository',
+        );
       }
-      return true;
+
+      return user;
     });
   }
 
@@ -118,14 +158,17 @@ class IsarAuthRepository implements AuthRepository {
 
       // 4. 사용자 정보 가져오기 (result.account 사용)
       final account = result.account;
+      if (account == null) {
+        throw Exception('Failed to get Naver account information');
+      }
 
       // 5. Domain Entity로 변환
       final user = User(
-        id: account.id,
+        id: account.id ?? '',
         oauthProvider: 'naver',
-        oauthUserId: account.id,
-        name: account.name,
-        email: account.email,
+        oauthUserId: account.id ?? '',
+        name: account.name ?? '',
+        email: account.email ?? '',
         profileImageUrl: account.profileImage,
         lastLoginAt: DateTime.now(),
       );
@@ -150,7 +193,14 @@ class IsarAuthRepository implements AuthRepository {
       }
     } catch (error) {
       // 네트워크 오류 무시
-      print('Logout network error ignored: $error');
+      if (kDebugMode) {
+        developer.log(
+          'Logout network error ignored (local cleanup will still proceed)',
+          name: 'IsarAuthRepository',
+          error: error,
+          level: 900,
+        );
+      }
     } finally {
       // 로컬 토큰은 반드시 삭제
       await _secureStorage.deleteAllTokens();
@@ -239,23 +289,84 @@ class IsarAuthRepository implements AuthRepository {
     for (int i = 0; i < maxRetries; i++) {
       try {
         return await operation();
-      } catch (error) {
+      } catch (error, stackTrace) {
+        if (kDebugMode) {
+          developer.log(
+            'Retry attempt ${i + 1}/$maxRetries failed',
+            name: 'IsarAuthRepository',
+            error: error,
+            stackTrace: stackTrace,
+            level: 900,
+          );
+        }
+
         // PlatformException CANCELED는 즉시 전파
         if (error is PlatformException && error.code == 'CANCELED') {
+          if (kDebugMode) {
+            developer.log(
+              '🚫 User cancelled - not retrying',
+              name: 'IsarAuthRepository',
+              error: error,
+              level: 1000,
+            );
+          }
           throw OAuthCancelledException('User cancelled OAuth login');
+        }
+
+        // MissingPluginException은 플랫폼 설정 문제 - 재시도 불가
+        if (error.toString().contains('MissingPluginException')) {
+          if (kDebugMode) {
+            developer.log(
+              '❌ CRITICAL: Kakao SDK not configured for macOS',
+              name: 'IsarAuthRepository',
+              error: error,
+              stackTrace: stackTrace,
+              level: 1000,
+            );
+            developer.log(
+              'Please check: https://github.com/kakao/kakao_flutter_sdk',
+              name: 'IsarAuthRepository',
+              level: 1000,
+            );
+          }
+          rethrow;
         }
 
         // shouldRetry가 false를 반환하면 즉시 전파
         if (shouldRetry != null && !shouldRetry(error)) {
+          if (kDebugMode) {
+            developer.log(
+              '⛔ Retry not allowed for this error type',
+              name: 'IsarAuthRepository',
+              error: error,
+              level: 1000,
+            );
+          }
           rethrow;
         }
 
         // 마지막 재시도에서 실패하면 예외 발생
         if (i == maxRetries - 1) {
+          if (kDebugMode) {
+            developer.log(
+              '❌ Max retries exceeded',
+              name: 'IsarAuthRepository',
+              error: error,
+              stackTrace: stackTrace,
+              level: 1000,
+            );
+          }
           throw MaxRetriesExceededException('Max retries exceeded: $error');
         }
 
         // Exponential backoff
+        if (kDebugMode) {
+          developer.log(
+            '🔄 Retrying in ${_retryDelayMs * (i + 1)}ms...',
+            name: 'IsarAuthRepository',
+            level: 900,
+          );
+        }
         await Future.delayed(Duration(milliseconds: _retryDelayMs * (i + 1)));
       }
     }

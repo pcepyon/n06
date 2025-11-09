@@ -1,4 +1,10 @@
+import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:flutter_naver_login/flutter_naver_login.dart';
+import 'package:flutter_naver_login/interface/types/naver_token.dart';
+import 'package:flutter_naver_login/interface/types/naver_account_result.dart';
+import 'package:flutter_naver_login/interface/types/naver_login_result.dart';
+import 'package:flutter_naver_login/interface/types/naver_login_status.dart';
 
 /// Data source for Naver OAuth 2.0 authentication.
 ///
@@ -34,7 +40,14 @@ class NaverAuthDataSource {
     } catch (error) {
       // SDK guarantees local token is deleted even if API fails
       // Log error but don't throw to ensure logout completes
-      print('Naver logout completed: $error');
+      if (kDebugMode) {
+        developer.log(
+          'Naver logout completed with error (local token still deleted)',
+          name: 'NaverAuthDataSource',
+          error: error,
+          level: 900,
+        );
+      }
     }
   }
 
@@ -46,16 +59,16 @@ class NaverAuthDataSource {
   /// Throws:
   /// - [Exception] if not authenticated or API call fails
   Future<NaverAccountResult> getUser() async {
-    return await FlutterNaverLogin.currentAccount();
+    return await FlutterNaverLogin.getCurrentAccount();
   }
 
   /// Gets the current access token and validates it.
   ///
   /// Throws:
   /// - [Exception] if token is expired or invalid
-  Future<NaverAccessToken> getCurrentToken() async {
-    final NaverAccessToken token =
-        await FlutterNaverLogin.currentAccessToken;
+  Future<NaverToken> getCurrentToken() async {
+    final NaverToken token =
+        await FlutterNaverLogin.getCurrentAccessToken();
 
     if (!token.isValid()) {
       throw Exception('Naver token expired');

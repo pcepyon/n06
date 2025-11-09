@@ -127,7 +127,7 @@ class LocalNotificationScheduler implements NotificationScheduler {
         '오늘은 투여일입니다',
         tz.TZDateTime.from(notificationDateTime, tz.local),
         notificationDetails,
-        androidAllowWhileIdle: true,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
