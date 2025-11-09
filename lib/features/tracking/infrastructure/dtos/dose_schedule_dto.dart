@@ -22,6 +22,9 @@ class DoseScheduleDto {
     scheduledDoseMg = entity.scheduledDoseMg;
     if (entity.notificationTime != null) {
       notificationTimeStr = entity.notificationTime.toString();
+    } else {
+      // 명시적으로 null 할당하여 late 필드 초기화
+      notificationTimeStr = null;
     }
     createdAt = entity.createdAt;
   }

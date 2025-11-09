@@ -18,13 +18,10 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(TAG, "🔍 [HEALTH CHECK] onCreate called")
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        Log.d(TAG, "🔍 [HEALTH CHECK] onNewIntent called with URI: ${intent.data}")
-
         // Set the intent so it's available for the engine
         setIntent(intent)
     }

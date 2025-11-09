@@ -25,79 +25,59 @@ class KakaoAuthDataSource {
   /// - [Exception] for other authentication failures
   Future<OAuthToken> login() async {
     try {
-      debugPrint('🔍 [HEALTH CHECK] KakaoAuthDataSource.login() called');
-      debugPrint('🔍 [HEALTH CHECK] Current thread: ${DateTime.now().millisecondsSinceEpoch}');
       if (kDebugMode) {
         developer.log('🚀 Starting Kakao login...', name: 'KakaoAuthDataSource');
       }
 
       // Check if we already have a valid token
       if (await AuthApi.instance.hasToken()) {
-        debugPrint('🔍 [HEALTH CHECK] Existing token found, checking validity...');
         try {
           final tokenInfo = await UserApi.instance.accessTokenInfo();
-          debugPrint('🔍 [HEALTH CHECK] Token is still valid, expires in ${tokenInfo.expiresIn} seconds');
           final token = await TokenManagerProvider.instance.manager.getToken();
           if (token != null) {
-            debugPrint('🔍 [HEALTH CHECK] Returning existing valid token');
             return token;
           }
         } catch (e) {
-          debugPrint('🔍 [HEALTH CHECK] Existing token is invalid: $e');
+          // Token is invalid, continue to login
         }
       }
 
       if (await isKakaoTalkInstalled()) {
-        debugPrint('🔍 [HEALTH CHECK] KakaoTalk is installed');
         if (kDebugMode) {
           developer.log('📱 KakaoTalk installed, trying KakaoTalk login', name: 'KakaoAuthDataSource');
         }
         try {
-          debugPrint('🔍 [HEALTH CHECK] About to call loginWithKakaoTalk()...');
-          debugPrint('🔍 [HEALTH CHECK] Creating Future for loginWithKakaoTalk()...');
-          final Future<OAuthToken> loginFuture = UserApi.instance.loginWithKakaoTalk();
-          debugPrint('🔍 [HEALTH CHECK] Future created, awaiting result...');
-
-          final token = await loginFuture.timeout(
+          final token = await UserApi.instance.loginWithKakaoTalk().timeout(
             const Duration(seconds: 120),
             onTimeout: () {
-              debugPrint('🔍 [HEALTH CHECK] ⚠️ LOGIN TIMEOUT after 120 seconds!');
               throw TimeoutException('KakaoTalk login timed out after 120 seconds');
             },
           );
 
-          debugPrint('🔍 [HEALTH CHECK] KakaoTalk login returned token: ${token.accessToken.substring(0, 20)}...');
           if (kDebugMode) {
             developer.log('✅ KakaoTalk login successful', name: 'KakaoAuthDataSource');
           }
           return token;
         } catch (error) {
-          debugPrint('🔍 [HEALTH CHECK] KakaoTalk login threw error: $error');
-          debugPrint('🔍 [HEALTH CHECK] Error type: ${error.runtimeType}');
           if (kDebugMode) {
             developer.log('⚠️ KakaoTalk login failed: $error', name: 'KakaoAuthDataSource');
           }
           // If user cancels, propagate the exception immediately
           if (error is PlatformException && error.code == 'CANCELED') {
-            debugPrint('🔍 [HEALTH CHECK] User canceled login, rethrowing');
             rethrow;
           }
 
           // For other errors (e.g., KakaoTalk login unavailable),
           // fallback to Account login
-          debugPrint('🔍 [HEALTH CHECK] Falling back to Account login');
           if (kDebugMode) {
             developer.log('🔄 Falling back to Account login', name: 'KakaoAuthDataSource');
           }
-          debugPrint('🔍 [HEALTH CHECK] Creating Future for loginWithKakaoAccount() fallback...');
           final token = await UserApi.instance.loginWithKakaoAccount().timeout(
             const Duration(seconds: 120),
             onTimeout: () {
-              debugPrint('🔍 [HEALTH CHECK] ⚠️ ACCOUNT LOGIN TIMEOUT after 120 seconds!');
               throw TimeoutException('Account login timed out after 120 seconds');
             },
           );
-          debugPrint('🔍 [HEALTH CHECK] Account login returned token: ${token.accessToken.substring(0, 20)}...');
           if (kDebugMode) {
             developer.log('✅ Account login successful', name: 'KakaoAuthDataSource');
           }
@@ -105,27 +85,17 @@ class KakaoAuthDataSource {
         }
       } else {
         // KakaoTalk not installed, use Account login directly
-        debugPrint('🔍 [HEALTH CHECK] KakaoTalk not installed, using Account login');
         if (kDebugMode) {
           developer.log('🌐 KakaoTalk not installed, using Account login', name: 'KakaoAuthDataSource');
         }
-        debugPrint('🔍 [HEALTH CHECK] About to call loginWithKakaoAccount()...');
-        debugPrint('🔍 [HEALTH CHECK] Creating Future for loginWithKakaoAccount()...');
 
-        final Future<OAuthToken> loginFuture = UserApi.instance.loginWithKakaoAccount();
-        debugPrint('🔍 [HEALTH CHECK] Future created, adding timeout...');
-
-        final token = await loginFuture.timeout(
+        final token = await UserApi.instance.loginWithKakaoAccount().timeout(
           const Duration(seconds: 120),
           onTimeout: () {
-            debugPrint('🔍 [HEALTH CHECK] ⚠️ ACCOUNT LOGIN TIMEOUT after 120 seconds!');
             throw TimeoutException('Account login timed out after 120 seconds');
           },
         );
 
-        debugPrint('🔍 [HEALTH CHECK] Account login completed successfully');
-        debugPrint('🔍 [HEALTH CHECK] Token received: ${token.accessToken.substring(0, 20)}...');
-        debugPrint('🔍 [HEALTH CHECK] Token expires at: ${token.expiresAt}');
         if (kDebugMode) {
           developer.log('✅ Account login successful', name: 'KakaoAuthDataSource');
           developer.log('Token details: expires at ${token.expiresAt}', name: 'KakaoAuthDataSource');
@@ -133,10 +103,6 @@ class KakaoAuthDataSource {
         return token;
       }
     } catch (error, stackTrace) {
-      debugPrint('🔍 [HEALTH CHECK] ❌ KakaoAuthDataSource.login() failed');
-      debugPrint('🔍 [HEALTH CHECK] Error: $error');
-      debugPrint('🔍 [HEALTH CHECK] Error type: ${error.runtimeType}');
-      debugPrint('🔍 [HEALTH CHECK] Stack trace: ${stackTrace.toString().split('\n').take(10).join('\n')}');
       if (kDebugMode) {
         developer.log(
           '❌ Kakao login failed',

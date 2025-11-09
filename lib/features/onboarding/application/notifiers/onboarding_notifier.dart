@@ -33,6 +33,8 @@ class OnboardingNotifier extends _$OnboardingNotifier {
   }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
+      print('🎯 [1/4] Onboarding: Start');
+
       final userRepo = ref.read(userRepositoryProvider);
       final profileRepo = ref.read(profileRepositoryProvider);
       final medicationRepo = ref.read(medicationRepositoryProvider);
@@ -100,9 +102,25 @@ class OnboardingNotifier extends _$OnboardingNotifier {
         await medicationRepo.saveDosagePlan(dosagePlan);
         await trackingRepo.saveWeightLog(weightLog);
 
+        print('🎯 [2/4] Onboarding: DosagePlan & Profile created');
+
         // 6. 투여 스케줄 생성 및 저장
         final schedules = generateSchedulesUseCase.execute(dosagePlan);
-        await scheduleRepo.saveAll(schedules);
+        print('🎯 [3/4] Onboarding: ${schedules.length} schedules generated');
+
+        try {
+          await scheduleRepo.saveAll(schedules);
+          print('🎯 [4/4] Onboarding: Complete ✅');
+        } catch (e, stackTrace) {
+          print('❌ [ERROR] Schedule save failed at step 4/4');
+          print('📊 Debug Info:');
+          print('  - Total schedules: ${schedules.length}');
+          for (int i = 0; i < (schedules.length > 2 ? 2 : schedules.length); i++) {
+            final s = schedules[i];
+            print('  Schedule[$i]: date=${s.scheduledDate}, dose=${s.scheduledDoseMg}mg, notification=${s.notificationTime}');
+          }
+          rethrow;
+        }
       });
     });
   }

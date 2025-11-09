@@ -88,7 +88,7 @@ class IsarAuthRepository implements AuthRepository {
 
       // 4. Domain Entity로 변환
       final user = User(
-        id: kakaoUser.id.toString(),
+        id: '',  // OAuth ID 대신 빈 문자열 사용 (Isar가 autoIncrement 할당)
         oauthProvider: 'kakao',
         oauthUserId: kakaoUser.id.toString(),
         name: kakaoUser.kakaoAccount?.profile?.nickname ?? '',
@@ -103,16 +103,22 @@ class IsarAuthRepository implements AuthRepository {
       }
 
       await _saveUserToIsar(user);
-      await _saveConsentToIsar(user.id, agreedToTerms, agreedToPrivacy);
+      await _saveConsentToIsar(user.oauthUserId, agreedToTerms, agreedToPrivacy);
+
+      // 6. DB에서 실제 Isar ID를 가진 User 조회
+      final savedUser = await getCurrentUser();
+      if (savedUser == null) {
+        throw Exception('Failed to retrieve saved user from database');
+      }
 
       if (kDebugMode) {
         developer.log(
-          '✅ Login completed successfully (user: ${user.id})',
+          '✅ Login completed successfully (user: ${savedUser.id})',
           name: 'IsarAuthRepository',
         );
       }
 
-      return user;
+      return savedUser;
     });
   }
 
@@ -148,7 +154,7 @@ class IsarAuthRepository implements AuthRepository {
 
       // 5. Domain Entity로 변환
       final user = User(
-        id: account.id ?? '',
+        id: '',  // OAuth ID 대신 빈 문자열 사용 (Isar가 autoIncrement 할당)
         oauthProvider: 'naver',
         oauthUserId: account.id ?? '',
         name: account.name ?? '',
@@ -159,9 +165,15 @@ class IsarAuthRepository implements AuthRepository {
 
       // 6. Isar에 저장
       await _saveUserToIsar(user);
-      await _saveConsentToIsar(user.id, agreedToTerms, agreedToPrivacy);
+      await _saveConsentToIsar(user.oauthUserId, agreedToTerms, agreedToPrivacy);
 
-      return user;
+      // 7. DB에서 실제 Isar ID를 가진 User 조회
+      final savedUser = await getCurrentUser();
+      if (savedUser == null) {
+        throw Exception('Failed to retrieve saved user from database');
+      }
+
+      return savedUser;
     });
   }
 
@@ -251,14 +263,15 @@ class IsarAuthRepository implements AuthRepository {
   }
 
   /// 동의 정보를 Isar에 저장
+  /// [oauthUserId] OAuth provider가 제공한 사용자 ID (not Isar ID)
   Future<void> _saveConsentToIsar(
-    String userId,
+    String oauthUserId,
     bool agreedToTerms,
     bool agreedToPrivacy,
   ) async {
     await _isar.writeTxn(() async {
       final consent = ConsentRecordDto()
-        ..userId = userId
+        ..userId = oauthUserId
         ..termsOfService = agreedToTerms
         ..privacyPolicy = agreedToPrivacy
         ..agreedAt = DateTime.now();

@@ -29,8 +29,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool get _canLogin => _agreedToTerms && _agreedToPrivacy && !_isLoading;
 
   Future<void> _handleKakaoLogin() async {
-    debugPrint('🔍 [LOGIN SCREEN] _handleKakaoLogin() called');
-
     if (kDebugMode) {
       developer.log(
         '🔐 Kakao login button clicked',
@@ -62,8 +60,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       final notifier = ref.read(authNotifierProvider.notifier);
 
-      debugPrint('🔍 [LOGIN SCREEN] Got notifier, calling loginWithKakao...');
-
       if (kDebugMode) {
         developer.log('🔄 Calling notifier.loginWithKakao()...', name: 'LoginScreen');
       }
@@ -73,8 +69,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         agreedToPrivacy: _agreedToPrivacy,
       );
 
-      debugPrint('🔍 [LOGIN SCREEN] loginWithKakao returned: $isFirstLogin');
-
       if (kDebugMode) {
         developer.log(
           '✅ Login completed. First login: $isFirstLogin',
@@ -83,19 +77,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
 
       if (!mounted) {
-        debugPrint('🔍 [LOGIN SCREEN] ⚠️ Widget unmounted after login');
         if (kDebugMode) {
           developer.log('⚠️ Widget unmounted', name: 'LoginScreen', level: 900);
         }
         return;
       }
 
-      debugPrint('🔍 [LOGIN SCREEN] Verifying auth state...');
-
       // Verify auth state before navigation
       final authState = ref.read(authNotifierProvider);
-
-      debugPrint('🔍 [LOGIN SCREEN] Auth state: $authState');
 
       // Check for errors first (before accessing value)
       if (authState.hasError) {
