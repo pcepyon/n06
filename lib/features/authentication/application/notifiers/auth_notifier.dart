@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/features/authentication/domain/entities/user.dart';
 import 'package:n06/features/authentication/domain/repositories/auth_repository.dart';
@@ -33,21 +35,107 @@ class AuthNotifier extends _$AuthNotifier {
     required bool agreedToTerms,
     required bool agreedToPrivacy,
   }) async {
+    if (kDebugMode) {
+      developer.log(
+        '🔐 loginWithKakao called (terms: $agreedToTerms, privacy: $agreedToPrivacy)',
+        name: 'AuthNotifier',
+      );
+    }
+
     state = const AsyncValue.loading();
+
+    if (kDebugMode) {
+      developer.log('⏳ State set to loading', name: 'AuthNotifier');
+    }
+
     state = await AsyncValue.guard(() async {
+      if (kDebugMode) {
+        developer.log('📞 Calling repository.loginWithKakao()...', name: 'AuthNotifier');
+      }
+
       final repository = ref.read(authRepositoryProvider);
       final user = await repository.loginWithKakao(
         agreedToTerms: agreedToTerms,
         agreedToPrivacy: agreedToPrivacy,
       );
+
+      if (kDebugMode) {
+        developer.log(
+          '✅ Repository returned user: ${user.id}',
+          name: 'AuthNotifier',
+        );
+      }
+
       return user;
     });
 
+    // Check if login succeeded
+    if (state.hasError) {
+      if (kDebugMode) {
+        state.whenOrNull(
+          error: (error, stack) {
+            developer.log(
+              '❌ Login failed with error',
+              name: 'AuthNotifier',
+              error: error,
+              stackTrace: stack,
+              level: 1000,
+            );
+          },
+        );
+      }
+      return false;
+    }
+
     // Return isFirstLogin status
     if (state.hasValue) {
+      final user = state.value;
+
+      // CRITICAL: User must not be null
+      if (user == null) {
+        if (kDebugMode) {
+          developer.log(
+            '❌ CRITICAL: Login succeeded but user is null!',
+            name: 'AuthNotifier',
+            level: 1000,
+          );
+        }
+        state = AsyncValue.error(
+          Exception('Login failed: User is null'),
+          StackTrace.current,
+        );
+        return false;
+      }
+
+      if (kDebugMode) {
+        developer.log(
+          '✅ User authenticated: ${user.id}',
+          name: 'AuthNotifier',
+        );
+        developer.log('🔍 Checking if first login...', name: 'AuthNotifier');
+      }
+
       final repository = ref.read(authRepositoryProvider);
-      return await repository.isFirstLogin();
+      final isFirstLogin = await repository.isFirstLogin();
+
+      if (kDebugMode) {
+        developer.log(
+          '✅ Is first login: $isFirstLogin',
+          name: 'AuthNotifier',
+        );
+      }
+
+      return isFirstLogin;
     }
+
+    if (kDebugMode) {
+      developer.log(
+        '⚠️ State has no value and no error',
+        name: 'AuthNotifier',
+        level: 900,
+      );
+    }
+
     return false;
   }
 

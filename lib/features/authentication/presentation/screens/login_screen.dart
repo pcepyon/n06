@@ -1,9 +1,10 @@
+import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/authentication/infrastructure/repositories/isar_auth_repository.dart';
-import 'package:n06/features/onboarding/presentation/screens/onboarding_screen.dart';
-import 'package:n06/features/dashboard/presentation/screens/home_dashboard_screen.dart';
 
 /// Login screen with social authentication options
 ///
@@ -28,48 +29,141 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool get _canLogin => _agreedToTerms && _agreedToPrivacy && !_isLoading;
 
   Future<void> _handleKakaoLogin() async {
-    if (!_canLogin) return;
+    if (kDebugMode) {
+      developer.log(
+        '🔐 Kakao login button clicked',
+        name: 'LoginScreen',
+      );
+      developer.log(
+        'Can login: $_canLogin (terms: $_agreedToTerms, privacy: $_agreedToPrivacy, loading: $_isLoading)',
+        name: 'LoginScreen',
+      );
+    }
+
+    if (!_canLogin) {
+      if (kDebugMode) {
+        developer.log(
+          '⚠️ Login blocked - conditions not met',
+          name: 'LoginScreen',
+          level: 900,
+        );
+      }
+      return;
+    }
 
     setState(() => _isLoading = true);
 
+    if (kDebugMode) {
+      developer.log('📱 Starting Kakao login...', name: 'LoginScreen');
+    }
+
     try {
       final notifier = ref.read(authNotifierProvider.notifier);
+
+      if (kDebugMode) {
+        developer.log('🔄 Calling notifier.loginWithKakao()...', name: 'LoginScreen');
+      }
+
       final isFirstLogin = await notifier.loginWithKakao(
         agreedToTerms: _agreedToTerms,
         agreedToPrivacy: _agreedToPrivacy,
       );
 
-      if (mounted) {
-        if (isFirstLogin) {
-          // Get the authenticated user's ID
-          final authState = ref.read(authNotifierProvider);
-          final userId = authState.when(
-            data: (user) => user?.id ?? '',
-            loading: () => '',
-            error: (_, __) => '',
-          );
+      if (kDebugMode) {
+        developer.log(
+          '✅ Login completed. First login: $isFirstLogin',
+          name: 'LoginScreen',
+        );
+      }
 
-          if (userId.isNotEmpty) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (_) => OnboardingScreen(
-                  userId: userId,
-                  onComplete: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const HomeDashboardScreen()),
-                    );
-                  },
-                ),
-              ),
-            );
-          }
-        } else {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const HomeDashboardScreen()),
+      if (!mounted) {
+        if (kDebugMode) {
+          developer.log('⚠️ Widget unmounted', name: 'LoginScreen', level: 900);
+        }
+        return;
+      }
+
+      // Verify auth state before navigation
+      final authState = ref.read(authNotifierProvider);
+
+      // Check for errors first (before accessing value)
+      if (authState.hasError) {
+        if (kDebugMode) {
+          authState.whenOrNull(
+            error: (error, stack) {
+              developer.log(
+                '❌ Auth state has error after login',
+                name: 'LoginScreen',
+                error: error,
+                stackTrace: stack,
+                level: 1000,
+              );
+            },
           );
         }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('로그인에 실패했습니다. 다시 시도해주세요.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
       }
-    } on OAuthCancelledException {
+
+      // Safe to access value now (no error)
+      final user = authState.valueOrNull;
+
+      if (user == null) {
+        if (kDebugMode) {
+          developer.log(
+            '❌ User is null after login',
+            name: 'LoginScreen',
+            level: 1000,
+          );
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('로그인 정보를 가져올 수 없습니다.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (kDebugMode) {
+        developer.log(
+          '✅ Auth state verified. User: ${user.id}',
+          name: 'LoginScreen',
+        );
+      }
+
+      if (mounted) {
+        if (isFirstLogin) {
+          if (kDebugMode) {
+            developer.log('🚀 Navigating to onboarding...', name: 'LoginScreen');
+          }
+          context.go('/onboarding', extra: user.id);
+        } else {
+          if (kDebugMode) {
+            developer.log('🏠 Navigating to home dashboard...', name: 'LoginScreen');
+          }
+          context.go('/home');
+        }
+      }
+    } on OAuthCancelledException catch (e, stack) {
+      if (kDebugMode) {
+        developer.log(
+          '🚫 OAuth cancelled by user',
+          name: 'LoginScreen',
+          error: e,
+          stackTrace: stack,
+          level: 900,
+        );
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -78,7 +172,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         );
       }
-    } on MaxRetriesExceededException {
+    } on MaxRetriesExceededException catch (e, stack) {
+      if (kDebugMode) {
+        developer.log(
+          '🌐 Network error - max retries exceeded',
+          name: 'LoginScreen',
+          error: e,
+          stackTrace: stack,
+          level: 1000,
+        );
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -92,7 +195,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      if (kDebugMode) {
+        developer.log(
+          '❌ Unexpected error during login',
+          name: 'LoginScreen',
+          error: e,
+          stackTrace: stack,
+          level: 1000,
+        );
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -104,6 +216,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
+        if (kDebugMode) {
+          developer.log('🏁 Login process completed', name: 'LoginScreen');
+        }
       }
     }
   }
@@ -120,34 +235,89 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         agreedToPrivacy: _agreedToPrivacy,
       );
 
+      if (kDebugMode) {
+        developer.log(
+          '✅ Login completed. First login: $isFirstLogin',
+          name: 'LoginScreen',
+        );
+      }
+
+      if (!mounted) {
+        if (kDebugMode) {
+          developer.log('⚠️ Widget unmounted', name: 'LoginScreen', level: 900);
+        }
+        return;
+      }
+
+      // Verify auth state before navigation
+      final authState = ref.read(authNotifierProvider);
+
+      // Check for errors first (before accessing value)
+      if (authState.hasError) {
+        if (kDebugMode) {
+          authState.whenOrNull(
+            error: (error, stack) {
+              developer.log(
+                '❌ Auth state has error after login',
+                name: 'LoginScreen',
+                error: error,
+                stackTrace: stack,
+                level: 1000,
+              );
+            },
+          );
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('로그인에 실패했습니다. 다시 시도해주세요.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Safe to access value now (no error)
+      final user = authState.valueOrNull;
+
+      if (user == null) {
+        if (kDebugMode) {
+          developer.log(
+            '❌ User is null after login',
+            name: 'LoginScreen',
+            level: 1000,
+          );
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('로그인 정보를 가져올 수 없습니다.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (kDebugMode) {
+        developer.log(
+          '✅ Auth state verified. User: ${user.id}',
+          name: 'LoginScreen',
+        );
+      }
+
       if (mounted) {
         if (isFirstLogin) {
-          // Get the authenticated user's ID
-          final authState = ref.read(authNotifierProvider);
-          final userId = authState.when(
-            data: (user) => user?.id ?? '',
-            loading: () => '',
-            error: (_, __) => '',
-          );
-
-          if (userId.isNotEmpty) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (_) => OnboardingScreen(
-                  userId: userId,
-                  onComplete: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const HomeDashboardScreen()),
-                    );
-                  },
-                ),
-              ),
-            );
+          if (kDebugMode) {
+            developer.log('🚀 Navigating to onboarding...', name: 'LoginScreen');
           }
+          context.go('/onboarding', extra: user.id);
         } else {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const HomeDashboardScreen()),
-          );
+          if (kDebugMode) {
+            developer.log('🏠 Navigating to home dashboard...', name: 'LoginScreen');
+          }
+          context.go('/home');
         }
       }
     } on OAuthCancelledException {

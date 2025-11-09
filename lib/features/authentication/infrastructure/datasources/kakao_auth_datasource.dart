@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 
@@ -20,22 +22,63 @@ class KakaoAuthDataSource {
   /// - [PlatformException] with code 'CANCELED' if user cancels (no retry needed)
   /// - [Exception] for other authentication failures
   Future<OAuthToken> login() async {
-    if (await isKakaoTalkInstalled()) {
-      try {
-        return await UserApi.instance.loginWithKakaoTalk();
-      } catch (error) {
-        // If user cancels, propagate the exception immediately
-        if (error is PlatformException && error.code == 'CANCELED') {
-          rethrow;
-        }
-
-        // For other errors (e.g., KakaoTalk login unavailable),
-        // fallback to Account login
-        return await UserApi.instance.loginWithKakaoAccount();
+    try {
+      if (kDebugMode) {
+        developer.log('🚀 Starting Kakao login...', name: 'KakaoAuthDataSource');
       }
-    } else {
-      // KakaoTalk not installed, use Account login directly
-      return await UserApi.instance.loginWithKakaoAccount();
+
+      if (await isKakaoTalkInstalled()) {
+        if (kDebugMode) {
+          developer.log('📱 KakaoTalk installed, trying KakaoTalk login', name: 'KakaoAuthDataSource');
+        }
+        try {
+          final token = await UserApi.instance.loginWithKakaoTalk();
+          if (kDebugMode) {
+            developer.log('✅ KakaoTalk login successful', name: 'KakaoAuthDataSource');
+          }
+          return token;
+        } catch (error) {
+          if (kDebugMode) {
+            developer.log('⚠️ KakaoTalk login failed: $error', name: 'KakaoAuthDataSource');
+          }
+          // If user cancels, propagate the exception immediately
+          if (error is PlatformException && error.code == 'CANCELED') {
+            rethrow;
+          }
+
+          // For other errors (e.g., KakaoTalk login unavailable),
+          // fallback to Account login
+          if (kDebugMode) {
+            developer.log('🔄 Falling back to Account login', name: 'KakaoAuthDataSource');
+          }
+          final token = await UserApi.instance.loginWithKakaoAccount();
+          if (kDebugMode) {
+            developer.log('✅ Account login successful', name: 'KakaoAuthDataSource');
+          }
+          return token;
+        }
+      } else {
+        // KakaoTalk not installed, use Account login directly
+        if (kDebugMode) {
+          developer.log('🌐 KakaoTalk not installed, using Account login', name: 'KakaoAuthDataSource');
+        }
+        final token = await UserApi.instance.loginWithKakaoAccount();
+        if (kDebugMode) {
+          developer.log('✅ Account login successful', name: 'KakaoAuthDataSource');
+        }
+        return token;
+      }
+    } catch (error, stackTrace) {
+      if (kDebugMode) {
+        developer.log(
+          '❌ Kakao login failed',
+          name: 'KakaoAuthDataSource',
+          error: error,
+          stackTrace: stackTrace,
+          level: 1000,
+        );
+      }
+      rethrow;
     }
   }
 
@@ -46,7 +89,30 @@ class KakaoAuthDataSource {
   /// Throws:
   /// - [Exception] if not authenticated or API call fails
   Future<User> getUser() async {
-    return await UserApi.instance.me();
+    try {
+      if (kDebugMode) {
+        developer.log('🔍 Calling UserApi.instance.me()...', name: 'KakaoAuthDataSource');
+      }
+      final user = await UserApi.instance.me();
+      if (kDebugMode) {
+        developer.log(
+          '✅ User info fetched successfully: id=${user.id}, nickname=${user.kakaoAccount?.profile?.nickname}',
+          name: 'KakaoAuthDataSource',
+        );
+      }
+      return user;
+    } catch (error, stackTrace) {
+      if (kDebugMode) {
+        developer.log(
+          '❌ Failed to fetch user info',
+          name: 'KakaoAuthDataSource',
+          error: error,
+          stackTrace: stackTrace,
+          level: 1000,
+        );
+      }
+      rethrow;
+    }
   }
 
   /// Logs out from Kakao.
@@ -59,7 +125,14 @@ class KakaoAuthDataSource {
     } catch (error) {
       // SDK guarantees local token is deleted even if API fails
       // Log error but don't throw to ensure logout completes
-      print('Kakao logout completed: $error');
+      if (kDebugMode) {
+        developer.log(
+          'Kakao logout completed with error (local token still deleted)',
+          name: 'KakaoAuthDataSource',
+          error: error,
+          level: 900,
+        );
+      }
     }
   }
 

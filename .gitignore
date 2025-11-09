@@ -99,6 +99,7 @@ patrol_cli.log
 **/ios/**/*.pbxuser
 **/ios/**/*.perspectivev3
 **/ios/**/Pods/
+**/ios/**/Podfile.lock
 **/ios/**/.symlinks/
 **/ios/**/profile
 **/ios/**/xcuserdata
@@ -130,6 +131,7 @@ patrol_cli.log
 **/android/**/GeneratedPluginRegistrant.java
 **/android/**/GeneratedPluginRegistrant.kt
 **/android/key.properties
+**/android/build/
 *.jks
 *.keystore
 

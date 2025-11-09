@@ -146,7 +146,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   cycleDays: _cycleDays,
                   initialDose: _initialDose,
                   escalationPlan: _escalationPlan,
-                  onComplete: widget.onComplete ?? () {},
+                  onComplete: widget.onComplete,
                 ),
               ],
             ),

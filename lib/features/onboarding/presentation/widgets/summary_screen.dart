@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:n06/features/onboarding/domain/entities/escalation_step.dart';
 import 'package:n06/features/onboarding/application/notifiers/onboarding_notifier.dart';
 
@@ -15,7 +16,7 @@ class SummaryScreen extends ConsumerWidget {
   final int cycleDays;
   final double initialDose;
   final List<EscalationStep>? escalationPlan;
-  final VoidCallback onComplete;
+  final VoidCallback? onComplete;
 
   const SummaryScreen({
     Key? key,
@@ -29,7 +30,7 @@ class SummaryScreen extends ConsumerWidget {
     required this.cycleDays,
     required this.initialDose,
     required this.escalationPlan,
-    required this.onComplete,
+    this.onComplete,
   }) : super(key: key);
 
   @override
@@ -130,8 +131,8 @@ class SummaryScreen extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    ref
+                  onPressed: () async {
+                    await ref
                         .read(onboardingNotifierProvider.notifier)
                         .saveOnboardingData(
                           userId: userId,
@@ -144,10 +145,15 @@ class SummaryScreen extends ConsumerWidget {
                           cycleDays: cycleDays,
                           initialDose: initialDose,
                           escalationPlan: escalationPlan,
-                        )
-                        .then((_) {
-                      onComplete();
-                    });
+                        );
+
+                    if (context.mounted) {
+                      if (onComplete != null) {
+                        onComplete!();
+                      } else {
+                        context.go('/home');
+                      }
+                    }
                   },
                   child: const Text('확인'),
                 ),

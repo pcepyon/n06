@@ -2,70 +2,90 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "macOS (Debug)",
+      "name": "Debug (Auto-select device)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
-      "args": [],
+      "args": ["--verbose"],
       "cwd": "${workspaceFolder}",
       "console": "debugConsole",
-      "deviceId": "macos",
-      "toolArgs": ["--start-paused"]
+      "toolArgs": ["--start-paused"],
+      "vmAdditionalArgs": [
+        "--enable-asserts",
+        "--verbose_logging"
+      ]
     },
     {
-      "name": "macOS (Release)",
+      "name": "Release (Auto-select device)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
       "args": [],
       "cwd": "${workspaceFolder}",
       "console": "debugConsole",
-      "deviceId": "macos",
       "flutterMode": "release"
     },
     {
-      "name": "macOS (Profile)",
+      "name": "Profile (Auto-select device)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
       "args": [],
       "cwd": "${workspaceFolder}",
       "console": "debugConsole",
-      "deviceId": "macos",
       "flutterMode": "profile"
     },
     {
-      "name": "Android (Debug)",
+      "name": "iOS Simulator (Debug)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
-      "args": [],
+      "args": ["--verbose"],
       "cwd": "${workspaceFolder}",
       "console": "debugConsole",
-      "deviceId": "android",
-      "toolArgs": ["--start-paused"]
+      "deviceId": "apple_ios_simulator",
+      "toolArgs": ["--start-paused"],
+      "vmAdditionalArgs": [
+        "--enable-asserts",
+        "--verbose_logging"
+      ]
     },
     {
-      "name": "Android (Release)",
+      "name": "iOS Simulator (Release)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
       "args": [],
       "cwd": "${workspaceFolder}",
       "console": "debugConsole",
-      "deviceId": "android",
+      "deviceId": "apple_ios_simulator",
       "flutterMode": "release"
     },
     {
-      "name": "Android (Profile)",
+      "name": "Android Emulator (Debug)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": ["--verbose"],
+      "cwd": "${workspaceFolder}",
+      "console": "debugConsole",
+      "preLaunchTask": "Launch Android Emulator",
+      "toolArgs": ["--start-paused"],
+      "vmAdditionalArgs": [
+        "--enable-asserts",
+        "--verbose_logging"
+      ]
+    },
+    {
+      "name": "Android Emulator (Release)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
       "args": [],
       "cwd": "${workspaceFolder}",
       "console": "debugConsole",
-      "deviceId": "android",
-      "flutterMode": "profile"
+      "preLaunchTask": "Launch Android Emulator",
+      "flutterMode": "release"
     },
     {
       "name": "Tests (Unit & Widget)",
@@ -84,22 +104,6 @@
       "args": [],
       "cwd": "${workspaceFolder}",
       "console": "debugConsole"
-    }
-  ],
-  "compounds": [
-    {
-      "name": "Tests + macOS App",
-      "configurations": [
-        "Tests (Unit & Widget)",
-        "macOS (Debug)"
-      ]
-    },
-    {
-      "name": "Tests + Android App",
-      "configurations": [
-        "Tests (Unit & Widget)",
-        "Android (Debug)"
-      ]
     }
   ]
 }

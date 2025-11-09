@@ -29,7 +29,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/onboarding',
       name: 'onboarding',
-      builder: (context, state) => const OnboardingScreen(),
+      builder: (context, state) {
+        final userId = state.extra as String?;
+        return OnboardingScreen(userId: userId);
+      },
     ),
 
     /// Home/Dashboard (F006)
