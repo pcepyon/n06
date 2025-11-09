@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/features/authentication/domain/entities/user.dart';
 import 'package:n06/features/authentication/domain/repositories/auth_repository.dart';
-import 'package:n06/features/authentication/infrastructure/repositories/isar_auth_repository.dart';
 import 'package:n06/features/authentication/application/providers.dart';
 
 part 'auth_notifier.g.dart';

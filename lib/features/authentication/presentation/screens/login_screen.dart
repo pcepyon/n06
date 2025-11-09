@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
-import 'package:n06/features/authentication/infrastructure/repositories/isar_auth_repository.dart';
+import 'package:n06/features/authentication/domain/exceptions/auth_exceptions.dart';
 
 /// Login screen with social authentication options
 ///

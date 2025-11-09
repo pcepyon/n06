@@ -4,29 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:isar/isar.dart';
 import 'package:n06/core/services/secure_storage_service.dart';
 import 'package:n06/features/authentication/domain/entities/user.dart';
+import 'package:n06/features/authentication/domain/exceptions/auth_exceptions.dart';
 import 'package:n06/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:n06/features/authentication/infrastructure/datasources/kakao_auth_datasource.dart';
 import 'package:n06/features/authentication/infrastructure/datasources/naver_auth_datasource.dart';
 import 'package:n06/features/authentication/infrastructure/dtos/consent_record_dto.dart';
 import 'package:n06/features/authentication/infrastructure/dtos/user_dto.dart';
-
-/// Custom exception for max retries exceeded
-class MaxRetriesExceededException implements Exception {
-  final String message;
-  MaxRetriesExceededException(this.message);
-
-  @override
-  String toString() => 'MaxRetriesExceededException: $message';
-}
-
-/// Custom exception for OAuth cancellation
-class OAuthCancelledException implements Exception {
-  final String message;
-  OAuthCancelledException(this.message);
-
-  @override
-  String toString() => 'OAuthCancelledException: $message';
-}
 
 /// Isar implementation of AuthRepository.
 ///
