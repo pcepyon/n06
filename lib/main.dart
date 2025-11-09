@@ -49,6 +49,22 @@ void main() async {
 void _setupErrorHandlers() {
   // Catch Flutter framework errors
   FlutterError.onError = (FlutterErrorDetails details) {
+    // Check if this is a Kakao OAuth callback GoRouter parsing error
+    final exception = details.exception;
+    if (exception is StateError &&
+        exception.message.contains('Origin is only applicable to schemes http and https')) {
+      // This is expected - Kakao SDK handles the callback, not GoRouter
+      debugPrint('🔍 [HEALTH CHECK] Kakao GoRouter parsing error (expected, ignoring)');
+      if (kDebugMode) {
+        developer.log(
+          '🔍 Kakao OAuth callback caused GoRouter parsing error (expected behavior)',
+          name: 'HealthCheck',
+        );
+      }
+      // Don't present this error to user
+      return;
+    }
+
     FlutterError.presentError(details);
     _logError(
       'Flutter Error',
@@ -112,11 +128,14 @@ Future<void> _initializeAndRunApp() async {
   }
 
   try {
-    // Initialize Kakao SDK
+    // Initialize Kakao SDK with debug logging enabled
     if (kDebugMode) {
-      developer.log('📱 Initializing Kakao SDK...', name: 'Main');
+      developer.log('📱 Initializing Kakao SDK with debug logging...', name: 'Main');
     }
-    KakaoSdk.init(nativeAppKey: '32dfc3999b53af153dbcefa7014093bc');
+    KakaoSdk.init(
+      nativeAppKey: '32dfc3999b53af153dbcefa7014093bc',
+      loggingEnabled: true,  // Enable detailed debug logging
+    );
 
     // Initialize Isar with all required collection schemas
     if (kDebugMode) {
@@ -205,8 +224,57 @@ class _ProviderLogger extends ProviderObserver {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    // Register as observer to intercept deep links
+    WidgetsBinding.instance.addObserver(this);
+
+    // Use debugPrint to ensure visibility
+    debugPrint('🔗 Deep link observer registered');
+    if (kDebugMode) {
+      developer.log('🔗 Deep link observer registered', name: 'MyApp');
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  Future<bool> didPushRouteInformation(RouteInformation routeInformation) async {
+    final uri = routeInformation.uri;
+
+    // Detect Kakao OAuth callbacks and handle them
+    if (uri.scheme.startsWith('kakao')) {
+      debugPrint('✅ Intercepting Kakao OAuth callback: $uri');
+      debugPrint('   Blocking GoRouter and allowing Kakao SDK to handle it');
+      if (kDebugMode) {
+        developer.log(
+          '✅ Kakao OAuth callback intercepted - blocking GoRouter',
+          name: 'MyApp',
+        );
+      }
+
+      // Return true to indicate we've handled it and prevent GoRouter from processing
+      // The Kakao SDK will still receive it through the native platform channel
+      return true;
+    }
+
+    // Let other routes be handled normally
+    debugPrint('📍 Allowing route: $uri');
+    return await super.didPushRouteInformation(routeInformation);
+  }
 
   @override
   Widget build(BuildContext context) {

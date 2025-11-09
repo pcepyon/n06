@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/features/authentication/domain/entities/user.dart';
 import 'package:n06/features/authentication/domain/repositories/auth_repository.dart';
@@ -14,7 +15,7 @@ part 'auth_notifier.g.dart';
 /// - Current user state
 /// - Token validation and refresh
 /// - First login detection
-@riverpod
+@Riverpod(keepAlive: true)  // 인증 상태는 글로벌 상태이므로 keepAlive 필수
 class AuthNotifier extends _$AuthNotifier {
   @override
   Future<User?> build() async {
@@ -34,6 +35,7 @@ class AuthNotifier extends _$AuthNotifier {
     required bool agreedToTerms,
     required bool agreedToPrivacy,
   }) async {
+    debugPrint('🔍 [HEALTH CHECK] AuthNotifier.loginWithKakao() called');
     if (kDebugMode) {
       developer.log(
         '🔐 loginWithKakao called (terms: $agreedToTerms, privacy: $agreedToPrivacy)',
@@ -41,23 +43,30 @@ class AuthNotifier extends _$AuthNotifier {
       );
     }
 
+    debugPrint('🔍 [HEALTH CHECK] Setting state to loading...');
     state = const AsyncValue.loading();
 
+    debugPrint('🔍 [HEALTH CHECK] State is now loading');
     if (kDebugMode) {
       developer.log('⏳ State set to loading', name: 'AuthNotifier');
     }
 
-    state = await AsyncValue.guard(() async {
+    // Use try-catch instead of AsyncValue.guard
+    try {
+      debugPrint('🔍 [HEALTH CHECK] Getting authRepositoryProvider...');
+      final repository = ref.read(authRepositoryProvider);
+
+      debugPrint('🔍 [HEALTH CHECK] Calling repository.loginWithKakao()...');
       if (kDebugMode) {
         developer.log('📞 Calling repository.loginWithKakao()...', name: 'AuthNotifier');
       }
 
-      final repository = ref.read(authRepositoryProvider);
       final user = await repository.loginWithKakao(
         agreedToTerms: agreedToTerms,
         agreedToPrivacy: agreedToPrivacy,
       );
 
+      debugPrint('🔍 [HEALTH CHECK] repository.loginWithKakao() returned user: ${user.id}');
       if (kDebugMode) {
         developer.log(
           '✅ Repository returned user: ${user.id}',
@@ -65,58 +74,20 @@ class AuthNotifier extends _$AuthNotifier {
         );
       }
 
-      return user;
-    });
+      // CRITICAL FIX: Explicitly set state with AsyncValue.data
+      state = AsyncValue.data(user);
+      debugPrint('🔍 [HEALTH CHECK] State updated with AsyncValue.data(user)');
 
-    // Check if login succeeded
-    if (state.hasError) {
-      if (kDebugMode) {
-        state.whenOrNull(
-          error: (error, stack) {
-            developer.log(
-              '❌ Login failed with error',
-              name: 'AuthNotifier',
-              error: error,
-              stackTrace: stack,
-              level: 1000,
-            );
-          },
-        );
-      }
-      return false;
-    }
+      // Debug: Check state immediately after setting
+      debugPrint('🔍 [HEALTH CHECK] Current state after update: $state');
+      debugPrint('🔍 [HEALTH CHECK] State hasValue: ${state.hasValue}');
+      debugPrint('🔍 [HEALTH CHECK] State value: ${state.valueOrNull}');
 
-    // Return isFirstLogin status
-    if (state.hasValue) {
-      final user = state.value;
-
-      // CRITICAL: User must not be null
-      if (user == null) {
-        if (kDebugMode) {
-          developer.log(
-            '❌ CRITICAL: Login succeeded but user is null!',
-            name: 'AuthNotifier',
-            level: 1000,
-          );
-        }
-        state = AsyncValue.error(
-          Exception('Login failed: User is null'),
-          StackTrace.current,
-        );
-        return false;
-      }
-
-      if (kDebugMode) {
-        developer.log(
-          '✅ User authenticated: ${user.id}',
-          name: 'AuthNotifier',
-        );
-        developer.log('🔍 Checking if first login...', name: 'AuthNotifier');
-      }
-
-      final repository = ref.read(authRepositoryProvider);
+      // Check if this is first login
+      debugPrint('🔍 [HEALTH CHECK] Checking if first login...');
       final isFirstLogin = await repository.isFirstLogin();
 
+      debugPrint('🔍 [HEALTH CHECK] isFirstLogin result: $isFirstLogin');
       if (kDebugMode) {
         developer.log(
           '✅ Is first login: $isFirstLogin',
@@ -124,18 +95,27 @@ class AuthNotifier extends _$AuthNotifier {
         );
       }
 
+      debugPrint('🔍 [HEALTH CHECK] AuthNotifier.loginWithKakao() returning: $isFirstLogin');
       return isFirstLogin;
-    }
 
-    if (kDebugMode) {
-      developer.log(
-        '⚠️ State has no value and no error',
-        name: 'AuthNotifier',
-        level: 900,
-      );
-    }
+    } catch (error, stackTrace) {
+      debugPrint('🔍 [HEALTH CHECK] ❌ Error occurred: $error');
 
-    return false;
+      // Set error state
+      state = AsyncValue.error(error, stackTrace);
+
+      if (kDebugMode) {
+        developer.log(
+          '❌ Login failed with error',
+          name: 'AuthNotifier',
+          error: error,
+          stackTrace: stackTrace,
+          level: 1000,
+        );
+      }
+
+      return false;
+    }
   }
 
   /// Login with Naver OAuth

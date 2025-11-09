@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/features/authentication/presentation/screens/login_screen.dart';
@@ -17,6 +19,25 @@ import 'package:n06/features/onboarding/presentation/screens/onboarding_screen.d
 /// GoRouter configuration for the application
 final appRouter = GoRouter(
   initialLocation: '/login',
+  // Handle errors from Kakao OAuth callbacks gracefully
+  onException: (context, state, router) {
+    final uri = state.uri;
+    if (kDebugMode) {
+      developer.log('GoRouter exception for: $uri', name: 'AppRouter');
+    }
+
+    // If it's a Kakao OAuth callback error, just ignore it
+    // The Kakao SDK will handle the callback
+    if (uri.scheme.startsWith('kakao')) {
+      if (kDebugMode) {
+        developer.log('Ignoring Kakao OAuth callback error in GoRouter', name: 'AppRouter');
+      }
+      return; // Don't navigate anywhere
+    }
+
+    // For other errors, go to login
+    router.go('/login');
+  },
   routes: [
     /// Authentication
     GoRoute(
@@ -118,12 +139,4 @@ final appRouter = GoRouter(
       builder: (context, state) => const DataSharingScreen(),
     ),
   ],
-
-  /// Error handling
-  errorBuilder: (context, state) => Scaffold(
-    appBar: AppBar(title: const Text('Error')),
-    body: Center(
-      child: Text('Page not found: ${state.uri}'),
-    ),
-  ),
 );
