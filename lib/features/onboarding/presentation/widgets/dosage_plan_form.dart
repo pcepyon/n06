@@ -6,11 +6,7 @@ class DosagePlanForm extends StatefulWidget {
   final Function(String, DateTime, int, double, List<EscalationStep>?) onDataChanged;
   final VoidCallback onNext;
 
-  const DosagePlanForm({
-    Key? key,
-    required this.onDataChanged,
-    required this.onNext,
-  }) : super(key: key);
+  const DosagePlanForm({super.key, required this.onDataChanged, required this.onNext});
 
   @override
   State<DosagePlanForm> createState() => _DosagePlanFormState();
@@ -22,7 +18,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
   late TextEditingController _initialDoseController;
 
   DateTime? _startDate;
-  List<EscalationStep> _escalationSteps = [];
+  final List<EscalationStep> _escalationSteps = [];
   String? _errorMessage;
 
   @override
@@ -72,10 +68,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
       builder: (context) => _EscalationStepDialog(
         onSave: (weeks, doseMg) {
           setState(() {
-            _escalationSteps.add(EscalationStep(
-              weeks: weeks,
-              doseMg: doseMg,
-            ));
+            _escalationSteps.add(EscalationStep(weeks: weeks, doseMg: doseMg));
           });
           Navigator.pop(context);
         },
@@ -97,18 +90,13 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '투여 계획 설정',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+            const Text('투여 계획 설정', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 32),
             TextField(
               controller: _medicationNameController,
               decoration: InputDecoration(
                 labelText: '약물명',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
             const SizedBox(height: 16),
@@ -135,9 +123,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: '투여 주기 (일)',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
             const SizedBox(height: 16),
@@ -146,9 +132,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
                 labelText: '초기 용량 (mg)',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
             const SizedBox(height: 24),
@@ -190,10 +174,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
                   border: Border.all(color: Colors.red),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  _errorMessage!,
-                  style: TextStyle(color: Colors.red.shade700),
-                ),
+                child: Text(_errorMessage!, style: TextStyle(color: Colors.red.shade700)),
               ),
             const SizedBox(height: 24),
             SizedBox(
@@ -214,8 +195,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
 class _EscalationStepDialog extends StatefulWidget {
   final Function(int, double) onSave;
 
-  const _EscalationStepDialog({Key? key, required this.onSave})
-      : super(key: key);
+  const _EscalationStepDialog({super.key, required this.onSave});
 
   @override
   State<_EscalationStepDialog> createState() => _EscalationStepDialogState();
@@ -249,25 +229,18 @@ class _EscalationStepDialogState extends State<_EscalationStepDialog> {
           TextField(
             controller: _weeksController,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: '주차',
-            ),
+            decoration: const InputDecoration(labelText: '주차'),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _doseController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: '용량 (mg)',
-            ),
+            decoration: const InputDecoration(labelText: '용량 (mg)'),
           ),
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('취소'),
-        ),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
         TextButton(
           onPressed: () {
             final weeks = int.tryParse(_weeksController.text);

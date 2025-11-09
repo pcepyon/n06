@@ -5,11 +5,7 @@ class BasicProfileForm extends StatefulWidget {
   final Function(String) onNameChanged;
   final VoidCallback onNext;
 
-  const BasicProfileForm({
-    Key? key,
-    required this.onNameChanged,
-    required this.onNext,
-  }) : super(key: key);
+  const BasicProfileForm({super.key, required this.onNameChanged, required this.onNext});
 
   @override
   State<BasicProfileForm> createState() => _BasicProfileFormState();
@@ -46,18 +42,13 @@ class _BasicProfileFormState extends State<BasicProfileForm> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            '이름을 입력해주세요',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
+          const Text('이름을 입력해주세요', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 32),
           TextField(
             controller: _nameController,
             decoration: InputDecoration(
               hintText: '성명',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               errorText: _nameController.text.isEmpty && _nameController.text.isNotEmpty
                   ? '이름을 입력해주세요'
                   : null,

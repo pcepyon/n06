@@ -19,7 +19,7 @@ class SummaryScreen extends ConsumerWidget {
   final VoidCallback? onComplete;
 
   const SummaryScreen({
-    Key? key,
+    super.key,
     required this.userId,
     required this.name,
     required this.currentWeight,
@@ -31,7 +31,7 @@ class SummaryScreen extends ConsumerWidget {
     required this.initialDose,
     required this.escalationPlan,
     this.onComplete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,10 +43,7 @@ class SummaryScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '정보 확인',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+            const Text('정보 확인', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 32),
             _SummarySection(
               title: '기본 정보',
@@ -62,17 +59,17 @@ class SummaryScreen extends ConsumerWidget {
               title: '투여 계획',
               items: [
                 ('약물명', medicationName),
-                ('시작일', '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}'),
+                (
+                  '시작일',
+                  '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}',
+                ),
                 ('주기', '$cycleDays일'),
                 ('초기 용량', '$initialDose mg'),
               ],
             ),
             if (escalationPlan != null && escalationPlan!.isNotEmpty) ...[
               const SizedBox(height: 24),
-              const Text(
-                '증량 계획',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
+              const Text('증량 계획', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
               ListView.builder(
                 shrinkWrap: true,
@@ -80,9 +77,7 @@ class SummaryScreen extends ConsumerWidget {
                 itemCount: escalationPlan!.length,
                 itemBuilder: (context, index) {
                   final step = escalationPlan![index];
-                  return ListTile(
-                    title: Text('${step.weeks}주차: ${step.doseMg} mg'),
-                  );
+                  return ListTile(title: Text('${step.weeks}주차: ${step.doseMg} mg'));
                 },
               ),
             ],
@@ -109,18 +104,20 @@ class SummaryScreen extends ConsumerWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        ref.read(onboardingNotifierProvider.notifier).retrySave(
-                          userId: userId,
-                          name: name,
-                          currentWeight: currentWeight,
-                          targetWeight: targetWeight,
-                          targetPeriodWeeks: targetPeriodWeeks,
-                          medicationName: medicationName,
-                          startDate: startDate,
-                          cycleDays: cycleDays,
-                          initialDose: initialDose,
-                          escalationPlan: escalationPlan,
-                        );
+                        ref
+                            .read(onboardingNotifierProvider.notifier)
+                            .retrySave(
+                              userId: userId,
+                              name: name,
+                              currentWeight: currentWeight,
+                              targetWeight: targetWeight,
+                              targetPeriodWeeks: targetPeriodWeeks,
+                              medicationName: medicationName,
+                              startDate: startDate,
+                              cycleDays: cycleDays,
+                              initialDose: initialDose,
+                              escalationPlan: escalationPlan,
+                            );
                       },
                       child: const Text('재시도'),
                     ),
@@ -170,21 +167,14 @@ class _SummarySection extends StatelessWidget {
   final String title;
   final List<(String, String)> items;
 
-  const _SummarySection({
-    Key? key,
-    required this.title,
-    required this.items,
-  }) : super(key: key);
+  const _SummarySection({super.key, required this.title, required this.items});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(12),

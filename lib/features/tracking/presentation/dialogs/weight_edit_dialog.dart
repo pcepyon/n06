@@ -10,11 +10,11 @@ class WeightEditDialog extends ConsumerStatefulWidget {
   final VoidCallback? onSaveSuccess;
 
   const WeightEditDialog({
-    Key? key,
+    super.key,
     required this.currentLog,
     required this.userId,
     this.onSaveSuccess,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<WeightEditDialog> createState() => _WeightEditDialogState();
@@ -31,9 +31,7 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
   @override
   void initState() {
     super.initState();
-    _weightController = TextEditingController(
-      text: widget.currentLog.weightKg.toString(),
-    );
+    _weightController = TextEditingController(text: widget.currentLog.weightKg.toString());
     _selectedDate = widget.currentLog.logDate;
     _validateUseCase = ValidateWeightEditUseCase();
   }
@@ -88,10 +86,7 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
   Future<void> _saveChanges() async {
     if (_errorMessage != null || _weightController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_errorMessage ?? '유효한 값을 입력해주세요'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(_errorMessage ?? '유효한 값을 입력해주세요'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -114,10 +109,7 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('체중 기록이 수정되었습니다'),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text('체중 기록이 수정되었습니다'), backgroundColor: Colors.green),
         );
         widget.onSaveSuccess?.call();
         Navigator.of(context).pop();
@@ -125,10 +117,7 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('저장 실패: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('저장 실패: ${e.toString()}'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -143,9 +132,7 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -153,27 +140,15 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '체중 수정',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              const Text('체중 수정', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 24),
               // 날짜 선택
-              Text(
-                '기록 날짜',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Text('기록 날짜', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               GestureDetector(
                 onTap: () => _selectDate(context),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade300),
                     borderRadius: BorderRadius.circular(8),
@@ -192,27 +167,17 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
               ),
               const SizedBox(height: 24),
               // 체중 입력
-              Text(
-                '체중 (kg)',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Text('체중 (kg)', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               TextField(
                 controller: _weightController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 onChanged: _validateWeight,
                 decoration: InputDecoration(
                   hintText: '체중을 입력해주세요',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                   errorText: _errorMessage,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 ),
               ),
               if (_warningMessage != null) ...[
@@ -226,10 +191,7 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
                   ),
                   child: Text(
                     '⚠ $_warningMessage',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.orange.shade800,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.orange.shade800),
                   ),
                 ),
               ],
@@ -244,16 +206,12 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: (_isLoading || _errorMessage != null)
-                        ? null
-                        : _saveChanges,
+                    onPressed: (_isLoading || _errorMessage != null) ? null : _saveChanges,
                     child: _isLoading
                         ? const SizedBox(
                             height: 16,
                             width: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Text('저장'),
                   ),

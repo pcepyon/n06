@@ -14,11 +14,10 @@ import 'package:n06/features/tracking/presentation/widgets/consultation_recommen
 /// BR3: 전문가 상담 권장 조건 (하나라도 선택 시 권장)
 /// BR4: 데이터 저장 규칙 (emergency_symptom_checks, symptom_logs)
 class EmergencyCheckScreen extends ConsumerStatefulWidget {
-  const EmergencyCheckScreen({Key? key}) : super(key: key);
+  const EmergencyCheckScreen({super.key});
 
   @override
-  ConsumerState<EmergencyCheckScreen> createState() =>
-      _EmergencyCheckScreenState();
+  ConsumerState<EmergencyCheckScreen> createState() => _EmergencyCheckScreenState();
 }
 
 class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
@@ -60,9 +59,7 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => ConsultationRecommendationDialog(
-          selectedSymptoms: selectedSymptoms,
-        ),
+        builder: (context) => ConsultationRecommendationDialog(selectedSymptoms: selectedSymptoms),
       ).then((_) {
         // 다이얼로그 닫힌 후 화면 종료
         Navigator.of(context).pop();
@@ -86,26 +83,18 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
 
     // Notifier를 통한 저장 (자동으로 부작용 기록도 생성)
     try {
-      await ref
-          .read(emergencyCheckNotifierProvider.notifier)
-          .saveEmergencyCheck(userId, check);
+      await ref.read(emergencyCheckNotifierProvider.notifier).saveEmergencyCheck(userId, check);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('증상이 기록되었습니다.'),
-            duration: Duration(seconds: 2),
-          ),
+          const SnackBar(content: Text('증상이 기록되었습니다.'), duration: Duration(seconds: 2)),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('기록 실패: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('기록 실패: $e'), backgroundColor: Colors.red));
       }
     }
   }
@@ -118,10 +107,7 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('증상 체크'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('증상 체크'), elevation: 0),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -134,19 +120,10 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
                 children: [
                   const Text(
                     '다음 증상 중 해당하는 것이 있나요?',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    '해당하는 증상을 선택해주세요.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
+                  Text('해당하는 증상을 선택해주세요.', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
                 ],
               ),
             ),
@@ -164,10 +141,7 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
                         selectedStates[index] = value ?? false;
                       });
                     },
-                    title: Text(
-                      emergencySymptoms[index],
-                      style: const TextStyle(fontSize: 14),
-                    ),
+                    title: Text(emergencySymptoms[index], style: const TextStyle(fontSize: 14)),
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 0),
                   ),
@@ -182,18 +156,13 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
         child: Row(
           children: [
             Expanded(
-              child: OutlinedButton(
-                onPressed: _handleNoSymptoms,
-                child: const Text('해당 없음'),
-              ),
+              child: OutlinedButton(onPressed: _handleNoSymptoms, child: const Text('해당 없음')),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: ElevatedButton(
                 // 증상이 선택되지 않으면 비활성화
-                onPressed: selectedStates.any((state) => state)
-                    ? _handleConfirm
-                    : null,
+                onPressed: selectedStates.any((state) => state) ? _handleConfirm : null,
                 child: const Text('확인'),
               ),
             ),

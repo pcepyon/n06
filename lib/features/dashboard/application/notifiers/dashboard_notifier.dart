@@ -76,14 +76,14 @@ class DashboardNotifier extends _$DashboardNotifier {
     // 프로필 조회
     final profile = await _profileRepository.getUserProfile(userId);
     if (profile == null) {
-      throw Exception('User profile not found');
+      throw Exception('User profile not found - Please complete onboarding first');
     }
 
     // 활성 투여 계획 조회
     final activePlan =
         await _medicationRepository.getActiveDosagePlan(userId);
     if (activePlan == null) {
-      throw Exception('Active dosage plan not found');
+      throw Exception('Active dosage plan not found - Please set up your medication plan');
     }
 
     // 체중 기록, 부작용 기록 조회

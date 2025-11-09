@@ -5,11 +5,7 @@ class TimePickerButton extends StatelessWidget {
   final TimeOfDay currentTime;
   final Function(TimeOfDay) onTimeSelected;
 
-  const TimePickerButton({
-    Key? key,
-    required this.currentTime,
-    required this.onTimeSelected,
-  }) : super(key: key);
+  const TimePickerButton({super.key, required this.currentTime, required this.onTimeSelected});
 
   String _formatTime(TimeOfDay time) {
     final hour = time.hour.toString().padLeft(2, '0');
@@ -24,19 +20,14 @@ class TimePickerButton extends StatelessWidget {
       child: OutlinedButton.icon(
         key: const Key('notification_time_button'),
         onPressed: () async {
-          final selectedTime = await showTimePicker(
-            context: context,
-            initialTime: currentTime,
-          );
+          final selectedTime = await showTimePicker(context: context, initialTime: currentTime);
           if (selectedTime != null) {
             onTimeSelected(selectedTime);
           }
         },
         icon: const Icon(Icons.access_time),
         label: Text(_formatTime(currentTime)),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-        ),
+        style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
       ),
     );
   }

@@ -4,24 +4,9 @@ import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/domain/usecases/validate_symptom_edit_usecase.dart';
 
-const List<String> _symptomOptions = [
-  '메스꺼움',
-  '구토',
-  '변비',
-  '설사',
-  '복통',
-  '두통',
-  '피로',
-];
+const List<String> _symptomOptions = ['메스꺼움', '구토', '변비', '설사', '복통', '두통', '피로'];
 
-const List<String> _contextTags = [
-  '기름진음식',
-  '과식',
-  '음주',
-  '공복',
-  '스트레스',
-  '수면부족',
-];
+const List<String> _contextTags = ['기름진음식', '과식', '음주', '공복', '스트레스', '수면부족'];
 
 class SymptomEditDialog extends ConsumerStatefulWidget {
   final SymptomLog currentLog;
@@ -29,11 +14,11 @@ class SymptomEditDialog extends ConsumerStatefulWidget {
   final VoidCallback? onSaveSuccess;
 
   const SymptomEditDialog({
-    Key? key,
+    super.key,
     required this.currentLog,
     required this.userId,
     this.onSaveSuccess,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<SymptomEditDialog> createState() => _SymptomEditDialogState();
@@ -96,10 +81,7 @@ class _SymptomEditDialogState extends ConsumerState<SymptomEditDialog> {
 
     if (_errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_errorMessage ?? '유효한 값을 입력해주세요'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(_errorMessage ?? '유효한 값을 입력해주세요'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -122,17 +104,11 @@ class _SymptomEditDialogState extends ConsumerState<SymptomEditDialog> {
       );
 
       final notifier = ref.read(symptomRecordEditNotifierProvider.notifier);
-      await notifier.updateSymptom(
-        recordId: widget.currentLog.id,
-        updatedLog: updatedLog,
-      );
+      await notifier.updateSymptom(recordId: widget.currentLog.id, updatedLog: updatedLog);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('증상 기록이 수정되었습니다'),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text('증상 기록이 수정되었습니다'), backgroundColor: Colors.green),
         );
         widget.onSaveSuccess?.call();
         Navigator.of(context).pop();
@@ -140,10 +116,7 @@ class _SymptomEditDialogState extends ConsumerState<SymptomEditDialog> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('저장 실패: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('저장 실패: ${e.toString()}'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -158,9 +131,7 @@ class _SymptomEditDialogState extends ConsumerState<SymptomEditDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -168,19 +139,10 @@ class _SymptomEditDialogState extends ConsumerState<SymptomEditDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '증상 수정',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              const Text('증상 수정', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 24),
               // 증상 선택
-              Text(
-                '증상',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Text('증상', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               DropdownButton<String>(
                 value: _selectedSymptom,
@@ -194,18 +156,12 @@ class _SymptomEditDialogState extends ConsumerState<SymptomEditDialog> {
                   }
                 },
                 items: _symptomOptions.map((String symptom) {
-                  return DropdownMenuItem<String>(
-                    value: symptom,
-                    child: Text(symptom),
-                  );
+                  return DropdownMenuItem<String>(value: symptom, child: Text(symptom));
                 }).toList(),
               ),
               const SizedBox(height: 24),
               // 심각도 슬라이더
-              Text(
-                '심각도: $_selectedSeverity/10',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Text('심각도: $_selectedSeverity/10', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               Slider(
                 value: _selectedSeverity.toDouble(),
@@ -221,10 +177,7 @@ class _SymptomEditDialogState extends ConsumerState<SymptomEditDialog> {
               ),
               const SizedBox(height: 24),
               // 컨텍스트 태그
-              Text(
-                '컨텍스트 (선택 사항)',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Text('컨텍스트 (선택 사항)', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -239,23 +192,15 @@ class _SymptomEditDialogState extends ConsumerState<SymptomEditDialog> {
               ),
               const SizedBox(height: 24),
               // 메모
-              Text(
-                '메모 (선택 사항)',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Text('메모 (선택 사항)', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               TextField(
                 controller: _noteController,
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: '추가 정보를 입력해주세요',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 ),
               ),
               if (_errorMessage != null) ...[
@@ -269,10 +214,7 @@ class _SymptomEditDialogState extends ConsumerState<SymptomEditDialog> {
                   ),
                   child: Text(
                     '❌ $_errorMessage',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.red.shade800,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.red.shade800),
                   ),
                 ),
               ],
@@ -287,16 +229,12 @@ class _SymptomEditDialogState extends ConsumerState<SymptomEditDialog> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: (_isLoading || _errorMessage != null)
-                        ? null
-                        : _saveChanges,
+                    onPressed: (_isLoading || _errorMessage != null) ? null : _saveChanges,
                     child: _isLoading
                         ? const SizedBox(
                             height: 16,
                             width: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Text('저장'),
                   ),

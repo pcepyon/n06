@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:n06/core/providers.dart';
 import 'package:n06/features/tracking/application/notifiers/emergency_check_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart';
@@ -19,76 +21,90 @@ import 'package:n06/features/tracking/domain/usecases/recalculate_dose_schedule_
 import 'package:n06/features/tracking/domain/usecases/schedule_generator_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/validate_dosage_plan_usecase.dart';
 import 'package:n06/features/tracking/infrastructure/services/notification_service.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/isar_tracking_repository.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/isar_medication_repository.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/isar_dosage_plan_repository.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/isar_dose_schedule_repository.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/isar_emergency_check_repository.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/isar_audit_repository.dart';
 
-// Repository Providers
-final medicationRepositoryProvider = Provider<MedicationRepository>((ref) {
-  // This should be provided by core/providers if Isar is available
-  // For now, we'll create a simple implementation
-  throw UnimplementedError(
-      'medicationRepositoryProvider must be provided by app initialization');
-});
+part 'providers.g.dart';
 
-final dosagePlanRepositoryProvider = Provider<DosagePlanRepository>((ref) {
-  // This should be provided by core/providers if Isar is available
-  // For now, we'll create a simple implementation
-  throw UnimplementedError(
-      'dosagePlanRepositoryProvider must be provided by app initialization');
-});
+// Repository Providers with Code Generation
+@riverpod
+MedicationRepository medicationRepository(MedicationRepositoryRef ref) {
+  final isar = ref.watch(isarProvider);
+  return IsarMedicationRepository(isar);
+}
 
-final doseScheduleRepositoryProvider = Provider<DoseScheduleRepository>((ref) {
-  // This should be provided by core/providers if Isar is available
-  // For now, we'll create a simple implementation
-  throw UnimplementedError(
-      'doseScheduleRepositoryProvider must be provided by app initialization');
-});
+@riverpod
+DosagePlanRepository dosagePlanRepository(DosagePlanRepositoryRef ref) {
+  final isar = ref.watch(isarProvider);
+  return IsarDosagePlanRepository(isar);
+}
 
-final trackingRepositoryProvider = Provider<TrackingRepository>((ref) {
-  throw UnimplementedError(
-      'trackingRepositoryProvider must be provided by app initialization');
-});
+@riverpod
+DoseScheduleRepository doseScheduleRepository(DoseScheduleRepositoryRef ref) {
+  final isar = ref.watch(isarProvider);
+  return IsarDoseScheduleRepository(isar);
+}
 
-final emergencyCheckRepositoryProvider = Provider<EmergencyCheckRepository>((ref) {
-  throw UnimplementedError(
-      'emergencyCheckRepositoryProvider must be provided by app initialization');
-});
+@riverpod
+TrackingRepository trackingRepository(TrackingRepositoryRef ref) {
+  final isar = ref.watch(isarProvider);
+  return IsarTrackingRepository(isar);
+}
 
-final auditRepositoryProvider = Provider((ref) {
-  throw UnimplementedError(
-      'auditRepositoryProvider must be provided by app initialization');
-});
+@riverpod
+EmergencyCheckRepository emergencyCheckRepository(EmergencyCheckRepositoryRef ref) {
+  final isar = ref.watch(isarProvider);
+  return IsarEmergencyCheckRepository(isar);
+}
 
-// UseCase Providers
-final scheduleGeneratorUseCaseProvider = Provider((ref) {
+@riverpod
+IsarAuditRepository auditRepository(AuditRepositoryRef ref) {
+  final isar = ref.watch(isarProvider);
+  return IsarAuditRepository(isar);
+}
+
+// UseCase Providers with Code Generation
+@riverpod
+ScheduleGeneratorUseCase scheduleGeneratorUseCase(ScheduleGeneratorUseCaseRef ref) {
   return ScheduleGeneratorUseCase();
-});
+}
 
-final injectionSiteRotationUseCaseProvider = Provider((ref) {
+@riverpod
+InjectionSiteRotationUseCase injectionSiteRotationUseCase(InjectionSiteRotationUseCaseRef ref) {
   return InjectionSiteRotationUseCase();
-});
+}
 
-final missedDoseAnalyzerUseCaseProvider = Provider((ref) {
+@riverpod
+MissedDoseAnalyzerUseCase missedDoseAnalyzerUseCase(MissedDoseAnalyzerUseCaseRef ref) {
   return MissedDoseAnalyzerUseCase();
-});
+}
 
 // UF-009: UpdateDosagePlan UseCase Providers
-final validateDosagePlanUseCaseProvider = Provider((ref) {
+@riverpod
+ValidateDosagePlanUseCase validateDosagePlanUseCase(ValidateDosagePlanUseCaseRef ref) {
   return ValidateDosagePlanUseCase();
-});
+}
 
-final recalculateDoseScheduleUseCaseProvider = Provider((ref) {
+@riverpod
+RecalculateDoseScheduleUseCase recalculateDoseScheduleUseCase(RecalculateDoseScheduleUseCaseRef ref) {
   return RecalculateDoseScheduleUseCase();
-});
+}
 
-final analyzePlanChangeImpactUseCaseProvider = Provider((ref) {
+@riverpod
+AnalyzePlanChangeImpactUseCase analyzePlanChangeImpactUseCase(AnalyzePlanChangeImpactUseCaseRef ref) {
   return AnalyzePlanChangeImpactUseCase();
-});
+}
 
-final updateDosagePlanUseCaseProvider = Provider((ref) {
+@riverpod
+UpdateDosagePlanUseCase updateDosagePlanUseCase(UpdateDosagePlanUseCaseRef ref) {
   final medicationRepository = ref.watch(medicationRepositoryProvider);
   final validateUseCase = ref.watch(validateDosagePlanUseCaseProvider);
   final analyzeImpactUseCase = ref.watch(analyzePlanChangeImpactUseCaseProvider);
-  final recalculateScheduleUseCase =
-      ref.watch(recalculateDoseScheduleUseCaseProvider);
+  final recalculateScheduleUseCase = ref.watch(recalculateDoseScheduleUseCaseProvider);
 
   return UpdateDosagePlanUseCase(
     medicationRepository: medicationRepository,
@@ -96,12 +112,13 @@ final updateDosagePlanUseCaseProvider = Provider((ref) {
     analyzeImpactUseCase: analyzeImpactUseCase,
     recalculateScheduleUseCase: recalculateScheduleUseCase,
   );
-});
+}
 
-// Service Providers
-final notificationServiceProvider = Provider((ref) {
+// Service Providers with Code Generation
+@riverpod
+NotificationService notificationService(NotificationServiceRef ref) {
   return NotificationService();
-});
+}
 
 // Notifier Provider - requires userId from auth state
 final medicationNotifierProvider = StateNotifierProvider.autoDispose<

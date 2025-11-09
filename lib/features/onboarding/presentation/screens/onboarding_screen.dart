@@ -10,11 +10,7 @@ class OnboardingScreen extends StatefulWidget {
   final String? userId;
   final VoidCallback? onComplete;
 
-  const OnboardingScreen({
-    Key? key,
-    this.userId,
-    this.onComplete,
-  }) : super(key: key);
+  const OnboardingScreen({super.key, this.userId, this.onComplete});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -89,10 +85,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: Column(
         children: [
           // 진행 표시기
-          LinearProgressIndicator(
-            value: (_currentStep + 1) / 4,
-            minHeight: 4,
-          ),
+          LinearProgressIndicator(value: (_currentStep + 1) / 4, minHeight: 4),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -110,10 +103,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               physics: const NeverScrollableScrollPhysics(),
               children: [
                 // Step 1: 기본 프로필
-                BasicProfileForm(
-                  onNameChanged: (name) => _name = name,
-                  onNext: _nextStep,
-                ),
+                BasicProfileForm(onNameChanged: (name) => _name = name, onNext: _nextStep),
                 // Step 2: 체중 및 목표
                 WeightGoalForm(
                   onDataChanged: (current, target, period) {

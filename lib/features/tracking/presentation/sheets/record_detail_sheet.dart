@@ -23,22 +23,18 @@ class RecordDetailSheet extends ConsumerWidget {
   final VoidCallback? onRecordUpdated;
 
   const RecordDetailSheet({
-    Key? key,
+    super.key,
     required this.record,
     required this.userId,
     this.onRecordUpdated,
-  }) : super(key: key);
+  });
 
   factory RecordDetailSheet.weight({
     required WeightLog log,
     required String userId,
     VoidCallback? onRecordUpdated,
   }) {
-    return RecordDetailSheet(
-      record: log,
-      userId: userId,
-      onRecordUpdated: onRecordUpdated,
-    );
+    return RecordDetailSheet(record: log, userId: userId, onRecordUpdated: onRecordUpdated);
   }
 
   factory RecordDetailSheet.symptom({
@@ -46,11 +42,7 @@ class RecordDetailSheet extends ConsumerWidget {
     required String userId,
     VoidCallback? onRecordUpdated,
   }) {
-    return RecordDetailSheet(
-      record: log,
-      userId: userId,
-      onRecordUpdated: onRecordUpdated,
-    );
+    return RecordDetailSheet(record: log, userId: userId, onRecordUpdated: onRecordUpdated);
   }
 
   factory RecordDetailSheet.dose({
@@ -58,11 +50,7 @@ class RecordDetailSheet extends ConsumerWidget {
     required String userId,
     VoidCallback? onRecordUpdated,
   }) {
-    return RecordDetailSheet(
-      record: record,
-      userId: userId,
-      onRecordUpdated: onRecordUpdated,
-    );
+    return RecordDetailSheet(record: record, userId: userId, onRecordUpdated: onRecordUpdated);
   }
 
   void _showEditDialog(BuildContext context, WidgetRef ref) {
@@ -116,10 +104,7 @@ class RecordDetailSheet extends ConsumerWidget {
       recordInfo = '${log.weightKg}kg (${_formatDate(log.logDate)})';
       deleteCallback = () async {
         final notifier = ref.read(weightRecordEditNotifierProvider.notifier);
-        await notifier.deleteWeight(
-          recordId: log.id,
-          userId: userId,
-        );
+        await notifier.deleteWeight(recordId: log.id, userId: userId);
       };
     } else if (record is SymptomLog) {
       final log = record as SymptomLog;
@@ -127,10 +112,7 @@ class RecordDetailSheet extends ConsumerWidget {
       recordInfo = '${log.symptomName} (${_formatDate(log.logDate)})';
       deleteCallback = () async {
         final notifier = ref.read(symptomRecordEditNotifierProvider.notifier);
-        await notifier.deleteSymptom(
-          recordId: log.id,
-          userId: userId,
-        );
+        await notifier.deleteSymptom(recordId: log.id, userId: userId);
       };
     } else if (record is DoseRecord) {
       final dose = record as DoseRecord;
@@ -138,10 +120,7 @@ class RecordDetailSheet extends ConsumerWidget {
       recordInfo = '${dose.actualDoseMg}mg (${_formatDateTime(dose.administeredAt)})';
       deleteCallback = () async {
         final notifier = ref.read(doseRecordEditNotifierProvider.notifier);
-        await notifier.deleteDoseRecord(
-          recordId: dose.id,
-          userId: userId,
-        );
+        await notifier.deleteDoseRecord(recordId: dose.id, userId: userId);
       };
     }
 
@@ -155,10 +134,7 @@ class RecordDetailSheet extends ConsumerWidget {
             await deleteCallback();
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('$recordType가 삭제되었습니다'),
-                  backgroundColor: Colors.green,
-                ),
+                SnackBar(content: Text('$recordType가 삭제되었습니다'), backgroundColor: Colors.green),
               );
               onRecordUpdated?.call();
               Navigator.pop(context); // Close sheet
@@ -166,10 +142,7 @@ class RecordDetailSheet extends ConsumerWidget {
           } catch (e) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('삭제 실패: ${e.toString()}'),
-                  backgroundColor: Colors.red,
-                ),
+                SnackBar(content: Text('삭제 실패: ${e.toString()}'), backgroundColor: Colors.red),
               );
             }
           }
@@ -211,31 +184,24 @@ class RecordDetailSheet extends ConsumerWidget {
           _buildInfoRow('심각도', '${log.severity}/10'),
           if (log.tags.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text(
-              '컨텍스트',
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
+            Text('컨텍스트', style: Theme.of(context).textTheme.labelMedium),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               children: log.tags
-                  .map((tag) => Chip(
-                        label: Text(tag),
-                        labelStyle: const TextStyle(fontSize: 12),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                      ))
+                  .map(
+                    (tag) => Chip(
+                      label: Text(tag),
+                      labelStyle: const TextStyle(fontSize: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    ),
+                  )
                   .toList(),
             ),
           ],
           if (log.note != null && log.note!.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text(
-              '메모',
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
+            Text('메모', style: Theme.of(context).textTheme.labelMedium),
             const SizedBox(height: 8),
             Text(log.note!),
           ],
@@ -249,24 +215,17 @@ class RecordDetailSheet extends ConsumerWidget {
         children: [
           _buildHeader('투여 기록'),
           const SizedBox(height: 16),
-          _buildInfoRow(
-            '날짜',
-            _formatDate(dose.administeredAt),
-          ),
+          _buildInfoRow('날짜', _formatDate(dose.administeredAt)),
           _buildInfoRow(
             '시간',
             '${dose.administeredAt.hour.toString().padLeft(2, '0')}:${dose.administeredAt.minute.toString().padLeft(2, '0')}',
           ),
           _buildInfoRow('투여량', '${dose.actualDoseMg} mg'),
-          if (dose.injectionSite != null)
-            _buildInfoRow('투여 부위', dose.injectionSite!),
+          if (dose.injectionSite != null) _buildInfoRow('투여 부위', dose.injectionSite!),
           _buildInfoRow('상태', dose.isCompleted ? '완료' : '미완료'),
           if (dose.note != null && dose.note!.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text(
-              '메모',
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
+            Text('메모', style: Theme.of(context).textTheme.labelMedium),
             const SizedBox(height: 8),
             Text(dose.note!),
           ],
@@ -317,13 +276,7 @@ class RecordDetailSheet extends ConsumerWidget {
   }
 
   Widget _buildHeader(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-      ),
-    );
+    return Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold));
   }
 
   Widget _buildInfoRow(String label, String value) {
@@ -332,20 +285,8 @@ class RecordDetailSheet extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
         ],
       ),
     );

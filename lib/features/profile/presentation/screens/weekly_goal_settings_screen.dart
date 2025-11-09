@@ -10,12 +10,10 @@ class WeeklyGoalSettingsScreen extends ConsumerStatefulWidget {
   const WeeklyGoalSettingsScreen({super.key});
 
   @override
-  ConsumerState<WeeklyGoalSettingsScreen> createState() =>
-      _WeeklyGoalSettingsScreenState();
+  ConsumerState<WeeklyGoalSettingsScreen> createState() => _WeeklyGoalSettingsScreenState();
 }
 
-class _WeeklyGoalSettingsScreenState
-    extends ConsumerState<WeeklyGoalSettingsScreen> {
+class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScreen> {
   late int _weightGoal;
   late int _symptomGoal;
   bool _isLoading = false;
@@ -43,14 +41,8 @@ class _WeeklyGoalSettingsScreenState
           title: const Text('목표 0 설정'),
           content: const Text('목표를 0으로 설정하시겠습니까?'),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('취소'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('확인'),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('취소')),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('확인')),
           ],
         ),
       );
@@ -60,25 +52,18 @@ class _WeeklyGoalSettingsScreenState
     setState(() => _isLoading = true);
 
     try {
-      await ref
-          .read(profileNotifierProvider.notifier)
-          .updateWeeklyGoals(_weightGoal, _symptomGoal);
+      await ref.read(profileNotifierProvider.notifier).updateWeeklyGoals(_weightGoal, _symptomGoal);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('주간 목표가 저장되었습니다')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('주간 목표가 저장되었습니다')));
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('저장 중 오류가 발생했습니다: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('저장 중 오류가 발생했습니다: $e'), backgroundColor: Colors.red));
       }
     }
   }
@@ -88,10 +73,7 @@ class _WeeklyGoalSettingsScreenState
     final profileState = ref.watch(profileNotifierProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('주간 기록 목표 조정'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('주간 기록 목표 조정'), elevation: 0),
       body: profileState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _buildErrorState(error),
@@ -128,10 +110,7 @@ class _WeeklyGoalSettingsScreenState
             const SizedBox(height: 24),
 
             // Weight record goal
-            Text(
-              '주간 체중 기록 목표',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('주간 체중 기록 목표', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             WeeklyGoalInputWidget(
               label: '주간 체중 기록 횟수 (0~7회)',
@@ -141,19 +120,13 @@ class _WeeklyGoalSettingsScreenState
             const SizedBox(height: 20),
 
             Text(
-              '${_weightGoal}회 / 주',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyLarge
-                  ?.copyWith(color: Colors.grey[600]),
+              '$_weightGoal회 / 주',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
             ),
             const SizedBox(height: 32),
 
             // Symptom record goal
-            Text(
-              '주간 부작용 기록 목표',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('주간 부작용 기록 목표', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             WeeklyGoalInputWidget(
               label: '주간 부작용 기록 횟수 (0~7회)',
@@ -163,11 +136,8 @@ class _WeeklyGoalSettingsScreenState
             const SizedBox(height: 20),
 
             Text(
-              '${_symptomGoal}회 / 주',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyLarge
-                  ?.copyWith(color: Colors.grey[600]),
+              '$_symptomGoal회 / 주',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
             ),
             const SizedBox(height: 40),
 
@@ -181,16 +151,11 @@ class _WeeklyGoalSettingsScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '투여 목표 (읽기 전용)',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  Text('투여 목표 (읽기 전용)', style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 8),
                   Text(
                     '투여 목표는 현재 투여 스케줄에 따라 자동으로 계산됩니다.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -224,11 +189,7 @@ class _WeeklyGoalSettingsScreenState
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 60,
-              color: Colors.red[300],
-            ),
+            Icon(Icons.error_outline, size: 60, color: Colors.red[300]),
             const SizedBox(height: 16),
             const Text('프로필 정보를 불러올 수 없습니다'),
             const SizedBox(height: 16),

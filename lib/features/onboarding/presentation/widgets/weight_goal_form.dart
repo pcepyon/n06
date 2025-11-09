@@ -5,11 +5,7 @@ class WeightGoalForm extends StatefulWidget {
   final Function(double, double, int?) onDataChanged;
   final VoidCallback onNext;
 
-  const WeightGoalForm({
-    Key? key,
-    required this.onDataChanged,
-    required this.onNext,
-  }) : super(key: key);
+  const WeightGoalForm({super.key, required this.onDataChanged, required this.onNext});
 
   @override
   State<WeightGoalForm> createState() => _WeightGoalFormState();
@@ -40,12 +36,9 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
   }
 
   void _recalculate() {
-    _currentWeight =
-        double.tryParse(_currentWeightController.text);
-    _targetWeight =
-        double.tryParse(_targetWeightController.text);
-    _targetPeriod =
-        int.tryParse(_targetPeriodController.text);
+    _currentWeight = double.tryParse(_currentWeightController.text);
+    _targetWeight = double.tryParse(_targetWeightController.text);
+    _targetPeriod = int.tryParse(_targetPeriodController.text);
 
     setState(() {
       _errorMessage = null;
@@ -89,9 +82,7 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
   }
 
   bool _canProceed() {
-    return _currentWeight != null &&
-        _targetWeight != null &&
-        _errorMessage == null;
+    return _currentWeight != null && _targetWeight != null && _errorMessage == null;
   }
 
   @override
@@ -102,19 +93,14 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '체중 및 목표 설정',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+            const Text('체중 및 목표 설정', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 32),
             TextField(
               controller: _currentWeightController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
                 labelText: '현재 체중 (kg)',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
             const SizedBox(height: 16),
@@ -123,9 +109,7 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
                 labelText: '목표 체중 (kg)',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
             const SizedBox(height: 16),
@@ -134,9 +118,7 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: '목표 기간 (주, 선택)',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
             const SizedBox(height: 24),
@@ -148,10 +130,7 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
                   border: Border.all(color: Colors.red),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  _errorMessage!,
-                  style: TextStyle(color: Colors.red.shade700),
-                ),
+                child: Text(_errorMessage!, style: TextStyle(color: Colors.red.shade700)),
               ),
             if (_weeklyGoal != null)
               Container(

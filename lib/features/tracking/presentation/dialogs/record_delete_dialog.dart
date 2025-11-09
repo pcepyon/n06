@@ -6,11 +6,11 @@ class RecordDeleteDialog extends StatelessWidget {
   final VoidCallback onConfirm;
 
   const RecordDeleteDialog({
-    Key? key,
+    super.key,
     required this.recordType,
     required this.recordInfo,
     required this.onConfirm,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +20,7 @@ class RecordDeleteDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '다음 기록을 삭제하시겠습니까?',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          Text('다음 기록을 삭제하시겠습니까?', style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(12),
@@ -34,21 +31,9 @@ class RecordDeleteDialog extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  recordType,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
-                ),
+                Text(recordType, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 const SizedBox(height: 4),
-                Text(
-                  recordInfo,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text(recordInfo, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
@@ -62,19 +47,12 @@ class RecordDeleteDialog extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.warning_outlined,
-                  color: Colors.red.shade800,
-                  size: 20,
-                ),
+                Icon(Icons.warning_outlined, color: Colors.red.shade800, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     '이 작업은 되돌릴 수 없습니다',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.red.shade800,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.red.shade800),
                   ),
                 ),
               ],
@@ -83,10 +61,7 @@ class RecordDeleteDialog extends StatelessWidget {
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('취소'),
-        ),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
         ElevatedButton(
           onPressed: () {
             onConfirm();

@@ -1,7 +1,12 @@
+import 'package:isar/isar.dart';
 import 'package:n06/features/tracking/domain/entities/audit_log.dart';
 import 'package:n06/features/tracking/domain/repositories/audit_repository.dart';
 
 class IsarAuditRepository implements AuditRepository {
+  final Isar _isar;
+
+  IsarAuditRepository(this._isar);
+
   // For Phase 0 MVP, audit logs are kept in memory
   // In Phase 1, these will be persisted to Supabase or Isar
   final List<AuditLog> _auditLogs = [];

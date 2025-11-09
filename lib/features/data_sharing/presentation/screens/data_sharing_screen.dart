@@ -6,10 +6,7 @@ import 'package:n06/features/data_sharing/domain/repositories/date_range.dart';
 class DataSharingScreen extends ConsumerStatefulWidget {
   final String? userId;
 
-  const DataSharingScreen({
-    Key? key,
-    this.userId,
-  }) : super(key: key);
+  const DataSharingScreen({super.key, this.userId});
 
   @override
   ConsumerState<DataSharingScreen> createState() => _DataSharingScreenState();
@@ -25,10 +22,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     Future.microtask(() {
       final userId = widget.userId;
       if (userId != null) {
-        ref.read(dataSharingNotifierProvider.notifier).enterSharingMode(
-              userId,
-              _selectedPeriod,
-            );
+        ref.read(dataSharingNotifierProvider.notifier).enterSharingMode(userId, _selectedPeriod);
       }
     });
   }
@@ -55,8 +49,8 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
         body: state.isLoading
             ? const Center(child: CircularProgressIndicator())
             : state.error != null
-                ? _buildErrorState(state.error!)
-                : _buildReportContent(state, context),
+            ? _buildErrorState(state.error!)
+            : _buildReportContent(state, context),
       ),
     );
   }
@@ -72,10 +66,9 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
-              ref.read(dataSharingNotifierProvider.notifier).enterSharingMode(
-                    widget.userId ?? '',
-                    _selectedPeriod,
-                  );
+              ref
+                  .read(dataSharingNotifierProvider.notifier)
+                  .enterSharingMode(widget.userId ?? '', _selectedPeriod);
             },
             child: const Text('다시 시도'),
           ),
@@ -172,10 +165,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '표시 기간',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
+        const Text('표시 기간', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         const SizedBox(height: 12),
         Row(
           children: DateRange.values.map((period) {
@@ -188,10 +178,9 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                   onSelected: (selected) {
                     setState(() => _selectedPeriod = period);
                     if (selected) {
-                      ref.read(dataSharingNotifierProvider.notifier).changePeriod(
-                            widget.userId ?? '',
-                            period,
-                          );
+                      ref
+                          .read(dataSharingNotifierProvider.notifier)
+                          .changePeriod(widget.userId ?? '', period);
                     }
                   },
                 ),
@@ -206,10 +195,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-      ),
+      child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
     );
   }
 
@@ -238,23 +224,19 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '투여 순응도',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
+            const Text('투여 순응도', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${rate.toStringAsFixed(1)}%',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                Text(
+                  '${rate.toStringAsFixed(1)}%',
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 16),
-                    child: LinearProgressIndicator(
-                      value: rate / 100,
-                      minHeight: 8,
-                    ),
+                    child: LinearProgressIndicator(value: rate / 100, minHeight: 8),
                   ),
                 ),
               ],
@@ -271,8 +253,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
       children: sites.entries.map((entry) {
         return ListTile(
           title: Text(entry.key),
-          trailing: Text('${entry.value}회',
-              style: const TextStyle(fontWeight: FontWeight.bold)),
+          trailing: Text('${entry.value}회', style: const TextStyle(fontWeight: FontWeight.bold)),
         );
       }).toList(),
     );
@@ -314,10 +295,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
         title: const Text('공유 종료'),
         content: const Text('공유를 종료하시겠습니까?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('취소'),
-          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('취소')),
           TextButton(
             onPressed: () {
               ref.read(dataSharingNotifierProvider.notifier).exitSharingMode();

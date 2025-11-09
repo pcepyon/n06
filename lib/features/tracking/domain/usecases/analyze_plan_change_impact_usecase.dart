@@ -54,7 +54,8 @@ class AnalyzePlanChangeImpactUseCase {
     // Generate warning message if needed
     String? warningMessage;
     if (changedFields.contains('escalationPlan') && currentWeek > 0) {
-      warningMessage = '현재 ${currentWeek}주차 진행 중입니다. '
+      warningMessage =
+          '현재 $currentWeek주차 진행 중입니다. '
           '변경 시 이후 증량 일정이 조정됩니다.';
     }
 
@@ -123,10 +124,7 @@ class AnalyzePlanChangeImpactUseCase {
   }
 
   /// Compare two escalation plans
-  bool _escalationPlansEqual(
-    List<EscalationStep>? plan1,
-    List<EscalationStep>? plan2,
-  ) {
+  bool _escalationPlansEqual(List<EscalationStep>? plan1, List<EscalationStep>? plan2) {
     if (plan1 == null && plan2 == null) return true;
     if (plan1 == null || plan2 == null) return false;
     if (plan1.length != plan2.length) return false;
