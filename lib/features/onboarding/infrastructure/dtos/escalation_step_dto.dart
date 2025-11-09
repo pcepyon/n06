@@ -1,18 +1,18 @@
-import 'package:n06/features/onboarding/domain/entities/escalation_step.dart';
+import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 
 class EscalationStepDto {
-  final int weeks;
+  final int weeksFromStart;
   final double doseMg;
 
   EscalationStepDto({
-    required this.weeks,
+    required this.weeksFromStart,
     required this.doseMg,
   });
 
   /// DTO를 Domain Entity로 변환한다.
   EscalationStep toEntity() {
     return EscalationStep(
-      weeks: weeks,
+      weeksFromStart: weeksFromStart,
       doseMg: doseMg,
     );
   }
@@ -20,7 +20,7 @@ class EscalationStepDto {
   /// Domain Entity를 DTO로 변환한다.
   static EscalationStepDto fromEntity(EscalationStep entity) {
     return EscalationStepDto(
-      weeks: entity.weeks,
+      weeksFromStart: entity.weeksFromStart,
       doseMg: entity.doseMg,
     );
   }
@@ -28,7 +28,7 @@ class EscalationStepDto {
   /// JSON 맵으로 변환한다.
   Map<String, dynamic> toJson() {
     return {
-      'weeks': weeks,
+      'weeksFromStart': weeksFromStart,
       'doseMg': doseMg,
     };
   }
@@ -36,7 +36,7 @@ class EscalationStepDto {
   /// JSON 맵에서 생성한다.
   factory EscalationStepDto.fromJson(Map<String, dynamic> json) {
     return EscalationStepDto(
-      weeks: json['weeks'] as int,
+      weeksFromStart: json['weeksFromStart'] as int,
       doseMg: json['doseMg'] as double,
     );
   }

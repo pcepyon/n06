@@ -16,20 +16,19 @@ class IsarTrackingRepository implements TrackingRepository {
   @override
   Future<void> saveWeightLog(WeightLog log) async {
     final dto = WeightLogDto.fromEntity(log);
-    await _isar.writeTxn(() async {
-      // 같은 날짜의 기존 기록이 있으면 삭제
-      final existing = await _isar.weightLogDtos
-          .filter()
-          .userIdEqualTo(log.userId)
-          .logDateEqualTo(log.logDate)
-          .findAll();
+    // 트랜잭션 내에서 호출될 수 있으므로 writeTxn 제거
+    // 같은 날짜의 기존 기록이 있으면 삭제
+    final existing = await _isar.weightLogDtos
+        .filter()
+        .userIdEqualTo(log.userId)
+        .logDateEqualTo(log.logDate)
+        .findAll();
 
-      if (existing.isNotEmpty) {
-        await _isar.weightLogDtos.deleteAll(existing.map((e) => e.id).toList());
-      }
+    if (existing.isNotEmpty) {
+      await _isar.weightLogDtos.deleteAll(existing.map((e) => e.id).toList());
+    }
 
-      await _isar.weightLogDtos.put(dto);
-    });
+    await _isar.weightLogDtos.put(dto);
   }
 
   @override

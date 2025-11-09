@@ -1,4 +1,4 @@
-import 'package:n06/features/onboarding/domain/entities/dose_schedule.dart';
+import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 
 /// 투여 스케줄 접근 계약을 정의하는 Repository Interface
 abstract class ScheduleRepository {

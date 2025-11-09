@@ -21,10 +21,9 @@ class IsarUserRepository implements UserRepository {
       throw Exception('사용자를 찾을 수 없습니다: $userId');
     }
 
-    await _isar.writeTxn(() async {
-      dto.name = name;
-      await _isar.userDtos.put(dto);
-    });
+    // 트랜잭션 내에서 호출될 수 있으므로 writeTxn 제거
+    dto.name = name;
+    await _isar.userDtos.put(dto);
   }
 
   @override

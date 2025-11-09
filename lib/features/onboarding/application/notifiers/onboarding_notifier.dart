@@ -1,12 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
-import 'package:n06/features/onboarding/domain/entities/dosage_plan.dart';
+import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/onboarding/domain/value_objects/weight.dart';
-import 'package:n06/features/onboarding/domain/value_objects/medication_name.dart';
-import 'package:n06/features/onboarding/domain/value_objects/start_date.dart';
-import 'package:n06/features/onboarding/domain/entities/escalation_step.dart';
 import 'package:n06/features/onboarding/domain/usecases/calculate_weekly_goal_usecase.dart';
 import 'package:n06/features/onboarding/domain/usecases/validate_dosage_plan_usecase.dart';
 import 'package:n06/features/onboarding/domain/usecases/generate_dose_schedules_usecase.dart';
@@ -52,8 +49,6 @@ class OnboardingNotifier extends _$OnboardingNotifier {
         // 1. 검증
         final currentWeightObj = Weight.create(currentWeight);
         final targetWeightObj = Weight.create(targetWeight);
-        final medicationNameObj = MedicationName.create(medicationName);
-        final startDateObj = StartDate.create(startDate);
 
         // 증량 계획 검증
         if (escalationPlan != null) {
@@ -67,8 +62,8 @@ class OnboardingNotifier extends _$OnboardingNotifier {
         final dosagePlan = DosagePlan(
           id: const Uuid().v4(),
           userId: userId,
-          medicationName: medicationNameObj,
-          startDate: startDateObj,
+          medicationName: medicationName,
+          startDate: startDate,
           cycleDays: cycleDays,
           initialDoseMg: initialDose,
           escalationPlan: escalationPlan,

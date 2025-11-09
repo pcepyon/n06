@@ -1,4 +1,4 @@
-import 'package:n06/features/onboarding/domain/entities/escalation_step.dart';
+import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 
 /// 투여 계획의 증량 단계를 검증하는 UseCase
 class ValidateDosagePlanUseCase {
@@ -27,7 +27,7 @@ class ValidateDosagePlanUseCase {
 
     // 시기가 역순인 경우 검사
     for (int i = 1; i < escalationPlan.length; i++) {
-      if (escalationPlan[i].weeks <= escalationPlan[i - 1].weeks) {
+      if (escalationPlan[i].weeksFromStart <= escalationPlan[i - 1].weeksFromStart) {
         errors.add('증량 계획의 시기는 순차적이어야 합니다.');
         break;
       }

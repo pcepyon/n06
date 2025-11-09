@@ -1,5 +1,5 @@
-import 'package:n06/features/onboarding/domain/entities/dosage_plan.dart';
-import 'package:n06/features/onboarding/domain/entities/dose_schedule.dart';
+import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
+import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:uuid/uuid.dart';
 
 /// DosagePlan 기반 투여 스케줄을 생성하는 UseCase
@@ -18,7 +18,7 @@ class GenerateDoseSchedulesUseCase {
     }
 
     final schedules = <DoseSchedule>[];
-    var currentDate = dosagePlan.startDate.value;
+    var currentDate = dosagePlan.startDate;
     var currentDoseMg = dosagePlan.initialDoseMg;
     final endDate = currentDate.add(Duration(days: daysToGenerate));
     var escalationIndex = 0;
@@ -27,8 +27,8 @@ class GenerateDoseSchedulesUseCase {
       // 현재 날짜에서의 용량 결정
       if (dosagePlan.escalationPlan != null && escalationIndex < dosagePlan.escalationPlan!.length) {
         final nextEscalation = dosagePlan.escalationPlan![escalationIndex];
-        final escalationDate = dosagePlan.startDate.value
-            .add(Duration(days: nextEscalation.weeks * 7));
+        final escalationDate = dosagePlan.startDate
+            .add(Duration(days: nextEscalation.weeksFromStart * 7));
 
         if (currentDate.isAtSameMomentAs(escalationDate) || currentDate.isAfter(escalationDate)) {
           currentDoseMg = nextEscalation.doseMg;
@@ -40,7 +40,6 @@ class GenerateDoseSchedulesUseCase {
       schedules.add(
         DoseSchedule(
           id: _uuid.v4(),
-          userId: dosagePlan.userId,
           dosagePlanId: dosagePlan.id,
           scheduledDate: currentDate,
           scheduledDoseMg: currentDoseMg,

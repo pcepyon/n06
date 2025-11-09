@@ -12,9 +12,8 @@ class IsarProfileRepository implements ProfileRepository {
   @override
   Future<void> saveUserProfile(UserProfile profile) async {
     final dto = UserProfileDto.fromEntity(profile);
-    await _isar.writeTxn(() async {
-      await _isar.userProfileDtos.put(dto);
-    });
+    // 트랜잭션 내에서 호출될 수 있으므로 writeTxn 제거
+    await _isar.userProfileDtos.put(dto);
   }
 
   @override
@@ -29,8 +28,7 @@ class IsarProfileRepository implements ProfileRepository {
   @override
   Future<void> updateUserProfile(UserProfile profile) async {
     final dto = UserProfileDto.fromEntity(profile);
-    await _isar.writeTxn(() async {
-      await _isar.userProfileDtos.put(dto);
-    });
+    // 트랜잭션 내에서 호출될 수 있으므로 writeTxn 제거
+    await _isar.userProfileDtos.put(dto);
   }
 }

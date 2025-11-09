@@ -12,7 +12,7 @@ import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/onboarding/domain/repositories/profile_repository.dart';
 import 'package:n06/features/onboarding/domain/repositories/medication_repository.dart'
     as onboarding_medication_repo;
-import 'package:n06/features/onboarding/domain/entities/dosage_plan.dart'
+import 'package:n06/features/tracking/domain/entities/dosage_plan.dart'
     as onboarding_dosage_plan;
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
@@ -97,7 +97,7 @@ class DashboardNotifier extends _$DashboardNotifier {
 
     // 현재 주차 계산
     final currentWeek =
-        _calculateCurrentWeek.execute(activePlan.startDate.value);
+        _calculateCurrentWeek.execute(activePlan.startDate);
 
     // 주간 목표 진행도 계산 (임시 데이터)
     final weeklyProgress = _calculateWeeklyProgress.execute(
@@ -233,7 +233,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     events.add(
       TimelineEvent(
         id: 'treatment_start',
-        dateTime: activePlan.startDate.value,
+        dateTime: activePlan.startDate,
         eventType: TimelineEventType.treatmentStart,
         title: '치료 시작',
         description: '${activePlan.initialDoseMg}mg 투여 시작',
@@ -244,8 +244,8 @@ class DashboardNotifier extends _$DashboardNotifier {
     if (activePlan.escalationPlan != null &&
         activePlan.escalationPlan!.isNotEmpty) {
       for (final step in activePlan.escalationPlan!) {
-        final escalationDate = activePlan.startDate.value
-            .add(Duration(days: step.weeks * 7));
+        final escalationDate = activePlan.startDate
+            .add(Duration(days: step.weeksFromStart * 7));
         events.add(
           TimelineEvent(
             id: 'escalation_${step.doseMg.toStringAsFixed(1)}',

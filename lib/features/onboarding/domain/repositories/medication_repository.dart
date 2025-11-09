@@ -1,4 +1,4 @@
-import 'package:n06/features/onboarding/domain/entities/dosage_plan.dart';
+import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 
 /// 투여 계획 접근 계약을 정의하는 Repository Interface
 abstract class MedicationRepository {

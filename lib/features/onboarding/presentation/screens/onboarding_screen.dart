@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:n06/features/onboarding/domain/entities/escalation_step.dart';
+import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/onboarding/presentation/widgets/basic_profile_form.dart';
 import 'package:n06/features/onboarding/presentation/widgets/weight_goal_form.dart';
 import 'package:n06/features/onboarding/presentation/widgets/dosage_plan_form.dart';

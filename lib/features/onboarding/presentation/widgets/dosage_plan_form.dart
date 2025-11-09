@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:n06/features/onboarding/domain/entities/escalation_step.dart';
+import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 
 /// 투여 계획 입력 폼
 class DosagePlanForm extends StatefulWidget {
@@ -68,7 +68,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
       builder: (context) => _EscalationStepDialog(
         onSave: (weeks, doseMg) {
           setState(() {
-            _escalationSteps.add(EscalationStep(weeks: weeks, doseMg: doseMg));
+            _escalationSteps.add(EscalationStep(weeksFromStart: weeks, doseMg: doseMg));
           });
           Navigator.pop(context);
         },
@@ -152,7 +152,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
                     itemBuilder: (context, index) {
                       final step = _escalationSteps[index];
                       return ListTile(
-                        title: Text('${step.weeks}주차 → ${step.doseMg}mg'),
+                        title: Text('${step.weeksFromStart}주차 → ${step.doseMg}mg'),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete),
                           onPressed: () => _removeEscalationStep(index),

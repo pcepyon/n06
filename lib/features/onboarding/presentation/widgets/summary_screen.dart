@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:n06/features/onboarding/domain/entities/escalation_step.dart';
+import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/onboarding/application/notifiers/onboarding_notifier.dart';
 
 /// 온보딩 정보 요약 및 최종 확인 화면
@@ -77,7 +77,7 @@ class SummaryScreen extends ConsumerWidget {
                 itemCount: escalationPlan!.length,
                 itemBuilder: (context, index) {
                   final step = escalationPlan![index];
-                  return ListTile(title: Text('${step.weeks}주차: ${step.doseMg} mg'));
+                  return ListTile(title: Text('${step.weeksFromStart}주차: ${step.doseMg} mg'));
                 },
               ),
             ],
