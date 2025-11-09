@@ -94,6 +94,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
             const SizedBox(height: 32),
             TextField(
               controller: _medicationNameController,
+              onChanged: (_) => setState(() {}), // 입력 변경 시 UI 업데이트
               decoration: InputDecoration(
                 labelText: '약물명',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -120,6 +121,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
             const SizedBox(height: 16),
             TextField(
               controller: _cycleDaysController,
+              onChanged: (_) => setState(() {}), // 입력 변경 시 UI 업데이트
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: '투여 주기 (일)',
@@ -129,6 +131,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
             const SizedBox(height: 16),
             TextField(
               controller: _initialDoseController,
+              onChanged: (_) => setState(() {}), // 입력 변경 시 UI 업데이트
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
                 labelText: '초기 용량 (mg)',
@@ -180,7 +183,19 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _canProceed() ? widget.onNext : null,
+                onPressed: _canProceed()
+                    ? () {
+                        // 데이터를 부모 위젯에 전달
+                        widget.onDataChanged(
+                          _medicationNameController.text.trim(),
+                          _startDate ?? DateTime.now(),
+                          int.parse(_cycleDaysController.text),
+                          double.parse(_initialDoseController.text),
+                          _escalationSteps,
+                        );
+                        widget.onNext();
+                      }
+                    : null,
                 child: const Text('다음'),
               ),
             ),

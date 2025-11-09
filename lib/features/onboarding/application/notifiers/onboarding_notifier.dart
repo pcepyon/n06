@@ -2,7 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:n06/features/onboarding/domain/entities/dosage_plan.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
-import 'package:n06/features/onboarding/domain/entities/weight_log.dart';
+import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/onboarding/domain/value_objects/weight.dart';
 import 'package:n06/features/onboarding/domain/value_objects/medication_name.dart';
 import 'package:n06/features/onboarding/domain/value_objects/start_date.dart';
@@ -11,6 +11,7 @@ import 'package:n06/features/onboarding/domain/usecases/calculate_weekly_goal_us
 import 'package:n06/features/onboarding/domain/usecases/validate_dosage_plan_usecase.dart';
 import 'package:n06/features/onboarding/domain/usecases/generate_dose_schedules_usecase.dart';
 import 'package:n06/features/onboarding/application/providers.dart';
+import 'package:n06/features/tracking/application/providers.dart' as tracking_providers;
 
 part 'onboarding_notifier.g.dart';
 
@@ -38,7 +39,7 @@ class OnboardingNotifier extends _$OnboardingNotifier {
       final userRepo = ref.read(userRepositoryProvider);
       final profileRepo = ref.read(profileRepositoryProvider);
       final medicationRepo = ref.read(medicationRepositoryProvider);
-      final trackingRepo = ref.read(trackingRepositoryProvider);
+      final trackingRepo = ref.read(tracking_providers.trackingRepositoryProvider);
       final scheduleRepo = ref.read(scheduleRepositoryProvider);
       final txnService = ref.read(transactionServiceProvider);
 
@@ -94,7 +95,7 @@ class OnboardingNotifier extends _$OnboardingNotifier {
           id: const Uuid().v4(),
           userId: userId,
           logDate: DateTime.now(),
-          weight: currentWeightObj,
+          weightKg: currentWeight,  // double 값 직접 사용 (tracking의 WeightLog 사용)
           createdAt: DateTime.now(),
         );
 

@@ -10,6 +10,7 @@ import 'package:n06/features/authentication/infrastructure/datasources/kakao_aut
 import 'package:n06/features/authentication/infrastructure/datasources/naver_auth_datasource.dart';
 import 'package:n06/features/authentication/infrastructure/dtos/consent_record_dto.dart';
 import 'package:n06/features/authentication/infrastructure/dtos/user_dto.dart';
+import 'package:n06/features/onboarding/infrastructure/dtos/user_profile_dto.dart';
 
 /// Isar implementation of AuthRepository.
 ///
@@ -198,8 +199,17 @@ class IsarAuthRepository implements AuthRepository {
 
   @override
   Future<bool> isFirstLogin() async {
-    final count = await _isar.userDtos.count();
-    return count == 0;
+    // UserProfile이 있는지 확인 (온보딩 완료 여부)
+    final user = await getCurrentUser();
+    if (user == null) return true;
+
+    // UserProfileDto 확인
+    final profileCount = await _isar.userProfileDtos
+        .filter()
+        .userIdEqualTo(user.id)
+        .count();
+
+    return profileCount == 0;
   }
 
   @override

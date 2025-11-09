@@ -3,13 +3,11 @@ import 'package:n06/core/providers.dart';
 import 'package:n06/features/onboarding/domain/repositories/user_repository.dart';
 import 'package:n06/features/onboarding/domain/repositories/profile_repository.dart';
 import 'package:n06/features/onboarding/domain/repositories/medication_repository.dart';
-import 'package:n06/features/onboarding/domain/repositories/tracking_repository.dart';
 import 'package:n06/features/onboarding/domain/repositories/schedule_repository.dart';
 import 'package:n06/features/onboarding/domain/usecases/check_onboarding_status_usecase.dart';
 import 'package:n06/features/onboarding/infrastructure/repositories/isar_user_repository.dart';
 import 'package:n06/features/onboarding/infrastructure/repositories/isar_profile_repository.dart';
 import 'package:n06/features/onboarding/infrastructure/repositories/isar_medication_repository.dart';
-import 'package:n06/features/onboarding/infrastructure/repositories/isar_tracking_repository.dart';
 import 'package:n06/features/onboarding/infrastructure/repositories/isar_schedule_repository.dart';
 import 'package:n06/features/onboarding/infrastructure/services/transaction_service.dart';
 
@@ -34,13 +32,6 @@ ProfileRepository profileRepository(ProfileRepositoryRef ref) {
 MedicationRepository medicationRepository(MedicationRepositoryRef ref) {
   final isarInstance = ref.watch(isarProvider);
   return IsarMedicationRepository(isarInstance);
-}
-
-/// TrackingRepository Provider
-@riverpod
-TrackingRepository trackingRepository(TrackingRepositoryRef ref) {
-  final isarInstance = ref.watch(isarProvider);
-  return IsarTrackingRepository(isarInstance);
 }
 
 /// ScheduleRepository Provider
