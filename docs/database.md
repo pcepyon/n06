@@ -383,4 +383,122 @@ Phase 2 이후 GDPR 준수를 위해 데이터 보관 정책 수립 필요.
 
 ### 설계 결정 사항
 
-1. **온보딩 시 weight_logs 자동 생성**: 온보딩에서 입력받은 현재 체중을 weight_logs에 첫 기록으로 자동 생성 필요
+#### 1. 온보딩 시 weight_logs 자동 생성
+온보딩에서 입력받은 현재 체중을 weight_logs에 첫 기록으로 자동 생성 필요
+
+**구현 방법:**
+- `OnboardingNotifier`에서 `TrackingRepository.saveWeightLog()` 호출
+- 온보딩 완료 시 `log_date = 온보딩 완료일`, `weight_kg = 입력받은 체중`으로 기록 생성
+
+#### 2. weight_logs 구현 위치 및 공유 패턴
+
+**핵심 원칙**: weight_logs는 독립 테이블이지만, **구현은 단일화**
+
+**구현 위치:**
+```
+features/tracking/
+├── domain/
+│   ├── entities/weight_log.dart           # WeightLog 엔티티 (공통 사용)
+│   └── repositories/tracking_repository.dart  # TrackingRepository 인터페이스
+└── infrastructure/
+    ├── dtos/weight_log_dto.dart           # Isar DTO
+    └── repositories/
+        └── isar_tracking_repository.dart  # Repository 구현체
+```
+
+**사용 패턴:**
+```dart
+// onboarding 기능
+import 'package:n06/features/tracking/domain/entities/weight_log.dart';
+import 'package:n06/features/tracking/application/providers.dart' as tracking_providers;
+final repo = ref.read(tracking_providers.trackingRepositoryProvider);
+
+// dashboard 기능
+import 'package:n06/features/tracking/domain/entities/weight_log.dart';
+import 'package:n06/features/tracking/application/providers.dart' as tracking_providers;
+final repo = ref.watch(tracking_providers.trackingRepositoryProvider);
+```
+
+**중복 정의 금지:**
+- ❌ `features/onboarding/domain/entities/weight_log.dart` 생성 금지
+- ❌ `features/onboarding/infrastructure/dtos/weight_log_dto.dart` 생성 금지
+- ❌ `features/*/domain/repositories/tracking_repository.dart` 중복 생성 금지
+- ✅ tracking의 구현을 import하여 사용
+
+**이유:**
+1. **Isar schema 충돌 방지**: 동일한 collection 이름으로 2개 이상의 DTO 생성 시 충돌
+2. **Repository Pattern 준수**: 하나의 데이터 소스(weight_logs)는 하나의 Repository
+3. **Phase 1 전환 용이**: tracking의 Repository만 변경하면 모든 기능에 자동 반영
+4. **타입 안정성**: 단일 WeightLog 엔티티로 타입 불일치 방지
+
+#### 3. 공통 테이블의 소유권 정의
+
+| 테이블 | 구현 위치 | 사용 기능 | 비고 |
+|--------|----------|----------|------|
+| weight_logs | `features/tracking/` | onboarding, tracking, dashboard | TrackingRepository 제공 |
+| symptom_logs | `features/tracking/` | tracking, dashboard | TrackingRepository 제공 |
+| user_profiles | `features/onboarding/` | onboarding, dashboard, profile | ProfileRepository 제공 |
+| dosage_plans | `features/tracking/` | onboarding, tracking | MedicationRepository 제공 |
+| dose_schedules | `features/tracking/` | onboarding, tracking | ScheduleRepository 제공 |
+| badge_definitions | `features/dashboard/` | dashboard | BadgeRepository 제공 |
+| user_badges | `features/dashboard/` | dashboard | BadgeRepository 제공 |
+
+**원칙:**
+- 각 테이블은 **가장 직접적으로 사용하는 기능**이 구현을 소유
+- 다른 기능은 소유 기능의 Repository를 import하여 사용
+- 중복 구현 절대 금지
+
+#### 4. Phase 1 전환 전략 (Isar → Supabase)
+
+**변경 범위:** Infrastructure Layer만 수정
+
+**예시 - TrackingRepository:**
+```dart
+// Phase 0 (현재)
+@riverpod
+TrackingRepository trackingRepository(TrackingRepositoryRef ref) {
+  final isar = ref.watch(isarProvider);
+  return IsarTrackingRepository(isar);  // ← Isar 구현
+}
+
+// Phase 1 (Supabase 전환)
+@riverpod
+TrackingRepository trackingRepository(TrackingRepositoryRef ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return SupabaseTrackingRepository(supabase);  // ← Supabase 구현 (1줄 변경)
+}
+```
+
+**영향 범위:**
+- ✅ tracking의 providers.dart: 1줄 변경
+- ✅ tracking의 infrastructure/ 디렉토리: 새로운 구현 추가
+- ❌ onboarding, dashboard: 코드 변경 불필요 (Repository Pattern 효과)
+- ❌ domain, application, presentation: 코드 변경 불필요
+
+#### 5. 데이터 무결성 제약
+
+Isar 구현 시 주의사항:
+
+Isar는 PostgreSQL의 UNIQUE 제약을 네이티브로 지원하지 않으므로, Repository 구현에서 수동 처리:
+
+```dart
+// weight_logs의 UNIQUE (user_id, log_date) 구현
+Future<void> saveWeightLog(WeightLog log) async {
+  await _isar.writeTxn(() async {
+    // 같은 날짜의 기존 기록 삭제
+    final existing = await _isar.weightLogDtos
+        .filter()
+        .userIdEqualTo(log.userId)
+        .logDateEqualTo(log.logDate)
+        .findAll();
+
+    if (existing.isNotEmpty) {
+      await _isar.weightLogDtos.deleteAll(existing.map((e) => e.id).toList());
+    }
+
+    await _isar.weightLogDtos.put(WeightLogDto.fromEntity(log));
+  });
+}
+```
+
+Phase 1에서는 PostgreSQL의 UNIQUE 제약이 자동 적용되므로 수동 처리 불필요
