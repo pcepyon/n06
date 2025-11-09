@@ -48,16 +48,27 @@ dose_records + weight_logs + symptom_logs + user_badges
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | uuid | PK, DEFAULT gen_random_uuid() | 내부 고유 식별자 |
-| oauth_provider | varchar(20) | NOT NULL | naver/kakao |
-| oauth_user_id | varchar(255) | NOT NULL | 소셜 제공자 사용자 ID |
+| auth_type | varchar(20) | NOT NULL | 'social' 또는 'email' |
+| oauth_provider | varchar(20) | NULL | naver/kakao (social인 경우만) |
+| oauth_user_id | varchar(255) | NULL | 소셜 제공자 사용자 ID (social인 경우만) |
+| email | varchar(255) | NOT NULL, UNIQUE | 이메일 |
+| password_hash | text | NULL | 비밀번호 해시 (email 인증인 경우만) |
+| email_verified | boolean | NOT NULL, DEFAULT false | 이메일 인증 여부 |
 | name | varchar(100) | NOT NULL | 사용자 이름 |
-| email | varchar(255) | NOT NULL | 이메일 |
 | profile_image_url | text | NULL | 프로필 이미지 URL |
+| login_attempts | integer | NOT NULL, DEFAULT 0 | 로그인 시도 횟수 |
+| locked_until | timestamptz | NULL | 계정 잠금 해제 시간 |
 | created_at | timestamptz | NOT NULL, DEFAULT now() | 가입일시 |
 | last_login_at | timestamptz | NOT NULL, DEFAULT now() | 마지막 로그인 일시 |
 
 **Indexes**
-- UNIQUE: (oauth_provider, oauth_user_id)
+- UNIQUE: email
+- UNIQUE: (oauth_provider, oauth_user_id) WHERE oauth_provider IS NOT NULL
+- INDEX: (email, auth_type)
+
+**Constraints**
+- CHECK: auth_type IN ('social', 'email')
+- CHECK: (auth_type = 'social' AND oauth_provider IS NOT NULL) OR (auth_type = 'email' AND password_hash IS NOT NULL)
 
 ---
 
@@ -292,6 +303,27 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 ---
 
+### password_reset_tokens
+비밀번호 재설정 토큰
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK, DEFAULT gen_random_uuid() | |
+| user_id | uuid | FK(users.id), NOT NULL | |
+| token | varchar(255) | NOT NULL, UNIQUE | 재설정 토큰 (UUID) |
+| expires_at | timestamptz | NOT NULL | 토큰 만료 시간 (24시간) |
+| used | boolean | NOT NULL, DEFAULT false | 사용 여부 |
+| created_at | timestamptz | NOT NULL, DEFAULT now() | |
+
+**Indexes**
+- INDEX: (token, used, expires_at)
+- INDEX: (user_id, created_at DESC)
+
+**Constraints**
+- CHECK: expires_at > created_at
+
+---
+
 ## RLS (Row Level Security) Policies
 
 **Phase 1 적용**
@@ -320,7 +352,7 @@ USING (id = auth.uid());
 
 성능 최적화를 위한 주요 인덱스:
 
-1. **users**: (oauth_provider, oauth_user_id) UNIQUE
+1. **users**: email UNIQUE, (oauth_provider, oauth_user_id) UNIQUE WHERE oauth_provider IS NOT NULL, (email, auth_type)
 2. **dosage_plans**: (user_id, is_active)
 3. **dose_schedules**: (dosage_plan_id, scheduled_date)
 4. **dose_records**: (dosage_plan_id, administered_at), (injection_site, administered_at DESC)
@@ -330,6 +362,7 @@ USING (id = auth.uid());
 8. **emergency_symptom_checks**: (user_id, checked_at DESC)
 9. **badge_definitions**: (category, display_order)
 10. **user_badges**: (user_id, badge_id) UNIQUE, (user_id, status), (user_id, achieved_at DESC)
+11. **password_reset_tokens**: (token, used, expires_at), (user_id, created_at DESC)
 
 ---
 

@@ -21,6 +21,7 @@
 | **Local DB** | Isar | 3.x | 오프라인 데이터 저장 |
 | **Auth** | kakao_flutter_sdk | 1.7+ | 카카오 로그인 |
 | | flutter_naver_login | 1.8+ | 네이버 로그인 |
+| | crypto | 5.0+ | 비밀번호 해싱 (SHA-256) |
 | | flutter_secure_storage | 9.0+ | 토큰 암호화 저장 |
 | **Analytics** | Firebase Analytics | 10.8+ | 사용자 행동 분석 |
 | | Firebase Crashlytics | 3.4+ | 크래시 추적 |
