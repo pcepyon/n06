@@ -1,33 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/features/notification/domain/entities/notification_settings.dart';
-import 'package:n06/features/notification/domain/repositories/notification_repository.dart';
-import 'package:n06/features/notification/domain/services/notification_scheduler.dart';
-import 'package:n06/features/notification/infrastructure/repositories/isar_notification_repository.dart';
-import 'package:n06/features/notification/infrastructure/services/local_notification_scheduler.dart';
-import 'package:n06/features/notification/infrastructure/services/permission_service.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
+import 'package:n06/features/notification/application/providers.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
-import 'package:n06/features/coping_guide/application/providers.dart';
 
 part 'notification_notifier.g.dart';
-
-/// Repository Provider
-@riverpod
-NotificationRepository notificationRepository(
-  NotificationRepositoryRef ref,
-) {
-  final isar = ref.watch(isarProvider);
-  return IsarNotificationRepository(isar);
-}
-
-/// Scheduler Provider
-@riverpod
-NotificationScheduler notificationScheduler(
-  NotificationSchedulerRef ref,
-) {
-  return LocalNotificationScheduler(PermissionService());
-}
 
 /// Notifier Class
 @riverpod
@@ -45,13 +23,13 @@ class NotificationNotifier extends _$NotificationNotifier {
     return settings ??
         NotificationSettings(
           userId: userId,
-          notificationTime: const TimeOfDay(hour: 9, minute: 0),
+          notificationTime: const NotificationTime(hour: 9, minute: 0),
           notificationEnabled: true,
         );
   }
 
   /// 알림 시간 업데이트
-  Future<void> updateNotificationTime(TimeOfDay newTime) async {
+  Future<void> updateNotificationTime(NotificationTime newTime) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final currentState = state.value;

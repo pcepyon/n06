@@ -1,11 +1,12 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:n06/features/notification/application/notifiers/notification_notifier.dart';
+import 'package:n06/features/notification/application/providers.dart';
 import 'package:n06/features/notification/domain/entities/notification_settings.dart';
 import 'package:n06/features/notification/domain/repositories/notification_repository.dart';
 import 'package:n06/features/notification/domain/services/notification_scheduler.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:n06/features/tracking/domain/repositories/medication_repository.dart';
@@ -60,7 +61,7 @@ void main() {
       // Arrange
       final mockSettings = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
       when(mockRepository.getNotificationSettings('user123'))
@@ -114,7 +115,7 @@ void main() {
       // Arrange
       final mockSettings = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
       final doseSchedule = DoseSchedule(
@@ -132,7 +133,7 @@ void main() {
           .thenAnswer((_) async => {});
       when(mockScheduler.scheduleNotifications(
         doseSchedules: anyNamedOfType<List<DoseSchedule>>('doseSchedules'),
-        notificationTime: anyNamedOfType<TimeOfDay>('notificationTime'),
+        notificationTime: anyNamedOfType<NotificationTime>('notificationTime'),
       )).thenAnswer((_) async => {});
       when(mockMedicationRepository.getDoseSchedules(anyOfType<String>()))
           .thenAnswer((_) async => [doseSchedule]);
@@ -152,7 +153,7 @@ void main() {
       final notifier =
           container.read(notificationNotifierProvider.notifier);
       await notifier.updateNotificationTime(
-        const TimeOfDay(hour: 21, minute: 0),
+        const NotificationTime(hour: 21, minute: 0),
       );
 
       // Assert
@@ -160,7 +161,7 @@ void main() {
       verify(mockScheduler.cancelAllNotifications()).called(1);
       verify(mockScheduler.scheduleNotifications(
         doseSchedules: anyNamedOfType<List<DoseSchedule>>('doseSchedules'),
-        notificationTime: anyNamedOfType<TimeOfDay>('notificationTime'),
+        notificationTime: anyNamedOfType<NotificationTime>('notificationTime'),
       )).called(1);
     });
 
@@ -168,7 +169,7 @@ void main() {
       // Arrange
       final mockSettings = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
       final doseSchedule = DoseSchedule(
@@ -188,7 +189,7 @@ void main() {
           .thenAnswer((_) async => {});
       when(mockScheduler.scheduleNotifications(
         doseSchedules: anyNamedOfType<List<DoseSchedule>>('doseSchedules'),
-        notificationTime: anyNamedOfType<TimeOfDay>('notificationTime'),
+        notificationTime: anyNamedOfType<NotificationTime>('notificationTime'),
       )).thenAnswer((_) async => {});
       when(mockMedicationRepository.getDoseSchedules(anyOfType<String>()))
           .thenAnswer((_) async => [doseSchedule]);
@@ -218,7 +219,7 @@ void main() {
       // Arrange
       final mockSettings = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
       final doseSchedule = DoseSchedule(
@@ -238,7 +239,7 @@ void main() {
           .thenAnswer((_) async => {});
       when(mockScheduler.scheduleNotifications(
         doseSchedules: anyNamedOfType<List<DoseSchedule>>('doseSchedules'),
-        notificationTime: anyNamedOfType<TimeOfDay>('notificationTime'),
+        notificationTime: anyNamedOfType<NotificationTime>('notificationTime'),
       )).thenAnswer((_) async => {});
       when(mockMedicationRepository.getDoseSchedules(anyOfType<String>()))
           .thenAnswer((_) async => [doseSchedule]);
@@ -268,7 +269,7 @@ void main() {
       // Arrange
       final mockSettings = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
 
@@ -303,7 +304,7 @@ void main() {
       // Arrange
       final mockSettings = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
 

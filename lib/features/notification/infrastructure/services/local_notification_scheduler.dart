@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:n06/features/notification/domain/services/notification_scheduler.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:n06/features/notification/infrastructure/services/permission_service.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -59,7 +59,7 @@ class LocalNotificationScheduler implements NotificationScheduler {
   @override
   Future<void> scheduleNotifications({
     required List<DoseSchedule> doseSchedules,
-    required TimeOfDay notificationTime,
+    required NotificationTime notificationTime,
   }) async {
     // 같은 날짜의 중복 제거
     final uniqueDates = <DateTime>{};

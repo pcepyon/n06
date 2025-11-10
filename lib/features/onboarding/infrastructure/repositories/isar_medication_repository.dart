@@ -12,8 +12,9 @@ class IsarMedicationRepository implements MedicationRepository {
   @override
   Future<void> saveDosagePlan(DosagePlan plan) async {
     final dto = DosagePlanDto.fromEntity(plan);
-    // 트랜잭션 내에서 호출될 수 있으므로 writeTxn 제거
-    await _isar.dosagePlanDtos.put(dto);
+    await _isar.writeTxn(() async {
+      await _isar.dosagePlanDtos.put(dto);
+    });
   }
 
   @override
@@ -29,7 +30,8 @@ class IsarMedicationRepository implements MedicationRepository {
   @override
   Future<void> updateDosagePlan(DosagePlan plan) async {
     final dto = DosagePlanDto.fromEntity(plan);
-    // 트랜잭션 내에서 호출될 수 있으므로 writeTxn 제거
-    await _isar.dosagePlanDtos.put(dto);
+    await _isar.writeTxn(() async {
+      await _isar.dosagePlanDtos.put(dto);
+    });
   }
 }

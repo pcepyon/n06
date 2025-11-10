@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 
 /// 알림 스케줄링 계약
@@ -12,7 +12,7 @@ abstract class NotificationScheduler {
   /// 투여 스케줄 기반 알림 등록
   Future<void> scheduleNotifications({
     required List<DoseSchedule> doseSchedules,
-    required TimeOfDay notificationTime,
+    required NotificationTime notificationTime,
   });
 
   /// 모든 알림 취소

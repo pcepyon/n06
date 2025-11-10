@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/features/notification/application/notifiers/notification_notifier.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:n06/features/notification/presentation/widgets/time_picker_button.dart';
 
 /// 푸시 알림 설정 화면
@@ -54,9 +55,12 @@ class NotificationSettingsScreen extends ConsumerWidget {
                 const Text('알림 시간', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
                 TimePickerButton(
-                  currentTime: settings.notificationTime,
+                  // NotificationTime → TimeOfDay 변환 (Presentation Layer에서만)
+                  currentTime: settings.notificationTime.toTimeOfDay(),
                   onTimeSelected: (selectedTime) async {
-                    await notifier.updateNotificationTime(selectedTime);
+                    // TimeOfDay → NotificationTime 변환
+                    final notificationTime = NotificationTime.fromTimeOfDay(selectedTime);
+                    await notifier.updateNotificationTime(notificationTime);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(

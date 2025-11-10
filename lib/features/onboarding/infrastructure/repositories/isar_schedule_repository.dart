@@ -13,8 +13,9 @@ class IsarScheduleRepository implements ScheduleRepository {
   @override
   Future<void> saveAll(List<DoseSchedule> schedules) async {
     final dtos = schedules.map((s) => DoseScheduleDto.fromEntity(s)).toList();
-    // 트랜잭션 내에서 호출될 수 있으므로 writeTxn 제거
-    await _isar.doseScheduleDtos.putAll(dtos);
+    await _isar.writeTxn(() async {
+      await _isar.doseScheduleDtos.putAll(dtos);
+    });
   }
 
   @override

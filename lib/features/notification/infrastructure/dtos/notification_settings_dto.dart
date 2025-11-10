@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:n06/features/notification/domain/entities/notification_settings.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 
 part 'notification_settings_dto.g.dart';
 
@@ -16,7 +16,10 @@ class NotificationSettingsDto {
   NotificationSettings toEntity() {
     return NotificationSettings(
       userId: userId,
-      notificationTime: TimeOfDay(hour: notificationHour, minute: notificationMinute),
+      notificationTime: NotificationTime(
+        hour: notificationHour,
+        minute: notificationMinute,
+      ),
       notificationEnabled: notificationEnabled,
     );
   }

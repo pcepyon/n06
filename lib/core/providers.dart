@@ -9,7 +9,8 @@ part 'providers.g.dart';
 /// The instance must be initialized in main.dart before running the app.
 ///
 /// This provider is watched by feature repositories to perform database operations.
-@riverpod
+/// keepAlive: true ensures the Isar instance is never disposed during the app lifecycle.
+@Riverpod(keepAlive: true)
 Isar isar(IsarRef ref) {
   throw UnimplementedError(
     'isarProvider must be initialized via ProviderScope override in main.dart',
