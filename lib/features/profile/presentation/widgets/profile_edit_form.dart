@@ -81,6 +81,7 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
       try {
         final profile = UserProfile(
           userId: widget.profile.userId,
+          userName: widget.profile.userName,
           targetWeight: Weight.create(targetWeight),
           currentWeight: Weight.create(currentWeight),
           targetPeriodWeeks: periodWeeks,

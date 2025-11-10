@@ -3,6 +3,7 @@ import 'package:n06/features/onboarding/domain/value_objects/weight.dart';
 /// 사용자 프로필 및 목표를 나타내는 Entity
 class UserProfile {
   final String userId;
+  final String? userName;
   final Weight targetWeight;
   final Weight currentWeight;
   final int? targetPeriodWeeks;
@@ -14,6 +15,7 @@ class UserProfile {
   /// weeklyWeightRecordGoal과 weeklySymptomRecordGoal의 기본값은 7이다.
   UserProfile({
     required this.userId,
+    this.userName,
     required this.targetWeight,
     required this.currentWeight,
     this.targetPeriodWeeks,
@@ -46,6 +48,7 @@ class UserProfile {
   /// 현재 UserProfile의 일부 필드를 변경한 새로운 UserProfile을 반환한다.
   UserProfile copyWith({
     String? userId,
+    String? userName,
     Weight? targetWeight,
     Weight? currentWeight,
     int? targetPeriodWeeks,
@@ -55,6 +58,7 @@ class UserProfile {
   }) {
     return UserProfile(
       userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
       targetWeight: targetWeight ?? this.targetWeight,
       currentWeight: currentWeight ?? this.currentWeight,
       targetPeriodWeeks: targetPeriodWeeks ?? this.targetPeriodWeeks,
@@ -72,6 +76,7 @@ class UserProfile {
 
     return other is UserProfile &&
         other.userId == userId &&
+        other.userName == userName &&
         other.targetWeight == targetWeight &&
         other.currentWeight == currentWeight &&
         other.targetPeriodWeeks == targetPeriodWeeks &&
@@ -83,6 +88,7 @@ class UserProfile {
   @override
   int get hashCode =>
       userId.hashCode ^
+      userName.hashCode ^
       targetWeight.hashCode ^
       currentWeight.hashCode ^
       targetPeriodWeeks.hashCode ^

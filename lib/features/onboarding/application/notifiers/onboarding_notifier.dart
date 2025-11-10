@@ -81,6 +81,7 @@ class OnboardingNotifier extends _$OnboardingNotifier {
 
         final userProfile = UserProfile(
           userId: userId,
+          userName: name,
           targetWeight: targetWeightObj,
           currentWeight: currentWeightObj,
           targetPeriodWeeks: targetPeriodWeeks,

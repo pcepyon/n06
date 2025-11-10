@@ -3,7 +3,7 @@ import 'package:riverpod/riverpod.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/onboarding/domain/value_objects/weight.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
-import 'package:n06/features/profile/domain/repositories/profile_repository.dart';
+import 'package:n06/features/onboarding/domain/repositories/profile_repository.dart';
 
 /// Simple mock ProfileRepository for testing
 class _MockProfileRepository implements ProfileRepository {
@@ -28,6 +28,11 @@ class _MockProfileRepository implements ProfileRepository {
 
   @override
   Future<void> saveUserProfile(UserProfile profile) async {
+    _mockProfile = profile;
+  }
+
+  @override
+  Future<void> updateUserProfile(UserProfile profile) async {
     _mockProfile = profile;
   }
 

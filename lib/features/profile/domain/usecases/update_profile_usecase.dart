@@ -1,6 +1,6 @@
 import 'package:n06/core/errors/domain_exception.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
-import 'package:n06/features/profile/domain/repositories/profile_repository.dart';
+import 'package:n06/features/onboarding/domain/repositories/profile_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
 
 /// UseCase for updating user profile

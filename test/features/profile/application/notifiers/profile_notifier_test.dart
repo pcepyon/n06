@@ -3,7 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/onboarding/domain/value_objects/weight.dart';
-import 'package:n06/features/profile/domain/repositories/profile_repository.dart';
+import 'package:n06/features/onboarding/domain/repositories/profile_repository.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
 
 class MockProfileRepository extends Mock implements ProfileRepository {}

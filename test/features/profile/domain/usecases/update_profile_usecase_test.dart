@@ -3,7 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:n06/core/errors/domain_exception.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/onboarding/domain/value_objects/weight.dart';
-import 'package:n06/features/profile/domain/repositories/profile_repository.dart';
+import 'package:n06/features/onboarding/domain/repositories/profile_repository.dart';
 import 'package:n06/features/profile/domain/usecases/update_profile_usecase.dart';
 import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
 

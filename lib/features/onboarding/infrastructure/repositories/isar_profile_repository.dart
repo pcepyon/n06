@@ -31,4 +31,41 @@ class IsarProfileRepository implements ProfileRepository {
     // 트랜잭션 내에서 호출될 수 있으므로 writeTxn 제거
     await _isar.userProfileDtos.put(dto);
   }
+
+  @override
+  Stream<UserProfile> watchUserProfile(String userId) {
+    return _isar.userProfileDtos
+        .filter()
+        .userIdEqualTo(userId)
+        .watch(fireImmediately: true)
+        .map((dtos) {
+      if (dtos.isEmpty) {
+        throw Exception('User profile not found for user: $userId');
+      }
+      return dtos.first.toEntity();
+    });
+  }
+
+  @override
+  Future<void> updateWeeklyGoals(
+    String userId,
+    int weeklyWeightRecordGoal,
+    int weeklySymptomRecordGoal,
+  ) async {
+    final existingDto = await _isar.userProfileDtos
+        .filter()
+        .userIdEqualTo(userId)
+        .findFirst();
+
+    if (existingDto == null) {
+      throw Exception('User profile not found for user: $userId');
+    }
+
+    // Update the goals
+    existingDto.weeklyWeightRecordGoal = weeklyWeightRecordGoal;
+    existingDto.weeklySymptomRecordGoal = weeklySymptomRecordGoal;
+
+    // 트랜잭션 내에서 호출될 수 있으므로 writeTxn 제거
+    await _isar.userProfileDtos.put(existingDto);
+  }
 }

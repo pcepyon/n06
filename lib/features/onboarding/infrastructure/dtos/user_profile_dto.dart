@@ -9,6 +9,7 @@ class UserProfileDto {
   Id isarId = Isar.autoIncrement;
 
   late String userId;
+  late String? userName;
   late double targetWeightKg;
   late double currentWeightKg;
   late int? targetPeriodWeeks;
@@ -20,6 +21,7 @@ class UserProfileDto {
   UserProfile toEntity() {
     return UserProfile(
       userId: userId,
+      userName: userName,
       targetWeight: Weight.create(targetWeightKg),
       currentWeight: Weight.create(currentWeightKg),
       targetPeriodWeeks: targetPeriodWeeks,
@@ -33,6 +35,7 @@ class UserProfileDto {
   static UserProfileDto fromEntity(UserProfile entity) {
     return UserProfileDto()
       ..userId = entity.userId
+      ..userName = entity.userName
       ..targetWeightKg = entity.targetWeight.value
       ..currentWeightKg = entity.currentWeight.value
       ..targetPeriodWeeks = entity.targetPeriodWeeks

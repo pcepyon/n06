@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:isar/isar.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 import 'package:n06/core/providers.dart';
@@ -136,6 +137,12 @@ Future<void> _initializeAndRunApp() async {
       nativeAppKey: '32dfc3999b53af153dbcefa7014093bc',
       loggingEnabled: true,  // Enable detailed debug logging
     );
+
+    // Initialize Korean locale for DateFormat
+    if (kDebugMode) {
+      developer.log('🌐 Initializing Korean locale...', name: 'Main');
+    }
+    await initializeDateFormatting('ko_KR', null);
 
     // Initialize Isar with all required collection schemas
     if (kDebugMode) {

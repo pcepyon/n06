@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
-import 'package:n06/features/profile/domain/repositories/profile_repository.dart';
+import 'package:n06/features/onboarding/domain/repositories/profile_repository.dart';
 import 'package:n06/features/profile/domain/usecases/update_profile_usecase.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';

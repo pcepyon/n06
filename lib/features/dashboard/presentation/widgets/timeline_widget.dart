@@ -41,7 +41,11 @@ class TimelineWidget extends StatelessWidget {
           itemCount: timeline.length,
           itemBuilder: (context, index) {
             final event = timeline[index];
-            return _TimelineEventItem(event: event);
+            final isLast = index == timeline.length - 1;
+            return _TimelineEventItem(
+              event: event,
+              isLast: isLast,
+            );
           },
         ),
       ],
@@ -51,8 +55,12 @@ class TimelineWidget extends StatelessWidget {
 
 class _TimelineEventItem extends StatelessWidget {
   final TimelineEvent event;
+  final bool isLast;
 
-  const _TimelineEventItem({required this.event});
+  const _TimelineEventItem({
+    required this.event,
+    required this.isLast,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +81,7 @@ class _TimelineEventItem extends StatelessWidget {
                   color: color,
                 ),
               ),
-              if (event != event) // For visual connecting line
+              if (!isLast) // For visual connecting line
                 Container(
                   width: 2,
                   height: 40,

@@ -91,7 +91,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     final symptoms = await _trackingRepository.getSymptomLogs(userId);
 
     // 연속 기록일 계산
-    final symptomLogs = symptoms.cast<SymptomLog>();
+    final symptomLogs = symptoms.whereType<SymptomLog>().toList();
     final continuousRecordDays = _calculateContinuousRecordDays.execute(
         weights, symptomLogs);
 
@@ -113,7 +113,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     final nextSchedule = _calculateNextSchedule(activePlan, weights, profile);
 
     // 주간 요약
-    final weeklySummary = _calculateWeeklySummary(weights, symptoms);
+    final weeklySummary = _calculateWeeklySummary(weights, symptomLogs);
 
     // 뱃지 조회 및 검증
     final userBadges = await _badgeRepository.getUserBadges(userId);
@@ -141,7 +141,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     final timeline = _buildTimeline(activePlan, profile, weights);
 
     return DashboardData(
-      userName: profile.userId,
+      userName: profile.userName ?? profile.userId.split('@').first,
       continuousRecordDays: continuousRecordDays,
       currentWeek: currentWeek,
       weeklyProgress: weeklyProgress,
@@ -188,7 +188,7 @@ class DashboardNotifier extends _$DashboardNotifier {
 
   WeeklySummary _calculateWeeklySummary(
     List<WeightLog> weights,
-    List<dynamic> symptoms,
+    List<SymptomLog> symptoms,
   ) {
     final now = DateTime.now();
     final sevenDaysAgo = now.subtract(Duration(days: 7));
@@ -203,12 +203,9 @@ class DashboardNotifier extends _$DashboardNotifier {
         ? recentWeights.first.weightKg - recentWeights.last.weightKg
         : 0.0;
 
-    // 지난 7일간 기록한 증상 개수
+    // 지난 7일간 증상 개수 (안전한 필터링)
     final symptomCount = symptoms
-        .where((s) {
-          final date = (s as dynamic).logDate as DateTime;
-          return date.isAfter(sevenDaysAgo);
-        })
+        .where((s) => s.logDate.isAfter(sevenDaysAgo))
         .length;
 
     return WeeklySummary(
@@ -226,10 +223,7 @@ class DashboardNotifier extends _$DashboardNotifier {
   ) {
     final events = <TimelineEvent>[];
 
-    // 가중치가 없으면 빈 타임라인 반환
-    if (weights.isEmpty) return events;
-
-    // 1. 치료 시작일 이벤트
+    // 1. 치료 시작일 이벤트 (항상 표시)
     events.add(
       TimelineEvent(
         id: 'treatment_start',
