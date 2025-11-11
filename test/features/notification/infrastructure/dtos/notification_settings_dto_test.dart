@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:n06/features/notification/domain/entities/notification_settings.dart';
 import 'package:n06/features/notification/infrastructure/dtos/notification_settings_dto.dart';
@@ -29,7 +29,7 @@ void main() {
       // Arrange
       final entity = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 21, minute: 30),
+        notificationTime: const NotificationTime(hour: 21, minute: 30),
         notificationEnabled: false,
       );
 
@@ -47,7 +47,7 @@ void main() {
       // Arrange
       final entity = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 0, minute: 0),
+        notificationTime: const NotificationTime(hour: 0, minute: 0),
         notificationEnabled: true,
       );
 
@@ -64,7 +64,7 @@ void main() {
       // Arrange
       final entity = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 23, minute: 59),
+        notificationTime: const NotificationTime(hour: 23, minute: 59),
         notificationEnabled: true,
       );
 
@@ -81,7 +81,7 @@ void main() {
       // Arrange
       final original = NotificationSettings(
         userId: 'user456',
-        notificationTime: const TimeOfDay(hour: 14, minute: 45),
+        notificationTime: const NotificationTime(hour: 14, minute: 45),
         notificationEnabled: false,
       );
 

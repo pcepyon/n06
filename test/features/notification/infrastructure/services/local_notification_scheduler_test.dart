@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:n06/features/notification/infrastructure/services/local_notification_scheduler.dart';
@@ -73,7 +73,7 @@ void main() {
       // Act
       await scheduler.scheduleNotifications(
         doseSchedules: doseSchedules,
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
       );
 
       // Assert
@@ -91,7 +91,7 @@ void main() {
       );
       await scheduler.scheduleNotifications(
         doseSchedules: [doseSchedule],
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
       );
 
       // Act
@@ -114,7 +114,7 @@ void main() {
       // Act
       await scheduler.scheduleNotifications(
         doseSchedules: [pastSchedule],
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
       );
 
       // Assert
@@ -143,7 +143,7 @@ void main() {
       // Act
       await scheduler.scheduleNotifications(
         doseSchedules: doseSchedules,
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
       );
 
       // Assert

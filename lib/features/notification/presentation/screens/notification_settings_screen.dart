@@ -8,6 +8,16 @@ import 'package:n06/features/notification/presentation/widgets/time_picker_butto
 class NotificationSettingsScreen extends ConsumerWidget {
   const NotificationSettingsScreen({super.key});
 
+  /// NotificationTime → TimeOfDay 변환 헬퍼 (Presentation Layer에서만 사용)
+  TimeOfDay _toTimeOfDay(NotificationTime notificationTime) {
+    return TimeOfDay(hour: notificationTime.hour, minute: notificationTime.minute);
+  }
+
+  /// TimeOfDay → NotificationTime 변환 헬퍼 (Presentation Layer에서만 사용)
+  NotificationTime _fromTimeOfDay(TimeOfDay timeOfDay) {
+    return NotificationTime(hour: timeOfDay.hour, minute: timeOfDay.minute);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(notificationNotifierProvider);
@@ -56,10 +66,10 @@ class NotificationSettingsScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 TimePickerButton(
                   // NotificationTime → TimeOfDay 변환 (Presentation Layer에서만)
-                  currentTime: settings.notificationTime.toTimeOfDay(),
+                  currentTime: _toTimeOfDay(settings.notificationTime),
                   onTimeSelected: (selectedTime) async {
                     // TimeOfDay → NotificationTime 변환
-                    final notificationTime = NotificationTime.fromTimeOfDay(selectedTime);
+                    final notificationTime = _fromTimeOfDay(selectedTime);
                     await notifier.updateNotificationTime(notificationTime);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(

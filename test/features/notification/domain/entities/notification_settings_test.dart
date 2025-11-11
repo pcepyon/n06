@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:n06/features/notification/domain/entities/notification_settings.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 
 void main() {
   group('NotificationSettings', () {
@@ -8,7 +8,7 @@ void main() {
       // Arrange & Act
       final settings = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
 
@@ -23,7 +23,7 @@ void main() {
       // Arrange & Act
       final settings = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 21, minute: 30),
+        notificationTime: const NotificationTime(hour: 21, minute: 30),
         notificationEnabled: false,
       );
 
@@ -35,13 +35,13 @@ void main() {
       // Arrange
       final original = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
 
       // Act
       final updated = original.copyWith(
-        notificationTime: const TimeOfDay(hour: 21, minute: 0),
+        notificationTime: const NotificationTime(hour: 21, minute: 0),
       );
 
       // Assert
@@ -54,13 +54,13 @@ void main() {
       // Arrange
       final original = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
 
       // Act
       final updated = original.copyWith(
-        notificationTime: const TimeOfDay(hour: 14, minute: 30),
+        notificationTime: const NotificationTime(hour: 14, minute: 30),
         notificationEnabled: false,
       );
 
@@ -74,12 +74,12 @@ void main() {
       // Arrange
       final settings1 = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
       final settings2 = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
 
@@ -91,12 +91,12 @@ void main() {
       // Arrange
       final settings1 = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
       final settings2 = NotificationSettings(
         userId: 'user456',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
 
@@ -108,12 +108,12 @@ void main() {
       // Arrange
       final settings1 = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
       final settings2 = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 10, minute: 0),
+        notificationTime: const NotificationTime(hour: 10, minute: 0),
         notificationEnabled: true,
       );
 
@@ -125,12 +125,12 @@ void main() {
       // Arrange
       final settings1 = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
       final settings2 = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: false,
       );
 

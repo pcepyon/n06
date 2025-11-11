@@ -1,5 +1,6 @@
 import 'package:isar/isar.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 
 part 'dose_schedule_dto.g.dart';
 
@@ -10,7 +11,8 @@ class DoseScheduleDto {
   late String dosagePlanId;
   late DateTime scheduledDate;
   late double scheduledDoseMg;
-  late String? notificationTimeStr; // HH:mm format
+  int? notificationHour;    // 0-23 or null
+  int? notificationMinute;  // 0-59 or null
   late DateTime createdAt;
 
   DoseScheduleDto();
@@ -20,19 +22,27 @@ class DoseScheduleDto {
     dosagePlanId = entity.dosagePlanId;
     scheduledDate = entity.scheduledDate;
     scheduledDoseMg = entity.scheduledDoseMg;
+
+    // NotificationTime → hour/minute
     if (entity.notificationTime != null) {
-      notificationTimeStr = entity.notificationTime.toString();
+      notificationHour = entity.notificationTime!.hour;
+      notificationMinute = entity.notificationTime!.minute;
     } else {
-      // 명시적으로 null 할당하여 late 필드 초기화
-      notificationTimeStr = null;
+      notificationHour = null;
+      notificationMinute = null;
     }
+
     createdAt = entity.createdAt;
   }
 
   DoseSchedule toEntity() {
-    Object? notificationTime;
-    if (notificationTimeStr != null) {
-      notificationTime = notificationTimeStr; // Store as string
+    // hour/minute → NotificationTime
+    NotificationTime? notificationTime;
+    if (notificationHour != null && notificationMinute != null) {
+      notificationTime = NotificationTime(
+        hour: notificationHour!,
+        minute: notificationMinute!,
+      );
     }
 
     return DoseSchedule(

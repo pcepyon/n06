@@ -1,3 +1,4 @@
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/tracking/domain/usecases/schedule_generator_usecase.dart';
@@ -27,7 +28,7 @@ void main() {
         final schedules = useCase.generateSchedules(
           plan,
           endDate,
-          notificationTime: TimeOfDay(hour: 9, minute: 0),
+          notificationTime: NotificationTime(hour: 9, minute: 0),
         );
 
         expect(schedules.length, 4);
@@ -184,7 +185,7 @@ void main() {
         );
 
         final endDate = DateTime(2025, 1, 29);
-        final notificationTime = TimeOfDay(hour: 14, minute: 30);
+        final notificationTime = NotificationTime(hour: 14, minute: 30);
 
         final schedules = useCase.generateSchedules(
           plan,
@@ -194,8 +195,8 @@ void main() {
 
         for (final schedule in schedules) {
           expect(schedule.notificationTime, isNotNull);
-          if (schedule.notificationTime is TimeOfDay) {
-            final time = schedule.notificationTime as TimeOfDay;
+          if (schedule.notificationTime is NotificationTime) {
+            final time = schedule.notificationTime as NotificationTime;
             expect(time.hour, 14);
             expect(time.minute, 30);
           }
@@ -203,23 +204,4 @@ void main() {
       });
     });
   });
-}
-
-// Mock TimeOfDay for testing
-class TimeOfDay {
-  final int hour;
-  final int minute;
-
-  TimeOfDay({required this.hour, required this.minute});
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is TimeOfDay &&
-          runtimeType == other.runtimeType &&
-          hour == other.hour &&
-          minute == other.minute;
-
-  @override
-  int get hashCode => hour.hashCode ^ minute.hashCode;
 }

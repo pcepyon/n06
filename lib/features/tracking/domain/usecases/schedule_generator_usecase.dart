@@ -1,30 +1,13 @@
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
-
-class TimeOfDay {
-  final int hour;
-  final int minute;
-
-  TimeOfDay({required this.hour, required this.minute});
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is TimeOfDay &&
-          runtimeType == other.runtimeType &&
-          hour == other.hour &&
-          minute == other.minute;
-
-  @override
-  int get hashCode => hour.hashCode ^ minute.hashCode;
-}
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 
 class ScheduleGeneratorUseCase {
   /// Generate complete schedule from plan start date to end date
   List<DoseSchedule> generateSchedules(
     DosagePlan plan,
     DateTime endDate, {
-    Object? notificationTime,
+    NotificationTime? notificationTime,
   }) {
     if (endDate.isBefore(plan.startDate)) {
       return [];
@@ -58,7 +41,7 @@ class ScheduleGeneratorUseCase {
     DateTime changeDate,
     DateTime endDate,
     List<DoseSchedule> existingSchedules, {
-    Object? notificationTime,
+    NotificationTime? notificationTime,
   }) {
     // Keep schedules before change date
     final keepSchedules = existingSchedules

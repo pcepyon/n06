@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
@@ -30,7 +30,7 @@ void main() {
       // Arrange
       final settings = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
 
@@ -58,7 +58,7 @@ void main() {
       // Arrange
       final initial = NotificationSettings(
         userId: 'user456',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
       await repository.saveNotificationSettings(initial);
@@ -66,7 +66,7 @@ void main() {
       // Act
       final updated = NotificationSettings(
         userId: 'user456',
-        notificationTime: const TimeOfDay(hour: 21, minute: 0),
+        notificationTime: const NotificationTime(hour: 21, minute: 0),
         notificationEnabled: false,
       );
       await repository.saveNotificationSettings(updated);
@@ -82,12 +82,12 @@ void main() {
       // Arrange
       final settings1 = NotificationSettings(
         userId: 'user789',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
       final settings2 = NotificationSettings(
         userId: 'user999',
-        notificationTime: const TimeOfDay(hour: 14, minute: 30),
+        notificationTime: const NotificationTime(hour: 14, minute: 30),
         notificationEnabled: false,
       );
 

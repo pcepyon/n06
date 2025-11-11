@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/core/providers.dart';
+import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/emergency_check_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart';
@@ -144,11 +145,12 @@ final trackingNotifierProvider =
     StateNotifierProvider.autoDispose<TrackingNotifier, AsyncValue<TrackingState>>(
   (ref) {
     final repository = ref.watch(trackingRepositoryProvider);
-    // userId는 AuthNotifier에서 가져와야 함
-    // 현재는 null로 설정
+    // AuthNotifier에서 userId 추출
+    final userId = ref.watch(authNotifierProvider).value?.id;
+
     return TrackingNotifier(
       repository: repository,
-      userId: null,
+      userId: userId,
     );
   },
 );

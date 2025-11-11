@@ -1,11 +1,12 @@
 import 'package:equatable/equatable.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 
 class DoseSchedule extends Equatable {
   final String id;
   final String dosagePlanId;
   final DateTime scheduledDate;
   final double scheduledDoseMg;
-  final Object? notificationTime;
+  final NotificationTime? notificationTime;
   final DateTime createdAt;
 
   DoseSchedule({
@@ -77,7 +78,7 @@ class DoseSchedule extends Equatable {
     String? dosagePlanId,
     DateTime? scheduledDate,
     double? scheduledDoseMg,
-    DateTime? notificationTime,
+    NotificationTime? notificationTime,
     DateTime? createdAt,
   }) {
     return DoseSchedule(

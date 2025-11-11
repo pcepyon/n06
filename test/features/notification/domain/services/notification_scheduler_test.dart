@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:n06/features/notification/domain/services/notification_scheduler.dart';
@@ -51,19 +51,19 @@ void main() {
       );
       when(mockScheduler.scheduleNotifications(
         doseSchedules: [doseSchedule],
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
       )).thenAnswer((_) async => {});
 
       // Act
       await mockScheduler.scheduleNotifications(
         doseSchedules: [doseSchedule],
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
       );
 
       // Assert
       verify(mockScheduler.scheduleNotifications(
         doseSchedules: [doseSchedule],
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
       )).called(1);
     });
 

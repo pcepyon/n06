@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:n06/features/notification/domain/entities/notification_settings.dart';
@@ -18,7 +18,7 @@ void main() {
       // Arrange
       final mockSettings = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
       when(mockRepository.getNotificationSettings('user123'))
@@ -37,7 +37,7 @@ void main() {
       // Arrange
       final mockSettings = NotificationSettings(
         userId: 'user123',
-        notificationTime: const TimeOfDay(hour: 9, minute: 0),
+        notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
       when(mockRepository.saveNotificationSettings(mockSettings))
