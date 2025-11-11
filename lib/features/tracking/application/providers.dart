@@ -3,7 +3,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/core/providers.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/emergency_check_notifier.dart';
-import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/weight_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/symptom_record_edit_notifier.dart';
@@ -121,24 +120,7 @@ NotificationService notificationService(NotificationServiceRef ref) {
   return NotificationService();
 }
 
-// Notifier Provider - requires userId from auth state
-final medicationNotifierProvider = StateNotifierProvider.autoDispose<
-    MedicationNotifier,
-    MedicationState>((ref) {
-  final repository = ref.watch(medicationRepositoryProvider);
-  final scheduleGenerator = ref.watch(scheduleGeneratorUseCaseProvider);
-  final injectionSiteRotation = ref.watch(injectionSiteRotationUseCaseProvider);
-  final missedDoseAnalyzer = ref.watch(missedDoseAnalyzerUseCaseProvider);
-  final notificationService = ref.watch(notificationServiceProvider);
-
-  return MedicationNotifier(
-    repository: repository,
-    scheduleGeneratorUseCase: scheduleGenerator,
-    injectionSiteRotationUseCase: injectionSiteRotation,
-    missedDoseAnalyzerUseCase: missedDoseAnalyzer,
-    notificationService: notificationService,
-  );
-});
+// MedicationNotifier Provider는 medication_notifier.dart에서 @riverpod으로 자동 생성됨
 
 // Tracking Notifier Provider
 final trackingNotifierProvider =
