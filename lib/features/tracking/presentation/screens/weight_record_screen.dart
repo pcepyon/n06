@@ -160,6 +160,9 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Provider를 구독하여 화면이 활성화된 동안 유지
+    ref.watch(trackingNotifierProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('체중 기록'),

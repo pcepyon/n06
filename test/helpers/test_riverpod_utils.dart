@@ -17,8 +17,9 @@ import 'package:flutter_test/flutter_test.dart';
 ///     ],
 ///   );
 ///
-///   final state = await container.read(medicationNotifierProvider.future);
-///   expect(state, isNotEmpty);
+///   // For AsyncNotifier providers, use .future to get the value
+///   final data = await container.read(someAsyncNotifierProvider.future);
+///   expect(data, isNotNull);
 ///
 ///   container.dispose();
 /// });
