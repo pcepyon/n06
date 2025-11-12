@@ -42,7 +42,7 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
   }
 
   /// 확인 버튼 클릭 처리
-  void _handleConfirm() {
+  Future<void> _handleConfirm() async {
     final selectedSymptoms = <String>[];
     for (int i = 0; i < selectedStates.length; i++) {
       if (selectedStates[i]) {
@@ -52,8 +52,11 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
 
     // BR3: 전문가 상담 권장 조건 (하나라도 선택 시)
     if (selectedSymptoms.isNotEmpty) {
-      // 증상 체크 저장
-      _saveEmergencyCheck(selectedSymptoms);
+      // 증상 체크 저장 - await 추가하여 저장 완료 후 다이얼로그 표시
+      await _saveEmergencyCheck(selectedSymptoms);
+
+      // mounted 체크: 저장 중 화면이 종료되었을 수 있음
+      if (!mounted) return;
 
       // 전문가 상담 권장 다이얼로그 표시
       showDialog(
@@ -62,7 +65,9 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
         builder: (context) => ConsultationRecommendationDialog(selectedSymptoms: selectedSymptoms),
       ).then((_) {
         // 다이얼로그 닫힌 후 화면 종료
-        Navigator.of(context).pop();
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
       });
     }
   }

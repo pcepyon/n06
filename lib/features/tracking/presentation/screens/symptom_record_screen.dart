@@ -112,13 +112,23 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
           createdAt: DateTime.now(),
         );
 
+        // 저장 완료 대기
         await notifier.saveSymptomLog(log);
         savedLog = log;
       }
 
+      // 저장 완료 후 mounted 체크
       if (!mounted) return;
 
-      // 대처 가이드 표시
+      // 저장 완료 피드백 표시
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('증상이 기록되었습니다.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // 대처 가이드 표시 (저장이 완전히 완료된 후)
       await _showCopingGuide();
     } catch (e) {
       if (mounted) {
