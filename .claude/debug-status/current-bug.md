@@ -724,3 +724,211 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
 **작성일**: 2025-11-12  
 **검증 완료 시각**: 10:45 KST  
 **최종 업데이트**: InputValidationWidget 코드 분석 완료
+
+---
+status: ANALYZED
+analyzed_by: root-cause-analyzer
+analyzed_at: 2025-11-12T11:00:00+09:00
+confidence: 100%
+---
+
+# 근본 원인 분석 완료
+
+## 🧠 심층 분석 결과
+
+### 근본 원인 (확신도: 100%)
+InputValidationWidget의 구조적 설계 결함으로 인한 데이터 흐름 단절
+
+### 상세 분석
+
+#### 1. InputValidationWidget 설계 문제점
+
+**현재 구조의 한계**:
+```dart
+class InputValidationWidget extends StatefulWidget {
+  // ❌ TextEditingController 파라미터 없음
+  final ValueChanged<String> onChanged;  // 콜백만 존재
+}
+
+class _InputValidationWidgetState {
+  late TextEditingController _controller;  // 자체 생성
+  
+  @override
+  void initState() {
+    _controller = TextEditingController();  // 내부 controller
+    _controller.addListener(() {
+      widget.onChanged(_controller.text);  // 콜백으로만 전달
+    });
+  }
+}
+```
+
+**문제점**:
+1. **캡슐화 과도**: 내부 상태를 외부에서 접근 불가
+2. **표준 패턴 위배**: Flutter의 일반적인 controller 패턴과 불일치
+3. **재사용성 제한**: 기존 controller와 연결 불가
+
+#### 2. Clean Architecture 위반 사항
+
+**A. 비즈니스 로직 중복 (DRY 원칙 위반)**
+
+| 위치 | 검증 로직 | 문제점 |
+|------|----------|---------|
+| InputValidationWidget | 하드코딩 (20-300kg) | Presentation Layer |
+| WeightRecordScreen | 하드코딩 (20-300kg) | Presentation Layer |
+| ValidateWeightEditUseCase | UseCase 패턴 | Domain Layer (올바름) |
+
+**B. 일관성 없는 아키텍처 적용**
+
+| 기능 | Widget | Controller 연결 | UseCase | Value Object |
+|------|--------|----------------|---------|--------------|
+| 온보딩 체중 입력 | TextField | ✅ 직접 연결 | ❌ 없음 | ✅ Weight |
+| 일상 체중 생성 | InputValidationWidget | ❌ **연결 안됨** | ❌ 없음 | ❌ 없음 |
+| 일상 체중 수정 | TextField | ✅ 직접 연결 | ✅ 있음 | ❌ 없음 |
+
+#### 3. 온보딩, 체중 수정 다이얼로그와의 구조적 차이
+
+**온보딩 (정상 동작)**:
+```dart
+// 직접적인 controller 사용
+TextField(
+  controller: _currentWeightController,  // ✅ 직접 연결
+  onChanged: _recalculate,              // ✅ 실시간 검증
+)
+
+// controller에서 값 읽기
+double.tryParse(_currentWeightController.text)  // ✅ 정상
+```
+
+**체중 수정 (정상 동작)**:
+```dart
+// UseCase 패턴 적용
+TextField(
+  controller: _weightController,        // ✅ 직접 연결
+  onChanged: _validateWeight,          // ✅ UseCase 호출
+)
+
+// UseCase로 검증
+_validateUseCase.execute(weight)       // ✅ Domain Layer
+```
+
+**일상 체중 기록 (버그)**:
+```dart
+// 잘못된 위젯 사용
+InputValidationWidget(
+  onChanged: (_) => setState(() {}),   // ❌ 값 저장 안함
+  // controller 전달 불가               // ❌ 설계 제약
+)
+
+// 빈 controller 접근
+double.tryParse(_weightController.text) // ❌ 항상 ""
+```
+
+#### 4. Value Object와 UseCase 불일치 문제
+
+**Value Object 사용 불일치**:
+- 온보딩: `Weight.create()` 사용 (Domain Layer)
+- 일상 기록: 직접 double 사용 (검증 없음)
+- 체중 수정: 직접 double 사용 (UseCase로 검증)
+
+**UseCase 패턴 불일치**:
+- `ValidateWeightEditUseCase`: 존재 (수정용)
+- `ValidateWeightCreateUseCase`: **부재** (생성용)
+
+### 인과 관계 심화 분석
+
+```
+[설계 단계]
+InputValidationWidget 독립 컴포넌트 설계
+    ↓
+[구현 단계]  
+자체 controller 생성, 외부 연결 미지원
+    ↓
+[통합 단계]
+WeightRecordScreen에서 잘못 사용
+    ↓
+[실행 단계]
+데이터 흐름 단절
+    ↓
+[결과]
+입력값 손실 → 검증 실패 → 기능 차단
+```
+
+## 🛠️ 장기 개선 방안 상세화
+
+### Solution 3: 포괄적 리팩토링
+
+#### Phase 1: InputValidationWidget 개선
+```dart
+class InputValidationWidget extends StatelessWidget {
+  final TextEditingController? controller;  // ✅ 외부 controller 지원
+  final bool showValidation;                // ✅ 검증 UI 옵션
+  final ValidationUseCase? validator;       // ✅ UseCase 주입
+  
+  @override
+  Widget build(BuildContext context) {
+    final effectiveController = controller ?? TextEditingController();
+    // ...
+  }
+}
+```
+
+#### Phase 2: ValidateWeightCreateUseCase 생성
+```dart
+class ValidateWeightCreateUseCase {
+  ValidationResult execute(double weight) {
+    // ValidateWeightEditUseCase와 동일한 로직 재사용
+    return _sharedValidator.validate(weight);
+  }
+}
+```
+
+#### Phase 3: Value Object 일관성 개선
+```dart
+// tracking 모듈에서도 Weight Value Object 사용
+final weight = Weight.create(inputValue);
+final newLog = WeightLog(
+  weightKg: weight.value,  // Value Object 사용
+  // ...
+);
+```
+
+#### Phase 4: 검증 로직 통합
+```dart
+// 공통 검증 로직을 Domain Layer로
+abstract class WeightValidator {
+  static const double MIN_WEIGHT = 20.0;
+  static const double MAX_WEIGHT = 300.0;
+  
+  static ValidationResult validate(double weight) {
+    // 중앙화된 검증 로직
+  }
+}
+```
+
+### 예상 효과
+
+1. **즉각적 효과**:
+   - 일상 체중 기록 기능 복구
+   - 사용자 경험 개선
+
+2. **장기적 효과**:
+   - Clean Architecture 준수
+   - 코드 재사용성 향상
+   - 유지보수성 개선
+   - 테스트 용이성 증가
+
+## Quality Gate 2 체크리스트
+
+- [✅] 근본 원인 명확히 식별
+- [✅] 5 Whys 분석 완료
+- [✅] 모든 기여 요인 문서화
+- [✅] 수정 전략 제시
+- [✅] 확신도 90% 이상 (100%)
+- [✅] 한글 문서 완성
+
+## Next Agent Required
+fix-validator
+
+**상세 분석 완료**: 2025-11-12 11:00 KST
+**작성자**: root-cause-analyzer agent (Opus 4.1)

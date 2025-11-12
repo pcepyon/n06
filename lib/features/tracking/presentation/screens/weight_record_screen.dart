@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/presentation/widgets/date_selection_widget.dart';
 import 'package:n06/features/tracking/presentation/widgets/input_validation_widget.dart';
+import 'package:n06/features/tracking/domain/usecases/validate_weight_create_usecase.dart';
 
 /// F002: 체중 기록 화면
 ///
@@ -20,7 +22,9 @@ class WeightRecordScreen extends ConsumerStatefulWidget {
 class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
   late DateTime selectedDate;
   late TextEditingController _weightController;
+  late ValidateWeightCreateUseCase _validateUseCase;
   bool isLoading = false;
+  String? _validationWarning;
 
   @override
   void initState() {
@@ -29,6 +33,7 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
     final now = DateTime.now();
     selectedDate = DateTime(now.year, now.month, now.day);
     _weightController = TextEditingController();
+    _validateUseCase = ValidateWeightCreateUseCase();
   }
 
   @override
@@ -44,11 +49,26 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
   }
 
   Future<void> _handleSave() async {
-    // 입력값 검증
+    // 입력값 파싱
     final weight = double.tryParse(_weightController.text);
-    if (weight == null || weight < 20 || weight > 300) {
-      _showErrorDialog('체중은 20kg 이상 300kg 이하여야 합니다');
+    if (weight == null) {
+      _showErrorDialog('유효한 체중 값을 입력해주세요');
       return;
+    }
+
+    // UseCase를 사용한 검증
+    final validationResult = _validateUseCase.execute(weight);
+
+    if (validationResult.isFailure) {
+      _showErrorDialog(validationResult.error ?? '유효하지 않은 체중 값입니다');
+      return;
+    }
+
+    // 경고 메시지가 있으면 상태에 저장 (UI에 표시 가능)
+    if (validationResult.warning != null) {
+      setState(() {
+        _validationWarning = validationResult.warning;
+      });
     }
 
     setState(() => isLoading = true);
@@ -195,9 +215,13 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
               ),
               const SizedBox(height: 12),
               InputValidationWidget(
+                controller: _weightController, // 외부 controller 전달
                 fieldName: '체중',
                 onChanged: (_) {
-                  setState(() {});
+                  setState(() {
+                    // 입력 변경 시 경고 메시지 초기화
+                    _validationWarning = null;
+                  });
                 },
                 label: '체중 (kg)',
                 hint: '예: 75.5',
@@ -206,6 +230,30 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
                   signed: false,
                 ),
               ),
+              // 경고 메시지 표시
+              if (_validationWarning != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning_amber, color: Colors.orange, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _validationWarning!,
+                          style: const TextStyle(color: Colors.orange, fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               // 저장 버튼
               const SizedBox(height: 32),

@@ -80,6 +80,16 @@ import 'package:flutter/material.dart'; // in domain/ folder
 
 // Writing code before test
 // (Violates TDD - see docs/tdd.md)
+
+// autoDispose Provider + async 저장 후 즉시 모달 표시
+await notifier.save(data);
+await showDialog(...); // WRONG: Provider 조기 해제 가능
+
+// userId 하드코딩 (authNotifier에서 가져와야 함)
+const userId = 'current-user-id'; // WRONG
+
+// Notifier에서 null 체크 없이 state 접근
+return state.asData!.value; // WRONG: asData가 null일 수 있음
 ```
 
 ### ✅ ALWAYS
@@ -95,6 +105,18 @@ class IsarMedicationRepository implements MedicationRepository { }
 
 // Test first
 test('should...', () { }); // Then write code
+
+// 저장 완료 후 mounted 체크하고 모달 표시
+await notifier.save(data);
+if (!mounted) return;
+await showDialog(...); // Safe
+
+// userId는 authNotifier에서 가져오기
+final userId = ref.read(authNotifierProvider).value?.id ?? 'fallback';
+
+// Notifier에서 state 백업 후 접근
+final prev = state.asData?.value ?? defaultState;
+return prev; // Safe
 ```
 
 **Details**: See `docs/code_structure.md` (DO/DON'T sections)

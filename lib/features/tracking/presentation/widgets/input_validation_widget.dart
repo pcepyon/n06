@@ -4,8 +4,16 @@ import 'package:flutter/material.dart';
 ///
 /// 체중 입력값을 실시간으로 검증하고,
 /// 에러/성공 상태를 시각적으로 표시합니다.
+///
+/// [controller]를 제공하면 외부에서 관리하는 TextEditingController를 사용하고,
+/// 제공하지 않으면 내부적으로 생성합니다.
 class InputValidationWidget extends StatefulWidget {
-  /// 입력된 값
+  /// 외부에서 관리하는 TextEditingController (선택사항)
+  ///
+  /// 제공하면 외부 controller를 사용하고, 제공하지 않으면 내부에서 생성합니다.
+  final TextEditingController? controller;
+
+  /// 입력된 값 (controller가 null일 때만 사용)
   final String? initialValue;
 
   /// 입력 필드의 이름 (예: "체중")
@@ -25,6 +33,7 @@ class InputValidationWidget extends StatefulWidget {
 
   const InputValidationWidget({
     super.key,
+    this.controller,
     this.initialValue,
     required this.fieldName,
     required this.onChanged,
@@ -42,19 +51,33 @@ class InputValidationWidget extends StatefulWidget {
 
 class _InputValidationWidgetState extends State<InputValidationWidget> {
   late TextEditingController _controller;
+  bool _isInternalController = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.initialValue ?? '');
+    // 외부 controller가 제공되면 사용하고, 없으면 내부에서 생성
+    if (widget.controller != null) {
+      _controller = widget.controller!;
+      _isInternalController = false;
+    } else {
+      _controller = TextEditingController(text: widget.initialValue ?? '');
+      _isInternalController = true;
+    }
+
     _controller.addListener(() {
       widget.onChanged(_controller.text);
+      // UI 업데이트를 위해 setState 호출
+      setState(() {});
     });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    // 내부에서 생성한 controller만 dispose
+    if (_isInternalController) {
+      _controller.dispose();
+    }
     super.dispose();
   }
 
