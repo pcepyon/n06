@@ -63,6 +63,12 @@ class TrackingNotifier extends StateNotifier<AsyncValue<TrackingState>> {
 
   // 체중 기록 저장
   Future<void> saveWeightLog(WeightLog log) async {
+    // 저장 전 현재 상태 백업
+    final previousState = state.asData?.value ?? const TrackingState(
+      weights: AsyncValue.data([]),
+      symptoms: AsyncValue.data([]),
+    );
+
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await _repository.saveWeightLog(log);
@@ -70,109 +76,125 @@ class TrackingNotifier extends StateNotifier<AsyncValue<TrackingState>> {
       final userId = _userId;
       if (userId != null) {
         final weights = await _repository.getWeightLogs(userId);
-        final currentState = state.asData!.value;
-
-        return currentState.copyWith(
+        return previousState.copyWith(
           weights: AsyncValue.data(weights),
         );
       }
 
-      return state.asData!.value;
+      // userId가 없으면 이전 상태 유지
+      return previousState;
     });
   }
 
   // 증상 기록 저장
   Future<void> saveSymptomLog(SymptomLog log) async {
+    // 저장 전 현재 상태 백업
+    final previousState = state.asData?.value ?? const TrackingState(
+      weights: AsyncValue.data([]),
+      symptoms: AsyncValue.data([]),
+    );
+
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await _repository.saveSymptomLog(log);
 
       if (_userId != null) {
         final symptoms = await _repository.getSymptomLogs(_userId);
-        final currentState = state.asData!.value;
-
-        return currentState.copyWith(
+        return previousState.copyWith(
           symptoms: AsyncValue.data(symptoms),
         );
       }
 
-      return state.asData!.value;
+      // userId가 없으면 이전 상태 유지
+      return previousState;
     });
   }
 
   // 체중 기록 삭제
   Future<void> deleteWeightLog(String id) async {
+    final previousState = state.asData?.value ?? const TrackingState(
+      weights: AsyncValue.data([]),
+      symptoms: AsyncValue.data([]),
+    );
+
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await _repository.deleteWeightLog(id);
 
       if (_userId != null) {
         final weights = await _repository.getWeightLogs(_userId);
-        final currentState = state.asData!.value;
-
-        return currentState.copyWith(
+        return previousState.copyWith(
           weights: AsyncValue.data(weights),
         );
       }
 
-      return state.asData!.value;
+      return previousState;
     });
   }
 
   // 증상 기록 삭제
   Future<void> deleteSymptomLog(String id) async {
+    final previousState = state.asData?.value ?? const TrackingState(
+      weights: AsyncValue.data([]),
+      symptoms: AsyncValue.data([]),
+    );
+
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await _repository.deleteSymptomLog(id);
 
       if (_userId != null) {
         final symptoms = await _repository.getSymptomLogs(_userId);
-        final currentState = state.asData!.value;
-
-        return currentState.copyWith(
+        return previousState.copyWith(
           symptoms: AsyncValue.data(symptoms),
         );
       }
 
-      return state.asData!.value;
+      return previousState;
     });
   }
 
   // 체중 기록 업데이트
   Future<void> updateWeightLog(String id, double newWeight) async {
+    final previousState = state.asData?.value ?? const TrackingState(
+      weights: AsyncValue.data([]),
+      symptoms: AsyncValue.data([]),
+    );
+
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await _repository.updateWeightLog(id, newWeight);
 
       if (_userId != null) {
         final weights = await _repository.getWeightLogs(_userId);
-        final currentState = state.asData!.value;
-
-        return currentState.copyWith(
+        return previousState.copyWith(
           weights: AsyncValue.data(weights),
         );
       }
 
-      return state.asData!.value;
+      return previousState;
     });
   }
 
   // 증상 기록 업데이트
   Future<void> updateSymptomLog(String id, SymptomLog updatedLog) async {
+    final previousState = state.asData?.value ?? const TrackingState(
+      weights: AsyncValue.data([]),
+      symptoms: AsyncValue.data([]),
+    );
+
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await _repository.updateSymptomLog(id, updatedLog);
 
       if (_userId != null) {
         final symptoms = await _repository.getSymptomLogs(_userId);
-        final currentState = state.asData!.value;
-
-        return currentState.copyWith(
+        return previousState.copyWith(
           symptoms: AsyncValue.data(symptoms),
         );
       }
 
-      return state.asData!.value;
+      return previousState;
     });
   }
 

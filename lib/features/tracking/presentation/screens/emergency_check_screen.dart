@@ -75,9 +75,8 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
   /// 증상 체크 저장
   /// BR4: emergency_symptom_checks + symptom_logs 저장
   Future<void> _saveEmergencyCheck(List<String> selectedSymptoms) async {
-    // 사용자 ID는 실제 앱에서 AuthNotifier에서 가져와야 함
-    // 현재는 테스트 ID 사용
-    const userId = 'current-user-id';
+    // AuthNotifier에서 현재 사용자 ID 가져오기
+    final userId = ref.read(authNotifierProvider).value?.id ?? 'current-user-id';
 
     final check = EmergencySymptomCheck(
       id: const Uuid().v4(),

@@ -152,10 +152,11 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
     return result ?? false;
   }
 
-  // 현재 사용자 ID 조회 (실제 구현에서는 AuthNotifier에서 가져올 것)
+  // 현재 사용자 ID 조회
   String _getCurrentUserId() {
-    // TODO: AuthNotifier에서 현재 사용자 ID 가져오기
-    return 'current-user-id';
+    // AuthNotifier에서 현재 사용자 ID 가져오기
+    final userId = ref.read(authNotifierProvider).value?.id;
+    return userId ?? 'current-user-id'; // fallback
   }
 
   @override
