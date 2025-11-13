@@ -1,6 +1,6 @@
 # State Management Design (Flutter/Riverpod)
 
-> GLP-1 치료 관리 MVP의 상태 관리 설계. Riverpod 2.x + 4-Layer Architecture + Repository Pattern.
+> GLP-1 치료 관리 MVP의 상태 관리 설계. Riverpod 3.x Code Generation + 4-Layer Architecture + Repository Pattern.
 
 ---
 
@@ -19,20 +19,19 @@
 | **Domain** | BadgeDefinition | `List<BadgeDefinition>` | F006 | 뱃지 정의 (정적) |
 | **Domain** | UserBadge | `List<UserBadge>` | F006 | 사용자 뱃지 획득 현황 |
 | **Domain** | CopingGuide | `CopingGuide` | F004 | 증상별 대처 가이드 (정적) |
-| **UI** | AuthState | `AsyncValue<User?>` | Auth | 인증 상태 |
+| **Domain** | NotificationSettings | `NotificationSettings` | UF-012 | 알림 시간 및 활성화 설정 |
+| **Domain** | AuditLog | `List<AuditLog>` | UF-011 | 기록 수정 이력 |
+| **UI** | AuthState | `AsyncValue<User?>` | Auth | 인증 상태 (keepAlive) |
 | **UI** | OnboardingState | `AsyncValue<void>` | F000 | 온보딩 완료 상태 |
-| **UI** | DashboardState | `AsyncValue<DashboardData>` | F006 | 대시보드 통합 상태 |
-| **UI** | DataSharingMode | `bool` | F003 | 데이터 공유 모드 활성화 |
-| **UI** | NotificationEnabled | `bool` | UF-012 | 알림 활성화 상태 |
-| **Form** | WeightInput | `double?` | F002 | 체중 입력값 |
-| **Form** | SymptomInput | `{String symptomName, int severity, List<String> tags}` | F002 | 증상 입력값 |
-| **Form** | DoseInput | `{DateTime date, double doseMg, String? site}` | F001 | 투여 입력값 |
-| **Form** | ProfileEditForm | `{String name, double targetWeight, int? periodWeeks}` | UF-008 | 프로필 수정 폼 |
-| **Derived** | TodayDoses | `List<DoseRecord>` | F001 | 오늘 투여 기록 (DoseRecord 필터링) |
-| **Derived** | WeeklyProgress | `WeeklyGoalProgress` | F006 | 주간 목표 달성률 (기록 개수 계산) |
-| **Derived** | ContinuousRecordDays | `int` | F006 | 연속 기록일 (기록 날짜 계산) |
-| **Derived** | CurrentWeek | `int` | F006 | 현재 치료 주차 (시작일 기준 계산) |
-| **Derived** | InsightMessage | `String?` | F006 | 인사이트 메시지 (데이터 분석 결과) |
+| **UI** | MedicationState | `AsyncValue<MedicationState>` | F001 | 투여 관련 통합 상태 |
+| **UI** | TrackingState | `AsyncValue<TrackingState>` | F002 | 체중/증상 기록 통합 상태 |
+| **UI** | DashboardData | `AsyncValue<DashboardData>` | F006 | 대시보드 통합 상태 |
+| **UI** | DataSharingState | `DataSharingState` | F003 | 데이터 공유 모드 상태 |
+| **UI** | CopingGuideState | `AsyncValue<CopingGuideState>` | F004 | 대처 가이드 상태 |
+| **UI** | ProfileState | `AsyncValue<UserProfile?>` | UF-008 | 프로필 상태 |
+| **Form** | WeightRecordEdit | `AsyncValue<void>` | UF-011 | 체중 기록 편집 상태 |
+| **Form** | SymptomRecordEdit | `AsyncValue<void>` | UF-011 | 증상 기록 편집 상태 |
+| **Form** | DoseRecordEdit | `AsyncValue<void>` | UF-011 | 투여 기록 편집 상태 |
 
 ---
 
@@ -43,74 +42,112 @@
 | `AsyncValue.loading()` | 로그인 성공 | `AsyncValue.data(User)` | 홈 대시보드 진입 |
 | `AsyncValue.data(User)` | 로그아웃 | `AsyncValue.data(null)` | 로그인 화면 전환 |
 | `AsyncValue.loading()` | 온보딩 완료 | `AsyncValue.data(void)` | 투여 계획 생성, 홈 진입 |
-| `AsyncValue.data(doses)` | 투여 기록 추가 | `AsyncValue.loading() → data` | 리스트 갱신, 달성률 업데이트 |
-| `AsyncValue.data(weights)` | 체중 기록 추가 | `AsyncValue.loading() → data` | 차트 갱신, 대시보드 리렌더링 |
-| `AsyncValue.data(symptoms)` | 증상 기록 추가 | `AsyncValue.loading() → data` | 가이드 표시 자동 |
-| `DataSharingMode: false` | 공유 모드 활성화 | `DataSharingMode: true` | 읽기 전용 UI 전환 |
-| `DataSharingMode: true` | 공유 모드 종료 | `DataSharingMode: false` | 일반 화면 복귀 |
+| `AsyncValue.data(state)` | 투여 기록 추가 | `AsyncValue.loading() → data` | 리스트 갱신, 달성률 업데이트 |
+| `AsyncValue.data(state)` | 체중 기록 추가 | `AsyncValue.loading() → data` | 차트 갱신, 대시보드 리렌더링 |
+| `AsyncValue.data(state)` | 증상 기록 추가 | `AsyncValue.loading() → data` | 가이드 표시 자동 |
+| `DataSharingState(isActive: false)` | 공유 모드 활성화 | `DataSharingState(isActive: true)` | 읽기 전용 UI 전환 |
+| `DataSharingState(isActive: true)` | 공유 모드 종료 | `DataSharingState(isActive: false)` | 일반 화면 복귀 |
 | `AsyncValue.data(plan)` | 투여 계획 수정 | `AsyncValue.loading() → data` | 스케줄 재계산, 대시보드 갱신 |
-| `AsyncValue.data(badges)` | 뱃지 조건 달성 | `AsyncValue.data(badges + new)` | 획득 알림 표시 |
 | `AsyncValue.data(profile)` | 프로필 수정 | `AsyncValue.loading() → data` | 목표 재계산, 대시보드 갱신 |
 | `AsyncValue.data(record)` | 기록 삭제 | `AsyncValue.loading() → data` | 목록 갱신, 통계 재계산 |
 
 ---
 
-## 3. Provider Structure
+## 3. Provider Architecture
 
-```mermaid
-graph TD
-    %% Global Providers
-    IsarProvider[Provider: isarProvider]
-    AuthRepo[Provider: authRepositoryProvider]
-    MedicationRepo[Provider: medicationRepositoryProvider]
-    TrackingRepo[Provider: trackingRepositoryProvider]
-    ProfileRepo[Provider: profileRepositoryProvider]
-    BadgeRepo[Provider: badgeRepositoryProvider]
+### Core Providers (keepAlive: true)
 
-    %% Feature Providers
-    AuthNotifier[AsyncNotifierProvider: authNotifierProvider]
-    OnboardingNotifier[AsyncNotifierProvider: onboardingNotifierProvider]
-    MedicationNotifier[AsyncNotifierProvider: medicationNotifierProvider]
-    TrackingNotifier[AsyncNotifierProvider: trackingNotifierProvider]
-    ProfileNotifier[AsyncNotifierProvider: profileNotifierProvider]
-    DashboardNotifier[AsyncNotifierProvider: dashboardNotifierProvider]
-    DataSharingNotifier[NotifierProvider: dataSharingNotifierProvider]
+```dart
+// core/providers.dart
+@Riverpod(keepAlive: true)
+Isar isar(IsarRef ref);  // 글로벌 DB 인스턴스
 
-    %% Derived Providers
-    TodayDosesProvider[Provider: todayDosesProvider]
-    WeeklyProgressProvider[Provider: weeklyProgressProvider]
-    ContinuousDaysProvider[Provider: continuousRecordDaysProvider]
-
-    %% Dependencies
-    IsarProvider --> AuthRepo
-    IsarProvider --> MedicationRepo
-    IsarProvider --> TrackingRepo
-    IsarProvider --> ProfileRepo
-    IsarProvider --> BadgeRepo
-
-    AuthRepo --> AuthNotifier
-    ProfileRepo --> OnboardingNotifier
-    ProfileRepo --> ProfileNotifier
-    MedicationRepo --> MedicationNotifier
-    TrackingRepo --> TrackingNotifier
-
-    MedicationRepo --> DashboardNotifier
-    TrackingRepo --> DashboardNotifier
-    BadgeRepo --> DashboardNotifier
-    ProfileRepo --> DashboardNotifier
-
-    MedicationNotifier --> TodayDosesProvider
-    TrackingNotifier --> WeeklyProgressProvider
-    TrackingNotifier --> ContinuousDaysProvider
-    DashboardNotifier --> DataSharingNotifier
+// authentication/application/notifiers/auth_notifier.dart
+@Riverpod(keepAlive: true)
+class AuthNotifier extends _$AuthNotifier;  // 글로벌 인증 상태
 ```
 
-**Provider 선택 기준:**
-- `Provider`: Repository, Service (불변)
-- `StateNotifierProvider`: 동기 상태 변경
-- `AsyncNotifierProvider`: 비동기 CRUD
-- `StreamProvider`: Isar watch (실시간 동기화)
-- `FutureProvider`: 일회성 비동기 로드
+### Repository Providers (feature별)
+
+**Tracking Feature:**
+```dart
+@riverpod MedicationRepository medicationRepository(ref);
+@riverpod DosagePlanRepository dosagePlanRepository(ref);
+@riverpod DoseScheduleRepository doseScheduleRepository(ref);
+@riverpod TrackingRepository trackingRepository(ref);
+@riverpod EmergencyCheckRepository emergencyCheckRepository(ref);
+@riverpod AuditRepository auditRepository(ref);
+```
+
+**Other Features:**
+```dart
+@riverpod AuthRepository authRepository(ref);
+@riverpod ProfileRepository profileRepository(ref);
+@riverpod BadgeRepository badgeRepository(ref);
+@riverpod NotificationRepository notificationRepository(ref);
+@riverpod CopingGuideRepository copingGuideRepository(ref);
+@riverpod SharedDataRepository sharedDataRepository(ref);
+```
+
+### UseCase Providers
+
+**Schedule Management:**
+```dart
+@riverpod ScheduleGeneratorUseCase scheduleGeneratorUseCase(ref);
+@riverpod RecalculateDoseScheduleUseCase recalculateDoseScheduleUseCase(ref);
+```
+
+**Dosage Plan Management (UF-009):**
+```dart
+@riverpod ValidateDosagePlanUseCase validateDosagePlanUseCase(ref);
+@riverpod AnalyzePlanChangeImpactUseCase analyzePlanChangeImpactUseCase(ref);
+@riverpod UpdateDosagePlanUseCase updateDosagePlanUseCase(ref);
+```
+
+**Injection & Dose Analysis:**
+```dart
+@riverpod InjectionSiteRotationUseCase injectionSiteRotationUseCase(ref);
+@riverpod MissedDoseAnalyzerUseCase missedDoseAnalyzerUseCase(ref);
+```
+
+### Feature Notifiers
+
+**Code Generation 방식 (@riverpod class):**
+```dart
+@riverpod class AuthNotifier extends _$AuthNotifier;           // keepAlive: true
+@riverpod class OnboardingNotifier extends _$OnboardingNotifier;
+@riverpod class MedicationNotifier extends _$MedicationNotifier;
+@riverpod class DashboardNotifier extends _$DashboardNotifier;
+@riverpod class ProfileNotifier extends _$ProfileNotifier;
+@riverpod class NotificationNotifier extends _$NotificationNotifier;
+@riverpod class CopingGuideNotifier extends _$CopingGuideNotifier;
+@riverpod class DataSharingNotifier extends _$DataSharingNotifier;
+@riverpod class EmergencyCheckNotifier extends _$EmergencyCheckNotifier;
+```
+
+**수동 정의 방식 (StateNotifierProvider):**
+```dart
+// TrackingNotifier는 StateNotifier 상속 (수동 Provider 정의 필요)
+final trackingNotifierProvider = StateNotifierProvider.autoDispose<
+  TrackingNotifier,
+  AsyncValue<TrackingState>
+>((ref) => TrackingNotifier(
+  repository: ref.watch(trackingRepositoryProvider),
+  userId: ref.watch(authNotifierProvider).value?.id,
+));
+```
+
+**UF-011 Record Edit Notifiers (수동 정의):**
+```dart
+final weightRecordEditNotifierProvider =
+    AsyncNotifierProvider<WeightRecordEditNotifier, void>(() => WeightRecordEditNotifier());
+
+final symptomRecordEditNotifierProvider =
+    AsyncNotifierProvider<SymptomRecordEditNotifier, void>(() => SymptomRecordEditNotifier());
+
+final doseRecordEditNotifierProvider =
+    AsyncNotifierProvider<DoseRecordEditNotifier, void>(() => DoseRecordEditNotifier());
+```
 
 ---
 
@@ -125,8 +162,6 @@ class User {
   final String name;
   final String email;
   final String? profileImageUrl;
-
-  User({required this.id, required this.name, required this.email, this.profileImageUrl});
 }
 ```
 
@@ -136,20 +171,13 @@ class User {
 // domain/entities/user_profile.dart
 class UserProfile {
   final String userId;
-  final double targetWeightKg;
-  final double? targetPeriodWeeks;
+  final String? userName;
+  final Weight targetWeight;           // Value Object
+  final Weight currentWeight;          // Value Object
+  final int? targetPeriodWeeks;
   final double? weeklyLossGoalKg;
-  final int weeklyWeightRecordGoal;
-  final int weeklySymptomRecordGoal;
-
-  UserProfile({
-    required this.userId,
-    required this.targetWeightKg,
-    this.targetPeriodWeeks,
-    this.weeklyLossGoalKg,
-    this.weeklyWeightRecordGoal = 7,
-    this.weeklySymptomRecordGoal = 7,
-  });
+  final int weeklyWeightRecordGoal;    // 기본값: 7
+  final int weeklySymptomRecordGoal;   // 기본값: 7
 }
 
 // domain/entities/dosage_plan.dart
@@ -162,135 +190,64 @@ class DosagePlan {
   final double initialDoseMg;
   final List<EscalationStep>? escalationPlan;
   final bool isActive;
-
-  DosagePlan({
-    required this.id,
-    required this.userId,
-    required this.medicationName,
-    required this.startDate,
-    required this.cycleDays,
-    required this.initialDoseMg,
-    this.escalationPlan,
-    this.isActive = true,
-  });
 }
 ```
 
 ### Medication Feature (F001)
 
 ```dart
-// domain/entities/dose_schedule.dart
-class DoseSchedule {
-  final String id;
-  final String dosagePlanId;
-  final DateTime scheduledDate;
-  final double scheduledDoseMg;
-  final TimeOfDay? notificationTime;
-
-  DoseSchedule({
-    required this.id,
-    required this.dosagePlanId,
-    required this.scheduledDate,
-    required this.scheduledDoseMg,
-    this.notificationTime,
-  });
-}
-
-// domain/entities/dose_record.dart
-class DoseRecord {
-  final String id;
-  final String? doseScheduleId;
-  final String dosagePlanId;
-  final DateTime administeredAt;
-  final double actualDoseMg;
-  final String? injectionSite; // 복부/허벅지/상완
-  final bool isCompleted;
-  final String? note;
-
-  DoseRecord({
-    required this.id,
-    this.doseScheduleId,
-    required this.dosagePlanId,
-    required this.administeredAt,
-    required this.actualDoseMg,
-    this.injectionSite,
-    this.isCompleted = true,
-    this.note,
-  });
-}
-
 // application/notifiers/medication_notifier.dart
 class MedicationState {
-  final AsyncValue<DosagePlan?> activePlan;
-  final AsyncValue<List<DoseSchedule>> schedules;
-  final AsyncValue<List<DoseRecord>> records;
+  final DosagePlan? activePlan;        // 직접 타입 (AsyncValue 아님)
+  final List<DoseSchedule> schedules;  // 직접 타입
+  final List<DoseRecord> records;      // 직접 타입
 
-  MedicationState({
-    required this.activePlan,
+  const MedicationState({
+    this.activePlan,
     required this.schedules,
     required this.records,
   });
+}
+
+// AsyncNotifier의 state가 AsyncValue<MedicationState>를 관리
+@riverpod
+class MedicationNotifier extends _$MedicationNotifier {
+  @override
+  Future<MedicationState> build() async {
+    // AsyncValue.data(MedicationState(...)) 형태로 저장됨
+  }
 }
 ```
 
 ### Tracking Feature (F002)
 
 ```dart
-// domain/entities/weight_log.dart
-class WeightLog {
-  final String id;
-  final String userId;
-  final DateTime logDate;
-  final double weightKg;
-  final DateTime createdAt;
-
-  WeightLog({
-    required this.id,
-    required this.userId,
-    required this.logDate,
-    required this.weightKg,
-    required this.createdAt,
-  });
-}
-
-// domain/entities/symptom_log.dart
-class SymptomLog {
-  final String id;
-  final String userId;
-  final DateTime logDate;
-  final String symptomName;
-  final int severity; // 1-10
-  final int? daysSinceEscalation;
-  final bool? isPersistent24h;
-  final String? note;
-  final List<String> tags;
-
-  SymptomLog({
-    required this.id,
-    required this.userId,
-    required this.logDate,
-    required this.symptomName,
-    required this.severity,
-    this.daysSinceEscalation,
-    this.isPersistent24h,
-    this.note,
-    this.tags = const [],
-  });
-}
-
 // application/notifiers/tracking_notifier.dart
 class TrackingState {
-  final AsyncValue<List<WeightLog>> weights;
-  final AsyncValue<List<SymptomLog>> symptoms;
+  final AsyncValue<List<WeightLog>> weights;   // AsyncValue 유지
+  final AsyncValue<List<SymptomLog>> symptoms; // AsyncValue 유지
 
-  TrackingState({required this.weights, required this.symptoms});
+  const TrackingState({
+    required this.weights,
+    required this.symptoms,
+  });
+}
+
+// StateNotifier 방식 (수동 정의)
+class TrackingNotifier extends StateNotifier<AsyncValue<TrackingState>> {
+  TrackingNotifier({
+    required TrackingRepository repository,
+    String? userId,
+  }) : super(const AsyncValue.loading()) {
+    _init();
+  }
 }
 ```
 
 ### Dashboard Feature (F006)
 
 ```dart
-// application/notifiers/dashboard_notifier.dart
+// domain/entities/dashboard_data.dart
 class DashboardData {
   final String userName;
   final int continuousRecordDays;
@@ -301,42 +258,65 @@ class DashboardData {
   final List<UserBadge> badges;
   final List<TimelineEvent> timeline;
   final String? insightMessage;
-
-  DashboardData({
-    required this.userName,
-    required this.continuousRecordDays,
-    required this.currentWeek,
-    required this.weeklyProgress,
-    required this.nextSchedule,
-    required this.weeklySummary,
-    required this.badges,
-    required this.timeline,
-    this.insightMessage,
-  });
 }
 
 class WeeklyProgress {
   final int doseCompletedCount;
   final int doseTargetCount;
-  final double doseRate; // 0.0 ~ 1.0
+  final double doseRate;         // 0.0 ~ 1.0
   final int weightRecordCount;
   final int weightTargetCount;
   final double weightRate;
   final int symptomRecordCount;
   final int symptomTargetCount;
   final double symptomRate;
+}
+```
 
-  WeeklyProgress({
-    required this.doseCompletedCount,
-    required this.doseTargetCount,
-    required this.doseRate,
-    required this.weightRecordCount,
-    required this.weightTargetCount,
-    required this.weightRate,
-    required this.symptomRecordCount,
-    required this.symptomTargetCount,
-    required this.symptomRate,
-  });
+### Notification Feature (UF-012)
+
+```dart
+// domain/entities/notification_settings.dart
+class NotificationSettings {
+  final String userId;
+  final NotificationTime notificationTime;
+  final bool notificationEnabled;
+}
+
+// domain/value_objects/notification_time.dart
+class NotificationTime {
+  final int hour;    // 0-23
+  final int minute;  // 0-59
+}
+```
+
+### Coping Guide Feature (F004)
+
+```dart
+// domain/entities/coping_guide.dart
+class CopingGuide {
+  final String symptomName;
+  final String shortGuide;
+  final List<GuideSection>? detailedGuide;
+}
+
+// domain/entities/coping_guide_state.dart
+class CopingGuideState {
+  final CopingGuide guide;
+  final bool showSeverityWarning;  // 심각도 7-10점 & 24h 지속 시 true
+}
+```
+
+### Data Sharing Feature (F003)
+
+```dart
+// application/notifiers/data_sharing_notifier.dart
+class DataSharingState {
+  final bool isActive;
+  final DateRange? selectedPeriod;
+  final SharedDataReport? report;  // 리포트 데이터
+  final String? error;             // 에러 메시지
+  final bool isLoading;            // 로딩 상태
 }
 ```
 
@@ -348,79 +328,81 @@ class EmergencySymptomCheck {
   final String id;
   final String userId;
   final DateTime checkedAt;
-  final List<String> checkedSymptoms;
-
-  EmergencySymptomCheck({
-    required this.id,
-    required this.userId,
-    required this.checkedAt,
-    required this.checkedSymptoms,
-  });
-}
-```
-
-### Data Sharing Feature (F003)
-
-```dart
-// application/notifiers/data_sharing_notifier.dart
-class DataSharingState {
-  final bool isActive;
-  final DateRange? selectedPeriod;
-
-  DataSharingState({this.isActive = false, this.selectedPeriod});
+  final List<String> checkedSymptoms;  // 선택된 심각 증상 목록
 }
 ```
 
 ---
 
-## 5. Provider Signatures
+## 5. Provider Signatures (실제 구현)
 
 ### Global Providers
 
 ```dart
-// infrastructure/providers.dart
-@riverpod
-Isar isar(IsarRef ref);
-
-@riverpod
-AuthRepository authRepository(AuthRepositoryRef ref);
-
-@riverpod
-MedicationRepository medicationRepository(MedicationRepositoryRef ref);
-
-@riverpod
-TrackingRepository trackingRepository(TrackingRepositoryRef ref);
-
-@riverpod
-ProfileRepository profileRepository(ProfileRepositoryRef ref);
-
-@riverpod
-BadgeRepository badgeRepository(BadgeRepositoryRef ref);
+// core/providers.dart
+@Riverpod(keepAlive: true)
+Isar isar(IsarRef ref) {
+  throw UnimplementedError('Override in main.dart');
+}
 ```
 
 ### Auth Feature
 
 ```dart
-// application/notifiers/auth_notifier.dart
+// authentication/application/providers.dart
 @riverpod
+AuthRepository authRepository(AuthRepositoryRef ref) {
+  throw UnimplementedError('Override in main.dart');
+}
+
+@riverpod
+SecureStorageRepository secureStorageRepository(SecureStorageRepositoryRef ref);
+
+@riverpod
+LogoutUseCase logoutUseCase(LogoutUseCaseRef ref);
+
+// authentication/application/notifiers/auth_notifier.dart
+@Riverpod(keepAlive: true)  // 글로벌 인증 상태이므로 keepAlive 필수
 class AuthNotifier extends _$AuthNotifier {
   @override
   Future<User?> build();
-  Future<void> loginWithKakao();
-  Future<void> loginWithNaver();
+  Future<bool> loginWithKakao({required bool agreedToTerms, required bool agreedToPrivacy});
+  Future<bool> loginWithNaver({required bool agreedToTerms, required bool agreedToPrivacy});
   Future<void> logout();
+  Future<bool> ensureValidToken();
 }
 ```
 
 ### Onboarding Feature (F000)
 
 ```dart
-// application/notifiers/onboarding_notifier.dart
+// onboarding/application/providers.dart
+@riverpod
+UserRepository userRepository(UserRepositoryRef ref);
+
+@riverpod
+ProfileRepository profileRepository(ProfileRepositoryRef ref);
+
+@riverpod
+MedicationRepository medicationRepository(MedicationRepositoryRef ref);
+
+@riverpod
+ScheduleRepository scheduleRepository(ScheduleRepositoryRef ref);
+
+@riverpod
+TransactionService transactionService(TransactionServiceRef ref);
+
+@riverpod
+CheckOnboardingStatusUseCase checkOnboardingStatusUseCase(CheckOnboardingStatusUseCaseRef ref);
+
+// onboarding/application/notifiers/onboarding_notifier.dart
 @riverpod
 class OnboardingNotifier extends _$OnboardingNotifier {
   @override
   Future<void> build();
+
   Future<void> saveOnboardingData({
+    required String userId,
     required String name,
     required double currentWeight,
     required double targetWeight,
@@ -431,87 +413,203 @@ class OnboardingNotifier extends _$OnboardingNotifier {
     required double initialDose,
     List<EscalationStep>? escalationPlan,
   });
+
+  Future<void> retrySave({...});
 }
 ```
 
 ### Medication Feature (F001)
 
 ```dart
-// application/notifiers/medication_notifier.dart
+// tracking/application/providers.dart
+@riverpod
+MedicationRepository medicationRepository(MedicationRepositoryRef ref);
+
+@riverpod
+DosagePlanRepository dosagePlanRepository(DosagePlanRepositoryRef ref);
+
+@riverpod
+DoseScheduleRepository doseScheduleRepository(DoseScheduleRepositoryRef ref);
+
+@riverpod
+TrackingRepository trackingRepository(TrackingRepositoryRef ref);
+
+@riverpod
+EmergencyCheckRepository emergencyCheckRepository(EmergencyCheckRepositoryRef ref);
+
+@riverpod
+AuditRepository auditRepository(AuditRepositoryRef ref);
+
+// UseCase Providers
+@riverpod
+ScheduleGeneratorUseCase scheduleGeneratorUseCase(ScheduleGeneratorUseCaseRef ref);
+
+@riverpod
+InjectionSiteRotationUseCase injectionSiteRotationUseCase(InjectionSiteRotationUseCaseRef ref);
+
+@riverpod
+MissedDoseAnalyzerUseCase missedDoseAnalyzerUseCase(MissedDoseAnalyzerUseCaseRef ref);
+
+@riverpod
+ValidateDosagePlanUseCase validateDosagePlanUseCase(ValidateDosagePlanUseCaseRef ref);
+
+@riverpod
+RecalculateDoseScheduleUseCase recalculateDoseScheduleUseCase(RecalculateDoseScheduleUseCaseRef ref);
+
+@riverpod
+AnalyzePlanChangeImpactUseCase analyzePlanChangeImpactUseCase(AnalyzePlanChangeImpactUseCaseRef ref);
+
+@riverpod
+UpdateDosagePlanUseCase updateDosagePlanUseCase(UpdateDosagePlanUseCaseRef ref);
+
+@riverpod
+NotificationService notificationService(NotificationServiceRef ref);
+
+// tracking/application/notifiers/medication_notifier.dart
 @riverpod
 class MedicationNotifier extends _$MedicationNotifier {
   @override
   Future<MedicationState> build();
-  Future<void> recordDose(DoseRecord dose);
-  Future<void> updateSchedule(String scheduleId, DateTime newDate);
-  Future<void> updateDosagePlan(DosagePlan plan);
-  Future<void> deleteDoseRecord(String recordId);
-}
 
-@riverpod
-List<DoseRecord> todayDoses(TodayDosesRef ref);
+  Future<RotationCheckResult?> recordDose(DoseRecord record);
+  Future<void> updateDosagePlan(DosagePlan newPlan);
+  MissedDoseAnalysisResult? getMissedDoseAnalysis();
+  Future<void> deleteDoseRecord(String recordId);
+  Future<List<dynamic>> getPlanHistory();
+  Future<RotationCheckResult> checkInjectionSiteRotation(String newSite);
+}
 ```
 
 ### Tracking Feature (F002)
 
 ```dart
-// application/notifiers/tracking_notifier.dart
-@riverpod
-class TrackingNotifier extends _$TrackingNotifier {
-  @override
-  Future<TrackingState> build();
+// tracking/application/providers.dart (수동 정의)
+final trackingNotifierProvider = StateNotifierProvider.autoDispose<
+  TrackingNotifier,
+  AsyncValue<TrackingState>
+>((ref) {
+  final repository = ref.watch(trackingRepositoryProvider);
+  final userId = ref.watch(authNotifierProvider).value?.id;
+  return TrackingNotifier(repository: repository, userId: userId);
+});
+
+// tracking/application/notifiers/tracking_notifier.dart
+class TrackingNotifier extends StateNotifier<AsyncValue<TrackingState>> {
   Future<void> saveWeightLog(WeightLog log);
   Future<void> saveSymptomLog(SymptomLog log);
   Future<void> deleteWeightLog(String id);
   Future<void> deleteSymptomLog(String id);
   Future<void> updateWeightLog(String id, double newWeight);
   Future<void> updateSymptomLog(String id, SymptomLog updatedLog);
+  Future<bool> hasWeightLogOnDate(String userId, DateTime date);
+  Future<WeightLog?> getWeightLog(String userId, DateTime date);
+  Future<DateTime?> getLatestDoseEscalationDate(String userId);
 }
-
-@riverpod
-int continuousRecordDays(ContinuousRecordDaysRef ref);
 ```
 
 ### Dashboard Feature (F006)
 
 ```dart
-// application/notifiers/dashboard_notifier.dart
+// dashboard/application/providers.dart
+@riverpod
+BadgeRepository badgeRepository(BadgeRepositoryRef ref);
+
+// dashboard/application/notifiers/dashboard_notifier.dart
 @riverpod
 class DashboardNotifier extends _$DashboardNotifier {
   @override
   Future<DashboardData> build();
   Future<void> refresh();
 }
-
-@riverpod
-WeeklyProgress weeklyProgress(WeeklyProgressRef ref);
-
-@riverpod
-String? insightMessage(InsightMessageRef ref);
 ```
 
 ### Profile Feature (UF-008)
 
 ```dart
-// application/notifiers/profile_notifier.dart
+// profile/application/notifiers/profile_notifier.dart
 @riverpod
 class ProfileNotifier extends _$ProfileNotifier {
   @override
-  Future<UserProfile> build();
-  Future<void> updateProfile(UserProfile profile);
+  Future<UserProfile?> build();
+
+  Future<void> loadProfile(String userId);
+  Future<void> updateProfile(UserProfile profile);  // UpdateProfileUseCase 사용
   Future<void> updateWeeklyGoals(int weightGoal, int symptomGoal);
+}
+
+@riverpod
+ProfileRepository profileRepository(ProfileRepositoryRef ref) {
+  throw UnimplementedError('Override in main.dart');
+}
+```
+
+### Notification Feature (UF-012)
+
+```dart
+// notification/application/providers.dart
+@riverpod
+NotificationRepository notificationRepository(NotificationRepositoryRef ref);
+
+@riverpod
+NotificationScheduler notificationScheduler(NotificationSchedulerRef ref);
+
+// notification/application/notifiers/notification_notifier.dart
+@riverpod
+class NotificationNotifier extends _$NotificationNotifier {
+  @override
+  Future<NotificationSettings> build();
+
+  Future<void> updateNotificationTime(NotificationTime newTime);
+  Future<void> toggleNotificationEnabled();
+}
+```
+
+### Coping Guide Feature (F004)
+
+```dart
+// coping_guide/application/providers.dart
+@riverpod
+CopingGuideRepository copingGuideRepository(CopingGuideRepositoryRef ref) {
+  return StaticCopingGuideRepository();  // 정적 데이터
+}
+
+@riverpod
+FeedbackRepository feedbackRepository(FeedbackRepositoryRef ref);
+
+// coping_guide/application/notifiers/coping_guide_notifier.dart
+@riverpod
+class CopingGuideNotifier extends _$CopingGuideNotifier {
+  @override
+  Future<CopingGuideState> build();
+
+  Future<void> getGuideBySymptom(String symptomName);
+  Future<void> checkSeverityAndGuide(String symptomName, int severity, bool isPersistent24h);
+  Future<void> submitFeedback(String symptomName, {required bool helpful});
+}
+
+@riverpod
+class CopingGuideListNotifier extends _$CopingGuideListNotifier {
+  @override
+  Future<List<CopingGuide>> build();
+  Future<void> loadAllGuides();
 }
 ```
 
 ### Data Sharing Feature (F003)
 
 ```dart
-// application/notifiers/data_sharing_notifier.dart
+// data_sharing/application/providers.dart
+@riverpod
+SharedDataRepository sharedDataRepository(SharedDataRepositoryRef ref);
+
+// data_sharing/application/notifiers/data_sharing_notifier.dart
 @riverpod
 class DataSharingNotifier extends _$DataSharingNotifier {
   @override
-  DataSharingState build();
-  void enterSharingMode(DateRange period);
+  DataSharingState build();  // 동기 상태 (AsyncNotifier 아님)
+
+  Future<void> enterSharingMode(String userId, DateRange period);
+  Future<void> changePeriod(String userId, DateRange period);
   void exitSharingMode();
 }
 ```
@@ -519,131 +617,220 @@ class DataSharingNotifier extends _$DataSharingNotifier {
 ### Emergency Feature (F005)
 
 ```dart
-// application/notifiers/emergency_notifier.dart
-@riverpod
-class EmergencyNotifier extends _$EmergencyNotifier {
+// tracking/application/providers.dart (수동 정의)
+final emergencyCheckNotifierProvider = AsyncNotifierProvider.autoDispose<
+  EmergencyCheckNotifier,
+  List<EmergencySymptomCheck>
+>(() => EmergencyCheckNotifier());
+
+// tracking/application/notifiers/emergency_check_notifier.dart
+class EmergencyCheckNotifier extends AutoDisposeAsyncNotifier<List<EmergencySymptomCheck>> {
   @override
   Future<List<EmergencySymptomCheck>> build();
   Future<void> saveSymptomCheck(List<String> symptoms);
 }
 ```
 
----
-
-## 6. Initial State
+### Record Edit Feature (UF-011)
 
 ```dart
-// Auth
-const initialAuthState = AsyncValue<User?>.loading();
+// tracking/application/providers.dart (수동 정의)
+final weightRecordEditNotifierProvider =
+    AsyncNotifierProvider<WeightRecordEditNotifier, void>(() => WeightRecordEditNotifier());
 
-// Medication
-const initialMedicationState = MedicationState(
-  activePlan: AsyncValue.loading(),
-  schedules: AsyncValue.loading(),
-  records: AsyncValue.loading(),
-);
+final symptomRecordEditNotifierProvider =
+    AsyncNotifierProvider<SymptomRecordEditNotifier, void>(() => SymptomRecordEditNotifier());
 
-// Tracking
-const initialTrackingState = TrackingState(
-  weights: AsyncValue.loading(),
-  symptoms: AsyncValue.loading(),
-);
-
-// Dashboard
-const initialDashboardState = AsyncValue<DashboardData>.loading();
-
-// Data Sharing
-const initialDataSharingState = DataSharingState(isActive: false);
+final doseRecordEditNotifierProvider =
+    AsyncNotifierProvider<DoseRecordEditNotifier, void>(() => DoseRecordEditNotifier());
 ```
 
 ---
 
-## 7. Repository Integration Patterns
+## 6. Initial State (빌드 시점 정의)
 
-### Pattern 1: AsyncNotifier + CRUD
+Riverpod code generation 사용 시, 초기 상태는 각 Notifier의 `build()` 메서드에서 반환됩니다.
 
 ```dart
 @riverpod
 class MedicationNotifier extends _$MedicationNotifier {
   @override
   Future<MedicationState> build() async {
-    final repository = ref.watch(medicationRepositoryProvider);
-    final plan = await repository.getActiveDosagePlan();
-    final schedules = await repository.getDoseSchedules(plan?.id);
-    final records = await repository.getDoseRecords(plan?.id);
-
+    // 이 반환값이 초기 상태 (AsyncValue.data(MedicationState(...)) 형태로 저장)
     return MedicationState(
-      activePlan: AsyncValue.data(plan),
-      schedules: AsyncValue.data(schedules),
-      records: AsyncValue.data(records),
+      activePlan: null,
+      schedules: [],
+      records: [],
+    );
+  }
+}
+
+@riverpod
+class DataSharingNotifier extends _$DataSharingNotifier {
+  @override
+  DataSharingState build() {
+    // 동기 초기 상태
+    return DataSharingState(isActive: false);
+  }
+}
+```
+
+**수동 정의 Provider의 초기 상태:**
+```dart
+class TrackingNotifier extends StateNotifier<AsyncValue<TrackingState>> {
+  TrackingNotifier({...}) : super(const AsyncValue.loading()) {
+    // AsyncValue.loading()이 초기 상태
+    _init();
+  }
+}
+```
+
+---
+
+## 7. Repository Integration Patterns
+
+### Pattern 1: AsyncNotifier + CRUD (MedicationNotifier)
+
+```dart
+@riverpod
+class MedicationNotifier extends _$MedicationNotifier {
+  MedicationRepository get _repository => ref.read(medicationRepositoryProvider);
+
+  @override
+  Future<MedicationState> build() async {
+    final userId = ref.watch(authNotifierProvider).value?.id;
+    if (userId == null) throw Exception('User not authenticated');
+
+    return await _loadMedicationData(userId);
+  }
+
+  Future<MedicationState> _loadMedicationData(String userId) async {
+    final plan = await _repository.getActiveDosagePlan(userId);
+    final schedules = plan != null
+        ? await _repository.getDoseSchedules(plan.id)
+        : <DoseSchedule>[];
+    final records = plan != null
+        ? await _repository.getDoseRecords(plan.id)
+        : <DoseRecord>[];
+
+    // MedicationState는 직접 타입 (AsyncValue 없음)
+    return MedicationState(
+      activePlan: plan,
+      schedules: schedules,
+      records: records,
     );
   }
 
-  Future<void> recordDose(DoseRecord dose) async {
+  Future<RotationCheckResult?> recordDose(DoseRecord record) async {
+    final userId = ref.read(authNotifierProvider).value?.id;
+    if (userId == null) throw Exception('User not authenticated');
+
+    // ... 비즈니스 로직 ...
+
+    await _repository.saveDoseRecord(record);
+
+    // 상태 재로딩
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repository = ref.read(medicationRepositoryProvider);
-      await repository.saveDoseRecord(dose);
+      return await _loadMedicationData(userId);
+    });
 
-      // 재조회
-      final plan = await repository.getActiveDosagePlan();
-      final schedules = await repository.getDoseSchedules(plan?.id);
-      final records = await repository.getDoseRecords(plan?.id);
+    return rotationResult;
+  }
+}
+```
 
-      return MedicationState(
-        activePlan: AsyncValue.data(plan),
-        schedules: AsyncValue.data(schedules),
-        records: AsyncValue.data(records),
+### Pattern 2: StateNotifier + AsyncValue (TrackingNotifier)
+
+```dart
+class TrackingNotifier extends StateNotifier<AsyncValue<TrackingState>> {
+  final TrackingRepository _repository;
+  final String? _userId;
+
+  TrackingNotifier({
+    required TrackingRepository repository,
+    String? userId,
+  }) : _repository = repository,
+       _userId = userId,
+       super(const AsyncValue.loading()) {
+    _init();
+  }
+
+  void _init() async {
+    if (_userId == null) {
+      state = const AsyncValue.data(TrackingState(
+        weights: AsyncValue.data([]),
+        symptoms: AsyncValue.data([]),
+      ));
+      return;
+    }
+
+    final result = await AsyncValue.guard(() async {
+      final weights = await _repository.getWeightLogs(_userId);
+      final symptoms = await _repository.getSymptomLogs(_userId);
+
+      return TrackingState(
+        weights: AsyncValue.data(weights),
+        symptoms: AsyncValue.data(symptoms),
       );
+    });
+
+    state = result;
+  }
+
+  Future<void> saveWeightLog(WeightLog log) async {
+    // 저장 전 현재 상태 백업
+    final previousState = state.asData?.value ?? const TrackingState(
+      weights: AsyncValue.data([]),
+      symptoms: AsyncValue.data([]),
+    );
+
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await _repository.saveWeightLog(log);
+
+      if (_userId != null) {
+        final weights = await _repository.getWeightLogs(_userId);
+        return previousState.copyWith(weights: AsyncValue.data(weights));
+      }
+
+      return previousState;
     });
   }
 }
 ```
 
-### Pattern 2: StreamProvider (실시간 동기화)
+### Pattern 3: Notifier (동기 상태 - DataSharingNotifier)
 
 ```dart
 @riverpod
-Stream<List<WeightLog>> weightLogsStream(WeightLogsStreamRef ref) {
-  final repository = ref.watch(trackingRepositoryProvider);
-  return repository.watchWeightLogs();
-}
-```
+class DataSharingNotifier extends _$DataSharingNotifier {
+  @override
+  DataSharingState build() {
+    return DataSharingState(isActive: false);
+  }
 
-### Pattern 3: Derived Provider (계산 상태)
+  Future<void> enterSharingMode(String userId, DateRange period) async {
+    try {
+      state = state.copyWith(isLoading: true, error: null);
 
-```dart
-@riverpod
-int continuousRecordDays(ContinuousRecordDaysRef ref) {
-  final trackingState = ref.watch(trackingNotifierProvider).value;
-  if (trackingState == null) return 0;
+      final repository = ref.read(sharedDataRepositoryProvider);
+      final report = await repository.getReportData(userId, period);
 
-  final allLogs = [
-    ...trackingState.weights.value ?? [],
-    ...trackingState.symptoms.value ?? [],
-  ];
-
-  if (allLogs.isEmpty) return 0;
-
-  // 연속 기록일 계산 로직
-  final sortedDates = allLogs
-      .map((log) => log.logDate)
-      .toSet()
-      .toList()
-    ..sort((a, b) => b.compareTo(a));
-
-  final today = DateTime.now();
-  int days = 0;
-
-  for (var date in sortedDates) {
-    if (date.difference(today.subtract(Duration(days: days))).inDays == 0) {
-      days++;
-    } else {
-      break;
+      state = state.copyWith(
+        isActive: true,
+        selectedPeriod: period,
+        report: report,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), isLoading: false);
     }
   }
 
-  return days;
+  void exitSharingMode() {
+    state = DataSharingState(isActive: false);
+  }
 }
 ```
 
@@ -651,37 +838,58 @@ int continuousRecordDays(ContinuousRecordDaysRef ref) {
 
 ## 8. Repository Interface 예시
 
+### Medication Repository (분리된 구조)
+
 ```dart
 // domain/repositories/medication_repository.dart
 abstract class MedicationRepository {
-  Future<DosagePlan?> getActiveDosagePlan();
-  Future<List<DoseSchedule>> getDoseSchedules(String? planId);
-  Future<List<DoseRecord>> getDoseRecords(String? planId);
-  Future<void> saveDosagePlan(DosagePlan plan);
+  Future<DosagePlan?> getActiveDosagePlan(String userId);
+  Future<List<DoseSchedule>> getDoseSchedules(String planId);
+  Future<List<DoseRecord>> getDoseRecords(String planId);
   Future<void> saveDoseRecord(DoseRecord record);
-  Future<void> updateDosagePlan(DosagePlan plan);
   Future<void> deleteDoseRecord(String id);
-  Stream<List<DoseRecord>> watchDoseRecords();
+  Future<bool> isDuplicateDoseRecord(String planId, DateTime date);
+  Future<List<DoseRecord>> getRecentDoseRecords(String planId, int days);
 }
 
+// domain/repositories/dosage_plan_repository.dart
+abstract class DosagePlanRepository {
+  Future<void> saveDosagePlan(DosagePlan plan);
+  Future<void> updateDosagePlan(DosagePlan plan);
+  Future<void> savePlanChangeHistory(String planId, Map<String, dynamic> before, Map<String, dynamic> after);
+  Future<List<dynamic>> getPlanChangeHistory(String planId);
+}
+
+// domain/repositories/dose_schedule_repository.dart
+abstract class DoseScheduleRepository {
+  Future<void> saveDoseSchedules(List<DoseSchedule> schedules);
+  Future<void> deleteDoseSchedulesFrom(String planId, DateTime fromDate);
+}
+```
+
+### Tracking Repository
+
+```dart
 // domain/repositories/tracking_repository.dart
 abstract class TrackingRepository {
-  Future<List<WeightLog>> getWeightLogs();
-  Future<List<SymptomLog>> getSymptomLogs();
+  Future<List<WeightLog>> getWeightLogs(String userId);
+  Future<List<SymptomLog>> getSymptomLogs(String userId);
   Future<void> saveWeightLog(WeightLog log);
   Future<void> saveSymptomLog(SymptomLog log);
   Future<void> deleteWeightLog(String id);
   Future<void> deleteSymptomLog(String id);
   Future<void> updateWeightLog(String id, double newWeight);
   Future<void> updateSymptomLog(String id, SymptomLog updatedLog);
-  Stream<List<WeightLog>> watchWeightLogs();
-  Stream<List<SymptomLog>> watchSymptomLogs();
+  Future<WeightLog?> getWeightLog(String userId, DateTime date);
+  Future<DateTime?> getLatestDoseEscalationDate(String userId);
+  Stream<List<WeightLog>> watchWeightLogs(String userId);
+  Stream<List<SymptomLog>> watchSymptomLogs(String userId);
 }
 ```
 
 **Phase 전환 전략:**
 - Repository Interface만 의존
-- Infrastructure Layer에서 `IsarMedicationRepository` / `SupabaseMedicationRepository` 구현
+- Infrastructure Layer에서 `IsarXxxRepository` / `SupabaseXxxRepository` 구현
 - Provider DI 변경만으로 전환 완료
 
 ---
@@ -689,14 +897,98 @@ abstract class TrackingRepository {
 ## 9. 핵심 원칙
 
 ### DO ✅
-- Repository Interface만 의존, 구현 분리
-- DTO는 Infrastructure, Entity는 Domain
-- 비즈니스 로직은 Domain Layer에만
-- 모든 Repository 호출은 Application Layer
-- 모든 비동기 상태는 `AsyncValue<T>` 사용
+- **Repository Interface만 의존**, 구현 분리 (Phase 1 전환 대비)
+- **DTO는 Infrastructure, Entity는 Domain** (Layer 분리)
+- **비즈니스 로직은 Domain Layer에만** (UseCase 활용)
+- **모든 Repository 호출은 Application Layer**에서만
+- **비동기 상태는 `AsyncValue<T>` 사용** (loading/error/data 자동 처리)
+- **글로벌 상태는 `keepAlive: true` 설정** (isarProvider, authNotifierProvider)
+- **userId는 authNotifier에서 추출** (하드코딩 금지)
+- **Notifier에서 state 접근 시 null 체크** (`asData?.value ?? defaultState`)
 
 ### DON'T ❌
-- Application에서 Isar 직접 사용
-- Presentation에서 Repository 직접 호출
-- Domain Layer에 Flutter/Isar 의존성
-- Provider 의존성 순환
+- **Application에서 Isar 직접 사용** (Repository를 통해서만)
+- **Presentation에서 Repository 직접 호출** (Notifier를 통해서만)
+- **Domain Layer에 Flutter/Isar 의존성** (순수 Dart만)
+- **Provider 의존성 순환** (단방향 의존성 유지)
+- **userId 하드코딩** (항상 authNotifier에서 가져오기)
+- **autoDispose Provider + async 저장 후 즉시 모달 표시** (Provider 조기 해제 가능)
+
+---
+
+## 10. 실전 예시
+
+### userId 추출 패턴
+
+```dart
+// ✅ 올바른 방법
+@override
+Future<MedicationState> build() async {
+  final userId = ref.watch(authNotifierProvider).value?.id;
+  if (userId == null) throw Exception('User not authenticated');
+
+  return await _loadMedicationData(userId);
+}
+
+// ❌ 잘못된 방법
+const userId = 'current-user-id';  // 하드코딩 금지
+```
+
+### State 안전한 접근 패턴
+
+```dart
+// ✅ 올바른 방법
+Future<void> saveWeightLog(WeightLog log) async {
+  final previousState = state.asData?.value ?? const TrackingState(
+    weights: AsyncValue.data([]),
+    symptoms: AsyncValue.data([]),
+  );
+  // ...
+}
+
+// ❌ 잘못된 방법
+final previousState = state.asData!.value;  // null 가능성 무시
+```
+
+### AutoDispose 모달 표시 패턴
+
+```dart
+// ✅ 올바른 방법
+await notifier.save(data);
+if (!mounted) return;  // 위젯이 dispose되었는지 확인
+await showDialog(...);
+
+// ❌ 잘못된 방법
+await notifier.save(data);
+await showDialog(...);  // Provider가 dispose되어 state 손실 가능
+```
+
+### Repository Override (테스트)
+
+```dart
+// test/features/tracking/medication_notifier_test.dart
+testWidgets('투여 기록 저장', (tester) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        medicationRepositoryProvider.overrideWith(
+          (ref) => MockMedicationRepository(),
+        ),
+      ],
+      child: const MaterialApp(home: DoseListScreen()),
+    ),
+  );
+
+  expect(find.text('0.5 mg'), findsOneWidget);
+});
+```
+
+---
+
+## 참고 문서
+
+- [Riverpod 공식 문서](https://riverpod.dev)
+- [Riverpod Code Generation](https://riverpod.dev/docs/concepts/about_code_generation)
+- [docs/external/riverpod_설정가이드.md](./external/riverpod_설정가이드.md) - 상세 설정 방법
+- [docs/code_structure.md](./code_structure.md) - 4-Layer Architecture
+- [docs/userflow.md](./userflow.md) - Feature별 요구사항
