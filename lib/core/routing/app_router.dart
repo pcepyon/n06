@@ -16,6 +16,7 @@ import 'package:n06/features/tracking/presentation/screens/symptom_record_screen
 import 'package:n06/features/coping_guide/presentation/screens/coping_guide_screen.dart';
 import 'package:n06/features/data_sharing/presentation/screens/data_sharing_screen.dart';
 import 'package:n06/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:n06/features/record_management/presentation/screens/record_list_screen.dart';
 
 /// GoRouter configuration for the application
 final appRouter = GoRouter(
@@ -145,6 +146,13 @@ final appRouter = GoRouter(
       path: '/dose-schedule',
       name: 'dose_schedule',
       builder: (context, state) => const DoseScheduleScreen(),
+    ),
+
+    /// Record Management (013)
+    GoRoute(
+      path: '/records',
+      name: 'record_list',
+      builder: (context, state) => const RecordListScreen(),
     ),
   ],
 );

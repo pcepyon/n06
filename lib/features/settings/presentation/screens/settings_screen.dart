@@ -137,6 +137,11 @@ class SettingsScreen extends ConsumerWidget {
                 subtitle: '알림 시간과 방식을 설정합니다',
                 onTap: () => context.push('/notification/settings'),
               ),
+              SettingsMenuItem(
+                title: '기록 관리',
+                subtitle: '저장된 기록을 확인하거나 삭제할 수 있습니다',
+                onTap: () => context.push('/records'),
+              ),
             ],
           ),
         ),
