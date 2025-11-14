@@ -8,6 +8,7 @@ import 'package:n06/features/settings/presentation/screens/settings_screen.dart'
 import 'package:n06/features/profile/presentation/screens/profile_edit_screen.dart';
 import 'package:n06/features/profile/presentation/screens/weekly_goal_settings_screen.dart';
 import 'package:n06/features/tracking/presentation/screens/edit_dosage_plan_screen.dart';
+import 'package:n06/features/tracking/presentation/screens/dose_schedule_screen.dart';
 import 'package:n06/features/notification/presentation/screens/notification_settings_screen.dart';
 import 'package:n06/features/tracking/presentation/screens/emergency_check_screen.dart';
 import 'package:n06/features/tracking/presentation/screens/weight_record_screen.dart';
@@ -137,6 +138,13 @@ final appRouter = GoRouter(
       path: '/data-sharing',
       name: 'data_sharing',
       builder: (context, state) => const DataSharingScreen(),
+    ),
+
+    /// Dose Schedule Management (003)
+    GoRoute(
+      path: '/dose-schedule',
+      name: 'dose_schedule',
+      builder: (context, state) => const DoseScheduleScreen(),
     ),
   ],
 );

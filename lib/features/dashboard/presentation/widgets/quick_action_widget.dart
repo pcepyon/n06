@@ -31,14 +31,9 @@ class QuickActionWidget extends StatelessWidget {
             ),
             _QuickActionButton(
               icon: Icons.check_circle,
-              label: '투여 완료',
+              label: '투여 기록',
               color: Colors.green,
-              onTap: () {
-                // 투여 완료 처리 (특정 라우트 없음, 다이얼로그나 inline 처리)
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('투여 완료 기능은 준비 중입니다')),
-                );
-              },
+              onTap: () => context.push('/dose-schedule'),
             ),
           ],
         ),
