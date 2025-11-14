@@ -62,6 +62,21 @@ Derived calculation from other providers?
   → Provider (see state-management.md)
 ```
 
+### "How should I get userId in screens?"
+
+```
+New screen needs userId?
+  → Use authNotifierProvider.read/watch (ALWAYS)
+  ✅ final userId = ref.read(authNotifierProvider).value?.id;
+
+External parameter (userId param)?
+  → Only for special cases:
+    - Onboarding flow (first login)
+    - Dialog/Sheet components (caller already has userId)
+  → Ensure caller passes userId + router receives it
+  ⚠️ NEVER leave optional userId parameter without passing it
+```
+
 ---
 
 
@@ -88,6 +103,14 @@ await showDialog(...); // WRONG: Provider 조기 해제 가능
 // userId 하드코딩 (authNotifier에서 가져와야 함)
 const userId = 'current-user-id'; // WRONG
 
+// 외부 userId 파라미터 받지만 전달 안함
+class SomeScreen extends ConsumerWidget {
+  final String? userId; // WRONG: 파라미터만 선언하고 전달 안함
+  const SomeScreen({this.userId});
+}
+// Router
+builder: (context, state) => const SomeScreen(), // WRONG: userId 미전달
+
 // Notifier에서 null 체크 없이 state 접근
 return state.asData!.value; // WRONG: asData가 null일 수 있음
 ```
@@ -111,8 +134,17 @@ await notifier.save(data);
 if (!mounted) return;
 await showDialog(...); // Safe
 
-// userId는 authNotifier에서 가져오기
-final userId = ref.read(authNotifierProvider).value?.id ?? 'fallback';
+// userId는 authNotifier에서 가져오기 (표준 패턴)
+final userId = ref.read(authNotifierProvider).value?.id;
+if (userId != null) {
+  // 데이터 로딩
+} else {
+  // 명시적 에러 처리
+}
+
+// 외부 파라미터는 특수 케이스만 허용
+// 1. Onboarding: context.go('/onboarding', extra: user.id)
+// 2. Dialog/Sheet: MyDialog(userId: userId) with required parameter
 
 // Notifier에서 state 백업 후 접근
 final prev = state.asData?.value ?? defaultState;

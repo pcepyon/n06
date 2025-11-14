@@ -88,4 +88,8 @@ class DataSharingNotifier extends _$DataSharingNotifier {
   void exitSharingMode() {
     state = DataSharingState(isActive: false);
   }
+
+  void setError(String errorMessage) {
+    state = state.copyWith(error: errorMessage, isLoading: false);
+  }
 }

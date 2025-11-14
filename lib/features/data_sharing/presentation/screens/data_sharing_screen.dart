@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/data_sharing/application/notifiers/data_sharing_notifier.dart';
 import 'package:n06/features/data_sharing/domain/repositories/date_range.dart';
 
@@ -20,9 +21,14 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     super.initState();
     // Enter sharing mode on screen initialization
     Future.microtask(() {
-      final userId = widget.userId;
+      // Get userId from authNotifierProvider (standard pattern)
+      final userId = ref.read(authNotifierProvider).value?.id;
+
       if (userId != null) {
         ref.read(dataSharingNotifierProvider.notifier).enterSharingMode(userId, _selectedPeriod);
+      } else {
+        // Explicit error handling when userId is not available
+        ref.read(dataSharingNotifierProvider.notifier).setError('사용자 인증 정보를 찾을 수 없습니다.');
       }
     });
   }
@@ -66,9 +72,12 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
-              ref
-                  .read(dataSharingNotifierProvider.notifier)
-                  .enterSharingMode(widget.userId ?? '', _selectedPeriod);
+              final userId = ref.read(authNotifierProvider).value?.id;
+              if (userId != null) {
+                ref
+                    .read(dataSharingNotifierProvider.notifier)
+                    .enterSharingMode(userId, _selectedPeriod);
+              }
             },
             child: const Text('다시 시도'),
           ),
@@ -178,9 +187,12 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                   onSelected: (selected) {
                     setState(() => _selectedPeriod = period);
                     if (selected) {
-                      ref
-                          .read(dataSharingNotifierProvider.notifier)
-                          .changePeriod(widget.userId ?? '', period);
+                      final userId = ref.read(authNotifierProvider).value?.id;
+                      if (userId != null) {
+                        ref
+                            .read(dataSharingNotifierProvider.notifier)
+                            .changePeriod(userId, period);
+                      }
                     }
                   },
                 ),
