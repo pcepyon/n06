@@ -92,6 +92,101 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
       return;
     }
 
+    // Task 3-2: 심각도 7-10 + 24시간 지속 선택 시 긴급 증상 체크 제안
+    if (severity >= 7 && isPersistent24h == true) {
+      final shouldCheck = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: const [
+              Icon(Icons.warning_amber, color: Colors.orange, size: 28),
+              SizedBox(width: 8),
+              Text('긴급 증상 체크'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                '심각한 증상이 24시간 이상 지속되고 있습니다.',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 12),
+              Text(
+                '긴급 증상 체크를 통해 즉시 병원 방문이 필요한지 확인하시겠습니까?',
+                style: TextStyle(fontSize: 14),
+              ),
+              SizedBox(height: 12),
+              Text(
+                '※ 매우 심각한 증상이 지속되는 경우 즉시 의료 기관을 방문하세요.',
+                style: TextStyle(fontSize: 12, color: Colors.red),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('나중에'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+              ),
+              child: const Text('확인하기'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldCheck == true && mounted) {
+        // 증상 저장 먼저
+        setState(() => isLoading = true);
+
+        try {
+          final userId = _getCurrentUserId();
+          final notifier = ref.read(trackingNotifierProvider.notifier);
+
+          // 각 증상별로 기록 저장
+          for (final symptom in selectedSymptoms) {
+            final log = SymptomLog(
+              id: const Uuid().v4(),
+              userId: userId,
+              logDate: selectedDate,
+              symptomName: symptom,
+              severity: severity,
+              daysSinceEscalation: daysSinceEscalation,
+              isPersistent24h: severity >= 7 ? isPersistent24h : null,
+              note: memo.isNotEmpty ? memo : null,
+              tags: selectedTags.toList(),
+              createdAt: DateTime.now(),
+            );
+
+            // 저장 완료 대기
+            await notifier.saveSymptomLog(log);
+            savedLog = log;
+          }
+
+          if (!mounted) return;
+
+          // 긴급 체크 화면으로 이동
+          context.push('/emergency/check');
+          return; // 아래 대처 가이드 다이얼로그 스킵
+        } catch (e) {
+          if (mounted) {
+            _showErrorDialog('저장 중 오류가 발생했습니다: $e');
+          }
+        } finally {
+          if (mounted) {
+            setState(() => isLoading = false);
+          }
+        }
+        return;
+      }
+    }
+
+    // Task 3-1: 일반 저장 흐름
     setState(() => isLoading = true);
 
     try {
@@ -129,7 +224,7 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
         ),
       );
 
-      // 대처 가이드 표시 (저장이 완전히 완료된 후)
+      // Task 3-1: 대처 가이드 표시 (저장이 완전히 완료된 후)
       await _showCopingGuide();
     } catch (e) {
       if (mounted) {
@@ -147,7 +242,8 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
 
     if (!mounted) return;
 
-    // 대처 가이드 위젯 표시
+    // Task 3-1: 대처 가이드 자동 표시
+    // 모달 바텀시트로 대처 가이드 위젯 표시
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -161,40 +257,6 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
             onClose: () => Navigator.of(context).pop(),
           ),
         ),
-      ),
-    );
-
-    // 심각도 7-10점이고 24시간 지속인 경우 증상 체크 화면 안내
-    if (severity >= 7 && isPersistent24h == true) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (mounted) {
-        _showEmergencyCheckPrompt();
-      }
-    }
-  }
-
-  void _showEmergencyCheckPrompt() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('증상 체크'),
-        content: const Text(
-          '심각한 증상이 지속되고 있습니다.\n증상 체크 화면에서 더 자세히 확인하시겠어요?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('나중에'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // F005 증상 체크 화면으로 이동
-              context.push('/emergency/check');
-            },
-            child: const Text('이동'),
-          ),
-        ],
       ),
     );
   }
