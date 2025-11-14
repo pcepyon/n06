@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';
 import 'package:n06/features/dashboard/presentation/widgets/greeting_widget.dart';
 import 'package:n06/features/dashboard/presentation/widgets/weekly_progress_widget.dart';
@@ -20,6 +21,12 @@ class HomeDashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('홈 대시보드'),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
       ),
       body: dashboardState.when(
         loading: () => const Center(
