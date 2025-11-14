@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show debugPrint;
 import 'package:flutter/services.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 
@@ -32,7 +31,8 @@ class KakaoAuthDataSource {
       // Check if we already have a valid token
       if (await AuthApi.instance.hasToken()) {
         try {
-          final tokenInfo = await UserApi.instance.accessTokenInfo();
+          // Validate token with server; throws if invalid/expired
+          await UserApi.instance.accessTokenInfo();
           final token = await TokenManagerProvider.instance.manager.getToken();
           if (token != null) {
             return token;

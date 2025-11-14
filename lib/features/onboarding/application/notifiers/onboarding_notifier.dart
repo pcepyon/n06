@@ -112,7 +112,7 @@ class OnboardingNotifier extends _$OnboardingNotifier {
         try {
           await scheduleRepo.saveAll(schedules);
           print('🎯 [4/4] Onboarding: Complete ✅');
-        } catch (e, stackTrace) {
+        } catch (e) {
           print('❌ [ERROR] Schedule save failed at step 4/4');
           print('📊 Debug Info:');
           print('  - Total schedules: ${schedules.length}');
