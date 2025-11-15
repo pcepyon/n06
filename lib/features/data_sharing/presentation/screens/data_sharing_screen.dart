@@ -177,7 +177,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
         const Text('표시 기간', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         const SizedBox(height: 12),
         Row(
-          children: DateRange.values.map((period) {
+          children: DateRange.values.map<Widget>((period) {
             return Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -214,7 +214,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
   Widget _buildDoseRecordsSection(dynamic report) {
     final records = report.getDoseRecordsSorted();
     return Column(
-      children: records.map((record) {
+      children: records.map<Widget>((record) {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.medical_services),
@@ -262,7 +262,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
   Widget _buildInjectionSiteSection(dynamic report) {
     final sites = report.getInjectionSiteHistory();
     return Column(
-      children: sites.entries.map((entry) {
+      children: sites.entries.map<Widget>((entry) {
         return ListTile(
           title: Text(entry.key),
           trailing: Text('${entry.value}회', style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -274,7 +274,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
   Widget _buildWeightLogsSection(dynamic report) {
     final logs = report.getWeightLogsSorted();
     return Column(
-      children: logs.map((log) {
+      children: logs.map<Widget>((log) {
         return ListTile(
           leading: const Icon(Icons.scale),
           title: Text('${log.weightKg} kg'),
@@ -287,7 +287,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
   Widget _buildSymptomLogsSection(dynamic report) {
     final logs = report.getSymptomLogsSorted();
     return Column(
-      children: logs.map((log) {
+      children: logs.map<Widget>((log) {
         return Card(
           child: ListTile(
             leading: const Icon(Icons.warning),
