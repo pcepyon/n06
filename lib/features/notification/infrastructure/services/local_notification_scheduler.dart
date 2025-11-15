@@ -128,8 +128,6 @@ class LocalNotificationScheduler implements NotificationScheduler {
         tz.TZDateTime.from(notificationDateTime, tz.local),
         notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
       );
     }
   }
