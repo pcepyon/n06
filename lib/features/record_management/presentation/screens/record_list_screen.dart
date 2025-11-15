@@ -61,7 +61,7 @@ class _WeightRecordsTab extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, stack) => Center(child: Text('오류: $err')),
           data: (state) {
-            final weights = state.weights.asData?.value ?? [];
+            final weights = state.weights;
 
             if (weights.isEmpty) {
               return const Center(child: Text('기록이 없습니다'));
@@ -194,7 +194,7 @@ class _SymptomRecordsTab extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, stack) => Center(child: Text('오류: $err')),
           data: (state) {
-            final symptoms = state.symptoms.asData?.value ?? [];
+            final symptoms = state.symptoms;
 
             if (symptoms.isEmpty) {
               return const Center(child: Text('기록이 없습니다'));

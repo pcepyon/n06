@@ -4,7 +4,7 @@ import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/data_sharing/domain/entities/shared_data_report.dart';
-import 'package:n06/features/data_sharing/domain/entities/emergency_symptom_check.dart';
+import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
 
 void main() {
   group('SharedDataReport', () {

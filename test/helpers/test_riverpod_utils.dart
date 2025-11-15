@@ -27,13 +27,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// Create a ProviderContainer with overrides
 ProviderContainer createContainer({
-  List<Override> overrides = const [],
+  dynamic overrides,
   ProviderContainer? parent,
   List<ProviderObserver>? observers,
 }) {
   final container = ProviderContainer(
     parent: parent,
-    overrides: overrides,
+    overrides: overrides ?? [],
     observers: observers,
   );
 
@@ -46,71 +46,67 @@ ProviderContainer createContainer({
 /// Create a ProviderScope for widget tests
 ProviderScope createProviderScope({
   required Widget child,
-  List<Override> overrides = const [],
+  dynamic overrides,
   List<ProviderObserver>? observers,
 }) {
   return ProviderScope(
-    overrides: overrides,
+    overrides: overrides ?? [],
     observers: observers,
     child: child,
   );
 }
 
 /// Test observer for tracking provider state changes
-class TestProviderObserver extends ProviderObserver {
+final class TestProviderObserver extends ProviderObserver {
   final List<ProviderListenerEvent> events = [];
 
   @override
   void didAddProvider(
-    ProviderBase provider,
+    ProviderObserverContext context,
     Object? value,
-    ProviderContainer container,
   ) {
-    events.add(ProviderListenerEvent.didAdd(provider, value));
+    events.add(ProviderListenerEvent.didAdd(context, value));
   }
 
   @override
   void didUpdateProvider(
-    ProviderBase provider,
+    ProviderObserverContext context,
     Object? previousValue,
     Object? newValue,
-    ProviderContainer container,
   ) {
-    events.add(ProviderListenerEvent.didUpdate(provider, previousValue, newValue));
+    events.add(ProviderListenerEvent.didUpdate(context, previousValue, newValue));
   }
 
   @override
   void didDisposeProvider(
-    ProviderBase provider,
-    ProviderContainer container,
+    ProviderObserverContext context,
   ) {
-    events.add(ProviderListenerEvent.didDispose(provider));
+    events.add(ProviderListenerEvent.didDispose(context));
   }
 
   @override
   void providerDidFail(
-    ProviderBase provider,
+    ProviderObserverContext context,
     Object error,
     StackTrace stackTrace,
-    ProviderContainer container,
   ) {
-    events.add(ProviderListenerEvent.didFail(provider, error, stackTrace));
+    events.add(ProviderListenerEvent.didFail(context, error, stackTrace));
   }
 
-  /// Get all update events for a specific provider
-  List<ProviderListenerEvent> getUpdatesFor(ProviderBase provider) {
-    return events.where((e) => e.provider == provider && e.type == EventType.update).toList();
+  /// Get all update events for a specific provider name
+  List<ProviderListenerEvent> getUpdatesFor(String providerName) {
+    return events.where((e) => e.providerName == providerName && e.type == EventType.update).toList();
   }
 
-  /// Get the last value for a specific provider
-  Object? getLastValueFor(ProviderBase provider) {
-    final updates = getUpdatesFor(provider);
+  /// Get the last value for a specific provider name
+  Object? getLastValueFor(String providerName) {
+    final updates = getUpdatesFor(providerName);
     return updates.isEmpty ? null : updates.last.newValue;
   }
 
   /// Check if provider was disposed
-  bool wasDisposed(ProviderBase provider) {
-    return events.any((e) => e.provider == provider && e.type == EventType.dispose);
+  bool wasDisposed(String providerName) {
+    return events.any((e) => e.providerName == providerName && e.type == EventType.dispose);
   }
 
   /// Clear all recorded events
@@ -129,33 +125,37 @@ enum EventType {
 
 /// Provider listener event
 class ProviderListenerEvent {
-  final ProviderBase provider;
+  final String providerName;
   final EventType type;
   final Object? previousValue;
   final Object? newValue;
   final Object? error;
   final StackTrace? stackTrace;
 
-  ProviderListenerEvent.didAdd(this.provider, this.newValue)
-      : type = EventType.add,
+  ProviderListenerEvent.didAdd(ProviderObserverContext context, this.newValue)
+      : providerName = context.provider.toString(),
+        type = EventType.add,
         previousValue = null,
         error = null,
         stackTrace = null;
 
-  ProviderListenerEvent.didUpdate(this.provider, this.previousValue, this.newValue)
-      : type = EventType.update,
+  ProviderListenerEvent.didUpdate(ProviderObserverContext context, this.previousValue, this.newValue)
+      : providerName = context.provider.toString(),
+        type = EventType.update,
         error = null,
         stackTrace = null;
 
-  ProviderListenerEvent.didDispose(this.provider)
-      : type = EventType.dispose,
+  ProviderListenerEvent.didDispose(ProviderObserverContext context)
+      : providerName = context.provider.toString(),
+        type = EventType.dispose,
         previousValue = null,
         newValue = null,
         error = null,
         stackTrace = null;
 
-  ProviderListenerEvent.didFail(this.provider, this.error, this.stackTrace)
-      : type = EventType.fail,
+  ProviderListenerEvent.didFail(ProviderObserverContext context, this.error, this.stackTrace)
+      : providerName = context.provider.toString(),
+        type = EventType.fail,
         previousValue = null,
         newValue = null;
 
@@ -163,13 +163,13 @@ class ProviderListenerEvent {
   String toString() {
     switch (type) {
       case EventType.add:
-        return 'ProviderListenerEvent.didAdd(${provider.runtimeType}, $newValue)';
+        return 'ProviderListenerEvent.didAdd($providerName, $newValue)';
       case EventType.update:
-        return 'ProviderListenerEvent.didUpdate(${provider.runtimeType}, $previousValue -> $newValue)';
+        return 'ProviderListenerEvent.didUpdate($providerName, $previousValue -> $newValue)';
       case EventType.dispose:
-        return 'ProviderListenerEvent.didDispose(${provider.runtimeType})';
+        return 'ProviderListenerEvent.didDispose($providerName)';
       case EventType.fail:
-        return 'ProviderListenerEvent.didFail(${provider.runtimeType}, $error)';
+        return 'ProviderListenerEvent.didFail($providerName, $error)';
     }
   }
 }
@@ -177,15 +177,15 @@ class ProviderListenerEvent {
 /// Wait for an AsyncValue to complete with data
 Future<T> waitForAsyncValue<T>(
   ProviderContainer container,
-  ProviderListenable<AsyncValue<T>> provider, {
+  dynamic provider, {
   Duration timeout = const Duration(seconds: 5),
 }) async {
   final completer = Completer<T>();
 
-  final subscription = container.listen<AsyncValue<T>>(
+  final subscription = container.listen(
     provider,
     (previous, next) {
-      if (!completer.isCompleted) {
+      if (!completer.isCompleted && next is AsyncValue<T>) {
         next.when(
           data: (data) => completer.complete(data),
           loading: () {},
@@ -206,7 +206,7 @@ Future<T> waitForAsyncValue<T>(
 Future<void> pumpWithProviderScope(
   WidgetTester tester,
   Widget widget, {
-  List<Override> overrides = const [],
+  dynamic overrides,
   List<ProviderObserver>? observers,
 }) async {
   await tester.pumpWidget(

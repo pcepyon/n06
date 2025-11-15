@@ -1,14 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart' as legacy;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/core/providers.dart';
-import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/weight_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/symptom_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/dose_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/usecases/update_dosage_plan_usecase.dart';
-import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
 import 'package:n06/features/tracking/domain/repositories/audit_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/dosage_plan_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/dose_schedule_repository.dart';
@@ -127,18 +124,11 @@ NotificationService notificationService(Ref ref) {
 
 // MedicationNotifier Provider는 medication_notifier.dart에서 @riverpod으로 자동 생성됨
 
-// Tracking Notifier Provider (using legacy StateNotifier API)
-final trackingNotifierProvider =
-    legacy.StateNotifierProvider.autoDispose<TrackingNotifier, AsyncValue<TrackingState>>(
-  (ref) {
-    final repository = ref.watch(trackingRepositoryProvider);
-    // AuthNotifier에서 userId 추출
-    final userId = ref.watch(authNotifierProvider).value?.id;
-
-    return TrackingNotifier(
-      repository: repository,
-      userId: userId,
-    );
+// Tracking Notifier Provider
+final trackingNotifierProvider = AsyncNotifierProvider.autoDispose<TrackingNotifier, TrackingState>(
+  () {
+    final notifier = TrackingNotifier();
+    return notifier;
   },
 );
 
