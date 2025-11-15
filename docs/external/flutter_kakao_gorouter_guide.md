@@ -1048,9 +1048,18 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 ```
 
+---
+
+### Phase 1 Implementation Details
+
 **Implementation of SupabaseAuthRepository:**
 
 ```dart
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
+import '../../domain/entities/user_profile.dart';
+import '../../domain/repositories/auth_repository.dart';
+
 class SupabaseAuthRepository implements AuthRepository {
   final SupabaseClient _supabase;
 
@@ -1058,32 +1067,201 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<UserProfile> loginWithKakao() async {
-    // 1. Get Kakao OAuth token
-    final kakaoToken = await UserApi.instance.loginWithKakaoAccount();
-    
-    // 2. Use Supabase signInWithIdToken
-    final authResponse = await _supabase.auth.signInWithIdToken(
-      provider: OAuthProvider.kakao,
-      idToken: kakaoToken.idToken!,
-      accessToken: kakaoToken.accessToken,
-    );
-    
-    // 3. Map to domain entity
-    return UserProfile(
-      id: authResponse.user!.id,
-      email: authResponse.user!.email,
-      provider: AuthProvider.kakao,
-    );
+    try {
+      OAuthToken kakaoToken;
+
+      // 1. Get Kakao OAuth token using native SDK
+      // Try KakaoTalk app login first, fall back to web
+      if (await isKakaoTalkInstalled()) {
+        try {
+          kakaoToken = await UserApi.instance.loginWithKakaoTalk();
+        } catch (error) {
+          kakaoToken = await UserApi.instance.loginWithKakaoAccount();
+        }
+      } else {
+        kakaoToken = await UserApi.instance.loginWithKakaoAccount();
+      }
+
+      // 2. Sign in to Supabase using Kakao token
+      // Supabase will verify the token with Kakao and create a session
+      final authResponse = await _supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.kakao,
+        idToken: kakaoToken.idToken!,
+        accessToken: kakaoToken.accessToken,
+      );
+
+      if (authResponse.user == null) {
+        throw Exception('Supabase authentication failed');
+      }
+
+      // 3. Fetch Kakao user info (optional - for additional profile data)
+      final kakaoUser = await UserApi.instance.me();
+
+      // 4. Update Supabase user metadata with Kakao profile
+      await _supabase.from('users').upsert({
+        'id': authResponse.user!.id,
+        'name': kakaoUser.kakaoAccount?.profile?.nickname ??
+                authResponse.user!.email?.split('@')[0] ?? 'User',
+        'profile_image_url': kakaoUser.kakaoAccount?.profile?.profileImageUrl,
+        'last_login_at': DateTime.now().toIso8601String(),
+      });
+
+      // 5. Map to domain entity
+      return UserProfile(
+        id: authResponse.user!.id,
+        email: kakaoUser.kakaoAccount?.email ?? authResponse.user!.email,
+        nickname: kakaoUser.kakaoAccount?.profile?.nickname,
+        profileImageUrl: kakaoUser.kakaoAccount?.profile?.profileImageUrl,
+        provider: AuthProvider.kakao,
+      );
+    } catch (e) {
+      throw Exception('Kakao login with Supabase failed: $e');
+    }
   }
-  
-  // ... other methods
+
+  @override
+  Future<void> logout() async {
+    try {
+      // 1. Logout from Kakao SDK
+      await UserApi.instance.logout();
+
+      // 2. Sign out from Supabase
+      await _supabase.auth.signOut();
+    } catch (e) {
+      throw Exception('Logout failed: $e');
+    }
+  }
+
+  @override
+  Future<bool> isLoggedIn() async {
+    try {
+      // Check Supabase session (single source of truth)
+      final session = _supabase.auth.currentSession;
+      return session != null;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<UserProfile?> getCurrentUser() async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return null;
+
+      // Fetch full profile from database
+      final profile = await _supabase
+          .from('users')
+          .select()
+          .eq('id', user.id)
+          .single();
+
+      return UserProfile(
+        id: user.id,
+        email: user.email,
+        nickname: profile['name'] as String?,
+        profileImageUrl: profile['profile_image_url'] as String?,
+        provider: AuthProvider.kakao,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
 }
 ```
+
+---
+
+### Key Points for Phase 1 Transition
+
+**1. Authentication Flow:**
+```
+User clicks "Kakao Login"
+   ↓
+Kakao Native SDK login (KakaoTalk app or web)
+   ↓
+Get Kakao OAuth tokens (idToken, accessToken)
+   ↓
+Send to Supabase: signInWithIdToken()
+   ↓
+Supabase verifies token with Kakao servers
+   ↓
+Supabase creates JWT session
+   ↓
+All subsequent DB queries use Supabase JWT (NOT Kakao token!)
+```
+
+**2. Token Management:**
+- ❌ Kakao tokens are NOT stored or used for DB access
+- ✅ Supabase automatically manages JWT tokens (access + refresh)
+- ✅ Supabase handles automatic token refresh
+- ✅ All DB queries authenticated via Supabase JWT
+
+**3. Database Access Control:**
+```sql
+-- RLS policies use Supabase auth.uid(), NOT Kakao ID
+CREATE POLICY "Users can view own records"
+ON dose_records FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM dosage_plans
+    WHERE id = dosage_plan_id
+    AND user_id = auth.uid()  -- ⭐ Supabase user ID
+  )
+);
+```
+
+**4. Benefits of This Approach:**
+- ✅ Native app UX (KakaoTalk quick login)
+- ✅ Supabase handles ALL authentication & authorization
+- ✅ Automatic session management & token refresh
+- ✅ RLS policies work seamlessly
+- ✅ Single source of truth (Supabase session)
+
+**5. Migration Path:**
+- Domain layer: **No changes**
+- Application layer: **No changes**
+- Presentation layer: **No changes**
+- Infrastructure layer: **Only change DI line** in `providers.dart`
+
+```dart
+// Change this ONE line:
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  // return KakaoAuthRepository(ref.watch(secureStorageProvider));  // Phase 0
+  return SupabaseAuthRepository(ref.watch(supabaseClientProvider));  // Phase 1
+});
+```
+
+---
+
+### Supabase Configuration Required
+
+**1. Enable Kakao Provider in Supabase Dashboard:**
+```
+Authentication → Providers → Kakao
+  ✅ Enable Kakao provider
+  Client ID: (not needed for native SDK flow)
+  Client Secret: (not needed for native SDK flow)
+```
+
+**2. Supabase automatically handles:**
+- Token verification with Kakao
+- User creation in `auth.users` table
+- Session management (JWT tokens)
+- Automatic token refresh
+- RLS policy enforcement
+
+**3. No additional server-side code needed!**
+- Supabase's `signInWithIdToken()` does all the work
+- Just pass the Kakao tokens from native SDK
+
+---
 
 **Benefits of Repository Pattern:**
 - Domain, Application, Presentation layers unchanged
 - Only 1 line in DI provider changes
 - Easy A/B testing between Phase 0 and Phase 1
+- Seamless migration with zero downtime
 
 ---
 

@@ -78,7 +78,7 @@ dependencies:
   # 기존 의존성...
 
   # Supabase (신규 추가)
-  supabase_flutter: ^2.0.0
+  supabase_flutter: ^2.10.3
 
   # 제거 예정 (Phase 1 완료 후)
   isar: ^3.1.0+1
@@ -637,47 +637,93 @@ USING (auth.role() = 'authenticated');
 
 ---
 
-## 5. OAuth 설정
+## 5. OAuth 설정 (네이티브 SDK 방식)
 
-> **중요**: OAuth 설정, 특히 네이티브 플랫폼(Android/iOS) 설정은 **`docs/external/flutter_kakao_gorouter_guide.md`** 문서를 반드시 참조하여 정확하게 진행해야 합니다. 아래는 Supabase 연동에 필요한 핵심 사항 요약입니다.
+> **중요**: Kakao/Naver 네이티브 SDK 설정은 각 가이드 문서를 **반드시** 참조하세요. 아래는 Supabase 연동에 필요한 핵심 사항 요약입니다.
 
-### 5.1 Kakao OAuth 설정
+### 5.1 네이티브 SDK 설정 가이드
 
-**Kakao Developers Console**:
-1.  **플랫폼 등록**:
-    *   **Android**: `android/app/src/main/AndroidManifest.xml`의 패키지 이름과 키 해시를 등록합니다.
-    *   **iOS**: `ios/Runner/Info.plist`의 번들 ID를 등록합니다.
-    *   *상세한 키 해시 생성 방법 등은 LTS 가이드를 참조하세요.*
-2.  **카카오 로그인 활성화**:
-    *   "제품 설정" > "카카오 로그인"을 활성화합니다.
-    *   **Redirect URI는 설정할 필요가 없습니다.** 네이티브 SDK는 앱의 커스텀 스킴(`kakao{NATIVE_APP_KEY}://oauth`)을 사용하며, 이는 `Info.plist`와 `AndroidManifest.xml`에 설정됩니다.
+**필수 참조 문서**:
+- **Kakao**: [`/docs/external/flutter_kakao_gorouter_guide.md`](/docs/external/flutter_kakao_gorouter_guide.md)
+  - Part 1: Kakao Developers Console 설정
+  - Part 2: SDK 설치
+  - Part 3: Android 네이티브 설정
+  - Part 4: iOS 네이티브 설정
+  - Part 5: GoRouter 딥링크 설정
 
-**Supabase Dashboard**:
-1. "Authentication" > "Providers" 메뉴로 이동합니다.
-2. "Kakao"를 클릭하고 "Enabled"를 체크합니다.
-3. **"Client ID"**에 Kakao 앱의 **네이티브 앱 키**를 입력합니다.
-4. **"Client Secret"**은 비워둡니다. (네이티브 로그인에서는 사용되지 않음)
-5. "Save"를 클릭합니다.
+- **Naver**: [`/docs/external/flutter_naver_gorouter_guide.md`](/docs/external/flutter_naver_gorouter_guide.md)
+  - Part 1: Naver Developers Console 설정
+  - Part 2: SDK 설치
+  - Part 3: Android 네이티브 설정
+  - Part 4: iOS 네이티브 설정
+  - Part 5: GoRouter 딥링크 설정
 
-### 5.2 Naver OAuth 설정 (Edge Function 사용)
+### 5.2 Supabase Dashboard 설정
 
-**Naver Developers Console**:
-1. https://developers.naver.com 접속
-2. 내 애플리케이션 선택
-3. "API 설정" > "서비스 URL" 추가
-4. "Callback URL" 추가
-   ```
-   # Edge Function에서 사용할 콜백 URL
-   https://[project-ref].supabase.co/functions/v1/naver-auth
-   ```
-5. Client ID, Client Secret 복사 후 Supabase Edge Function의 Secret으로 저장합니다. (상세 내용은 `03_authentication.md` 참조)
+#### Kakao Provider 활성화
 
-### 5.3 체크리스트
+1. Supabase Dashboard → **Authentication** → **Providers**
+2. **Kakao** 클릭
+3. 설정:
+   - **Enable Kakao**: ON
+   - **Client ID**: (비워둠 - 네이티브 SDK는 필요 없음)
+   - **Client Secret**: (비워둠 - 네이티브 SDK는 필요 없음)
+4. **Save** 클릭
 
-- [ ] **(필수)** `flutter_kakao_gorouter_guide.md`에 따라 Android/iOS 네이티브 설정 완료
-- [ ] Supabase Dashboard에서 Kakao Provider 활성화 및 네이티브 앱 키 설정 완료
-- [ ] Naver Developers Console에서 Callback URL 추가
-- [ ] Naver Client ID, Client Secret 저장
+**중요**: 네이티브 SDK 방식에서는 Supabase가 카카오 서버에 직접 토큰을 검증하므로, Dashboard에서 Client ID/Secret 설정이 필요 없습니다.
+
+#### Naver Provider (현재 설정 불필요)
+
+Naver는 Supabase 기본 Provider가 아니므로:
+- 현재 단계에서는 Dashboard 설정 불필요
+- Phase 1.3에서 네이티브 SDK로 직접 처리
+- 프로덕션에서는 Edge Function 사용 (옵션)
+
+### 5.3 네이티브 설정 체크리스트
+
+#### Kakao 설정
+- [ ] Kakao Developers Console에 애플리케이션 등록
+- [ ] 네이티브 앱 키 발급
+- [ ] Android 플랫폼 등록 (패키지명, 키 해시)
+- [ ] iOS 플랫폼 등록 (번들 ID)
+- [ ] `kakao_flutter_sdk_user` 패키지 추가
+- [ ] AndroidManifest.xml 설정 (커스텀 스킴, intent-filter)
+- [ ] Info.plist 설정 (CFBundleURLSchemes)
+- [ ] Supabase Dashboard Kakao Provider 활성화
+
+#### Naver 설정
+- [ ] Naver Developers Console에 애플리케이션 등록
+- [ ] Client ID, Client Secret 발급
+- [ ] Android 플랫폼 등록 (패키지명)
+- [ ] iOS 플랫폼 등록 (번들 ID)
+- [ ] `flutter_naver_login` 패키지 추가
+- [ ] AndroidManifest.xml 설정 (커스텀 스킴)
+- [ ] Info.plist 설정 (CFBundleURLSchemes, NaverThirdPartyConstants)
+
+### 5.4 인증 흐름 (Phase 1)
+
+**Kakao/Naver 공통 흐름**:
+```
+1. 사용자가 "로그인" 버튼 클릭
+   ↓
+2. 네이티브 SDK로 로그인 (KakaoTalk/Naver 앱)
+   ↓
+3. OAuth 토큰 받기 (idToken, accessToken)
+   ↓
+4. Supabase signInWithIdToken() 호출
+   ↓
+5. Supabase가 카카오/네이버 서버에 토큰 검증
+   ↓
+6. Supabase JWT 세션 생성
+   ↓
+7. 모든 DB 작업은 Supabase JWT로만 처리
+```
+
+**핵심 포인트**:
+- ✅ 카카오/네이버: 로그인만 담당 (토큰 발급)
+- ✅ Supabase: 인증, 권한, DB 접근 모두 담당
+- ✅ 카카오/네이버 토큰은 DB 접근에 사용 안 됨
+- ✅ RLS 정책은 Supabase JWT 기반으로 작동
 
 ---
 
