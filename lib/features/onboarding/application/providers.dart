@@ -7,11 +7,8 @@ import 'package:n06/features/onboarding/domain/repositories/schedule_repository.
 import 'package:n06/features/onboarding/domain/usecases/check_onboarding_status_usecase.dart';
 import 'package:n06/features/onboarding/infrastructure/repositories/supabase_user_repository.dart';
 import 'package:n06/features/onboarding/infrastructure/repositories/supabase_profile_repository.dart';
-// import 'package:n06/features/onboarding/infrastructure/repositories/isar_user_repository.dart';  // Phase 1.8에서 제거
-// import 'package:n06/features/onboarding/infrastructure/repositories/isar_profile_repository.dart';  // Phase 1.8에서 제거
-import 'package:n06/features/onboarding/infrastructure/repositories/isar_medication_repository.dart';
-import 'package:n06/features/onboarding/infrastructure/repositories/isar_schedule_repository.dart';
-import 'package:n06/features/onboarding/infrastructure/services/transaction_service.dart';
+import 'package:n06/features/onboarding/infrastructure/repositories/onboarding_medication_repository_adapter.dart';
+import 'package:n06/features/onboarding/infrastructure/repositories/onboarding_schedule_repository_adapter.dart';
 
 part 'providers.g.dart';
 
@@ -29,32 +26,23 @@ ProfileRepository profileRepository(Ref ref) {
   return SupabaseProfileRepository(supabase);
 }
 
-/// MedicationRepository Provider
+/// MedicationRepository Provider (uses tracking's Supabase repository)
 @riverpod
-MedicationRepository medicationRepository(MedicationRepositoryRef ref) {
-  final isarInstance = ref.watch(isarProvider);
-  return IsarMedicationRepository(isarInstance);
+MedicationRepository medicationRepository(Ref ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return OnboardingMedicationRepositoryAdapter(supabase);
 }
 
-/// ScheduleRepository Provider
+/// ScheduleRepository Provider (uses tracking's Supabase repository)
 @riverpod
-ScheduleRepository scheduleRepository(ScheduleRepositoryRef ref) {
-  final isarInstance = ref.watch(isarProvider);
-  return IsarScheduleRepository(isarInstance);
-}
-
-/// TransactionService Provider
-@riverpod
-TransactionService transactionService(TransactionServiceRef ref) {
-  final isarInstance = ref.watch(isarProvider);
-  return TransactionService(isarInstance);
+ScheduleRepository scheduleRepository(Ref ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return OnboardingScheduleRepositoryAdapter(supabase);
 }
 
 /// CheckOnboardingStatusUseCase Provider
 @riverpod
-CheckOnboardingStatusUseCase checkOnboardingStatusUseCase(
-  CheckOnboardingStatusUseCaseRef ref,
-) {
+CheckOnboardingStatusUseCase checkOnboardingStatusUseCase(Ref ref) {
   final profileRepo = ref.watch(profileRepositoryProvider);
   return CheckOnboardingStatusUseCase(profileRepo);
 }

@@ -52,13 +52,9 @@ dependencies:
   uuid: ^4.0.0
   path_provider: ^2.1.0
 
-  # Supabase (신규 추가)
+  # Supabase
   supabase_flutter: ^2.10.3
   flutter_dotenv: ^5.1.0
-
-  # Local Database (기존 유지 - Phase 1.8에서 제거)
-  isar: ^3.1.0+1
-  isar_flutter_libs: ^3.1.0+1
 
   # Analytics & Crashlytics
   firebase_core: ^4.2.1
@@ -98,6 +94,8 @@ dev_dependencies:
 
   # Mocking
   mockito: ^5.5.0
+
+  # Note: isar_generator removed in Phase 1.8 (no longer needed)
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

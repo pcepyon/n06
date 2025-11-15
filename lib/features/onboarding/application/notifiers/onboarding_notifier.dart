@@ -40,14 +40,16 @@ class OnboardingNotifier extends _$OnboardingNotifier {
       final medicationRepo = ref.read(medicationRepositoryProvider);
       final trackingRepo = ref.read(tracking_providers.trackingRepositoryProvider);
       final scheduleRepo = ref.read(scheduleRepositoryProvider);
-      final txnService = ref.read(transactionServiceProvider);
 
       // UseCase 인스턴스 생성
       final calculateGoalUseCase = CalculateWeeklyGoalUseCase();
       final validatePlanUseCase = ValidateDosagePlanUseCase();
       final generateSchedulesUseCase = GenerateDoseSchedulesUseCase();
 
-      await txnService.executeInTransaction(() async {
+      // Note: Supabase handles transactions at the database level.
+      // Each repository operation is atomic. For multi-step operations,
+      // we rely on proper error handling and potential rollback logic.
+      try {
         // 1. 검증
         final currentWeightObj = Weight.create(currentWeight);
         final targetWeightObj = Weight.create(targetWeight);
@@ -122,7 +124,10 @@ class OnboardingNotifier extends _$OnboardingNotifier {
           }
           rethrow;
         }
-      });
+      } catch (e) {
+        print('❌ [ERROR] Onboarding save failed: $e');
+        rethrow;
+      }
     });
   }
 

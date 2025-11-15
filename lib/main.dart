@@ -4,29 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:isar/isar.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
-import 'package:n06/core/providers.dart';
 import 'package:n06/core/routing/app_router.dart';
-import 'package:n06/core/services/secure_storage_service.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:n06/features/authentication/infrastructure/dtos/consent_record_dto.dart';
-import 'package:n06/features/authentication/infrastructure/dtos/user_dto.dart';
-import 'package:n06/features/tracking/infrastructure/dtos/dosage_plan_dto.dart';
-import 'package:n06/features/tracking/infrastructure/dtos/dose_schedule_dto.dart';
-import 'package:n06/features/tracking/infrastructure/dtos/dose_record_dto.dart';
-import 'package:n06/features/tracking/infrastructure/dtos/plan_change_history_dto.dart';
-import 'package:n06/features/tracking/infrastructure/dtos/weight_log_dto.dart';
-import 'package:n06/features/tracking/infrastructure/dtos/symptom_log_dto.dart';
-import 'package:n06/features/tracking/infrastructure/dtos/symptom_context_tag_dto.dart';
-import 'package:n06/features/tracking/infrastructure/dtos/emergency_symptom_check_dto.dart';
-import 'package:n06/features/dashboard/infrastructure/dtos/user_badge_dto.dart';
-import 'package:n06/features/dashboard/infrastructure/dtos/badge_definition_dto.dart';
-import 'package:n06/features/onboarding/infrastructure/dtos/user_profile_dto.dart';
-import 'package:n06/features/coping_guide/infrastructure/dtos/guide_feedback_dto.dart';
-import 'package:n06/features/notification/infrastructure/dtos/notification_settings_dto.dart';
 
 void main() async {
   // Run app in error zone to catch all errors
@@ -157,47 +138,13 @@ Future<void> _initializeAndRunApp() async {
     }
     await initializeDateFormatting('ko_KR', null);
 
-    // Initialize Isar with all required collection schemas
     if (kDebugMode) {
-      developer.log('💾 Opening Isar database...', name: 'Main');
-    }
-    final dir = await getApplicationDocumentsDirectory();
-    final isar = await Isar.open(
-      [
-        UserDtoSchema,
-        ConsentRecordDtoSchema,
-        DosagePlanDtoSchema,
-        DoseScheduleDtoSchema,
-        DoseRecordDtoSchema,
-        PlanChangeHistoryDtoSchema,
-        WeightLogDtoSchema,
-        SymptomLogDtoSchema,
-        SymptomContextTagDtoSchema,
-        EmergencySymptomCheckDtoSchema,
-        UserBadgeDtoSchema,
-        BadgeDefinitionDtoSchema,
-        UserProfileDtoSchema,
-        GuideFeedbackDtoSchema,
-        NotificationSettingsDtoSchema,
-      ],
-      directory: dir.path,
-      inspector: true,
-    );
-
-    if (kDebugMode) {
-      developer.log('✅ Isar database initialized', name: 'Main');
       developer.log('🎯 Launching app...', name: 'Main');
     }
 
     runApp(
       ProviderScope(
         observers: kDebugMode ? [_ProviderLogger()] : null,
-        overrides: [
-          // Override isarProvider with initialized instance
-          isarProvider.overrideWithValue(isar),
-          // authRepositoryProvider는 providers.dart에서 자동으로 Supabase 사용
-          // Phase 1.3: override 제거 (기본 SupabaseAuthRepository 사용)
-        ],
         child: const MyApp(),
       ),
     );
