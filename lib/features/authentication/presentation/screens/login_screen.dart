@@ -113,7 +113,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
 
       // Safe to access value now (no error)
-      final user = authState.valueOrNull;
+      final user = authState.asData?.value;
 
       if (user == null) {
         if (kDebugMode) {
@@ -279,7 +279,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
 
       // Safe to access value now (no error)
-      final user = authState.valueOrNull;
+      final user = authState.asData?.value;
 
       if (user == null) {
         if (kDebugMode) {

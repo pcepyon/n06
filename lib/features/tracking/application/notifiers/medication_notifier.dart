@@ -114,7 +114,7 @@ class MedicationNotifier extends _$MedicationNotifier {
     final userId = ref.read(authNotifierProvider).value?.id;
     if (userId == null) throw Exception('User not authenticated');
 
-    final currentState = state.valueOrNull;
+    final currentState = state.asData?.value;
     if (currentState == null) throw Exception('State not loaded');
 
     final currentPlan = currentState.activePlan;
@@ -154,7 +154,7 @@ class MedicationNotifier extends _$MedicationNotifier {
 
   /// Get missed dose analysis
   MissedDoseAnalysisResult? getMissedDoseAnalysis() {
-    final currentState = state.valueOrNull;
+    final currentState = state.asData?.value;
     if (currentState == null) return null;
 
     final schedules = currentState.schedules;
@@ -179,7 +179,7 @@ class MedicationNotifier extends _$MedicationNotifier {
 
   /// Get plan change history
   Future<List<dynamic>> getPlanHistory() async {
-    final currentState = state.valueOrNull;
+    final currentState = state.asData?.value;
     if (currentState == null) return [];
 
     final plan = currentState.activePlan;
@@ -194,7 +194,7 @@ class MedicationNotifier extends _$MedicationNotifier {
   Future<RotationCheckResult> checkInjectionSiteRotation(
     String newSite,
   ) async {
-    final currentState = state.valueOrNull;
+    final currentState = state.asData?.value;
     if (currentState == null) throw Exception('State not loaded');
 
     final plan = currentState.activePlan;
@@ -227,3 +227,7 @@ class MedicationNotifier extends _$MedicationNotifier {
     };
   }
 }
+
+
+// Backwards compatibility alias
+const medicationNotifierProvider = medicationProvider;

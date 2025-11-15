@@ -2,8 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart' as legacy;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/core/providers.dart';
-// import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
-import 'package:n06/features/tracking/application/notifiers/emergency_check_notifier.dart';
+import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/weight_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/symptom_record_edit_notifier.dart';
@@ -101,21 +100,21 @@ AnalyzePlanChangeImpactUseCase analyzePlanChangeImpactUseCase(Ref ref) {
   return AnalyzePlanChangeImpactUseCase();
 }
 
-// TODO: UpdateDosagePlanUseCase - temporarily disabled until Supabase migration
-// @riverpod
-// UpdateDosagePlanUseCase updateDosagePlanUseCase(Ref ref) {
-//   final medicationRepository = ref.watch(medicationRepositoryProvider);
-//   final validateUseCase = ref.watch(validateDosagePlanUseCaseProvider);
-//   final analyzeImpactUseCase = ref.watch(analyzePlanChangeImpactUseCaseProvider);
-//   final recalculateScheduleUseCase = ref.watch(recalculateDoseScheduleUseCaseProvider);
+// UpdateDosagePlanUseCase Provider
+@riverpod
+UpdateDosagePlanUseCase updateDosagePlanUseCase(Ref ref) {
+  final medicationRepository = ref.watch(medicationRepositoryProvider);
+  final validateUseCase = ref.watch(validateDosagePlanUseCaseProvider);
+  final analyzeImpactUseCase = ref.watch(analyzePlanChangeImpactUseCaseProvider);
+  final recalculateScheduleUseCase = ref.watch(recalculateDoseScheduleUseCaseProvider);
 
-//   return UpdateDosagePlanUseCase(
-//     medicationRepository: medicationRepository,
-//     validateUseCase: validateUseCase,
-//     analyzeImpactUseCase: analyzeImpactUseCase,
-//     recalculateScheduleUseCase: recalculateScheduleUseCase,
-//   );
-// }
+  return UpdateDosagePlanUseCase(
+    medicationRepository: medicationRepository,
+    validateUseCase: validateUseCase,
+    analyzeImpactUseCase: analyzeImpactUseCase,
+    recalculateScheduleUseCase: recalculateScheduleUseCase,
+  );
+}
 
 // Service Providers with Code Generation
 @riverpod
@@ -125,26 +124,22 @@ NotificationService notificationService(Ref ref) {
 
 // MedicationNotifier Provider는 medication_notifier.dart에서 @riverpod으로 자동 생성됨
 
-// TODO: Tracking Notifier Provider - temporarily disabled until Supabase migration
-// final trackingNotifierProvider =
-//     legacy.StateNotifierProvider.autoDispose<TrackingNotifier, AsyncValue<TrackingState>>(
-//   (ref) {
-//     final repository = ref.watch(trackingRepositoryProvider);
-//     // AuthNotifier에서 userId 추출
-//     final userId = ref.watch(authNotifierProvider).value?.id;
+// Tracking Notifier Provider (using legacy StateNotifier API)
+final trackingNotifierProvider =
+    legacy.StateNotifierProvider.autoDispose<TrackingNotifier, AsyncValue<TrackingState>>(
+  (ref) {
+    final repository = ref.watch(trackingRepositoryProvider);
+    // AuthNotifier에서 userId 추출
+    final userId = ref.watch(authNotifierProvider).value?.id;
 
-//     return TrackingNotifier(
-//       repository: repository,
-//       userId: userId,
-//     );
-//   },
-// );
-
-// Emergency Check Notifier Provider (F005)
-final emergencyCheckNotifierProvider =
-    AsyncNotifierProvider.autoDispose<EmergencyCheckNotifier, List<EmergencySymptomCheck>>(
-  () => EmergencyCheckNotifier(),
+    return TrackingNotifier(
+      repository: repository,
+      userId: userId,
+    );
+  },
 );
+
+// Emergency Check Notifier Provider는 emergency_check_notifier.dart에서 @riverpod으로 자동 생성됨
 
 // UF-011: Weight Record Edit Notifier Provider
 final weightRecordEditNotifierProvider = AsyncNotifierProvider<WeightRecordEditNotifier, void>(

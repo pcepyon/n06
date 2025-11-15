@@ -158,3 +158,7 @@ class OnboardingNotifier extends _$OnboardingNotifier {
     );
   }
 }
+
+
+// Backwards compatibility alias
+const onboardingNotifierProvider = onboardingProvider;

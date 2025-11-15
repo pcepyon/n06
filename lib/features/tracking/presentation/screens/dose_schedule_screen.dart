@@ -325,7 +325,7 @@ class _DoseRecordDialogState extends ConsumerState<DoseRecordDialog> {
       final medicationNotifier = ref.read(medicationNotifierProvider.notifier);
       final medicationState = ref.read(medicationNotifierProvider);
 
-      final state = medicationState.valueOrNull;
+      final state = medicationState.asData?.value;
       if (state?.activePlan == null) {
         throw Exception('활성 투여 계획이 없습니다');
       }

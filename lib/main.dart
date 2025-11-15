@@ -155,7 +155,7 @@ Future<void> _initializeAndRunApp() async {
 }
 
 // Riverpod logger for debugging
-class _ProviderLogger extends ProviderObserver {
+final class _ProviderLogger extends ProviderObserver {
   @override
   void didUpdateProvider(
     ProviderObserverContext context,

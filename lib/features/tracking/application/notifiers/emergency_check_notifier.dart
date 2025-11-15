@@ -1,8 +1,10 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
 import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
+
+part 'emergency_check_notifier.g.dart';
 
 /// F005: 증상 체크 상태 관리 및 비즈니스 로직 orchestration
 ///
@@ -16,8 +18,8 @@ import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 /// - EmergencyCheckRepository (F005)
 /// - TrackingRepository (F002 - 부작용 기록 저장)
 /// - MedicationRepository (F001 - 용량 증량 후 경과일 계산)
-class EmergencyCheckNotifier
-    extends AutoDisposeAsyncNotifier<List<EmergencySymptomCheck>> {
+@riverpod
+class EmergencyCheckNotifier extends _$EmergencyCheckNotifier {
   @override
   Future<List<EmergencySymptomCheck>> build() async {
     // 초기 로드는 수행하지 않음 (사용자 ID 필요)

@@ -113,8 +113,12 @@ class ProfileNotifier extends _$ProfileNotifier {
 /// Phase 0: Returns IsarProfileRepository
 /// Phase 1: Will return SupabaseProfileRepository
 @riverpod
-ProfileRepository profileRepository(ProfileRepositoryRef ref) {
+ProfileRepository profileRepository(Ref ref) {
   throw UnimplementedError(
     'profileRepositoryProvider must be overridden in ProviderScope',
   );
 }
+
+
+// Backwards compatibility alias
+const profileNotifierProvider = profileProvider;
