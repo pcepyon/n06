@@ -93,3 +93,6 @@ class DataSharingNotifier extends _$DataSharingNotifier {
     state = state.copyWith(error: errorMessage, isLoading: false);
   }
 }
+
+/// Alias for backwards compatibility
+const dataSharingNotifierProvider = dataSharingProvider;

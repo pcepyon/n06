@@ -1,28 +1,49 @@
-import 'package:isar/isar.dart';
 import 'package:n06/features/authentication/domain/entities/consent_record.dart';
 
-part 'consent_record_dto.g.dart';
-
-/// Isar DTO for ConsentRecord entity.
+/// Supabase DTO for ConsentRecord entity.
 ///
-/// Stores user consent information in Isar local database.
-@collection
+/// Stores user consent information in Supabase database.
 class ConsentRecordDto {
-  ConsentRecordDto();
+  final String id;
+  final String userId;
+  final bool termsOfService;
+  final bool privacyPolicy;
+  final DateTime agreedAt;
 
-  Id id = Isar.autoIncrement;
+  const ConsentRecordDto({
+    required this.id,
+    required this.userId,
+    required this.termsOfService,
+    required this.privacyPolicy,
+    required this.agreedAt,
+  });
 
-  @Index()
-  late String userId;
+  /// Creates DTO from Supabase JSON.
+  factory ConsentRecordDto.fromJson(Map<String, dynamic> json) {
+    return ConsentRecordDto(
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
+      termsOfService: json['terms_of_service'] as bool,
+      privacyPolicy: json['privacy_policy'] as bool,
+      agreedAt: DateTime.parse(json['agreed_at'] as String),
+    );
+  }
 
-  late bool termsOfService;
-  late bool privacyPolicy;
-  late DateTime agreedAt;
+  /// Converts DTO to Supabase JSON.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'user_id': userId,
+      'terms_of_service': termsOfService,
+      'privacy_policy': privacyPolicy,
+      'agreed_at': agreedAt.toIso8601String(),
+    };
+  }
 
   /// Converts DTO to Domain Entity.
   ConsentRecord toEntity() {
     return ConsentRecord(
-      id: id.toString(),
+      id: id,
       userId: userId,
       termsOfService: termsOfService,
       privacyPolicy: privacyPolicy,
@@ -32,11 +53,12 @@ class ConsentRecordDto {
 
   /// Creates DTO from Domain Entity.
   factory ConsentRecordDto.fromEntity(ConsentRecord entity) {
-    return ConsentRecordDto()
-      ..id = entity.id.isNotEmpty ? int.tryParse(entity.id) ?? Isar.autoIncrement : Isar.autoIncrement
-      ..userId = entity.userId
-      ..termsOfService = entity.termsOfService
-      ..privacyPolicy = entity.privacyPolicy
-      ..agreedAt = entity.agreedAt;
+    return ConsentRecordDto(
+      id: entity.id,
+      userId: entity.userId,
+      termsOfService: entity.termsOfService,
+      privacyPolicy: entity.privacyPolicy,
+      agreedAt: entity.agreedAt,
+    );
   }
 }

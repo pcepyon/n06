@@ -1,20 +1,54 @@
-import 'package:isar/isar.dart';
 import 'package:n06/features/dashboard/domain/entities/badge_definition.dart';
 
-part 'badge_definition_dto.g.dart';
-
-@collection
+/// Supabase DTO for BadgeDefinition entity.
+///
+/// Stores badge definition information in Supabase database.
 class BadgeDefinitionDto {
-  Id? isarId;
-  late String id;
-  late String name;
-  late String description;
-  late String category; // enum string: streak, weight, dose, record
-  String? iconUrl;
-  late int displayOrder;
+  final String id;
+  final String name;
+  final String description;
+  final String category;
+  final String? iconUrl;
+  final int displayOrder;
+  final Map<String, dynamic>? achievementCondition;
 
-  BadgeDefinitionDto();
+  const BadgeDefinitionDto({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.category,
+    this.iconUrl,
+    required this.displayOrder,
+    this.achievementCondition,
+  });
 
+  /// Creates DTO from Supabase JSON.
+  factory BadgeDefinitionDto.fromJson(Map<String, dynamic> json) {
+    return BadgeDefinitionDto(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      category: json['category'] as String,
+      iconUrl: json['icon_url'] as String?,
+      displayOrder: json['display_order'] as int,
+      achievementCondition: json['achievement_condition'] as Map<String, dynamic>?,
+    );
+  }
+
+  /// Converts DTO to Supabase JSON.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'category': category,
+      'icon_url': iconUrl,
+      'display_order': displayOrder,
+      'achievement_condition': achievementCondition,
+    };
+  }
+
+  /// Converts DTO to Domain Entity.
   BadgeDefinition toEntity() {
     return BadgeDefinition(
       id: id,
@@ -26,14 +60,17 @@ class BadgeDefinitionDto {
     );
   }
 
+  /// Creates DTO from Domain Entity.
   factory BadgeDefinitionDto.fromEntity(BadgeDefinition entity) {
-    return BadgeDefinitionDto()
-      ..id = entity.id
-      ..name = entity.name
-      ..description = entity.description
-      ..category = entity.category.toString().split('.').last
-      ..iconUrl = entity.iconUrl
-      ..displayOrder = entity.displayOrder;
+    return BadgeDefinitionDto(
+      id: entity.id,
+      name: entity.name,
+      description: entity.description,
+      category: entity.category.toString().split('.').last,
+      iconUrl: entity.iconUrl,
+      displayOrder: entity.displayOrder,
+      achievementCondition: null,
+    );
   }
 
   static BadgeCategory _stringToCategory(String value) {

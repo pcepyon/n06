@@ -1,8 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart' as legacy;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-// TODO: Isar removed - imports will be replaced with Supabase
-// import 'package:n06/core/providers.dart';
+import 'package:n06/core/providers.dart';
 // import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/emergency_check_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart';
@@ -11,6 +10,7 @@ import 'package:n06/features/tracking/application/notifiers/symptom_record_edit_
 import 'package:n06/features/tracking/application/notifiers/dose_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/usecases/update_dosage_plan_usecase.dart';
 import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
+import 'package:n06/features/tracking/domain/repositories/audit_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/dosage_plan_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/dose_schedule_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/emergency_check_repository.dart';
@@ -23,51 +23,57 @@ import 'package:n06/features/tracking/domain/usecases/recalculate_dose_schedule_
 import 'package:n06/features/tracking/domain/usecases/schedule_generator_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/validate_dosage_plan_usecase.dart';
 import 'package:n06/features/tracking/infrastructure/services/notification_service.dart';
-// import 'package:n06/features/tracking/infrastructure/repositories/isar_tracking_repository.dart';
-// import 'package:n06/features/tracking/infrastructure/repositories/isar_medication_repository.dart';
-// import 'package:n06/features/tracking/infrastructure/repositories/isar_dosage_plan_repository.dart';
-// import 'package:n06/features/tracking/infrastructure/repositories/isar_dose_schedule_repository.dart';
-// import 'package:n06/features/tracking/infrastructure/repositories/isar_emergency_check_repository.dart';
-// import 'package:n06/features/tracking/infrastructure/repositories/isar_audit_repository.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/supabase_tracking_repository.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/supabase_medication_repository.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/supabase_dosage_plan_repository.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/supabase_dose_schedule_repository.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/supabase_emergency_check_repository.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/supabase_audit_repository.dart';
+// import 'package:n06/features/tracking/infrastructure/repositories/isar_tracking_repository.dart';  // Phase 1.8에서 제거
+// import 'package:n06/features/tracking/infrastructure/repositories/isar_medication_repository.dart';  // Phase 1.8에서 제거
+// import 'package:n06/features/tracking/infrastructure/repositories/isar_dosage_plan_repository.dart';  // Phase 1.8에서 제거
+// import 'package:n06/features/tracking/infrastructure/repositories/isar_dose_schedule_repository.dart';  // Phase 1.8에서 제거
+// import 'package:n06/features/tracking/infrastructure/repositories/isar_emergency_check_repository.dart';  // Phase 1.8에서 제거
+// import 'package:n06/features/tracking/infrastructure/repositories/isar_audit_repository.dart';  // Phase 1.8에서 제거
 
 part 'providers.g.dart';
 
-// TODO: Repository Providers - will be replaced with Supabase implementations
-// @riverpod
-// MedicationRepository medicationRepository(Ref ref) {
-//   final isar = ref.watch(isarProvider);
-//   return IsarMedicationRepository(isar);
-// }
+// Repository Providers - Supabase implementations
+@riverpod
+MedicationRepository medicationRepository(Ref ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return SupabaseMedicationRepository(supabase);
+}
 
-// @riverpod
-// DosagePlanRepository dosagePlanRepository(Ref ref) {
-//   final isar = ref.watch(isarProvider);
-//   return IsarDosagePlanRepository(isar);
-// }
+@riverpod
+DosagePlanRepository dosagePlanRepository(Ref ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return SupabaseDosagePlanRepository(supabase);
+}
 
-// @riverpod
-// DoseScheduleRepository doseScheduleRepository(Ref ref) {
-//   final isar = ref.watch(isarProvider);
-//   return IsarDoseScheduleRepository(isar);
-// }
+@riverpod
+DoseScheduleRepository doseScheduleRepository(Ref ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return SupabaseDoseScheduleRepository(supabase);
+}
 
-// @riverpod
-// TrackingRepository trackingRepository(Ref ref) {
-//   final isar = ref.watch(isarProvider);
-//   return IsarTrackingRepository(isar);
-// }
+@riverpod
+TrackingRepository trackingRepository(Ref ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return SupabaseTrackingRepository(supabase);
+}
 
-// @riverpod
-// EmergencyCheckRepository emergencyCheckRepository(Ref ref) {
-//   final isar = ref.watch(isarProvider);
-//   return IsarEmergencyCheckRepository(isar);
-// }
+@riverpod
+EmergencyCheckRepository emergencyCheckRepository(Ref ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return SupabaseEmergencyCheckRepository(supabase);
+}
 
-// @riverpod
-// IsarAuditRepository auditRepository(Ref ref) {
-//   final isar = ref.watch(isarProvider);
-//   return IsarAuditRepository(isar);
-// }
+@riverpod
+AuditRepository auditRepository(Ref ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return SupabaseAuditRepository(supabase);
+}
 
 // UseCase Providers with Code Generation
 @riverpod

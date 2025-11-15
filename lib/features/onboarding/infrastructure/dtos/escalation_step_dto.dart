@@ -1,13 +1,32 @@
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 
+/// Supabase embedded DTO for EscalationStep.
+///
+/// Used as JSONB data in dosage_plans and plan_change_history tables.
 class EscalationStepDto {
   final int weeksFromStart;
   final double doseMg;
 
-  EscalationStepDto({
+  const EscalationStepDto({
     required this.weeksFromStart,
     required this.doseMg,
   });
+
+  /// Creates DTO from Supabase JSON.
+  factory EscalationStepDto.fromJson(Map<String, dynamic> json) {
+    return EscalationStepDto(
+      weeksFromStart: json['weeks_from_start'] as int,
+      doseMg: (json['dose_mg'] as num).toDouble(),
+    );
+  }
+
+  /// Converts DTO to Supabase JSON.
+  Map<String, dynamic> toJson() {
+    return {
+      'weeks_from_start': weeksFromStart,
+      'dose_mg': doseMg,
+    };
+  }
 
   /// DTO를 Domain Entity로 변환한다.
   EscalationStep toEntity() {
@@ -22,22 +41,6 @@ class EscalationStepDto {
     return EscalationStepDto(
       weeksFromStart: entity.weeksFromStart,
       doseMg: entity.doseMg,
-    );
-  }
-
-  /// JSON 맵으로 변환한다.
-  Map<String, dynamic> toJson() {
-    return {
-      'weeksFromStart': weeksFromStart,
-      'doseMg': doseMg,
-    };
-  }
-
-  /// JSON 맵에서 생성한다.
-  factory EscalationStepDto.fromJson(Map<String, dynamic> json) {
-    return EscalationStepDto(
-      weeksFromStart: json['weeksFromStart'] as int,
-      doseMg: json['doseMg'] as double,
     );
   }
 }

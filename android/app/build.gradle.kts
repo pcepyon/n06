@@ -25,7 +25,7 @@ android {
         applicationId = "com.glp1.n06"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23  // Required for Firebase 4.x
+        minSdk = flutter.minSdkVersion  // Required for Firebase 4.x
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

@@ -1,9 +1,13 @@
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/features/authentication/domain/entities/user.dart';
 import 'package:n06/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:n06/features/authentication/application/providers.dart';
+import 'package:n06/features/authentication/infrastructure/repositories/supabase_auth_repository.dart';
+// import 'package:n06/features/authentication/infrastructure/repositories/isar_auth_repository.dart';  // Phase 1.8에서 제거
+import 'package:n06/core/providers.dart';
 
 part 'auth_notifier.g.dart';
 
@@ -162,12 +166,14 @@ class AuthNotifier extends _$AuthNotifier {
 
 /// Provider for AuthRepository
 ///
-/// Phase 0: Returns IsarAuthRepository
-/// Phase 1: Will return SupabaseMedicationRepository
+/// Phase 0: Returns IsarAuthRepository (deprecated)
+/// Phase 1: Returns SupabaseAuthRepository
 @riverpod
-AuthRepository authRepository(AuthRepositoryRef ref) {
-  // This will be injected properly through providers in main.dart
-  throw UnimplementedError(
-    'authRepositoryProvider must be overridden in ProviderScope',
-  );
+AuthRepository authRepository(Ref ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return SupabaseAuthRepository(supabase);
 }
+
+/// Alias for backwards compatibility
+/// The generated provider is named 'authProvider', but the codebase uses 'authNotifierProvider'
+const authNotifierProvider = authProvider;

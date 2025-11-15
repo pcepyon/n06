@@ -113,3 +113,6 @@ class NotificationNotifier extends _$NotificationNotifier {
     }
   }
 }
+
+/// Alias for backwards compatibility
+const notificationNotifierProvider = notificationProvider;

@@ -1,48 +1,64 @@
-import 'dart:convert';
-
-import 'package:isar/isar.dart';
 import 'package:n06/features/tracking/domain/entities/plan_change_history.dart';
 
-part 'plan_change_history_dto.g.dart';
-
-@collection
+/// Supabase DTO for PlanChangeHistory entity.
+///
+/// Stores plan change history in Supabase database.
 class PlanChangeHistoryDto {
-  Id? id = Isar.autoIncrement;
-  late String historyId; // UUID
-  late String dosagePlanId;
-  late DateTime changedAt;
-  late String oldPlanJson; // JSON string
-  late String newPlanJson; // JSON string
+  final String id;
+  final String dosagePlanId;
+  final DateTime changedAt;
+  final Map<String, dynamic> oldPlan;
+  final Map<String, dynamic> newPlan;
 
-  @Index()
-  late DateTime indexedChangedAt;
+  const PlanChangeHistoryDto({
+    required this.id,
+    required this.dosagePlanId,
+    required this.changedAt,
+    required this.oldPlan,
+    required this.newPlan,
+  });
 
-  PlanChangeHistoryDto();
-
-  PlanChangeHistoryDto.fromEntity(PlanChangeHistory entity) {
-    historyId = entity.id;
-    dosagePlanId = entity.dosagePlanId;
-    changedAt = entity.changedAt;
-    oldPlanJson = _mapToJson(entity.oldPlan);
-    newPlanJson = _mapToJson(entity.newPlan);
-    indexedChangedAt = entity.changedAt;
-  }
-
-  PlanChangeHistory toEntity() {
-    return PlanChangeHistory(
-      id: historyId,
-      dosagePlanId: dosagePlanId,
-      changedAt: changedAt,
-      oldPlan: _jsonToMap(oldPlanJson),
-      newPlan: _jsonToMap(newPlanJson),
+  /// Creates DTO from Supabase JSON.
+  factory PlanChangeHistoryDto.fromJson(Map<String, dynamic> json) {
+    return PlanChangeHistoryDto(
+      id: json['id'] as String,
+      dosagePlanId: json['dosage_plan_id'] as String,
+      changedAt: DateTime.parse(json['changed_at'] as String),
+      oldPlan: json['old_plan'] as Map<String, dynamic>,
+      newPlan: json['new_plan'] as Map<String, dynamic>,
     );
   }
 
-  static String _mapToJson(Map<String, dynamic> map) {
-    return jsonEncode(map);
+  /// Converts DTO to Supabase JSON.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'dosage_plan_id': dosagePlanId,
+      'changed_at': changedAt.toIso8601String(),
+      'old_plan': oldPlan,
+      'new_plan': newPlan,
+    };
   }
 
-  static Map<String, dynamic> _jsonToMap(String json) {
-    return jsonDecode(json) as Map<String, dynamic>;
+  /// Converts DTO to Domain Entity.
+  PlanChangeHistory toEntity() {
+    return PlanChangeHistory(
+      id: id,
+      dosagePlanId: dosagePlanId,
+      changedAt: changedAt,
+      oldPlan: oldPlan,
+      newPlan: newPlan,
+    );
+  }
+
+  /// Creates DTO from Domain Entity.
+  factory PlanChangeHistoryDto.fromEntity(PlanChangeHistory entity) {
+    return PlanChangeHistoryDto(
+      id: entity.id,
+      dosagePlanId: entity.dosagePlanId,
+      changedAt: entity.changedAt,
+      oldPlan: entity.oldPlan,
+      newPlan: entity.newPlan,
+    );
   }
 }

@@ -5,8 +5,10 @@ import 'package:n06/features/onboarding/domain/repositories/profile_repository.d
 import 'package:n06/features/onboarding/domain/repositories/medication_repository.dart';
 import 'package:n06/features/onboarding/domain/repositories/schedule_repository.dart';
 import 'package:n06/features/onboarding/domain/usecases/check_onboarding_status_usecase.dart';
-import 'package:n06/features/onboarding/infrastructure/repositories/isar_user_repository.dart';
-import 'package:n06/features/onboarding/infrastructure/repositories/isar_profile_repository.dart';
+import 'package:n06/features/onboarding/infrastructure/repositories/supabase_user_repository.dart';
+import 'package:n06/features/onboarding/infrastructure/repositories/supabase_profile_repository.dart';
+// import 'package:n06/features/onboarding/infrastructure/repositories/isar_user_repository.dart';  // Phase 1.8에서 제거
+// import 'package:n06/features/onboarding/infrastructure/repositories/isar_profile_repository.dart';  // Phase 1.8에서 제거
 import 'package:n06/features/onboarding/infrastructure/repositories/isar_medication_repository.dart';
 import 'package:n06/features/onboarding/infrastructure/repositories/isar_schedule_repository.dart';
 import 'package:n06/features/onboarding/infrastructure/services/transaction_service.dart';
@@ -15,16 +17,16 @@ part 'providers.g.dart';
 
 /// UserRepository Provider
 @riverpod
-UserRepository userRepository(UserRepositoryRef ref) {
-  final isarInstance = ref.watch(isarProvider);
-  return IsarUserRepository(isarInstance);
+UserRepository userRepository(Ref ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return SupabaseUserRepository(supabase);
 }
 
 /// ProfileRepository Provider
 @riverpod
-ProfileRepository profileRepository(ProfileRepositoryRef ref) {
-  final isarInstance = ref.watch(isarProvider);
-  return IsarProfileRepository(isarInstance);
+ProfileRepository profileRepository(Ref ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return SupabaseProfileRepository(supabase);
 }
 
 /// MedicationRepository Provider

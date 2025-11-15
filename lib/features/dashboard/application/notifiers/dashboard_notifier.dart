@@ -332,3 +332,6 @@ class DashboardNotifier extends _$DashboardNotifier {
     return '오늘도 함께 목표를 향해 나아가요! 첫 기록을 해보세요.';
   }
 }
+
+/// Alias for backwards compatibility
+const dashboardNotifierProvider = dashboardProvider;

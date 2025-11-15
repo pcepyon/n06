@@ -10,12 +10,10 @@ import 'package:n06/core/providers.dart';
 import 'package:n06/core/routing/app_router.dart';
 import 'package:n06/core/services/secure_storage_service.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
-import 'package:n06/features/authentication/infrastructure/datasources/kakao_auth_datasource.dart';
-import 'package:n06/features/authentication/infrastructure/datasources/naver_auth_datasource.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:n06/features/authentication/infrastructure/dtos/consent_record_dto.dart';
 import 'package:n06/features/authentication/infrastructure/dtos/user_dto.dart';
-import 'package:n06/features/authentication/infrastructure/repositories/isar_auth_repository.dart';
 import 'package:n06/features/tracking/infrastructure/dtos/dosage_plan_dto.dart';
 import 'package:n06/features/tracking/infrastructure/dtos/dose_schedule_dto.dart';
 import 'package:n06/features/tracking/infrastructure/dtos/dose_record_dto.dart';
@@ -129,6 +127,21 @@ Future<void> _initializeAndRunApp() async {
   }
 
   try {
+    // Load environment variables
+    if (kDebugMode) {
+      developer.log('📄 Loading environment variables...', name: 'Main');
+    }
+    await dotenv.load(fileName: ".env");
+
+    // Initialize Supabase
+    if (kDebugMode) {
+      developer.log('☁️ Initializing Supabase...', name: 'Main');
+    }
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_URL']!,
+      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+    );
+
     // Initialize Kakao SDK with debug logging enabled
     if (kDebugMode) {
       developer.log('📱 Initializing Kakao SDK with debug logging...', name: 'Main');
@@ -182,15 +195,8 @@ Future<void> _initializeAndRunApp() async {
         overrides: [
           // Override isarProvider with initialized instance
           isarProvider.overrideWithValue(isar),
-          // Override authRepositoryProvider with IsarAuthRepository
-          authRepositoryProvider.overrideWithValue(
-            IsarAuthRepository(
-              isar,
-              KakaoAuthDataSource(),
-              NaverAuthDataSource(),
-              SecureStorageService(),
-            ),
-          ),
+          // authRepositoryProvider는 providers.dart에서 자동으로 Supabase 사용
+          // Phase 1.3: override 제거 (기본 SupabaseAuthRepository 사용)
         ],
         child: const MyApp(),
       ),
@@ -205,26 +211,24 @@ Future<void> _initializeAndRunApp() async {
 class _ProviderLogger extends ProviderObserver {
   @override
   void didUpdateProvider(
-    ProviderBase<Object?> provider,
+    ProviderObserverContext context,
     Object? previousValue,
     Object? newValue,
-    ProviderContainer container,
   ) {
     developer.log(
-      '${provider.name ?? provider.runtimeType} updated: $newValue',
+      '${context.provider.name ?? context.provider.runtimeType} updated: $newValue',
       name: 'Riverpod',
     );
   }
 
   @override
   void providerDidFail(
-    ProviderBase<Object?> provider,
+    ProviderObserverContext context,
     Object error,
     StackTrace stackTrace,
-    ProviderContainer container,
   ) {
     _logError(
-      'Provider Error: ${provider.name ?? provider.runtimeType}',
+      'Provider Error: ${context.provider.name ?? context.provider.runtimeType}',
       error,
       stackTrace,
     );

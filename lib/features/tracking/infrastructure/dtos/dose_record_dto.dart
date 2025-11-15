@@ -1,46 +1,65 @@
-import 'package:isar/isar.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 
-part 'dose_record_dto.g.dart';
-
-@collection
+/// Supabase DTO for DoseRecord entity.
+///
+/// Stores dose record information in Supabase database.
 class DoseRecordDto {
-  Id? id = Isar.autoIncrement;
-  late String recordId; // UUID
-  late String? doseScheduleId;
-  late String dosagePlanId;
-  late DateTime administeredAt;
-  late double actualDoseMg;
-  late String? injectionSite; // abdomen, thigh, arm
-  late bool isCompleted;
-  late String? note;
-  late DateTime createdAt;
+  final String id;
+  final String? doseScheduleId;
+  final String dosagePlanId;
+  final DateTime administeredAt;
+  final double actualDoseMg;
+  final String? injectionSite;
+  final bool isCompleted;
+  final String? note;
+  final DateTime createdAt;
 
-  @Index()
-  late DateTime indexedDate; // For efficient date-based queries
+  const DoseRecordDto({
+    required this.id,
+    this.doseScheduleId,
+    required this.dosagePlanId,
+    required this.administeredAt,
+    required this.actualDoseMg,
+    this.injectionSite,
+    required this.isCompleted,
+    this.note,
+    required this.createdAt,
+  });
 
-  DoseRecordDto();
-
-  DoseRecordDto.fromEntity(DoseRecord entity) {
-    recordId = entity.id;
-    doseScheduleId = entity.doseScheduleId;
-    dosagePlanId = entity.dosagePlanId;
-    administeredAt = entity.administeredAt;
-    actualDoseMg = entity.actualDoseMg;
-    injectionSite = entity.injectionSite;
-    isCompleted = entity.isCompleted;
-    note = entity.note;
-    createdAt = entity.createdAt;
-    indexedDate = DateTime(
-      entity.administeredAt.year,
-      entity.administeredAt.month,
-      entity.administeredAt.day,
+  /// Creates DTO from Supabase JSON.
+  factory DoseRecordDto.fromJson(Map<String, dynamic> json) {
+    return DoseRecordDto(
+      id: json['id'] as String,
+      doseScheduleId: json['dose_schedule_id'] as String?,
+      dosagePlanId: json['dosage_plan_id'] as String,
+      administeredAt: DateTime.parse(json['administered_at'] as String),
+      actualDoseMg: (json['actual_dose_mg'] as num).toDouble(),
+      injectionSite: json['injection_site'] as String?,
+      isCompleted: json['is_completed'] as bool,
+      note: json['note'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
 
+  /// Converts DTO to Supabase JSON.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'dose_schedule_id': doseScheduleId,
+      'dosage_plan_id': dosagePlanId,
+      'administered_at': administeredAt.toIso8601String(),
+      'actual_dose_mg': actualDoseMg,
+      'injection_site': injectionSite,
+      'is_completed': isCompleted,
+      'note': note,
+      'created_at': createdAt.toIso8601String(),
+    };
+  }
+
+  /// Converts DTO to Domain Entity.
   DoseRecord toEntity() {
     return DoseRecord(
-      id: recordId,
+      id: id,
       doseScheduleId: doseScheduleId,
       dosagePlanId: dosagePlanId,
       administeredAt: administeredAt,
@@ -49,6 +68,21 @@ class DoseRecordDto {
       isCompleted: isCompleted,
       note: note,
       createdAt: createdAt,
+    );
+  }
+
+  /// Creates DTO from Domain Entity.
+  factory DoseRecordDto.fromEntity(DoseRecord entity) {
+    return DoseRecordDto(
+      id: entity.id,
+      doseScheduleId: entity.doseScheduleId,
+      dosagePlanId: entity.dosagePlanId,
+      administeredAt: entity.administeredAt,
+      actualDoseMg: entity.actualDoseMg,
+      injectionSite: entity.injectionSite,
+      isCompleted: entity.isCompleted,
+      note: entity.note,
+      createdAt: entity.createdAt,
     );
   }
 }

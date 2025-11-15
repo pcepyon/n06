@@ -3,7 +3,7 @@ import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
-import 'emergency_symptom_check.dart';
+import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
 
 class SharedDataReport extends Equatable {
   final DateTime dateRangeStart;

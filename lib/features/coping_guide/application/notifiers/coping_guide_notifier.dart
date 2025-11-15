@@ -97,3 +97,7 @@ class CopingGuideListNotifier extends _$CopingGuideListNotifier {
     });
   }
 }
+
+/// Aliases for backwards compatibility
+const copingGuideNotifierProvider = copingGuideProvider;
+const copingGuideListNotifierProvider = copingGuideListProvider;
