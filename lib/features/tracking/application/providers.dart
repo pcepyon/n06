@@ -29,6 +29,9 @@ import 'package:n06/features/tracking/infrastructure/repositories/supabase_dose_
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_emergency_check_repository.dart';
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_audit_repository.dart';
 
+// Re-export emergency check notifier providers
+export 'package:n06/features/tracking/application/notifiers/emergency_check_notifier.dart' show emergencyCheckProvider, emergencyCheckNotifierProvider;
+
 part 'providers.g.dart';
 
 // Repository Providers - Supabase implementations

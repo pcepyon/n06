@@ -7,14 +7,15 @@ void main() {
     group('toEntity', () {
       test('should convert UserDto to User entity', () {
         // Arrange
-        final dto = UserDto()
-          ..id = 123
-          ..oauthProvider = 'kakao'
-          ..oauthUserId = 'kakao_123'
-          ..name = '홍길동'
-          ..email = 'test@example.com'
-          ..profileImageUrl = 'https://example.com/image.jpg'
-          ..lastLoginAt = DateTime(2025, 1, 1);
+        final dto = UserDto(
+          id: '123',
+          oauthProvider: 'kakao',
+          oauthUserId: 'kakao_123',
+          name: '홍길동',
+          email: 'test@example.com',
+          profileImageUrl: 'https://example.com/image.jpg',
+          lastLoginAt: DateTime(2025, 1, 1),
+        );
 
         // Act
         final entity = dto.toEntity();
@@ -31,14 +32,15 @@ void main() {
 
       test('should handle null profileImageUrl', () {
         // Arrange
-        final dto = UserDto()
-          ..id = 123
-          ..oauthProvider = 'kakao'
-          ..oauthUserId = 'kakao_123'
-          ..name = '홍길동'
-          ..email = 'test@example.com'
-          ..profileImageUrl = null
-          ..lastLoginAt = DateTime(2025, 1, 1);
+        final dto = UserDto(
+          id: '123',
+          oauthProvider: 'kakao',
+          oauthUserId: 'kakao_123',
+          name: '홍길동',
+          email: 'test@example.com',
+          profileImageUrl: null,
+          lastLoginAt: DateTime(2025, 1, 1),
+        );
 
         // Act
         final entity = dto.toEntity();
@@ -65,7 +67,7 @@ void main() {
         final dto = UserDto.fromEntity(entity);
 
         // Assert
-        expect(dto.id, 123);
+        expect(dto.id, '123');
         expect(dto.oauthProvider, 'kakao');
         expect(dto.oauthUserId, 'kakao_123');
         expect(dto.name, '홍길동');
@@ -90,8 +92,52 @@ void main() {
         final dto = UserDto.fromEntity(entity);
 
         // Assert
-        expect(dto.id, 456);
+        expect(dto.id, '456');
         expect(dto.profileImageUrl, isNull);
+      });
+    });
+
+    group('JSON serialization', () {
+      test('should convert from JSON', () {
+        // Arrange
+        final json = {
+          'id': '123',
+          'oauth_provider': 'kakao',
+          'oauth_user_id': 'kakao_123',
+          'name': '홍길동',
+          'email': 'test@example.com',
+          'profile_image_url': 'https://example.com/image.jpg',
+          'last_login_at': '2025-01-01T00:00:00.000',
+        };
+
+        // Act
+        final dto = UserDto.fromJson(json);
+
+        // Assert
+        expect(dto.id, '123');
+        expect(dto.oauthProvider, 'kakao');
+        expect(dto.email, 'test@example.com');
+      });
+
+      test('should convert to JSON', () {
+        // Arrange
+        final dto = UserDto(
+          id: '123',
+          oauthProvider: 'kakao',
+          oauthUserId: 'kakao_123',
+          name: '홍길동',
+          email: 'test@example.com',
+          profileImageUrl: 'https://example.com/image.jpg',
+          lastLoginAt: DateTime(2025, 1, 1),
+        );
+
+        // Act
+        final json = dto.toJson();
+
+        // Assert
+        expect(json['id'], '123');
+        expect(json['oauth_provider'], 'kakao');
+        expect(json['email'], 'test@example.com');
       });
     });
   });

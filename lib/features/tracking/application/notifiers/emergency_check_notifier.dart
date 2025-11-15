@@ -1,10 +1,27 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
-import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
 import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
+import 'package:n06/features/tracking/domain/repositories/emergency_check_repository.dart';
+import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/supabase_emergency_check_repository.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/supabase_tracking_repository.dart';
+import 'package:n06/core/providers.dart';
 
 part 'emergency_check_notifier.g.dart';
+
+// Repository providers (to avoid circular dependency with providers.dart)
+@riverpod
+EmergencyCheckRepository _emergencyCheckRepository(_EmergencyCheckRepositoryRef ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return SupabaseEmergencyCheckRepository(supabase);
+}
+
+@riverpod
+TrackingRepository _trackingRepository(_TrackingRepositoryRef ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return SupabaseTrackingRepository(supabase);
+}
 
 /// F005: 증상 체크 상태 관리 및 비즈니스 로직 orchestration
 ///
@@ -43,8 +60,8 @@ class EmergencyCheckNotifier extends _$EmergencyCheckNotifier {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final emergencyCheckRepo =
-          ref.read(emergencyCheckRepositoryProvider);
-      final trackingRepo = ref.read(trackingRepositoryProvider);
+          ref.read(_emergencyCheckRepositoryProvider);
+      final trackingRepo = ref.read(_trackingRepositoryProvider);
 
       try {
         // 1. 증상 체크 저장
@@ -81,7 +98,7 @@ class EmergencyCheckNotifier extends _$EmergencyCheckNotifier {
   Future<void> fetchEmergencyChecks(String userId) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      final repo = ref.read(emergencyCheckRepositoryProvider);
+      final repo = ref.read(_emergencyCheckRepositoryProvider);
       return await repo.getEmergencyChecks(userId);
     });
   }
@@ -90,7 +107,7 @@ class EmergencyCheckNotifier extends _$EmergencyCheckNotifier {
   Future<void> deleteEmergencyCheck(String id) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      final repo = ref.read(emergencyCheckRepositoryProvider);
+      final repo = ref.read(_emergencyCheckRepositoryProvider);
       await repo.deleteEmergencyCheck(id);
 
       // 상태는 빈 리스트로 재설정 (실제로는 모든 기록을 다시 조회해야 함)
@@ -102,7 +119,7 @@ class EmergencyCheckNotifier extends _$EmergencyCheckNotifier {
   Future<void> updateEmergencyCheck(EmergencySymptomCheck check) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      final repo = ref.read(emergencyCheckRepositoryProvider);
+      final repo = ref.read(_emergencyCheckRepositoryProvider);
       await repo.updateEmergencyCheck(check);
 
       // 상태는 현재 상태에서 수정된 항목으로 업데이트
@@ -115,3 +132,6 @@ class EmergencyCheckNotifier extends _$EmergencyCheckNotifier {
 }
 
 // Provider가 providers.dart에 정의되어 있음
+
+// Backwards compatibility alias
+const emergencyCheckNotifierProvider = emergencyCheckProvider;
