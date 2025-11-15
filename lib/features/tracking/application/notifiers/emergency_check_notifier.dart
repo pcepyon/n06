@@ -12,13 +12,13 @@ part 'emergency_check_notifier.g.dart';
 
 // Repository providers (to avoid circular dependency with providers.dart)
 @riverpod
-EmergencyCheckRepository _emergencyCheckRepository(_EmergencyCheckRepositoryRef ref) {
+EmergencyCheckRepository _emergencyCheckRepository(Ref ref) {
   final supabase = ref.watch(supabaseProvider);
   return SupabaseEmergencyCheckRepository(supabase);
 }
 
 @riverpod
-TrackingRepository _trackingRepository(_TrackingRepositoryRef ref) {
+TrackingRepository _trackingRepository(Ref ref) {
   final supabase = ref.watch(supabaseProvider);
   return SupabaseTrackingRepository(supabase);
 }

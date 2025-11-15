@@ -1,5 +1,4 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/features/authentication/domain/repositories/secure_storage_repository.dart';
 import 'package:n06/features/authentication/domain/usecases/logout_usecase.dart';
 import 'package:n06/features/authentication/infrastructure/repositories/flutter_secure_storage_repository.dart';

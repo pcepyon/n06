@@ -1,5 +1,4 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/core/providers.dart';
 import 'package:n06/features/notification/domain/repositories/notification_repository.dart';
 import 'package:n06/features/notification/domain/services/notification_scheduler.dart';
