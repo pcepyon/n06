@@ -6,11 +6,16 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================
--- 1. Users Table (Supabase Auth 연동)
+-- 1. Users Table (OAuth Provider 통합)
 -- ============================================
+-- Kakao: Supabase Auth 사용 (auth.users 테이블 연동)
+-- Naver: 직접 관리 (auth.users 테이블과 별개)
 CREATE TABLE public.users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY,  -- Kakao: UUID, Naver: 'naver_{id}'
+  oauth_provider VARCHAR(20) NOT NULL,
+  oauth_user_id VARCHAR(255) NOT NULL,
   name VARCHAR(100) NOT NULL,
+  email VARCHAR(255),
   profile_image_url TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_login_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -21,7 +26,7 @@ CREATE TABLE public.users (
 -- ============================================
 CREATE TABLE public.consent_records (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   terms_of_service BOOLEAN NOT NULL,
   privacy_policy BOOLEAN NOT NULL,
   agreed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -32,7 +37,7 @@ CREATE TABLE public.consent_records (
 -- ============================================
 CREATE TABLE public.user_profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID UNIQUE NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id TEXT UNIQUE NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   target_weight_kg NUMERIC(5,2) NOT NULL,
   target_period_weeks INTEGER,
   weekly_loss_goal_kg NUMERIC(4,2),
@@ -47,7 +52,7 @@ CREATE TABLE public.user_profiles (
 -- ============================================
 CREATE TABLE public.dosage_plans (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   medication_name VARCHAR(100) NOT NULL,
   start_date DATE NOT NULL,
   cycle_days INTEGER NOT NULL,
@@ -108,7 +113,7 @@ CREATE INDEX idx_dose_records_injection_site ON public.dose_records(injection_si
 -- ============================================
 CREATE TABLE public.weight_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   log_date DATE NOT NULL,
   weight_kg NUMERIC(5,2) NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -122,7 +127,7 @@ CREATE INDEX idx_weight_logs_user_date ON public.weight_logs(user_id, log_date D
 -- ============================================
 CREATE TABLE public.symptom_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   log_date DATE NOT NULL,
   symptom_name VARCHAR(50) NOT NULL,
   severity INTEGER NOT NULL CHECK (severity >= 1 AND severity <= 10),
@@ -151,7 +156,7 @@ CREATE INDEX idx_symptom_context_tags_name ON public.symptom_context_tags(tag_na
 -- ============================================
 CREATE TABLE public.emergency_symptom_checks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   checked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   checked_symptoms JSONB NOT NULL
 );
@@ -179,7 +184,7 @@ CREATE INDEX idx_badge_definitions_category ON public.badge_definitions(category
 -- ============================================
 CREATE TABLE public.user_badges (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   badge_id VARCHAR(50) NOT NULL REFERENCES public.badge_definitions(id) ON DELETE CASCADE,
   status VARCHAR(20) NOT NULL CHECK (status IN ('locked', 'in_progress', 'achieved')),
   progress_percentage INTEGER NOT NULL DEFAULT 0 CHECK (progress_percentage >= 0 AND progress_percentage <= 100),
@@ -197,7 +202,7 @@ CREATE INDEX idx_user_badges_user_achieved ON public.user_badges(user_id, achiev
 -- ============================================
 CREATE TABLE public.notification_settings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID UNIQUE NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id TEXT UNIQUE NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   notification_hour INTEGER NOT NULL CHECK (notification_hour >= 0 AND notification_hour <= 23),
   notification_minute INTEGER NOT NULL CHECK (notification_minute >= 0 AND notification_minute <= 59),
   notification_enabled BOOLEAN NOT NULL DEFAULT TRUE,
@@ -210,7 +215,7 @@ CREATE TABLE public.notification_settings (
 -- ============================================
 CREATE TABLE public.guide_feedback (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   symptom_name VARCHAR(50) NOT NULL,
   helpful BOOLEAN NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -223,7 +228,7 @@ CREATE INDEX idx_guide_feedback_user ON public.guide_feedback(user_id, created_a
 -- ============================================
 CREATE TABLE public.audit_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   entity_type VARCHAR(50) NOT NULL,
   entity_id UUID NOT NULL,
   action VARCHAR(20) NOT NULL,

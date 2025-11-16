@@ -58,17 +58,34 @@
 ## 5. OAuth 설정
 
 ### Kakao
-1. Supabase Dashboard → Authentication → Providers
-2. "Kakao" 클릭
-3. 설정:
-   - Enable Kakao: **ON**
-   - Client ID: (비워둠 - 네이티브 SDK 사용)
-   - Client Secret: (비워둠 - 네이티브 SDK 사용)
-4. Save
+`signInWithIdToken()` API를 사용하기 위해 Supabase에서 Kakao Provider를 활성화해야 합니다.
+
+1. **Kakao Developers Console** (https://developers.kakao.com)
+   - 내 애플리케이션 → 앱 선택
+   - 앱 키 섹션에서 다음 정보 복사:
+     - REST API 키 (Client ID로 사용)
+     - 앱 시크릿 키 생성 (없으면 생성) → Client Secret으로 사용
+
+2. **Supabase Dashboard** → Authentication → Providers
+   - "Kakao" 클릭
+   - 설정:
+     - Enable Kakao: **ON**
+     - Client ID (REST API Key): `복사한 REST API 키 입력`
+     - Client Secret Code: `복사한 앱 시크릿 키 입력`
+     - Authorized Redirect URLs: Supabase에서 자동 생성됨
+   - Save
+
+3. **Kakao Developers Console에서 Redirect URI 추가**
+   - 내 애플리케이션 → 카카오 로그인 → Redirect URI
+   - Supabase에서 제공한 Redirect URL 추가
+   - 형식: `https://[PROJECT_REF].supabase.co/auth/v1/callback`
+
+**참고**: 현재 Native App Key (`32dfc3999b53af153dbcefa7014093bc`)는 모바일 앱용이며, REST API Key는 서버 간 토큰 검증용으로 별도로 필요합니다.
 
 ### Naver
-- 현재 단계에서는 설정 불필요
-- Phase 1.3에서 네이티브 SDK로 처리
+Naver는 Supabase Auth의 OAuth Provider를 사용하지 않습니다.
+- Native SDK로 로그인 후 직접 users 테이블에 저장
+- Supabase Dashboard 설정 불필요
 
 ## 6. 검증
 
