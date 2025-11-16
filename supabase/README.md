@@ -22,38 +22,60 @@
    SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
    ```
 
-## 3. 데이터베이스 스키마 생성
+## 3. 마이그레이션 실행
 
-1. Supabase Dashboard → SQL Editor
-2. "New Query" 클릭
-3. `docs/supabase/schema.sql` 파일 내용 전체 복사
-4. 붙여넣기 후 "Run" 버튼 클릭
-5. 성공 메시지 확인
-6. Database → Tables 메뉴에서 17개 테이블 생성 확인:
-   - users
-   - consent_records
-   - user_profiles
-   - dosage_plans
-   - plan_change_history
-   - dose_schedules
-   - dose_records
-   - weight_logs
-   - symptom_logs
-   - symptom_context_tags
-   - emergency_symptom_checks
-   - badge_definitions
-   - user_badges
-   - notification_settings
-   - guide_feedback
-   - audit_logs
+**중요**: 마이그레이션은 반드시 순서대로 실행해야 합니다.
 
-## 4. RLS 정책 설정
+### 방법 1: Supabase CLI (권장)
 
-1. SQL Editor에서 "New Query" 클릭
-2. `docs/supabase/rls_policies.sql` 파일 내용 전체 복사
-3. 붙여넣기 후 "Run" 버튼 클릭
-4. 성공 메시지 확인
-5. Database → Tables → 각 테이블 → Policies 탭에서 정책 확인
+```bash
+# Supabase CLI 설치 (처음 한 번만)
+brew install supabase/tap/supabase
+
+# Supabase 프로젝트와 연결
+supabase link --project-ref [YOUR_PROJECT_REF]
+
+# 마이그레이션 실행
+supabase db push
+```
+
+### 방법 2: SQL Editor (수동)
+
+1. **스키마 생성**
+   - SQL Editor → New Query
+   - `supabase/migrations/01.schema.sql` 복사 & 실행
+
+2. **RLS 정책 생성**
+   - SQL Editor → New Query
+   - `supabase/migrations/02.rls_policies.sql` 복사 & 실행
+
+3. **Users 테이블 업데이트** (Kakao + Naver 지원)
+   - SQL Editor → New Query
+   - `supabase/migrations/03.migration_update_users_table.sql` 복사 & 실행
+
+4. **새 사용자 자동 등록 Trigger 생성** ⭐
+   - SQL Editor → New Query
+   - `supabase/migrations/04.handle_new_user_trigger.sql` 복사 & 실행
+
+### 생성된 테이블 (16개)
+
+Database → Tables 메뉴에서 확인:
+- users
+- consent_records
+- user_profiles
+- dosage_plans
+- plan_change_history
+- dose_schedules
+- dose_records
+- weight_logs
+- symptom_logs
+- symptom_context_tags
+- emergency_symptom_checks
+- badge_definitions
+- user_badges
+- notification_settings
+- guide_feedback
+- audit_logs
 
 ## 5. OAuth 설정
 
@@ -110,3 +132,25 @@ flutter run
 ### 문제: RLS 정책 적용 안됨
 - `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` 실행 확인
 - 로그인 상태에서 테스트
+
+### 문제: "must be owner of relation users" 에러
+**원인**: 마이그레이션 파일을 일반 사용자 권한으로 실행
+**해결방법**: Supabase Dashboard의 SQL Editor를 사용하면 자동으로 postgres 권한으로 실행됩니다.
+
+### 문제: "new row violates row-level security policy for table users"
+**원인**: Trigger 함수가 RLS 정책에 막힘
+**해결방법**: `04.handle_new_user_trigger.sql`의 `SECURITY DEFINER` 키워드가 필수입니다.
+
+```sql
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+SECURITY DEFINER  -- 🔑 이 부분이 핵심!
+...
+```
+
+**SECURITY DEFINER의 역할**:
+- Trigger 함수가 함수 소유자(postgres)의 권한으로 실행됨
+- RLS 정책을 우회하여 public.users에 INSERT 가능
+- 신규 가입 시점에는 auth.uid()가 세션에 아직 없을 수 있으므로 필수
+
+**참고**: https://github.com/orgs/supabase/discussions/306

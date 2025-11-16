@@ -148,17 +148,21 @@ class SupabaseAuthRepository implements AuthRepository {
         throw Exception('Supabase authentication failed');
       }
 
-      // 3. Kakao 사용자 정보 가져오기 (추가 프로필 데이터용)
+      // 3. Wait for trigger to complete (small delay)
+      // Database trigger automatically creates public.users record
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // 4. Kakao 사용자 정보 가져오기 (추가 프로필 데이터용)
       final kakaoUser = await kakao.UserApi.instance.me();
 
-      // 4. public.users 테이블에 프로필 생성/업데이트
-      await _createOrUpdateUserProfile(
-        authResponse.user!,
+      // 5. Update profile with Kakao data (trigger already created base record)
+      await _updateUserProfile(
+        authResponse.user!.id,
         kakaoUser.kakaoAccount?.profile?.nickname,
         kakaoUser.kakaoAccount?.profile?.profileImageUrl,
       );
 
-      // 5. 동의 기록 저장
+      // 6. 동의 기록 저장
       await _saveConsentRecord(
         authResponse.user!.id,
         agreedToTerms,
@@ -242,20 +246,32 @@ class SupabaseAuthRepository implements AuthRepository {
   // Helper Methods
   // ============================================
 
-  Future<void> _createOrUpdateUserProfile(
-    User authUser,
+  /// Update user profile with OAuth provider data
+  /// Note: Trigger automatically creates base record on auth.users insert
+  Future<void> _updateUserProfile(
+    String userId,
     String? nickname,
     String? profileImageUrl,
   ) async {
-    await _supabase.from('users').upsert({
-      'id': authUser.id,
-      'oauth_provider': 'kakao',
-      'oauth_user_id': authUser.id,
-      'name': nickname ?? authUser.email?.split('@')[0] ?? 'User',
-      'email': authUser.email ?? '',
-      'profile_image_url': profileImageUrl,
-      'last_login_at': DateTime.now().toIso8601String(),
-    });
+    // Only update if we have data from OAuth provider
+    if (nickname != null || profileImageUrl != null) {
+      final updates = <String, dynamic>{};
+
+      if (nickname != null) {
+        updates['name'] = nickname;
+      }
+
+      if (profileImageUrl != null) {
+        updates['profile_image_url'] = profileImageUrl;
+      }
+
+      updates['last_login_at'] = DateTime.now().toIso8601String();
+
+      await _supabase
+          .from('users')
+          .update(updates)
+          .eq('id', userId);
+    }
   }
 
   Future<void> _saveConsentRecord(
