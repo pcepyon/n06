@@ -4,11 +4,13 @@ import 'package:n06/features/onboarding/domain/value_objects/weight.dart';
 /// Supabase DTO for UserProfile entity.
 ///
 /// Stores user profile information in Supabase database.
+///
+/// SSoT (Single Source of Truth) 원칙 준수:
+/// - userName은 users 테이블에만 저장 (조회 시 JOIN)
+/// - currentWeight는 weight_logs 테이블에만 저장 (조회 시 최신 레코드 조회)
 class UserProfileDto {
   final String userId;
-  final String? userName;
   final double targetWeightKg;
-  final double currentWeightKg;
   final int? targetPeriodWeeks;
   final double? weeklyLossGoalKg;
   final int weeklyWeightRecordGoal;
@@ -16,22 +18,18 @@ class UserProfileDto {
 
   const UserProfileDto({
     required this.userId,
-    this.userName,
     required this.targetWeightKg,
-    required this.currentWeightKg,
     this.targetPeriodWeeks,
     this.weeklyLossGoalKg,
     required this.weeklyWeightRecordGoal,
     required this.weeklySymptomRecordGoal,
   });
 
-  /// Creates DTO from Supabase JSON.
+  /// Creates DTO from Supabase JSON (user_profiles 테이블 조회 결과).
   factory UserProfileDto.fromJson(Map<String, dynamic> json) {
     return UserProfileDto(
       userId: json['user_id'] as String,
-      userName: json['user_name'] as String?,
       targetWeightKg: (json['target_weight_kg'] as num).toDouble(),
-      currentWeightKg: (json['current_weight_kg'] as num).toDouble(),
       targetPeriodWeeks: json['target_period_weeks'] as int?,
       weeklyLossGoalKg: json['weekly_loss_goal_kg'] != null
           ? (json['weekly_loss_goal_kg'] as num).toDouble()
@@ -41,13 +39,15 @@ class UserProfileDto {
     );
   }
 
-  /// Converts DTO to Supabase JSON.
+  /// Converts DTO to Supabase JSON (user_profiles 테이블 INSERT/UPDATE용).
+  ///
+  /// SSoT 원칙: user_name과 current_weight_kg는 제외
+  /// - user_name: users 테이블에서 관리
+  /// - current_weight_kg: weight_logs 테이블에서 관리
   Map<String, dynamic> toJson() {
     return {
       'user_id': userId,
-      'user_name': userName,
       'target_weight_kg': targetWeightKg,
-      'current_weight_kg': currentWeightKg,
       'target_period_weeks': targetPeriodWeeks,
       'weekly_loss_goal_kg': weeklyLossGoalKg,
       'weekly_weight_record_goal': weeklyWeightRecordGoal,
@@ -56,7 +56,14 @@ class UserProfileDto {
   }
 
   /// DTO를 Domain Entity로 변환한다.
-  UserProfile toEntity() {
+  ///
+  /// [userName]과 [currentWeightKg]는 외부에서 조회한 데이터를 매개변수로 받는다:
+  /// - userName: users 테이블에서 조회
+  /// - currentWeightKg: weight_logs 테이블에서 최신 레코드 조회 (없으면 0.0)
+  UserProfile toEntity({
+    required String userName,
+    required double currentWeightKg,
+  }) {
     return UserProfile(
       userId: userId,
       userName: userName,
@@ -69,13 +76,15 @@ class UserProfileDto {
     );
   }
 
-  /// Domain Entity를 DTO로 변환한다.
+  /// Domain Entity를 DTO로 변환한다 (user_profiles 테이블 저장용).
+  ///
+  /// SSoT 원칙: userName, currentWeight는 제외
+  /// - userName: users 테이블에서 별도 관리
+  /// - currentWeight: weight_logs 테이블에서 별도 관리
   static UserProfileDto fromEntity(UserProfile entity) {
     return UserProfileDto(
       userId: entity.userId,
-      userName: entity.userName,
       targetWeightKg: entity.targetWeight.value,
-      currentWeightKg: entity.currentWeight.value,
       targetPeriodWeeks: entity.targetPeriodWeeks,
       weeklyLossGoalKg: entity.weeklyLossGoalKg,
       weeklyWeightRecordGoal: entity.weeklyWeightRecordGoal,

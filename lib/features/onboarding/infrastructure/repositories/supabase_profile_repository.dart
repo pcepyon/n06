@@ -17,14 +17,43 @@ class SupabaseProfileRepository implements ProfileRepository {
 
   @override
   Future<UserProfile?> getUserProfile(String userId) async {
-    final response = await _supabase
+    // 1. user_profiles 테이블에서 프로필 조회
+    final profileResponse = await _supabase
         .from('user_profiles')
         .select()
         .eq('user_id', userId)
         .maybeSingle();
 
-    if (response == null) return null;
-    return UserProfileDto.fromJson(response).toEntity();
+    if (profileResponse == null) return null;
+
+    // 2. users 테이블에서 이름 조회 (SSoT)
+    final userResponse = await _supabase
+        .from('users')
+        .select('name')
+        .eq('id', userId)
+        .maybeSingle();
+
+    if (userResponse == null) {
+      throw Exception('User not found in users table for userId: $userId');
+    }
+
+    // 3. weight_logs 테이블에서 최신 체중 조회 (SSoT)
+    final weightResponse = await _supabase
+        .from('weight_logs')
+        .select('weight_kg')
+        .eq('user_id', userId)
+        .order('log_date', ascending: false)
+        .limit(1)
+        .maybeSingle();
+
+    // 4. DTO → Entity 변환 (조회한 데이터 조합)
+    final dto = UserProfileDto.fromJson(profileResponse);
+    return dto.toEntity(
+      userName: userResponse['name'] as String,
+      currentWeightKg: weightResponse != null
+          ? (weightResponse['weight_kg'] as num).toDouble()
+          : 70.0, // 체중 기록이 없을 경우 기본값 (실제로는 온보딩에서 항상 입력)
+    );
   }
 
   @override
@@ -34,19 +63,45 @@ class SupabaseProfileRepository implements ProfileRepository {
         .from('user_profiles')
         .update(dto.toJson())
         .eq('user_id', profile.userId);
+
+    // ⚠️ 참고: currentWeight는 업데이트하지 않음!
+    // 체중 변경은 TrackingRepository.saveWeightLog() 사용
   }
 
   @override
   Stream<UserProfile> watchUserProfile(String userId) {
+    // TODO: 실시간 스트림에서 3개 테이블 JOIN 구현 필요
+    // 현재는 user_profiles만 스트림 (userName, currentWeight는 null/0.0)
     return _supabase
         .from('user_profiles')
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
-        .map((data) {
+        .asyncMap((data) async {
       if (data.isEmpty) {
         throw Exception('User profile not found for user: $userId');
       }
-      return UserProfileDto.fromJson(data.first).toEntity();
+
+      // users, weight_logs 조회
+      final userResponse = await _supabase
+          .from('users')
+          .select('name')
+          .eq('id', userId)
+          .maybeSingle();
+
+      final weightResponse = await _supabase
+          .from('weight_logs')
+          .select('weight_kg')
+          .eq('user_id', userId)
+          .order('log_date', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      return UserProfileDto.fromJson(data.first).toEntity(
+        userName: userResponse?['name'] as String? ?? '',
+        currentWeightKg: weightResponse != null
+            ? (weightResponse['weight_kg'] as num).toDouble()
+            : 70.0, // 기본값
+      );
     });
   }
 
