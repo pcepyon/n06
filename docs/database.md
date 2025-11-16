@@ -1,4 +1,8 @@
-# Database Schema Design
+# Database Schema Design (Supabase PostgreSQL)
+
+> **현재 상태**: Phase 1 완료 - Supabase PostgreSQL 사용 중
+>
+> Phase 0에서는 Isar 로컬 DB를 사용했으나, Phase 1 전환으로 모든 데이터가 Supabase PostgreSQL로 마이그레이션되었습니다.
 
 ## Data Flow
 
@@ -73,8 +77,11 @@ dose_records + weight_logs + symptom_logs + user_badges
 ---
 
 ### oauth_tokens
-인증 토큰 (Supabase Auth 사용 시 불필요, 참고용)
+~~인증 토큰 (Phase 0에서 사용, Phase 1에서 제거됨)~~
 
+**Phase 1에서는 Supabase Auth가 토큰 관리를 자동으로 처리하므로 이 테이블은 사용하지 않습니다.**
+
+Phase 0 참고용 스키마:
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | uuid | PK, DEFAULT gen_random_uuid() | |
@@ -326,9 +333,11 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 ## RLS (Row Level Security) Policies
 
-**Phase 1 적용**
+**Phase 1 완료 - 적용됨 ✅**
 
-모든 테이블에 다음 정책 적용:
+모든 테이블에 RLS가 활성화되어 있으며, 다음 정책이 적용되었습니다:
+
+**일반 테이블 정책 (user_id 기반):**
 ```sql
 ALTER TABLE {table_name} ENABLE ROW LEVEL SECURITY;
 
@@ -338,13 +347,26 @@ FOR ALL
 USING (user_id = auth.uid());
 ```
 
-users 테이블:
+**users 테이블 정책:**
 ```sql
 CREATE POLICY "Users can only access their own profile"
 ON users
 FOR ALL
 USING (id = auth.uid());
 ```
+
+**적용 완료된 테이블:**
+- users
+- user_profiles
+- dosage_plans
+- dose_schedules
+- dose_records
+- weight_logs
+- symptom_logs
+- symptom_context_tags
+- emergency_symptom_checks
+- user_badges
+- password_reset_tokens (user_id 기반)
 
 ---
 
@@ -377,9 +399,10 @@ Phase 2 이후 GDPR 준수를 위해 데이터 보관 정책 수립 필요.
 
 - 모든 timestamp는 timestamptz 사용 (timezone 고려)
 - JSON 필드는 jsonb 사용 (쿼리 성능 최적화)
-- Phase 0에서는 Isar 로컬 DB만 사용
-- Phase 1에서 Supabase PostgreSQL로 마이그레이션
-- Repository Pattern으로 데이터 소스 전환 대비
+- **Phase 1 완료**: Supabase PostgreSQL 사용 중 ✅
+- Repository Pattern으로 Phase 0 → Phase 1 전환 완료
+- 모든 데이터는 Supabase PostgreSQL에 저장됨
+- RLS(Row Level Security)로 데이터 접근 제어 적용됨
 
 ### 설계 결정 사항
 
@@ -448,20 +471,20 @@ final repo = ref.watch(tracking_providers.trackingRepositoryProvider);
 - 다른 기능은 소유 기능의 Repository를 import하여 사용
 - 중복 구현 절대 금지
 
-#### 4. Phase 1 전환 전략 (Isar → Supabase)
+#### 4. Phase 1 전환 완료 (Isar → Supabase) ✅
 
-**변경 범위:** Infrastructure Layer만 수정
+**변경 범위:** Infrastructure Layer만 수정 완료
 
-**예시 - TrackingRepository:**
+**예시 - TrackingRepository 전환:**
 ```dart
-// Phase 0 (현재)
+// Phase 0 (과거)
 @riverpod
 TrackingRepository trackingRepository(TrackingRepositoryRef ref) {
   final isar = ref.watch(isarProvider);
   return IsarTrackingRepository(isar);  // ← Isar 구현
 }
 
-// Phase 1 (Supabase 전환)
+// Phase 1 (현재) ✅
 @riverpod
 TrackingRepository trackingRepository(TrackingRepositoryRef ref) {
   final supabase = ref.watch(supabaseProvider);
@@ -469,20 +492,27 @@ TrackingRepository trackingRepository(TrackingRepositoryRef ref) {
 }
 ```
 
-**영향 범위:**
-- ✅ tracking의 providers.dart: 1줄 변경
-- ✅ tracking의 infrastructure/ 디렉토리: 새로운 구현 추가
-- ❌ onboarding, dashboard: 코드 변경 불필요 (Repository Pattern 효과)
-- ❌ domain, application, presentation: 코드 변경 불필요
+**실제 영향 범위:**
+- ✅ tracking의 providers.dart: 1줄 변경 완료
+- ✅ tracking의 infrastructure/ 디렉토리: Supabase 구현 추가 완료
+- ✅ onboarding, dashboard: 코드 변경 불필요 (Repository Pattern 효과)
+- ✅ domain, application, presentation: 코드 변경 불필요
+
+**전환 완료된 Repository:**
+- MedicationRepository → SupabaseMedicationRepository
+- TrackingRepository → SupabaseTrackingRepository
+- ProfileRepository → SupabaseProfileRepository
+- AuthRepository → SupabaseAuthRepository
+- BadgeRepository → SupabaseBadgeRepository
 
 #### 5. 데이터 무결성 제약
 
-Isar 구현 시 주의사항:
+**Phase 0 (Isar) 구현 참고:**
 
-Isar는 PostgreSQL의 UNIQUE 제약을 네이티브로 지원하지 않으므로, Repository 구현에서 수동 처리:
+Isar는 PostgreSQL의 UNIQUE 제약을 네이티브로 지원하지 않았으므로, Repository 구현에서 수동 처리했습니다:
 
 ```dart
-// weight_logs의 UNIQUE (user_id, log_date) 구현
+// Phase 0: weight_logs의 UNIQUE (user_id, log_date) 수동 구현
 Future<void> saveWeightLog(WeightLog log) async {
   await _isar.writeTxn(() async {
     // 같은 날짜의 기존 기록 삭제
@@ -501,4 +531,22 @@ Future<void> saveWeightLog(WeightLog log) async {
 }
 ```
 
-Phase 1에서는 PostgreSQL의 UNIQUE 제약이 자동 적용되므로 수동 처리 불필요
+**Phase 1 (Supabase PostgreSQL) 현재 상태 ✅:**
+
+PostgreSQL의 UNIQUE 제약이 DB 레벨에서 자동 적용되므로 수동 처리가 불필요합니다:
+
+```sql
+-- weight_logs 테이블
+CREATE UNIQUE INDEX unique_weight_log_per_user_per_date
+ON weight_logs(user_id, log_date);
+```
+
+Repository 구현이 단순해졌습니다:
+```dart
+// Phase 1: 단순한 INSERT (UNIQUE 제약은 DB가 자동 처리)
+Future<void> saveWeightLog(WeightLog log) async {
+  await _supabase
+      .from('weight_logs')
+      .upsert(log.toJson());  // DB가 중복 처리
+}
+```

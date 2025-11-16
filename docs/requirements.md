@@ -1,4 +1,8 @@
-# GLP-1 치료 관리 MVP 요구사항 문서 (Phase 0)
+# GLP-1 치료 관리 MVP 요구사항 문서
+
+> **구현 상태**: Phase 1 완료 - Supabase 기반
+>
+> 이 문서는 기능 요구사항을 정의하며, 구현 기술(Phase 0: Isar / Phase 1: Supabase)과 무관하게 유지됩니다.
 
 ## 1. 제품 개요 및 비전
 
