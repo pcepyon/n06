@@ -8,8 +8,8 @@ class InjectionSiteSelectWidget extends ConsumerStatefulWidget {
 
   const InjectionSiteSelectWidget({
     required this.onSiteSelected,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   ConsumerState<InjectionSiteSelectWidget> createState() => _InjectionSiteSelectWidgetState();

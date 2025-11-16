@@ -31,9 +31,8 @@ void main() {
       testWidgets('should render SymptomRecordScreen',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange & Act
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -48,9 +47,8 @@ void main() {
       testWidgets('should render symptom list',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange & Act
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -68,9 +66,8 @@ void main() {
       testWidgets('should render severity slider',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange & Act
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -84,9 +81,8 @@ void main() {
       testWidgets('should allow selecting multiple symptoms',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -107,9 +103,8 @@ void main() {
       testWidgets('should display severity slider correctly',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange & Act
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -122,9 +117,8 @@ void main() {
       testWidgets('should update severity value when slider is dragged',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -142,9 +136,8 @@ void main() {
       testWidgets('should show 24h persistence question for severity 7-10',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -162,9 +155,8 @@ void main() {
       testWidgets('should not show question for severity below 7',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -178,9 +170,8 @@ void main() {
       testWidgets('should allow selecting context tags for severity 1-6',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -194,9 +185,8 @@ void main() {
       testWidgets('should not show context tags for severity 7-10',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -214,9 +204,8 @@ void main() {
       testWidgets('should allow entering memo',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -237,9 +226,8 @@ void main() {
       testWidgets('should display days since escalation when available',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange & Act
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -253,9 +241,8 @@ void main() {
       testWidgets('should show coping guide after saving',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -269,9 +256,8 @@ void main() {
       testWidgets('should prompt emergency check for severity 7-10 with persistence',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -284,9 +270,8 @@ void main() {
       testWidgets('should show error when no symptom is selected',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));
@@ -308,9 +293,8 @@ void main() {
       testWidgets('should show error when severity 7-10 without persistence selection',
           (tester) async {
         // Configure screen size for large layouts
-        tester.binding.window.physicalSizeTestValue =
-          const Size(1280, 1600);
-        addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+        tester.view.physicalSize = const Size(1280, 1600);
+        addTearDown(tester.view.resetPhysicalSize);
 
         // Arrange
         await tester.pumpWidget(_buildTestableWidget(mockTrackingRepository));

@@ -6,7 +6,7 @@ import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:n06/features/tracking/presentation/widgets/injection_site_select_widget.dart';
 
 class DoseScheduleScreen extends ConsumerWidget {
-  const DoseScheduleScreen({Key? key}) : super(key: key);
+  const DoseScheduleScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -224,8 +224,8 @@ class DoseRecordDialog extends ConsumerStatefulWidget {
 
   const DoseRecordDialog({
     required this.schedule,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   ConsumerState<DoseRecordDialog> createState() => _DoseRecordDialogState();

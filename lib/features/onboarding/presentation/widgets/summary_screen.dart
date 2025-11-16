@@ -167,7 +167,7 @@ class _SummarySection extends StatelessWidget {
   final String title;
   final List<(String, String)> items;
 
-  const _SummarySection({super.key, required this.title, required this.items});
+  const _SummarySection({required this.title, required this.items});
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +186,7 @@ class _SummarySection extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: items.length,
-            separatorBuilder: (_, __) => const Divider(),
+            separatorBuilder: (context, index) => const Divider(),
             itemBuilder: (context, index) {
               final (label, value) = items[index];
               return Padding(

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
@@ -33,7 +34,9 @@ class OnboardingNotifier extends _$OnboardingNotifier {
   }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      print('🎯 [1/4] Onboarding: Start');
+      if (kDebugMode) {
+        debugPrint('🎯 [1/4] Onboarding: Start');
+      }
 
       final userRepo = ref.read(userRepositoryProvider);
       final profileRepo = ref.read(profileRepositoryProvider);
@@ -105,27 +108,37 @@ class OnboardingNotifier extends _$OnboardingNotifier {
         await medicationRepo.saveDosagePlan(dosagePlan);
         await trackingRepo.saveWeightLog(weightLog);
 
-        print('🎯 [2/4] Onboarding: DosagePlan & Profile created');
+        if (kDebugMode) {
+          debugPrint('🎯 [2/4] Onboarding: DosagePlan & Profile created');
+        }
 
         // 6. 투여 스케줄 생성 및 저장
         final schedules = generateSchedulesUseCase.execute(dosagePlan);
-        print('🎯 [3/4] Onboarding: ${schedules.length} schedules generated');
+        if (kDebugMode) {
+          debugPrint('🎯 [3/4] Onboarding: ${schedules.length} schedules generated');
+        }
 
         try {
           await scheduleRepo.saveAll(schedules);
-          print('🎯 [4/4] Onboarding: Complete ✅');
+          if (kDebugMode) {
+            debugPrint('🎯 [4/4] Onboarding: Complete ✅');
+          }
         } catch (e) {
-          print('❌ [ERROR] Schedule save failed at step 4/4');
-          print('📊 Debug Info:');
-          print('  - Total schedules: ${schedules.length}');
-          for (int i = 0; i < (schedules.length > 2 ? 2 : schedules.length); i++) {
-            final s = schedules[i];
-            print('  Schedule[$i]: date=${s.scheduledDate}, dose=${s.scheduledDoseMg}mg, notification=${s.notificationTime}');
+          if (kDebugMode) {
+            debugPrint('❌ [ERROR] Schedule save failed at step 4/4');
+            debugPrint('📊 Debug Info:');
+            debugPrint('  - Total schedules: ${schedules.length}');
+            for (int i = 0; i < (schedules.length > 2 ? 2 : schedules.length); i++) {
+              final s = schedules[i];
+              debugPrint('  Schedule[$i]: date=${s.scheduledDate}, dose=${s.scheduledDoseMg}mg, notification=${s.notificationTime}');
+            }
           }
           rethrow;
         }
       } catch (e) {
-        print('❌ [ERROR] Onboarding save failed: $e');
+        if (kDebugMode) {
+          debugPrint('❌ [ERROR] Onboarding save failed: $e');
+        }
         rethrow;
       }
     });

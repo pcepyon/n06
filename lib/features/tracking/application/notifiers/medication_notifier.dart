@@ -8,7 +8,6 @@ import 'package:n06/features/tracking/domain/repositories/medication_repository.
 import 'package:n06/features/tracking/domain/usecases/injection_site_rotation_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/missed_dose_analyzer_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/schedule_generator_usecase.dart';
-import 'package:n06/features/tracking/infrastructure/services/notification_service.dart';
 
 part 'medication_notifier.g.dart';
 
@@ -42,7 +41,6 @@ class MedicationNotifier extends _$MedicationNotifier {
   ScheduleGeneratorUseCase get _scheduleGeneratorUseCase => ref.read(scheduleGeneratorUseCaseProvider);
   InjectionSiteRotationUseCase get _injectionSiteRotationUseCase => ref.read(injectionSiteRotationUseCaseProvider);
   MissedDoseAnalyzerUseCase get _missedDoseAnalyzerUseCase => ref.read(missedDoseAnalyzerUseCaseProvider);
-  NotificationService get _notificationService => ref.read(notificationServiceProvider);
 
   @override
   Future<MedicationState> build() async {

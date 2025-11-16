@@ -210,7 +210,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
 class _EscalationStepDialog extends StatefulWidget {
   final Function(int, double) onSave;
 
-  const _EscalationStepDialog({super.key, required this.onSave});
+  const _EscalationStepDialog({required this.onSave});
 
   @override
   State<_EscalationStepDialog> createState() => _EscalationStepDialogState();

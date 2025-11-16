@@ -4,7 +4,7 @@ import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 class ValidateDosagePlanUseCase {
   /// 증량 계획이 유효한지 검증한다.
   ///
-  /// 반환값: {'isValid': bool, 'errors': List<String>}
+  /// 반환값: `{'isValid': bool, 'errors': List<String>}`
   /// - isValid: 증량 계획이 유효한 경우 true
   /// - errors: 유효하지 않은 경우 에러 메시지 리스트
   Map<String, dynamic> execute(List<EscalationStep>? escalationPlan) {

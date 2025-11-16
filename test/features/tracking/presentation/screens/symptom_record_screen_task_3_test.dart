@@ -59,8 +59,8 @@ void main() {
     testWidgets('TC-SRS-TASK3-01: Task 3-1 - Should show coping guide after saving symptom (severity < 7)',
         (tester) async {
       // Configure screen size
-      tester.binding.window.physicalSizeTestValue = const Size(1280, 1600);
-      addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+      tester.view.physicalSize = const Size(1280, 1600);
+      addTearDown(tester.view.resetPhysicalSize);
 
       // Arrange
       await tester.pumpWidget(buildTestableWidget());
@@ -93,8 +93,8 @@ void main() {
     testWidgets('TC-SRS-TASK3-02: Task 3-2 - Should show emergency check dialog when severity >= 7 and 24h persistent',
         (tester) async {
       // Configure screen size
-      tester.binding.window.physicalSizeTestValue = const Size(1280, 1600);
-      addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+      tester.view.physicalSize = const Size(1280, 1600);
+      addTearDown(tester.view.resetPhysicalSize);
 
       // Arrange
       await tester.pumpWidget(buildTestableWidget());
@@ -139,8 +139,8 @@ void main() {
     testWidgets('TC-SRS-TASK3-03: Task 3-2 - Should save symptom and navigate to emergency check when confirmed',
         (tester) async {
       // Configure screen size
-      tester.binding.window.physicalSizeTestValue = const Size(1280, 1600);
-      addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+      tester.view.physicalSize = const Size(1280, 1600);
+      addTearDown(tester.view.resetPhysicalSize);
 
       // Track save calls
       final saveCallCount = <SymptomLog>[];
@@ -198,8 +198,8 @@ void main() {
     testWidgets('TC-SRS-TASK3-04: Task 3-2 - Should save symptom and show coping guide when user selects "나중에"',
         (tester) async {
       // Configure screen size
-      tester.binding.window.physicalSizeTestValue = const Size(1280, 1600);
-      addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
+      tester.view.physicalSize = const Size(1280, 1600);
+      addTearDown(tester.view.resetPhysicalSize);
 
       // Track save calls
       final saveCallCount = <SymptomLog>[];
