@@ -1,4 +1,0 @@
-- project url : https://wbxaiwbotzrdvhfopykh.supabase.co
-- anon key : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndieGFpd2JvdHpyZHZoZm9weWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxOTIwMTYsImV4cCI6MjA3ODc2ODAxNn0.2YQZFRWoasdsVW4t5vWn7LYAe25ZPzFrgI7lD_1wUF4
-
-- 

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:n06/features/tracking/presentation/screens/symptom_record_screen.dart';
 import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
 import 'package:n06/features/tracking/application/providers.dart';
+import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 
 class MockTrackingRepository extends Mock implements TrackingRepository {}
 
@@ -26,6 +27,24 @@ void main() {
 
     setUp(() {
       mockTrackingRepository = MockTrackingRepository();
+
+      // Setup default behavior for required methods
+      when(() => mockTrackingRepository.saveSymptomLog(any()))
+          .thenAnswer((_) async => {});
+      when(() => mockTrackingRepository.getSymptomLogs(any()))
+          .thenAnswer((_) async => []);
+      when(() => mockTrackingRepository.getLatestDoseEscalationDate(any()))
+          .thenAnswer((_) async => null);
+    });
+
+    setUpAll(() {
+      registerFallbackValue(SymptomLog(
+        id: 'test',
+        userId: 'test',
+        logDate: DateTime.now(),
+        symptomName: 'test',
+        severity: 5,
+      ));
     });
     group('TC-SRS-01: Screen Rendering', () {
       testWidgets('should render SymptomRecordScreen',

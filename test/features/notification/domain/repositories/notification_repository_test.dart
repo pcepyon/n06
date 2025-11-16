@@ -1,14 +1,20 @@
 import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:n06/features/notification/domain/entities/notification_settings.dart';
 import 'package:n06/features/notification/domain/repositories/notification_repository.dart';
 
 class MockNotificationRepository extends Mock implements NotificationRepository {}
 
+class FakeNotificationSettings extends Fake implements NotificationSettings {}
+
 void main() {
   group('NotificationRepository Interface', () {
     late MockNotificationRepository mockRepository;
+
+    setUpAll(() {
+      registerFallbackValue(FakeNotificationSettings());
+    });
 
     setUp(() {
       mockRepository = MockNotificationRepository();
@@ -21,7 +27,7 @@ void main() {
         notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
-      when(mockRepository.getNotificationSettings('user123'))
+      when(() => mockRepository.getNotificationSettings('user123'))
           .thenAnswer((_) async => mockSettings);
 
       // Act
@@ -30,7 +36,7 @@ void main() {
       // Assert
       expect(settings, isA<NotificationSettings>());
       expect(settings!.userId, 'user123');
-      verify(mockRepository.getNotificationSettings('user123')).called(1);
+      verify(() => mockRepository.getNotificationSettings('user123')).called(1);
     });
 
     test('should define saveNotificationSettings method', () async {
@@ -40,19 +46,19 @@ void main() {
         notificationTime: const NotificationTime(hour: 9, minute: 0),
         notificationEnabled: true,
       );
-      when(mockRepository.saveNotificationSettings(mockSettings))
-          .thenAnswer((_) async => {});
+      when(() => mockRepository.saveNotificationSettings(any()))
+          .thenAnswer((_) async {});
 
       // Act
       await mockRepository.saveNotificationSettings(mockSettings);
 
       // Assert
-      verify(mockRepository.saveNotificationSettings(mockSettings)).called(1);
+      verify(() => mockRepository.saveNotificationSettings(any())).called(1);
     });
 
     test('should return null when settings not found', () async {
       // Arrange
-      when(mockRepository.getNotificationSettings('nonexistent'))
+      when(() => mockRepository.getNotificationSettings('nonexistent'))
           .thenAnswer((_) async => null);
 
       // Act

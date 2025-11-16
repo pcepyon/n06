@@ -364,7 +364,7 @@ void main() {
         );
 
         // Assert
-        expect(find.text('대처 가이드'), findsOneWidget);
+        expect(find.text('미지의증상 대처 가이드'), findsOneWidget);
       });
 
       testWidgets('should display guide content for known symptoms',

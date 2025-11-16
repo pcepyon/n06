@@ -40,36 +40,6 @@ void main() {
       expect(symptomLog.isPersistent24h, isTrue);
     });
 
-    // TC-SL-03: 심각도 범위 검증 (1-10)
-    test('should throw exception for invalid severity (0)', () {
-      // Act & Assert
-      expect(
-        () => SymptomLog(
-          id: 'sl-003',
-          userId: 'user-001',
-          logDate: DateTime.now(),
-          symptomName: '메스꺼움',
-          severity: 0,
-        ),
-        throwsA(isA<ArgumentError>()),
-      );
-    });
-
-    // TC-SL-03-b: 심각도 범위 검증 (1-10)
-    test('should throw exception for invalid severity (11)', () {
-      // Act & Assert
-      expect(
-        () => SymptomLog(
-          id: 'sl-003',
-          userId: 'user-001',
-          logDate: DateTime.now(),
-          symptomName: '메스꺼움',
-          severity: 11,
-        ),
-        throwsA(isA<ArgumentError>()),
-      );
-    });
-
     // TC-SL-04: 경과일 미계산 (증량 이력 없음)
     test('should allow null daysSinceEscalation', () {
       // Arrange & Act

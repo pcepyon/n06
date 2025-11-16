@@ -248,5 +248,46 @@ MedicationRepository medicationRepository(ref) =>
 3. **Test-Driven**: Test first, code second (see tdd.md)
 4. **Phase Flexibility**: Infrastructure-only changes for Phase 1 (see techstack.md)
 
+## Test Maintenance
+
+테스트 유지보수 관련 문서:
+- `docs/test/test-maintenance.md`: 테스트 유지보수 프로세스 및 원칙
+- `docs/test/test-maintenance-final-report.md`: 최근 테스트 정리 작업 결과 (2025-11-16)
+- `docs/test/integration-test-backlog.md`: Integration 테스트 작성 대기 목록
+- `docs/test/test-audit-report.md`: 테스트 감사 보고서
+- `docs/test/test-cleanup-analysis.md`: 테스트 정리 상세 분석
+- `docs/test/test-cleanup-final-summary.md`: 테스트 정리 실행 계획
+
+### Test Coverage 목표
+- Domain: 95%+
+- Application: 85%+
+- Infrastructure: 70%+
+- Presentation: 60%+
+
+### AI Agent 테스트 규칙
+
+**새 기능 작성 시**:
+1. Test-First (TDD) 원칙 준수
+2. Behavior 테스트, Implementation 테스트 금지
+3. Mock보다 Fake 선호 (복잡한 시나리오)
+
+**테스트 삭제 기준**:
+1. ROI 분석: 가치 vs 유지보수 비용
+2. 삭제 전 문서화 (rationale 기록)
+3. Integration 테스트로 대체 가능 여부 검토
+
+**Mock 사용 지침**:
+- Mocktail 사용 시 `registerFallbackValue()` 필수
+- 복잡한 Provider 의존성은 Fake Repository 사용
+- Platform channel (알림 등)은 Mock 설정 필요
+
+**층별 테스트 전략**:
+- Domain: Entity + UseCase 단위 테스트 (높은 커버리지)
+- Application: 핵심 비즈니스 로직 흐름 테스트
+- Infrastructure: Repository 인터페이스 테스트
+- Presentation: 핵심 사용자 흐름만 테스트 (brittle UI test 지양)
+
+---
+
 ## rules
 - sot 문서를 작성할 때는 한글로 작성하라.

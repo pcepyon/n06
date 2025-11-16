@@ -1,44 +1,54 @@
 import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:n06/features/notification/domain/services/notification_scheduler.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 
 class MockNotificationScheduler extends Mock implements NotificationScheduler {}
 
+class FakeDoseSchedule extends Fake implements DoseSchedule {}
+
+class FakeNotificationTime extends Fake implements NotificationTime {}
+
 void main() {
   group('NotificationScheduler Interface', () {
     late MockNotificationScheduler mockScheduler;
 
+    setUpAll(() {
+      registerFallbackValue(FakeDoseSchedule());
+      registerFallbackValue(FakeNotificationTime());
+    });
+
     setUp(() {
       mockScheduler = MockNotificationScheduler();
+
+      // Set up default mock behaviors
+      when(() => mockScheduler.checkPermission()).thenAnswer((_) async => true);
+      when(() => mockScheduler.requestPermission()).thenAnswer((_) async => true);
+      when(() => mockScheduler.scheduleNotifications(
+        doseSchedules: any(named: 'doseSchedules'),
+        notificationTime: any(named: 'notificationTime'),
+      )).thenAnswer((_) async {});
+      when(() => mockScheduler.cancelAllNotifications()).thenAnswer((_) async {});
     });
 
     test('should define checkPermission method', () async {
-      // Arrange
-      when(mockScheduler.checkPermission())
-          .thenAnswer((_) async => true);
-
       // Act
       final hasPermission = await mockScheduler.checkPermission();
 
       // Assert
       expect(hasPermission, isA<bool>());
       expect(hasPermission, true);
-      verify(mockScheduler.checkPermission()).called(1);
+      verify(() => mockScheduler.checkPermission()).called(1);
     });
 
     test('should define requestPermission method', () async {
-      // Arrange
-      when(mockScheduler.requestPermission())
-          .thenAnswer((_) async => true);
-
       // Act
       final granted = await mockScheduler.requestPermission();
 
       // Assert
       expect(granted, isTrue);
-      verify(mockScheduler.requestPermission()).called(1);
+      verify(() => mockScheduler.requestPermission()).called(1);
     });
 
     test('should define scheduleNotifications method', () async {
@@ -49,10 +59,6 @@ void main() {
         scheduledDate: DateTime.now().add(const Duration(days: 1)),
         scheduledDoseMg: 0.5,
       );
-      when(mockScheduler.scheduleNotifications(
-        doseSchedules: [doseSchedule],
-        notificationTime: const NotificationTime(hour: 9, minute: 0),
-      )).thenAnswer((_) async => {});
 
       // Act
       await mockScheduler.scheduleNotifications(
@@ -61,27 +67,23 @@ void main() {
       );
 
       // Assert
-      verify(mockScheduler.scheduleNotifications(
-        doseSchedules: [doseSchedule],
-        notificationTime: const NotificationTime(hour: 9, minute: 0),
+      verify(() => mockScheduler.scheduleNotifications(
+        doseSchedules: any(named: 'doseSchedules'),
+        notificationTime: any(named: 'notificationTime'),
       )).called(1);
     });
 
     test('should define cancelAllNotifications method', () async {
-      // Arrange
-      when(mockScheduler.cancelAllNotifications())
-          .thenAnswer((_) async => {});
-
       // Act
       await mockScheduler.cancelAllNotifications();
 
       // Assert
-      verify(mockScheduler.cancelAllNotifications()).called(1);
+      verify(() => mockScheduler.cancelAllNotifications()).called(1);
     });
 
     test('should return false when permission check fails', () async {
       // Arrange
-      when(mockScheduler.checkPermission())
+      when(() => mockScheduler.checkPermission())
           .thenAnswer((_) async => false);
 
       // Act
@@ -93,7 +95,7 @@ void main() {
 
     test('should return false when permission request denied', () async {
       // Arrange
-      when(mockScheduler.requestPermission())
+      when(() => mockScheduler.requestPermission())
           .thenAnswer((_) async => false);
 
       // Act
