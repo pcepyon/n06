@@ -10,6 +10,7 @@ import 'package:n06/features/authentication/presentation/screens/email_signin_sc
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/onboarding/domain/repositories/profile_repository.dart';
 import 'package:n06/features/onboarding/application/providers.dart';
+import 'package:n06/features/onboarding/domain/value_objects/weight.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -48,38 +49,23 @@ class FakeUser extends Fake implements User {
   }) : lastLoginAt = lastLoginAt ?? DateTime.now();
 }
 
-class FakeUserProfile extends Fake implements UserProfile {
-  @override
-  final String userId;
-
-  @override
-  final String nickName;
-
-  @override
-  final String? profileImageUrl;
-
-  @override
-  final int weeklyWeightRecordGoal;
-
-  @override
-  final int weeklySymptomRecordGoal;
-
-  @override
-  final DateTime createdAt;
-
-  @override
-  final DateTime updatedAt;
-
-  FakeUserProfile({
-    this.userId = 'test-user-id',
-    this.nickName = 'Test User',
-    this.profileImageUrl,
-    this.weeklyWeightRecordGoal = 3,
-    this.weeklySymptomRecordGoal = 3,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  })  : createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now();
+// Helper function to create test UserProfile
+UserProfile createTestProfile({
+  String userId = 'test-user-id',
+  String? userName = 'Test User',
+  double targetWeightKg = 80.0,
+  double currentWeightKg = 90.0,
+  int weeklyWeightRecordGoal = 3,
+  int weeklySymptomRecordGoal = 3,
+}) {
+  return UserProfile(
+    userId: userId,
+    userName: userName,
+    targetWeight: Weight.create(targetWeightKg),
+    currentWeight: Weight.create(currentWeightKg),
+    weeklyWeightRecordGoal: weeklyWeightRecordGoal,
+    weeklySymptomRecordGoal: weeklySymptomRecordGoal,
+  );
 }
 
 void main() {
@@ -445,7 +431,7 @@ void main() {
     testWidgets('로그인 성공 + 프로필 있음 → /home 네비게이션 (BUG-2025-1119-004)', (WidgetTester tester) async {
       // GIVEN: Mock repository that returns success
       final testUser = FakeUser(id: 'test-user-id');
-      final testProfile = FakeUserProfile(userId: 'test-user-id');
+      final testProfile = createTestProfile(userId: 'test-user-id');
 
       when(() => mockRepository.signInWithEmail(
         email: any(named: 'email'),
