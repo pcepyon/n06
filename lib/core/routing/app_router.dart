@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/features/authentication/presentation/screens/login_screen.dart';
 import 'package:n06/features/dashboard/presentation/screens/home_dashboard_screen.dart';
@@ -16,6 +17,9 @@ import 'package:n06/features/coping_guide/presentation/screens/coping_guide_scre
 import 'package:n06/features/data_sharing/presentation/screens/data_sharing_screen.dart';
 import 'package:n06/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:n06/features/record_management/presentation/screens/record_list_screen.dart';
+import 'package:n06/features/authentication/presentation/screens/email_signup_screen.dart';
+import 'package:n06/features/authentication/presentation/screens/email_signin_screen.dart';
+import 'package:n06/features/authentication/presentation/screens/password_reset_screen.dart';
 
 /// GoRouter configuration for the application
 final appRouter = GoRouter(
@@ -152,6 +156,62 @@ final appRouter = GoRouter(
       path: '/records',
       name: 'record_list',
       builder: (context, state) => const RecordListScreen(),
+    ),
+
+    /// Email Authentication (F-016)
+    GoRoute(
+      path: '/email-signup',
+      name: 'email_signup',
+      builder: (context, state) => const EmailSignupScreen(),
+    ),
+
+    GoRoute(
+      path: '/email-signin',
+      name: 'email_signin',
+      builder: (context, state) => const EmailSigninScreen(),
+    ),
+
+    GoRoute(
+      path: '/password-reset',
+      name: 'password_reset',
+      builder: (context, state) {
+        final token = state.uri.queryParameters['token'];
+        return PasswordResetScreen(token: token);
+      },
+    ),
+
+    /// Deep Link: Password reset from email
+    GoRoute(
+      path: '/reset-password',
+      builder: (context, state) {
+        final token = state.uri.queryParameters['token'];
+        final type = state.uri.queryParameters['type'];
+        if (kDebugMode) {
+          developer.log(
+            'Deep link received: /reset-password (token: $token, type: $type)',
+            name: 'AppRouter',
+          );
+        }
+        return PasswordResetScreen(token: token);
+      },
+    ),
+
+    /// Deep Link: Email confirmation (P1)
+    GoRoute(
+      path: '/email-confirmation',
+      builder: (context, state) {
+        final token = state.uri.queryParameters['token'];
+        if (kDebugMode) {
+          developer.log(
+            'Deep link received: /email-confirmation (token: $token)',
+            name: 'AppRouter',
+          );
+        }
+        // TODO: Implement EmailConfirmationScreen (P1)
+        return const Scaffold(
+          body: Center(child: Text('Email Confirmation')),
+        );
+      },
     ),
   ],
 );

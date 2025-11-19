@@ -76,6 +76,17 @@
 				<string>com.glp1.n06</string>
 			</array>
 		</dict>
+		<!-- Email Authentication (F-016) Deep Link -->
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>n06</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>n06</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

@@ -161,6 +161,207 @@ class AuthNotifier extends _$AuthNotifier {
 
     return true;
   }
+
+  /// Sign up with email and password
+  ///
+  /// [email] User email address
+  /// [password] User password (must meet strength requirements)
+  /// [agreedToTerms] User agreed to terms of service
+  /// [agreedToPrivacy] User agreed to privacy policy
+  ///
+  /// Returns true if signup successful, false otherwise
+  /// Throws exception on validation or network errors
+  Future<bool> signUpWithEmail({
+    required String email,
+    required String password,
+    required bool agreedToTerms,
+    required bool agreedToPrivacy,
+  }) async {
+    if (kDebugMode) {
+      developer.log(
+        'signUpWithEmail called (email: $email)',
+        name: 'AuthNotifier',
+      );
+    }
+
+    state = const AsyncValue.loading();
+
+    try {
+      final repository = ref.read(authRepositoryProvider);
+      final user = await repository.signUpWithEmail(
+        email: email,
+        password: password,
+      );
+
+      // CRITICAL FIX: Explicitly set state with AsyncValue.data
+      state = AsyncValue.data(user);
+
+      if (kDebugMode) {
+        developer.log(
+          'Sign up successful: ${user.id}',
+          name: 'AuthNotifier',
+        );
+      }
+
+      // Check if this is first login
+      final isFirstLogin = await repository.isFirstLogin();
+      return isFirstLogin;
+    } catch (error, stackTrace) {
+      // Set error state
+      state = AsyncValue.error(error, stackTrace);
+
+      if (kDebugMode) {
+        developer.log(
+          'Sign up failed',
+          name: 'AuthNotifier',
+          error: error,
+          stackTrace: stackTrace,
+          level: 1000,
+        );
+      }
+
+      return false;
+    }
+  }
+
+  /// Sign in with email and password
+  ///
+  /// [email] User email address
+  /// [password] User password
+  ///
+  /// Returns true if signin successful, false otherwise
+  Future<bool> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    if (kDebugMode) {
+      developer.log(
+        'signInWithEmail called (email: $email)',
+        name: 'AuthNotifier',
+      );
+    }
+
+    state = const AsyncValue.loading();
+
+    try {
+      final repository = ref.read(authRepositoryProvider);
+      final user = await repository.signInWithEmail(
+        email: email,
+        password: password,
+      );
+
+      state = AsyncValue.data(user);
+
+      if (kDebugMode) {
+        developer.log(
+          'Sign in successful: ${user.id}',
+          name: 'AuthNotifier',
+        );
+      }
+
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+
+      if (kDebugMode) {
+        developer.log(
+          'Sign in failed',
+          name: 'AuthNotifier',
+          error: error,
+          stackTrace: stackTrace,
+          level: 1000,
+        );
+      }
+
+      return false;
+    }
+  }
+
+  /// Reset password by sending reset email
+  ///
+  /// [email] User email address to send reset link
+  ///
+  /// Throws exception if network error
+  Future<void> resetPasswordForEmail(String email) async {
+    if (kDebugMode) {
+      developer.log(
+        'resetPasswordForEmail called (email: $email)',
+        name: 'AuthNotifier',
+      );
+    }
+
+    try {
+      final repository = ref.read(authRepositoryProvider);
+      await repository.resetPasswordForEmail(email);
+
+      if (kDebugMode) {
+        developer.log(
+          'Password reset email sent',
+          name: 'AuthNotifier',
+        );
+      }
+    } catch (error, stackTrace) {
+      if (kDebugMode) {
+        developer.log(
+          'Password reset failed',
+          name: 'AuthNotifier',
+          error: error,
+          stackTrace: stackTrace,
+          level: 1000,
+        );
+      }
+      rethrow;
+    }
+  }
+
+  /// Update password for logged-in user
+  ///
+  /// [currentPassword] User's current password
+  /// [newPassword] New password (must meet strength requirements)
+  ///
+  /// Throws exception if current password is wrong or network error
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    if (kDebugMode) {
+      developer.log(
+        'updatePassword called',
+        name: 'AuthNotifier',
+      );
+    }
+
+    try {
+      final repository = ref.read(authRepositoryProvider);
+      final user = await repository.updatePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+
+      state = AsyncValue.data(user);
+
+      if (kDebugMode) {
+        developer.log(
+          'Password updated successfully',
+          name: 'AuthNotifier',
+        );
+      }
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+
+      if (kDebugMode) {
+        developer.log(
+          'Password update failed',
+          name: 'AuthNotifier',
+          error: error,
+          stackTrace: stackTrace,
+          level: 1000,
+        );
+      }
+
+      rethrow;
+    }
+  }
 }
 
 /// Provider for AuthRepository

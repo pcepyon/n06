@@ -303,4 +303,195 @@ class SupabaseAuthRepository implements AuthRepository {
       lastLoginAt: DateTime.parse(userProfile['last_login_at'] as String),
     );
   }
+
+  // ============================================
+  // Email Authentication Methods
+  // ============================================
+
+  @override
+  Future<domain.User> signUpWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      // 1. Sign up with Supabase Auth
+      final response = await _supabase.auth.signUp(
+        email: email,
+        password: password,
+        data: {
+          'email': email,
+        },
+      );
+
+      final authUser = response.user;
+      if (authUser == null) {
+        throw Exception('Sign up failed: user is null');
+      }
+
+      // 2. Create user profile record
+      await _supabase.from('users').insert({
+        'id': authUser.id,
+        'email': email,
+        'name': email.split('@')[0], // Use email prefix as default name
+        'oauth_provider': 'email',
+        'oauth_user_id': email,
+        'last_login_at': DateTime.now().toIso8601String(),
+      });
+
+      // 3. Return domain user
+      return domain.User(
+        id: authUser.id,
+        oauthProvider: 'email',
+        oauthUserId: email,
+        name: email.split('@')[0],
+        email: email,
+        lastLoginAt: DateTime.now(),
+      );
+    } on AuthException catch (e) {
+      // Catch specific Supabase auth errors
+      if (e.message.contains('already registered')) {
+        throw Exception('Email already exists');
+      }
+      if (e.message.contains('weak password')) {
+        throw Exception('Password is too weak');
+      }
+      throw Exception('Sign up failed: ${e.message}');
+    } catch (e) {
+      throw Exception('Sign up error: $e');
+    }
+  }
+
+  @override
+  Future<domain.User> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      // 1. Sign in with Supabase Auth
+      final response = await _supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      final authUser = response.user;
+      if (authUser == null) {
+        throw Exception('Sign in failed: user is null');
+      }
+
+      // 2. Update last login time
+      await _supabase.from('users').update({
+        'last_login_at': DateTime.now().toIso8601String(),
+      }).eq('id', authUser.id);
+
+      // 3. Fetch user profile
+      final userProfile = await _supabase
+          .from('users')
+          .select()
+          .eq('id', authUser.id)
+          .single();
+
+      // 4. Return domain user
+      return domain.User(
+        id: authUser.id,
+        oauthProvider: userProfile['oauth_provider'] as String,
+        oauthUserId: userProfile['oauth_user_id'] as String,
+        name: userProfile['name'] as String,
+        email: userProfile['email'] as String? ?? '',
+        profileImageUrl: userProfile['profile_image_url'] as String?,
+        lastLoginAt: DateTime.parse(userProfile['last_login_at'] as String),
+      );
+    } on AuthException catch (e) {
+      if (e.message.contains('invalid credentials')) {
+        throw Exception('Invalid email or password');
+      }
+      if (e.message.contains('Email not confirmed')) {
+        throw Exception('Email not confirmed');
+      }
+      throw Exception('Sign in failed: ${e.message}');
+    } catch (e) {
+      throw Exception('Sign in error: $e');
+    }
+  }
+
+  @override
+  Future<void> resetPasswordForEmail(String email) async {
+    try {
+      await _supabase.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'n06://reset-password',
+      );
+    } on AuthException catch (e) {
+      // For security, we don't tell whether email exists or not
+      // Always return success
+      if (e.statusCode == '422') {
+        // Email not found - still return success for security
+        return;
+      }
+      rethrow;
+    } catch (e) {
+      // Log but don't throw for security
+      // Password reset email errors are silently ignored for security reasons
+    }
+  }
+
+  @override
+  Future<domain.User> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      // Note: Supabase doesn't provide a direct way to verify current password
+      // Current approach:
+      // 1. Get current user email
+      // 2. Try to re-authenticate with current password
+      // 3. If successful, update password
+
+      final currentUser = _supabase.auth.currentUser;
+      if (currentUser == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Re-authenticate with current password
+      final currentEmail = currentUser.email;
+      if (currentEmail == null) {
+        throw Exception('User email not found');
+      }
+
+      try {
+        // Try to sign in with current password to verify it
+        await _supabase.auth.signInWithPassword(
+          email: currentEmail,
+          password: currentPassword,
+        );
+      } on AuthException {
+        throw Exception('Current password is incorrect');
+      }
+
+      // Update password
+      await _supabase.auth.updateUser(
+        UserAttributes(password: newPassword),
+      );
+
+      // Fetch and return updated user
+      final userProfile = await _supabase
+          .from('users')
+          .select()
+          .eq('id', currentUser.id)
+          .single();
+
+      return domain.User(
+        id: currentUser.id,
+        oauthProvider: userProfile['oauth_provider'] as String,
+        oauthUserId: userProfile['oauth_user_id'] as String,
+        name: userProfile['name'] as String,
+        email: userProfile['email'] as String? ?? '',
+        profileImageUrl: userProfile['profile_image_url'] as String?,
+        lastLoginAt: DateTime.parse(userProfile['last_login_at'] as String),
+      );
+    } on AuthException catch (e) {
+      throw Exception('Update password failed: ${e.message}');
+    } catch (e) {
+      throw Exception('Update password error: $e');
+    }
+  }
 }

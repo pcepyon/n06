@@ -10,7 +10,7 @@ class QuickActionWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '빠른 기록',
+          '빠른 액션',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
@@ -29,11 +29,23 @@ class QuickActionWidget extends StatelessWidget {
               color: Colors.pink,
               onTap: () => context.push('/tracking/symptom'),
             ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
             _QuickActionButton(
               icon: Icons.check_circle,
               label: '투여 기록',
               color: Colors.green,
               onTap: () => context.push('/dose-schedule'),
+            ),
+            _QuickActionButton(
+              icon: Icons.menu_book,
+              label: '대처 가이드',
+              color: Colors.purple,
+              onTap: () => context.push('/coping-guide'),
             ),
           ],
         ),

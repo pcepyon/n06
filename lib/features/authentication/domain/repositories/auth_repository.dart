@@ -51,4 +51,41 @@ abstract class AuthRepository {
   /// Returns new access token on success.
   /// Throws exception if refresh token is also expired.
   Future<String> refreshAccessToken(String refreshToken);
+
+  /// Sign up with email and password
+  ///
+  /// Creates a new user account with email authentication.
+  /// Returns authenticated [User] on success.
+  /// Throws exception if email already exists or password is weak.
+  Future<User> signUpWithEmail({
+    required String email,
+    required String password,
+  });
+
+  /// Sign in with email and password
+  ///
+  /// Authenticates user with email credentials.
+  /// Returns authenticated [User] on success.
+  /// Throws exception if credentials are invalid.
+  Future<User> signInWithEmail({
+    required String email,
+    required String password,
+  });
+
+  /// Send password reset email
+  ///
+  /// Sends password reset link to user's email.
+  /// Always succeeds even if email doesn't exist (for security).
+  /// Link redirects to deep link: n06://reset-password?token=xxx
+  Future<void> resetPasswordForEmail(String email);
+
+  /// Update password for logged-in user
+  ///
+  /// Updates user password. Requires current authentication.
+  /// Returns updated [User] on success.
+  /// Throws exception if current password is invalid or new password is weak.
+  Future<User> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
 }
