@@ -55,6 +55,38 @@ void main() {
     });
 
     group('signUpWithEmail', () {
+      test('[BUG-2025-1119-003] 회원가입 성공 시 User 객체를 직접 반환', () async {
+        // Given
+        final testUser = FakeUser(
+          id: 'new-user-id',
+          email: 'newuser@example.com',
+        );
+
+        when(() => mockRepository.signUpWithEmail(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        )).thenAnswer((_) async => testUser);
+
+        // When
+        final authNotifier = container.read(authProvider.notifier);
+        final result = await authNotifier.signUpWithEmail(
+          email: 'newuser@example.com',
+          password: 'Password123!',
+          agreedToTerms: true,
+          agreedToPrivacy: true,
+        );
+
+        // Then
+        expect(result, isA<User>()); // User 객체 반환
+        expect(result.id, 'new-user-id');
+        expect(result.email, 'newuser@example.com');
+
+        // State도 업데이트되어야 함
+        final state = container.read(authProvider);
+        expect(state.hasValue, true);
+        expect(state.asData?.value?.email, 'newuser@example.com');
+      });
+
       test('회원가입 성공 시 state가 AsyncData<User>로 변경', () async {
         // Given
         final testUser = FakeUser(
@@ -66,9 +98,6 @@ void main() {
           password: any(named: 'password'),
         )).thenAnswer((_) async => testUser);
 
-        when(() => mockRepository.isFirstLogin())
-            .thenAnswer((_) async => true);
-
         // When
         final authNotifier = container.read(authProvider.notifier);
         final result = await authNotifier.signUpWithEmail(
@@ -79,13 +108,13 @@ void main() {
         );
 
         // Then
-        expect(result, true); // isFirstLogin returns true
+        expect(result, isA<User>()); // bool → User 변경
         final state = container.read(authProvider);
         expect(state.hasValue, true);
         expect(state.asData?.value?.email, 'newuser@example.com');
       });
 
-      test('회원가입 실패 시 state가 AsyncError로 변경', () async {
+      test('회원가입 실패 시 예외 발생 및 state가 AsyncError로 변경', () async {
         // Given
         when(() => mockRepository.signUpWithEmail(
           email: any(named: 'email'),
@@ -94,15 +123,20 @@ void main() {
 
         // When
         final authNotifier = container.read(authProvider.notifier);
-        final result = await authNotifier.signUpWithEmail(
-          email: 'duplicate@example.com',
-          password: 'Password123!',
-          agreedToTerms: true,
-          agreedToPrivacy: true,
+
+        // Then - 예외가 발생해야 함
+        expect(
+          () => authNotifier.signUpWithEmail(
+            email: 'duplicate@example.com',
+            password: 'Password123!',
+            agreedToTerms: true,
+            agreedToPrivacy: true,
+          ),
+          throwsException,
         );
 
-        // Then
-        expect(result, false);
+        // State는 AsyncError여야 함
+        await Future.delayed(Duration.zero); // 비동기 처리 대기
         final state = container.read(authProvider);
         expect(state.hasError, true);
       });
@@ -135,7 +169,7 @@ void main() {
         )).called(1);
       });
 
-      test('약관 미동의 상태에서도 저장 시도', () async {
+      test('약관 미동의 상태에서도 저장 시도 (Notifier는 검증 안함)', () async {
         // Given
         final testUser = FakeUser();
 
@@ -143,9 +177,6 @@ void main() {
           email: any(named: 'email'),
           password: any(named: 'password'),
         )).thenAnswer((_) async => testUser);
-
-        when(() => mockRepository.isFirstLogin())
-            .thenAnswer((_) async => true);
 
         // When
         final authNotifier = container.read(authProvider.notifier);
@@ -158,20 +189,17 @@ void main() {
 
         // Then
         // Notifier는 약관 검증을 하지 않음 (Presentation에서 처리)
-        expect(result, true);
+        expect(result, isA<User>()); // User 객체 반환
       });
 
-      test('처음 로그인이 아닐 때 false 반환', () async {
+      test('회원가입 항상 User 객체 반환 (isFirstLogin 체크 제거)', () async {
         // Given
-        final testUser = FakeUser();
+        final testUser = FakeUser(id: 'user-123');
 
         when(() => mockRepository.signUpWithEmail(
           email: any(named: 'email'),
           password: any(named: 'password'),
         )).thenAnswer((_) async => testUser);
-
-        when(() => mockRepository.isFirstLogin())
-            .thenAnswer((_) async => false); // Not first login
 
         // When
         final authNotifier = container.read(authProvider.notifier);
@@ -182,8 +210,12 @@ void main() {
           agreedToPrivacy: true,
         );
 
-        // Then
-        expect(result, false);
+        // Then - isFirstLogin 체크 없이 항상 User 반환
+        expect(result, isA<User>());
+        expect(result.id, 'user-123');
+
+        // isFirstLogin 호출되지 않아야 함
+        verifyNever(() => mockRepository.isFirstLogin());
       });
     });
 
