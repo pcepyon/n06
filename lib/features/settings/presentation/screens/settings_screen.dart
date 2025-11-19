@@ -75,7 +75,7 @@ class SettingsScreen extends ConsumerWidget {
     WidgetRef ref,
     dynamic profile,
   ) {
-    final userName = profile.userId;
+    final userName = profile.userName ?? profile.userId.split('@').first;
 
     return ListView(
       children: [
