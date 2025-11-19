@@ -7,8 +7,13 @@ import 'package:n06/features/authentication/domain/entities/user.dart';
 import 'package:n06/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/authentication/presentation/screens/email_signin_screen.dart';
+import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
+import 'package:n06/features/onboarding/domain/repositories/profile_repository.dart';
+import 'package:n06/features/onboarding/application/providers.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
+
+class MockProfileRepository extends Mock implements ProfileRepository {}
 
 class FakeUser extends Fake implements User {
   @override
@@ -43,11 +48,47 @@ class FakeUser extends Fake implements User {
   }) : lastLoginAt = lastLoginAt ?? DateTime.now();
 }
 
+class FakeUserProfile extends Fake implements UserProfile {
+  @override
+  final String userId;
+
+  @override
+  final String nickName;
+
+  @override
+  final String? profileImageUrl;
+
+  @override
+  final int weeklyWeightRecordGoal;
+
+  @override
+  final int weeklySymptomRecordGoal;
+
+  @override
+  final DateTime createdAt;
+
+  @override
+  final DateTime updatedAt;
+
+  FakeUserProfile({
+    this.userId = 'test-user-id',
+    this.nickName = 'Test User',
+    this.profileImageUrl,
+    this.weeklyWeightRecordGoal = 3,
+    this.weeklySymptomRecordGoal = 3,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  })  : createdAt = createdAt ?? DateTime.now(),
+        updatedAt = updatedAt ?? DateTime.now();
+}
+
 void main() {
   late MockAuthRepository mockRepository;
+  late MockProfileRepository mockProfileRepository;
 
   setUp(() {
     mockRepository = MockAuthRepository();
+    mockProfileRepository = MockProfileRepository();
   });
 
   Widget createWidgetUnderTest() {
@@ -398,6 +439,147 @@ void main() {
 
       // Then - AppBar or title
       expect(find.byType(Text), findsWidgets);
+    });
+
+    // BUG-2025-1119-004: 이메일 로그인 성공 후 프로필 존재 여부에 따른 네비게이션
+    testWidgets('로그인 성공 + 프로필 있음 → /home 네비게이션 (BUG-2025-1119-004)', (WidgetTester tester) async {
+      // GIVEN: Mock repository that returns success
+      final testUser = FakeUser(id: 'test-user-id');
+      final testProfile = FakeUserProfile(userId: 'test-user-id');
+
+      when(() => mockRepository.signInWithEmail(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      )).thenAnswer((_) async => testUser);
+
+      when(() => mockProfileRepository.getUserProfile('test-user-id'))
+          .thenAnswer((_) async => testProfile);
+
+      // Mock GoRouter for navigation tracking
+      final goRouter = GoRouter(
+        initialLocation: '/email-signin',
+        routes: [
+          GoRoute(
+            path: '/email-signin',
+            builder: (context, state) => const EmailSigninScreen(),
+          ),
+          GoRoute(
+            path: '/home',
+            builder: (context, state) => const Scaffold(
+              body: Center(child: Text('Home Dashboard')),
+            ),
+          ),
+          GoRoute(
+            path: '/onboarding',
+            builder: (context, state) => const Scaffold(
+              body: Center(child: Text('Onboarding Screen')),
+            ),
+          ),
+        ],
+      );
+
+      final testApp = ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(mockRepository),
+          profileRepositoryProvider.overrideWithValue(mockProfileRepository),
+        ],
+        child: MaterialApp.router(
+          routerConfig: goRouter,
+        ),
+      );
+
+      await tester.pumpWidget(testApp);
+      await tester.pumpAndSettle();
+
+      // WHEN: User fills in valid credentials and submits
+      final textFields = find.byType(TextField);
+      expect(textFields.evaluate().length >= 2, true);
+
+      await tester.enterText(textFields.at(0), 'test@example.com');
+      await tester.enterText(textFields.at(1), 'Password123!');
+      await tester.pump();
+
+      final submitButton = find.byType(ElevatedButton);
+      await tester.tap(submitButton.first);
+      await tester.pumpAndSettle();
+
+      // THEN: 프로필이 있으므로 /home으로 네비게이션
+      expect(find.text('Home Dashboard'), findsOneWidget);
+      expect(find.text('Onboarding Screen'), findsNothing);
+
+      // Verify profile was checked
+      verify(() => mockProfileRepository.getUserProfile('test-user-id')).called(1);
+    });
+
+    testWidgets('로그인 성공 + 프로필 없음 → /onboarding 네비게이션 (BUG-2025-1119-004)', (WidgetTester tester) async {
+      // GIVEN: Mock repository that returns success but no profile
+      final testUser = FakeUser(id: 'test-user-id');
+
+      when(() => mockRepository.signInWithEmail(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      )).thenAnswer((_) async => testUser);
+
+      // Profile repository returns null (user hasn't completed onboarding)
+      when(() => mockProfileRepository.getUserProfile('test-user-id'))
+          .thenAnswer((_) async => null);
+
+      // Mock GoRouter for navigation tracking
+      final goRouter = GoRouter(
+        initialLocation: '/email-signin',
+        routes: [
+          GoRoute(
+            path: '/email-signin',
+            builder: (context, state) => const EmailSigninScreen(),
+          ),
+          GoRoute(
+            path: '/home',
+            builder: (context, state) => const Scaffold(
+              body: Center(child: Text('Home Dashboard')),
+            ),
+          ),
+          GoRoute(
+            path: '/onboarding',
+            builder: (context, state) => Scaffold(
+              body: Center(
+                child: Text('Onboarding Screen: ${state.extra}'),
+              ),
+            ),
+          ),
+        ],
+      );
+
+      final testApp = ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(mockRepository),
+          profileRepositoryProvider.overrideWithValue(mockProfileRepository),
+        ],
+        child: MaterialApp.router(
+          routerConfig: goRouter,
+        ),
+      );
+
+      await tester.pumpWidget(testApp);
+      await tester.pumpAndSettle();
+
+      // WHEN: User fills in valid credentials and submits
+      final textFields = find.byType(TextField);
+      expect(textFields.evaluate().length >= 2, true);
+
+      await tester.enterText(textFields.at(0), 'test@example.com');
+      await tester.enterText(textFields.at(1), 'Password123!');
+      await tester.pump();
+
+      final submitButton = find.byType(ElevatedButton);
+      await tester.tap(submitButton.first);
+      await tester.pumpAndSettle();
+
+      // THEN: 프로필이 없으므로 /onboarding으로 네비게이션
+      expect(find.textContaining('Onboarding Screen'), findsOneWidget);
+      expect(find.text('Home Dashboard'), findsNothing);
+
+      // Verify profile was checked
+      verify(() => mockProfileRepository.getUserProfile('test-user-id')).called(1);
     });
   });
 }
