@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:n06/features/authentication/domain/entities/user.dart';
 import 'package:n06/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/authentication/presentation/screens/email_signup_screen.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
@@ -273,23 +275,46 @@ void main() {
       }
     });
 
-    testWidgets('회원가입 성공 시 네비게이션 발생', (WidgetTester tester) async {
-      // When
+    testWidgets('첫 로그인 회원가입 성공 시 /onboarding으로 네비게이션 (BUG-2025-1119-001)', (WidgetTester tester) async {
+      // GIVEN: Mock repository returns user for first login
+      when(() => mockRepository.signUpWithEmail(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      )).thenAnswer((_) async => FakeUser());
+
+      // Mock GoRouter for navigation tracking
+      final goRouter = GoRouter(
+        initialLocation: '/email-signup',
+        routes: [
+          GoRoute(
+            path: '/email-signup',
+            builder: (context, state) => const EmailSignupScreen(),
+          ),
+          GoRoute(
+            path: '/onboarding',
+            builder: (context, state) {
+              final userId = state.extra as String?;
+              return Scaffold(
+                body: Center(child: Text('Onboarding: $userId')),
+              );
+            },
+          ),
+        ],
+      );
+
       final testApp = ProviderScope(
-        child: MaterialApp(
-          home: const EmailSignupScreen(),
-          routes: {
-            '/home': (context) => const Scaffold(
-              body: Center(child: Text('Home')),
-            ),
-          },
+        overrides: [
+          authRepositoryProvider.overrideWithValue(mockRepository),
+        ],
+        child: MaterialApp.router(
+          routerConfig: goRouter,
         ),
       );
 
       await tester.pumpWidget(testApp);
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      // Fill in all fields correctly
+      // WHEN: User fills in all fields and agrees to terms
       final textFields = find.byType(TextField);
       if (textFields.evaluate().length >= 3) {
         await tester.enterText(textFields.at(0), 'newuser@example.com');
@@ -297,13 +322,88 @@ void main() {
         await tester.enterText(textFields.at(2), 'ValidPass123!');
         await tester.pump();
 
-        // Check terms
+        // Check required terms
         final checkboxes = find.byType(Checkbox);
         if (checkboxes.evaluate().length >= 2) {
-          await tester.tap(checkboxes.at(0));
+          await tester.tap(checkboxes.at(0)); // Terms
           await tester.pump();
-          await tester.tap(checkboxes.at(1));
+          await tester.tap(checkboxes.at(1)); // Privacy
           await tester.pump();
+
+          // Submit
+          final submitButton = find.byType(ElevatedButton);
+          if (submitButton.evaluate().isNotEmpty) {
+            await tester.tap(submitButton.first);
+            await tester.pumpAndSettle();
+
+            // THEN: Should navigate to /onboarding with userId
+            expect(find.textContaining('Onboarding:'), findsOneWidget);
+          }
+        }
+      }
+    });
+
+    testWidgets('기존 사용자 회원가입 성공 시 /home으로 네비게이션 (BUG-2025-1119-001)', (WidgetTester tester) async {
+      // GIVEN: Mock repository returns user
+      when(() => mockRepository.signUpWithEmail(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      )).thenAnswer((_) async => FakeUser());
+
+      // Mock GoRouter for navigation tracking
+      final goRouter = GoRouter(
+        initialLocation: '/email-signup',
+        routes: [
+          GoRoute(
+            path: '/email-signup',
+            builder: (context, state) => const EmailSignupScreen(),
+          ),
+          GoRoute(
+            path: '/home',
+            builder: (context, state) => const Scaffold(
+              body: Center(child: Text('Home Dashboard')),
+            ),
+          ),
+        ],
+      );
+
+      final testApp = ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(mockRepository),
+        ],
+        child: MaterialApp.router(
+          routerConfig: goRouter,
+        ),
+      );
+
+      await tester.pumpWidget(testApp);
+      await tester.pumpAndSettle();
+
+      // WHEN: User fills in all fields and agrees to terms
+      final textFields = find.byType(TextField);
+      if (textFields.evaluate().length >= 3) {
+        await tester.enterText(textFields.at(0), 'existing@example.com');
+        await tester.enterText(textFields.at(1), 'ValidPass123!');
+        await tester.enterText(textFields.at(2), 'ValidPass123!');
+        await tester.pump();
+
+        // Check required terms
+        final checkboxes = find.byType(Checkbox);
+        if (checkboxes.evaluate().length >= 2) {
+          await tester.tap(checkboxes.at(0)); // Terms
+          await tester.pump();
+          await tester.tap(checkboxes.at(1)); // Privacy
+          await tester.pump();
+
+          // Submit
+          final submitButton = find.byType(ElevatedButton);
+          if (submitButton.evaluate().isNotEmpty) {
+            await tester.tap(submitButton.first);
+            await tester.pumpAndSettle();
+
+            // THEN: Should navigate to /home
+            expect(find.text('Home Dashboard'), findsOneWidget);
+          }
         }
       }
     });

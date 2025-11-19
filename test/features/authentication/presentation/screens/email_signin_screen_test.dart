@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:n06/features/authentication/domain/entities/user.dart';
 import 'package:n06/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/authentication/presentation/screens/email_signin_screen.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
@@ -278,27 +280,58 @@ void main() {
       }
     });
 
-    testWidgets('로그인 성공 시 네비게이션 발생', (WidgetTester tester) async {
-      // When
-      final testApp = ProviderScope(
-        child: MaterialApp(
-          home: const EmailSigninScreen(),
-          routes: {
-            '/home': (context) => const Scaffold(
-              body: Center(child: Text('Home')),
+    testWidgets('로그인 성공 시 /home으로 네비게이션 발생 (BUG-2025-1119-001)', (WidgetTester tester) async {
+      // GIVEN: Mock repository that returns success
+      when(() => mockRepository.signInWithEmail(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      )).thenAnswer((_) async => FakeUser());
+
+      // Mock GoRouter for navigation tracking
+      final goRouter = GoRouter(
+        initialLocation: '/email-signin',
+        routes: [
+          GoRoute(
+            path: '/email-signin',
+            builder: (context, state) => const EmailSigninScreen(),
+          ),
+          GoRoute(
+            path: '/home',
+            builder: (context, state) => const Scaffold(
+              body: Center(child: Text('Home Dashboard')),
             ),
-          },
+          ),
+        ],
+      );
+
+      final testApp = ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(mockRepository),
+        ],
+        child: MaterialApp.router(
+          routerConfig: goRouter,
         ),
       );
 
       await tester.pumpWidget(testApp);
-      await tester.pump();
+      await tester.pumpAndSettle();
 
+      // WHEN: User fills in valid credentials and submits
       final textFields = find.byType(TextField);
       if (textFields.evaluate().length >= 2) {
         await tester.enterText(textFields.at(0), 'test@example.com');
         await tester.enterText(textFields.at(1), 'Password123!');
         await tester.pump();
+
+        final submitButton = find.byType(ElevatedButton);
+        if (submitButton.evaluate().isNotEmpty) {
+          await tester.tap(submitButton.first);
+          await tester.pumpAndSettle();
+
+          // THEN: Should navigate to /home dashboard
+          // Verify by checking if Home Dashboard screen is rendered
+          expect(find.text('Home Dashboard'), findsOneWidget);
+        }
       }
     });
 
