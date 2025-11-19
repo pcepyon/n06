@@ -11,7 +11,56 @@
 
 ## Pending Integration Tests
 
-### 1. Profile Management Flow
+### 1. Email Authentication E2E Flow
+- **Priority**: High
+- **Feature**: Authentication (Email)
+- **User Story**: User can sign up, sign in, reset password, and update password using email
+- **Test Steps**:
+  1. **Sign Up Flow**:
+     - User enters email and password in signup form
+     - Submit sign up form
+     - Verify user record created in Supabase `users` table
+     - Verify user logged in (session created)
+  2. **Sign In Flow**:
+     - User logs out
+     - User enters email and password in login form
+     - Submit login form
+     - Verify `last_login_at` updated in database
+     - Verify user logged in (session created)
+  3. **Invalid Credentials**:
+     - User enters wrong password
+     - Submit login form
+     - Verify error message: "Invalid email or password"
+     - User remains logged out
+  4. **Password Reset**:
+     - User clicks "Forgot Password"
+     - User enters email
+     - Verify reset email sent (check Supabase)
+     - User receives deep link with token
+     - User clicks deep link (n06://reset-password?token=xxx)
+     - App opens to password reset screen
+     - User enters new password
+     - Verify password updated
+  5. **Update Password**:
+     - User logged in
+     - Navigate to Settings > Change Password
+     - User enters current password (wrong)
+     - Verify error: "Current password is incorrect"
+     - User enters correct current password + new password
+     - Verify password updated
+     - User can log in with new password
+- **Expected Outcome**:
+  - All email auth flows work end-to-end with real Supabase environment
+  - Error messages display correctly
+  - Security rules enforced (password reset email enumeration)
+- **Original Unit Tests**:
+  - `test/features/authentication/infrastructure/repositories/supabase_auth_repository_email_test.dart`
+  - Unit tests verify Auth API calls, but not full DB integration
+- **Blocked By**: Supabase test environment setup
+- **Assigned To**: TBD
+- **Status**: Backlog
+
+### 2. Profile Management Flow
 - **Priority**: Medium
 - **Feature**: Profile
 - **User Story**: User can view and update their profile information
