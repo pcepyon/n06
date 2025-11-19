@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:n06/core/utils/validators.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 
@@ -89,12 +90,20 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
       );
 
       // Navigate based on onboarding status
+      if (!mounted) return;
+
       if (isFirstLogin) {
-        // Go to onboarding
-        // TODO: Navigate to onboarding screen
+        // Get user ID for onboarding
+        final user = ref.read(authProvider).value;
+        if (user != null) {
+          context.go('/onboarding', extra: user.id);
+        } else {
+          // Fallback to home if user is somehow null
+          context.go('/home');
+        }
       } else {
         // Go to dashboard
-        // TODO: Navigate to dashboard
+        context.go('/home');
       }
     } catch (e) {
       if (!mounted) return;

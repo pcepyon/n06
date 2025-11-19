@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:n06/core/utils/validators.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 
@@ -54,8 +55,10 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Sign in successful!')),
         );
+
         // Navigate to dashboard
-        // TODO: Navigate to dashboard
+        if (!mounted) return;
+        context.go('/home');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Sign in failed')),
