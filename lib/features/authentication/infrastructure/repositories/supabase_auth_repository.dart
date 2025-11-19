@@ -286,9 +286,9 @@ class SupabaseAuthRepository implements AuthRepository {
         throw Exception('Supabase authentication failed');
       }
 
-      // 3. Wait for trigger to complete (small delay)
-      // Database trigger automatically creates public.users record
-      await Future.delayed(const Duration(milliseconds: 500));
+      // 3. Wait for database trigger to create public.users record
+      // BUG-2025-1119-006 FIX: Polling instead of fixed delay to prevent Race Condition
+      await _waitForUserRecord(authResponse.user!.id);
 
       // 4. Kakao 사용자 정보 가져오기 (추가 프로필 데이터용)
       final kakaoUser = await kakao.UserApi.instance.me();
@@ -355,6 +355,9 @@ class SupabaseAuthRepository implements AuthRepository {
           'profile_image_url': naverAccount.profileImage,
           'last_login_at': DateTime.now().toIso8601String(),
         });
+
+        // BUG-2025-1119-006 FIX: Wait for INSERT to complete before consent record
+        await _waitForUserRecord(userId);
       } else {
         // 기존 사용자 업데이트
         await _supabase.from('users').update({
@@ -410,6 +413,35 @@ class SupabaseAuthRepository implements AuthRepository {
           .update(updates)
           .eq('id', userId);
     }
+  }
+
+  /// Wait for user record to be created in public.users table
+  ///
+  /// This method polls the users table to wait for the database trigger
+  /// to complete creating the user record. This prevents Race Condition
+  /// errors when trying to insert foreign key references (e.g., consent_records).
+  ///
+  /// Maximum wait time: 2 seconds (10 retries * 200ms)
+  /// Throws: Exception if user record is not created within timeout
+  Future<void> _waitForUserRecord(String userId) async {
+    for (int i = 0; i < 10; i++) {
+      final user = await _supabase
+          .from('users')
+          .select()
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (user != null) {
+        // User record exists, proceed
+        return;
+      }
+
+      // Wait 200ms before next attempt
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
+
+    // Timeout: user record not created after 2 seconds
+    throw Exception('User record not created after 2 seconds');
   }
 
   Future<void> _saveConsentRecord(
@@ -476,7 +508,19 @@ class SupabaseAuthRepository implements AuthRepository {
         'last_login_at': DateTime.now().toIso8601String(),
       });
 
-      // 3. Return domain user
+      // 3. Wait for user record to be created
+      // BUG-2025-1119-006 FIX: Ensure users INSERT completes before consent record
+      await _waitForUserRecord(authUser.id);
+
+      // 4. Save consent record (default: both consents true for email signup)
+      // BUG-2025-1119-006 FIX: Email signup was missing consent record
+      await _saveConsentRecord(
+        authUser.id,
+        true,  // terms_of_service: true (email signup implies agreement)
+        true,  // privacy_policy: true (email signup implies agreement)
+      );
+
+      // 5. Return domain user
       return domain.User(
         id: authUser.id,
         oauthProvider: 'email',
