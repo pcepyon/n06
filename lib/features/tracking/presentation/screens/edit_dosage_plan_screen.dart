@@ -1,27 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
+import 'package:n06/features/tracking/domain/entities/medication_template.dart';
 import 'package:n06/features/tracking/domain/usecases/analyze_plan_change_impact_usecase.dart';
 
 class EditDosagePlanScreen extends ConsumerWidget {
-  final DosagePlan? initialPlan;
-
   const EditDosagePlanScreen({
     super.key,
-    this.initialPlan,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final medicationState = ref.watch(medicationNotifierProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('투여 계획 수정'),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: _EditDosagePlanForm(initialPlan: initialPlan),
+        child: medicationState.when(
+          loading: () => const Center(
+            child: CircularProgressIndicator(),
+          ),
+          error: (error, stack) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('오류가 발생했습니다: $error'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    ref.invalidate(medicationNotifierProvider);
+                  },
+                  child: const Text('다시 시도'),
+                ),
+              ],
+            ),
+          ),
+          data: (state) {
+            final plan = state.activePlan;
+            if (plan == null) {
+              return const Center(
+                child: Text('활성 투여 계획이 없습니다.'),
+              );
+            }
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: _EditDosagePlanForm(initialPlan: plan),
+            );
+          },
         ),
       ),
     );
@@ -29,12 +59,12 @@ class EditDosagePlanScreen extends ConsumerWidget {
 }
 
 class _EditDosagePlanForm extends ConsumerStatefulWidget {
-  final DosagePlan? initialPlan;
+  final DosagePlan initialPlan;
 
   const _EditDosagePlanForm({
     // ignore: unused_element_parameter
     super.key,
-    this.initialPlan,
+    required this.initialPlan,
   });
 
   @override
@@ -42,66 +72,41 @@ class _EditDosagePlanForm extends ConsumerStatefulWidget {
 }
 
 class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
-  late TextEditingController _medicationNameController;
-  late TextEditingController _cycleDaysController;
-  late TextEditingController _initialDoseController;
+  MedicationTemplate? _selectedTemplate;
+  double? _selectedDose;
   late DateTime _selectedStartDate;
 
   @override
   void initState() {
     super.initState();
     final plan = widget.initialPlan;
-    _medicationNameController = TextEditingController(
-      text: plan?.medicationName ?? '',
-    );
-    _cycleDaysController = TextEditingController(
-      text: plan?.cycleDays.toString() ?? '7',
-    );
-    _initialDoseController = TextEditingController(
-      text: plan?.initialDoseMg.toString() ?? '0.25',
-    );
-    _selectedStartDate = plan?.startDate ?? DateTime.now();
-  }
 
-  @override
-  void dispose() {
-    _medicationNameController.dispose();
-    _cycleDaysController.dispose();
-    _initialDoseController.dispose();
-    super.dispose();
+    // Find matching template from existing medication name
+    _selectedTemplate = MedicationTemplate.findByName(plan.medicationName);
+    _selectedDose = plan.initialDoseMg;
+    _selectedStartDate = plan.startDate;
   }
 
   Future<void> _handleSave() async {
     try {
       // Validate inputs
-      if (_medicationNameController.text.trim().isEmpty) {
-        _showErrorSnackBar('약물명을 입력하세요');
+      if (_selectedTemplate == null) {
+        _showErrorSnackBar('약물을 선택하세요');
         return;
       }
 
-      final cycleDays = int.tryParse(_cycleDaysController.text);
-      if (cycleDays == null || cycleDays < 1) {
-        _showErrorSnackBar('투여 주기는 1일 이상이어야 합니다');
-        return;
-      }
-
-      final initialDose = double.tryParse(_initialDoseController.text);
-      if (initialDose == null || initialDose <= 0) {
-        _showErrorSnackBar('초기 용량은 0보다 커야 합니다');
+      if (_selectedDose == null) {
+        _showErrorSnackBar('용량을 선택하세요');
         return;
       }
 
       final plan = widget.initialPlan;
-      if (plan == null) {
-        _showErrorSnackBar('투여 계획이 로드되지 않았습니다');
-        return;
-      }
 
       // Create updated plan
       final updatedPlan = plan.copyWith(
-        medicationName: _medicationNameController.text.trim(),
-        cycleDays: cycleDays,
-        initialDoseMg: initialDose,
+        medicationName: _selectedTemplate!.displayName,
+        cycleDays: _selectedTemplate!.standardCycleDays,
+        initialDoseMg: _selectedDose!,
         startDate: _selectedStartDate,
         updatedAt: DateTime.now(),
       );
@@ -216,12 +221,63 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Medication Name
-        TextField(
-          controller: _medicationNameController,
-          decoration: InputDecoration(
+        // Medication Name - Dropdown
+        DropdownButtonFormField<MedicationTemplate>(
+          decoration: const InputDecoration(
             labelText: '약물명',
             border: OutlineInputBorder(),
+          ),
+          initialValue: _selectedTemplate,
+          items: MedicationTemplate.all.map((template) {
+            return DropdownMenuItem<MedicationTemplate>(
+              value: template,
+              child: Text(template.displayName),
+            );
+          }).toList(),
+          onChanged: (newTemplate) {
+            setState(() {
+              _selectedTemplate = newTemplate;
+              // Reset dose when medication changes
+              _selectedDose = null;
+            });
+          },
+        ),
+        const SizedBox(height: 16),
+
+        // Initial Dose - Dropdown
+        DropdownButtonFormField<double>(
+          decoration: const InputDecoration(
+            labelText: '초기 용량 (mg)',
+            border: OutlineInputBorder(),
+          ),
+          initialValue: _selectedDose,
+          items: _selectedTemplate?.availableDoses.map((dose) {
+            return DropdownMenuItem<double>(
+              value: dose,
+              child: Text('$dose mg'),
+            );
+          }).toList(),
+          onChanged: _selectedTemplate == null
+              ? null
+              : (newDose) {
+                  setState(() {
+                    _selectedDose = newDose;
+                  });
+                },
+        ),
+        const SizedBox(height: 16),
+
+        // Cycle Days - Read-only display
+        InputDecorator(
+          decoration: const InputDecoration(
+            labelText: '투여 주기',
+            border: OutlineInputBorder(),
+          ),
+          child: Text(
+            _selectedTemplate != null
+                ? '${_selectedTemplate!.standardCycleDays}일 (매주)'
+                : '-',
+            style: const TextStyle(fontSize: 16),
           ),
         ),
         const SizedBox(height: 16),
@@ -243,28 +299,6 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
               setState(() => _selectedStartDate = picked);
             }
           },
-        ),
-        const SizedBox(height: 16),
-
-        // Cycle Days
-        TextField(
-          controller: _cycleDaysController,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: '투여 주기 (일)',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Initial Dose
-        TextField(
-          controller: _initialDoseController,
-          keyboardType: TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            labelText: '초기 용량 (mg)',
-            border: OutlineInputBorder(),
-          ),
         ),
         const SizedBox(height: 32),
 

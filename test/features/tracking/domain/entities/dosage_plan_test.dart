@@ -85,7 +85,7 @@ void main() {
       });
 
       test(
-          'should throw exception when escalation exceeds max dose (2.4mg)',
+          'should throw exception when escalation dose is not positive',
           () {
         expect(
           () => DosagePlan(
@@ -96,7 +96,7 @@ void main() {
             cycleDays: 7,
             initialDoseMg: 2.0,
             escalationPlan: [
-              EscalationStep(weeksFromStart: 4, doseMg: 2.5), // 2.4 초과
+              EscalationStep(weeksFromStart: 4, doseMg: 0), // 0 or negative not allowed
             ],
           ),
           throwsArgumentError,

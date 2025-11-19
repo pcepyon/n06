@@ -5,7 +5,6 @@ export 'log_record_change_usecase.dart';
 export 'analyze_plan_change_impact_usecase.dart';
 export 'recalculate_dose_schedule_usecase.dart';
 export 'injection_site_rotation_usecase.dart';
-export 'validate_dosage_plan_usecase.dart';
 export 'schedule_generator_usecase.dart';
 export 'missed_dose_analyzer_usecase.dart';
 export 'dose_notification_usecase.dart';

@@ -1,7 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-const double maxDoseMg = 2.4;
-
 class EscalationStep extends Equatable {
   final int weeksFromStart;
   final double doseMg;
@@ -78,9 +76,9 @@ class DosagePlan extends Equatable {
         throw ArgumentError('Escalation plan must have monotonic increasing doses');
       }
 
-      // Check dose doesn't exceed max
-      if (step.doseMg > maxDoseMg) {
-        throw ArgumentError('Escalation dose cannot exceed ${maxDoseMg}mg');
+      // Check dose is positive
+      if (step.doseMg <= 0) {
+        throw ArgumentError('Escalation dose must be positive');
       }
 
       // Check weeks are in increasing order

@@ -17,7 +17,6 @@ import 'package:n06/features/tracking/domain/usecases/injection_site_rotation_us
 import 'package:n06/features/tracking/domain/usecases/missed_dose_analyzer_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/recalculate_dose_schedule_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/schedule_generator_usecase.dart';
-import 'package:n06/features/tracking/domain/usecases/validate_dosage_plan_usecase.dart';
 import 'package:n06/features/tracking/infrastructure/services/notification_service.dart';
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_tracking_repository.dart';
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_medication_repository.dart';
@@ -86,11 +85,6 @@ MissedDoseAnalyzerUseCase missedDoseAnalyzerUseCase(Ref ref) {
 
 // UF-009: UpdateDosagePlan UseCase Providers
 @riverpod
-ValidateDosagePlanUseCase validateDosagePlanUseCase(Ref ref) {
-  return ValidateDosagePlanUseCase();
-}
-
-@riverpod
 RecalculateDoseScheduleUseCase recalculateDoseScheduleUseCase(Ref ref) {
   return RecalculateDoseScheduleUseCase();
 }
@@ -104,13 +98,11 @@ AnalyzePlanChangeImpactUseCase analyzePlanChangeImpactUseCase(Ref ref) {
 @riverpod
 UpdateDosagePlanUseCase updateDosagePlanUseCase(Ref ref) {
   final medicationRepository = ref.watch(medicationRepositoryProvider);
-  final validateUseCase = ref.watch(validateDosagePlanUseCaseProvider);
   final analyzeImpactUseCase = ref.watch(analyzePlanChangeImpactUseCaseProvider);
   final recalculateScheduleUseCase = ref.watch(recalculateDoseScheduleUseCaseProvider);
 
   return UpdateDosagePlanUseCase(
     medicationRepository: medicationRepository,
-    validateUseCase: validateUseCase,
     analyzeImpactUseCase: analyzeImpactUseCase,
     recalculateScheduleUseCase: recalculateScheduleUseCase,
   );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
+import 'package:n06/features/tracking/domain/entities/medication_template.dart';
 
 /// 투여 계획 입력 폼
 class DosagePlanForm extends StatefulWidget {
@@ -13,9 +14,9 @@ class DosagePlanForm extends StatefulWidget {
 }
 
 class _DosagePlanFormState extends State<DosagePlanForm> {
-  late TextEditingController _medicationNameController;
-  late TextEditingController _cycleDaysController;
-  late TextEditingController _initialDoseController;
+  MedicationTemplate? _selectedTemplate;
+  double? _selectedDose;
+  bool _useStandardEscalation = true;
 
   DateTime? _startDate;
   final List<EscalationStep> _escalationSteps = [];
@@ -24,42 +25,29 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
   @override
   void initState() {
     super.initState();
-    _medicationNameController = TextEditingController();
-    _cycleDaysController = TextEditingController();
-    _initialDoseController = TextEditingController();
     _startDate = DateTime.now();
   }
 
-  @override
-  void dispose() {
-    _medicationNameController.dispose();
-    _cycleDaysController.dispose();
-    _initialDoseController.dispose();
-    super.dispose();
-  }
-
   bool _canProceed() {
-    final medicationName = _medicationNameController.text.trim();
-    final cycleDays = int.tryParse(_cycleDaysController.text);
-    final initialDose = double.tryParse(_initialDoseController.text);
-
-    if (medicationName.isEmpty) {
-      _errorMessage = '약물명을 입력해주세요.';
+    if (_selectedTemplate == null) {
+      _errorMessage = '약물을 선택해주세요.';
       return false;
     }
 
-    if (cycleDays == null || cycleDays <= 0) {
-      _errorMessage = '투여 주기는 양수여야 합니다.';
-      return false;
-    }
-
-    if (initialDose == null || initialDose <= 0) {
-      _errorMessage = '초기 용량은 양수여야 합니다.';
+    if (_selectedDose == null) {
+      _errorMessage = '초기 용량을 선택해주세요.';
       return false;
     }
 
     _errorMessage = null;
     return true;
+  }
+
+  List<EscalationStep>? _getEscalationPlan() {
+    if (_useStandardEscalation && _selectedTemplate != null) {
+      return _selectedTemplate!.standardEscalation;
+    }
+    return _escalationSteps.isEmpty ? null : _escalationSteps;
   }
 
   void _addEscalationStep() {
@@ -92,13 +80,29 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
           children: [
             const Text('투여 계획 설정', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 32),
-            TextField(
-              controller: _medicationNameController,
-              onChanged: (_) => setState(() {}), // 입력 변경 시 UI 업데이트
+            DropdownButtonFormField<MedicationTemplate>(
+              key: ValueKey(_selectedTemplate),
+              value: _selectedTemplate, // ignore: deprecated_member_use
               decoration: InputDecoration(
                 labelText: '약물명',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
+              items: MedicationTemplate.all.map((template) {
+                return DropdownMenuItem(
+                  value: template,
+                  child: Text(template.displayName),
+                );
+              }).toList(),
+              onChanged: (template) {
+                setState(() {
+                  _selectedTemplate = template;
+                  // Auto-fill with recommended start dose
+                  _selectedDose = template?.recommendedStartDose;
+                  // Reset escalation steps when changing medication
+                  _escalationSteps.clear();
+                  _useStandardEscalation = true;
+                });
+              },
             ),
             const SizedBox(height: 16),
             ListTile(
@@ -119,55 +123,88 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
               },
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _cycleDaysController,
-              onChanged: (_) => setState(() {}), // 입력 변경 시 UI 업데이트
-              keyboardType: TextInputType.number,
+            TextFormField(
+              initialValue: _selectedTemplate?.standardCycleDays.toString() ?? '7',
+              enabled: false,
               decoration: InputDecoration(
                 labelText: '투여 주기 (일)',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                filled: true,
+                fillColor: Colors.grey.shade100,
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _initialDoseController,
-              onChanged: (_) => setState(() {}), // 입력 변경 시 UI 업데이트
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            DropdownButtonFormField<double>(
+              key: ValueKey(_selectedDose),
+              value: _selectedDose, // ignore: deprecated_member_use
               decoration: InputDecoration(
                 labelText: '초기 용량 (mg)',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
+              items: _selectedTemplate?.availableDoses.map((dose) {
+                return DropdownMenuItem(
+                  value: dose,
+                  child: Text('${dose}mg'),
+                );
+              }).toList(),
+              onChanged: _selectedTemplate == null
+                  ? null
+                  : (dose) {
+                      setState(() {
+                        _selectedDose = dose;
+                      });
+                    },
             ),
             const SizedBox(height: 24),
-            if (_escalationSteps.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('증량 계획', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _escalationSteps.length,
-                    itemBuilder: (context, index) {
-                      final step = _escalationSteps[index];
-                      return ListTile(
-                        title: Text('${step.weeksFromStart}주차 → ${step.doseMg}mg'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () => _removeEscalationStep(index),
-                        ),
-                      );
+            CheckboxListTile(
+              title: const Text('표준 증량 계획 사용'),
+              subtitle: _selectedTemplate != null
+                  ? Text('${_selectedTemplate!.standardEscalation.length}단계 FDA/MFDS 승인 계획')
+                  : null,
+              value: _useStandardEscalation,
+              onChanged: _selectedTemplate == null
+                  ? null
+                  : (value) {
+                      setState(() {
+                        _useStandardEscalation = value ?? true;
+                        if (value == true) {
+                          _escalationSteps.clear();
+                        }
+                      });
                     },
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              ),
-            ElevatedButton.icon(
-              onPressed: _addEscalationStep,
-              icon: const Icon(Icons.add),
-              label: const Text('증량 단계 추가'),
             ),
+            if (!_useStandardEscalation) ...[
+              const SizedBox(height: 8),
+              if (_escalationSteps.isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('수동 증량 계획', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _escalationSteps.length,
+                      itemBuilder: (context, index) {
+                        final step = _escalationSteps[index];
+                        return ListTile(
+                          title: Text('${step.weeksFromStart}주차 → ${step.doseMg}mg'),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () => _removeEscalationStep(index),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ElevatedButton.icon(
+                onPressed: _addEscalationStep,
+                icon: const Icon(Icons.add),
+                label: const Text('증량 단계 추가'),
+              ),
+            ],
             const SizedBox(height: 24),
             if (_errorMessage != null)
               Container(
@@ -187,11 +224,11 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
                     ? () {
                         // 데이터를 부모 위젯에 전달
                         widget.onDataChanged(
-                          _medicationNameController.text.trim(),
+                          _selectedTemplate!.displayName,
                           _startDate ?? DateTime.now(),
-                          int.parse(_cycleDaysController.text),
-                          double.parse(_initialDoseController.text),
-                          _escalationSteps,
+                          _selectedTemplate!.standardCycleDays,
+                          _selectedDose!,
+                          _getEscalationPlan(),
                         );
                         widget.onNext();
                       }

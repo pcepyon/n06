@@ -2,7 +2,6 @@ import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/tracking/domain/repositories/medication_repository.dart';
 import 'package:n06/features/tracking/domain/usecases/analyze_plan_change_impact_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/recalculate_dose_schedule_usecase.dart';
-import 'package:n06/features/tracking/domain/usecases/validate_dosage_plan_usecase.dart';
 
 /// Result of updating a dosage plan
 class UpdateDosagePlanResult {
@@ -26,20 +25,19 @@ class UpdateDosagePlanResult {
 }
 
 /// Orchestrates the dosage plan update workflow:
-/// 1. Validate the new plan
-/// 2. Analyze impact of changes
-/// 3. Save plan and change history
-/// 4. Recalculate schedules
-/// 5. Delete future schedules and save new ones
+/// 1. Analyze impact of changes
+/// 2. Save plan and change history
+/// 3. Recalculate schedules
+/// 4. Delete future schedules and save new ones
+///
+/// Note: Validation is handled by DosagePlan entity constructor and UI constraints
 class UpdateDosagePlanUseCase {
   final MedicationRepository medicationRepository;
-  final ValidateDosagePlanUseCase validateUseCase;
   final AnalyzePlanChangeImpactUseCase analyzeImpactUseCase;
   final RecalculateDoseScheduleUseCase recalculateScheduleUseCase;
 
   UpdateDosagePlanUseCase({
     required this.medicationRepository,
-    required this.validateUseCase,
     required this.analyzeImpactUseCase,
     required this.recalculateScheduleUseCase,
   });
@@ -50,27 +48,19 @@ class UpdateDosagePlanUseCase {
     required DosagePlan newPlan,
   }) async {
     try {
-      // Step 1: Validate new plan
-      final validation = validateUseCase.validate(newPlan);
-      if (!validation.isValid) {
-        return UpdateDosagePlanResult.failure(
-          validation.errorMessage ?? '투여 계획이 유효하지 않습니다',
-        );
-      }
-
-      // Step 2: Analyze impact
+      // Step 1: Analyze impact
       final impact = analyzeImpactUseCase.execute(
         oldPlan: oldPlan,
         newPlan: newPlan,
         fromDate: DateTime.now(),
       );
 
-      // Step 3: Early exit if no changes
+      // Step 2: Early exit if no changes
       if (!impact.hasChanges) {
         return UpdateDosagePlanResult.success(impact: impact);
       }
 
-      // Step 4: Save plan and change history in transaction
+      // Step 3: Save plan and change history in transaction
       final oldPlanMap = _serializePlan(oldPlan);
       final newPlanMap = _serializePlan(newPlan);
 
@@ -81,7 +71,7 @@ class UpdateDosagePlanUseCase {
         newPlanMap,
       );
 
-      // Step 5: Recalculate and update schedules
+      // Step 4: Recalculate and update schedules
       await medicationRepository.deleteDoseSchedulesFrom(
         newPlan.id,
         DateTime.now(),
