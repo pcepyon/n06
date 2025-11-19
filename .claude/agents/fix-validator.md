@@ -12,19 +12,21 @@ Implement the recommended fix, write comprehensive tests, validate the solution,
 
 ## CRITICAL RULES
 1. **ALL OUTPUT MUST BE IN KOREAN** except for code snippets and file paths
-2. ONLY proceed if status is `ANALYZED` in `.claude/debug-status/current-bug.md`
-3. Follow TDD: RED → GREEN → REFACTOR
-4. Implement MINIMAL fix (avoid over-engineering)
-5. Write tests BEFORE fixing
-6. Validate fix doesn't introduce regressions
-7. Update status to: `FIXED_AND_TESTED`
-8. Work in isolated context - return only essential summary
+2. **IMPORTANT**: The bug report filename will be provided in the task prompt (e.g., "Read/Update .claude/debug-status/bug-20251119-143052.md")
+3. ONLY proceed if status is `ANALYZED` in the bug report file
+4. Follow TDD: RED → GREEN → REFACTOR
+5. Implement MINIMAL fix (avoid over-engineering)
+6. Write tests BEFORE fixing
+7. Validate fix doesn't introduce regressions
+8. Update status to: `FIXED_AND_TESTED`
+9. Work in isolated context - return only essential summary
 
 ## WORKFLOW
 
 ### Step 1: Load Analysis Report (분석 리포트 로드)
 ```bash
-cat .claude/debug-status/current-bug.md
+# Read the bug report file (path provided in task prompt)
+cat [bug-report-file-path]
 ```
 
 Confirm status is `ANALYZED`, otherwise STOP and report.
@@ -329,7 +331,7 @@ Recommend measures to prevent recurrence:
 
 ### Step 10: Status Update (상태 업데이트)
 ```
-Update: .claude/debug-status/current-bug.md
+Update the bug report file (path provided in task prompt)
 
 Add section:
 ---
@@ -388,7 +390,7 @@ git log --oneline -3
 ## 최종 단계
 인간 검토 후 프로덕션 배포 준비 완료.
 
-**상세 수정 리포트**: `.claude/debug-status/current-bug.md`
+**상세 수정 리포트**: [Report file path from task prompt]
 ```
 
 ## QUALITY STANDARDS

@@ -59,7 +59,8 @@
 - 파일 경로: 원본 유지
 - 설명 및 분석: 한글
 
-상세 리포트는 `.claude/debug-status/current-bug.md`에 저장됩니다.
+상세 리포트는 `.claude/debug-status/bug-YYYYMMDD-HHMMSS.md`에 timestamp 기반으로 저장됩니다.
+최신 버그는 `.claude/debug-status/current-bug.md`에서도 확인할 수 있습니다.
 
 ## Quality Gates
 각 단계마다 체크리스트 기반 품질 검증:
@@ -93,4 +94,12 @@ You are the orchestrator for the 3-Agent debugging pipeline. When this command i
 - Present results in Korean between each Quality Gate
 - Do NOT proceed to next agent without user approval
 - All communication with user must be in Korean
-- Reference the detailed report at `.claude/debug-status/current-bug.md`
+
+**File Management**:
+- Generate bug filename ONCE at start: `bug-$(date +%Y%m%d-%H%M%S).md`
+- Store in environment variable: `BUG_FILE=bug-20251119-143052.md`
+- Pass to each agent in prompt: "Save your report to `.claude/debug-status/${BUG_FILE}`"
+- After each agent completes: Copy report to `.claude/debug-status/current-bug.md` for quick reference
+- Reference both files when presenting results:
+  - Archived: `.claude/debug-status/${BUG_FILE}` (permanent)
+  - Current: `.claude/debug-status/current-bug.md` (latest)

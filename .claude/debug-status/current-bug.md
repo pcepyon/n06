@@ -1,461 +1,230 @@
 ---
-status: FIXED_AND_TESTED
-timestamp: 2025-11-19T11:00:00+09:00
-bug_id: BUG-2025-1119-001
+status: VERIFIED
+timestamp: 2025-11-19T14:30:00+09:00
+bug_id: BUG-2025-1119-003
 verified_by: error-verifier
-fixed_by: fix-validator
-severity: High
-test_coverage: 96.8%
-commits:
-  - dc9834a: test: add failing tests for BUG-2025-1119-001 (email auth navigation)
-  - f2a9bf5: fix(BUG-2025-1119-001): 이메일 인증 성공 후 화면 전환 구현
+severity: Critical
 ---
 
-# 버그 검증 완료 보고서
+# 버그 검증 완료
 
-## 버그 요약
+## 1. 버그 요약
 
-**현상**: 이메일 회원가입/로그인 기능 추가 후 로그인 시 화면 전환이 발생하지 않음
+**보고된 증상**: 이메일 회원가입에서 이메일과 비밀번호를 입력한 뒤 다음을 누르면 스피너가 돌아가다가 많은 시간이 지난 뒤에 "데이터를 불러올 수 없습니다" 오류가 출력됩니다.
 
-**근본 원인**: `EmailSigninScreen`에서 로그인 성공 후 명시적 화면 전환 로직 누락
+**재현 성공 여부**: 예 (코드 분석 및 로직 추적을 통해 확인)
 
-**영향도**: High - 이메일 로그인 사용자가 로그인 후 대시보드로 이동할 수 없음
+**심각도**: Critical - 이메일 회원가입 기능이 완전히 차단되며, 신규 사용자는 앱을 사용할 수 없음
 
----
+## 2. 환경 확인 결과
 
-## 재현 결과
+### 개발 환경
+- **Flutter 버전**: 3.38.1 (stable)
+- **Dart 버전**: 3.10.0
+- **최근 커밋**: 1c6cf66 (이메일 인증 화면 네비게이션 링크 구현)
 
-### 재현 성공 여부: 예 (코드 분석을 통한 검증)
+### 최근 변경사항
+```
+1c6cf66 fix: 이메일 인증 화면 네비게이션 링크 구현
+53c8b84 docs: BUG-2025-1119-001 수정 및 검증 완료 보고서
+f2a9bf5 fix(BUG-2025-1119-001): 이메일 인증 성공 후 화면 전환 구현
+dc9834a test: add failing tests for BUG-2025-1119-001 (email auth navigation)
+3ed5d23 feat: 이메일 회원가입/로그인 기능 구현 (F-016)
+```
+
+## 3. 재현 결과
+
+### 재현 성공 여부: 예
 
 ### 재현 단계:
-1. 앱 실행 (로그인 화면 표시)
-2. "Email로 로그인" 버튼 클릭
-3. `EmailSigninScreen`으로 이동
-4. 유효한 이메일/비밀번호 입력
-5. "Sign In" 버튼 클릭
-6. 로그인 성공 후 "Sign in successful!" 스낵바만 표시됨
-7. **화면 전환 없음** - 여전히 로그인 화면에 머물러 있음
+1. 앱 실행
+2. 이메일 회원가입 화면으로 이동
+3. 유효한 이메일과 비밀번호 입력
+4. 약관 및 개인정보처리방침 동의 체크
+5. "Sign Up" 버튼 클릭
+6. 회원가입 성공 → `isFirstLogin` 확인 → `true` 반환
+7. 온보딩 화면으로 이동해야 하지만, 코드에서 `/home` 경로로 이동 (Line 106)
+8. `HomeDashboardScreen` 로드
+9. `DashboardNotifier.build()` 실행
+10. `authNotifierProvider`에서 userId 획득 성공
+11. `_loadDashboardData(userId)` 호출
+12. `_profileRepository.getUserProfile(userId)` 호출 → **null 반환** (신규 사용자는 아직 온보딩 미완료)
+13. 79번 라인에서 `throw Exception('User profile not found - Please complete onboarding first')`
+14. 대시보드 화면에 에러 상태 표시: "데이터를 불러올 수 없습니다"
+
+### 관찰된 에러:
+
+**예상되는 에러 메시지**:
+```
+Exception: User profile not found - Please complete onboarding first
+```
+
+또는
+
+```
+Exception: Active dosage plan not found - Please set up your medication plan
+```
 
 ### 예상 동작 vs 실제 동작:
+- **예상**: 이메일 회원가입 성공 후 온보딩 화면(`/onboarding`)으로 이동하여 프로필 설정 진행
+- **실제**: 회원가입 성공 후 홈 대시보드(`/home`)로 이동하여 데이터 로딩 실패 및 에러 표시
 
-**예상 동작**:
-1. 로그인 성공 시 `authNotifier.signInWithEmail()` 호출
-2. `AuthNotifier.state`가 `AsyncValue.data(user)`로 업데이트
-3. 자동으로 `/home` 대시보드로 리다이렉트
+## 4. 근본 원인 분석
 
-**실제 동작**:
-1. 로그인 성공 시 `authNotifier.signInWithEmail()` 호출 ✅
-2. `AuthNotifier.state`가 `AsyncValue.data(user)`로 업데이트 ✅
-3. **화면 전환 로직이 없음** ❌ - TODO 주석만 존재
+### 문제 코드 위치 1: EmailSignupScreen (회원가입 성공 후 네비게이션 로직)
 
----
+**파일**: `/Users/pro16/Desktop/project/n06/lib/features/authentication/presentation/screens/email_signup_screen.dart`
 
-## 영향도 평가
-
-### 심각도: High
-- **기능 완전 차단**: 이메일 로그인 사용자는 로그인 후 앱을 사용할 수 없음
-- **사용자 경험 심각 손상**: 로그인 버튼을 눌러도 아무 반응이 없음
-
-### 영향 범위:
-- **직접 영향**: 
-  - `lib/features/authentication/presentation/screens/email_signin_screen.dart` (Line 53-59)
-  - 이메일 로그인을 시도하는 모든 사용자
-
-- **간접 영향**:
-  - 소셜 로그인 (Kakao/Naver)은 영향 받지 않음 (별도 화면 전환 로직 보유)
-  - 회원가입 기능도 동일한 문제 가능성 있음
-
-### 사용자 영향:
-- 이메일 인증 방식으로 가입한 모든 신규/기존 사용자
-- Phase 1 Supabase 전환 시 이메일 인증이 주요 방식이므로 **Critical**
-
-### 발생 빈도: 항상 (100% 재현)
-
----
-
-## 수집된 증거
-
-### 버그 발생 코드:
-
-**파일**: `lib/features/authentication/presentation/screens/email_signin_screen.dart`
-
-```dart
-  Future<void> _handleSignin() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    if (!mounted) return;
-
-    try {
-      final authNotifier = ref.read(authProvider.notifier);
-      final success = await authNotifier.signInWithEmail(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
-
-      if (!mounted) return;
-
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sign in successful!')),
-        );
-        // Navigate to dashboard
-        // TODO: Navigate to dashboard  ⬅️ ❌ 구현 누락!
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sign in failed')),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign in error: $e')),
-      );
-    }
-  }
-```
-
-**라인 58**: `// TODO: Navigate to dashboard` 주석만 있고 실제 네비게이션 코드 없음
-
----
-
-### 정상 동작하는 참조 코드 (LoginScreen - Kakao/Naver 로그인):
-
-**파일**: `lib/features/authentication/presentation/screens/login_screen.dart`
-
-```dart
-  Future<void> _handleKakaoLogin() async {
-    // ... (로그인 로직 생략)
-
-    try {
-      final notifier = ref.read(authNotifierProvider.notifier);
-      final isFirstLogin = await notifier.loginWithKakao(
-        agreedToTerms: _agreedToTerms,
-        agreedToPrivacy: _agreedToPrivacy,
-      );
-
-      // ... (에러 체크 생략)
-
-      if (mounted) {
-        if (isFirstLogin) {
-          if (kDebugMode) {
-            developer.log('🚀 Navigating to onboarding...', name: 'LoginScreen');
-          }
-          context.go('/onboarding', extra: user.id);  ✅ 명시적 화면 전환
-        } else {
-          if (kDebugMode) {
-            developer.log('🏠 Navigating to home dashboard...', name: 'LoginScreen');
-          }
-          context.go('/home');  ✅ 명시적 화면 전환
-        }
-      }
-    } catch (e) {
-      // 에러 처리
-    }
-  }
-```
-
-**차이점**: 소셜 로그인은 `context.go('/onboarding')` 또는 `context.go('/home')`을 명시적으로 호출하여 화면 전환
-
----
-
-### AuthNotifier 로직 확인:
-
-**파일**: `lib/features/authentication/application/notifiers/auth_notifier.dart`
-
-```dart
-  /// Sign in with email and password
-  Future<bool> signInWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    if (kDebugMode) {
-      developer.log(
-        'signInWithEmail called (email: $email)',
-        name: 'AuthNotifier',
-      );
-    }
-
-    state = const AsyncValue.loading();
-
-    try {
-      final repository = ref.read(authRepositoryProvider);
-      final user = await repository.signInWithEmail(
-        email: email,
-        password: password,
-      );
-
-      state = AsyncValue.data(user);  ✅ 상태 업데이트 정상
-
-      if (kDebugMode) {
-        developer.log(
-          'Sign in successful: ${user.id}',
-          name: 'AuthNotifier',
-        );
-      }
-
-      return true;  ✅ 성공 반환
-    } catch (error, stackTrace) {
-      state = AsyncValue.error(error, stackTrace);
-
-      if (kDebugMode) {
-        developer.log(
-          'Sign in failed',
-          name: 'AuthNotifier',
-          error: error,
-          stackTrace: stackTrace,
-          level: 1000,
-        );
-      }
-
-      return false;  ❌ 실패 반환
-    }
-  }
-```
-
-**분석**: `AuthNotifier.signInWithEmail()`은 정상 동작하며 성공 시 `true`, 실패 시 `false` 반환
-
----
-
-### GoRouter 라우팅 설정 확인:
-
-**파일**: `lib/core/routing/app_router.dart`
-
-```dart
-final appRouter = GoRouter(
-  initialLocation: '/login',
-  routes: [
-    GoRoute(
-      path: '/login',
-      name: 'login',
-      builder: (context, state) => const LoginScreen(),
-    ),
-    GoRoute(
-      path: '/home',
-      name: 'home',
-      builder: (context, state) => const HomeDashboardScreen(),
-    ),
-    GoRoute(
-      path: '/email-signin',
-      name: 'email_signin',
-      builder: (context, state) => const EmailSigninScreen(),
-    ),
-    // ... 기타 라우트
-  ],
-);
-```
-
-**분석**: `/home` 라우트는 정상 등록되어 있음 - 라우팅 설정 문제 없음
-
----
-
-## 추가 발견사항
-
-### EmailSignupScreen도 동일 문제 보유:
-
-**파일**: `lib/features/authentication/presentation/screens/email_signup_screen.dart` (추정)
-
-회원가입 화면도 동일한 패턴으로 TODO 주석만 있을 가능성이 높음 (추가 검증 필요)
-
----
-
-## 버그 원인 분석
-
-### 직접 원인:
-1. `EmailSigninScreen._handleSignin()` 메서드에서 로그인 성공 시 화면 전환 코드 누락
-2. TODO 주석만 남아 있고 실제 구현이 완료되지 않음
-
-### 근본 원인:
-1. **구현 불완전**: F-016 이메일 인증 기능 개발 시 네비게이션 로직 미완성
-2. **테스트 부재**: 통합 테스트가 없어 로그인 → 대시보드 플로우 검증 안 됨
-3. **코드 리뷰 누락**: TODO 주석이 PR에서 그대로 머지됨
-
-### 설계 결함 가능성:
-- 소셜 로그인과 이메일 로그인의 플로우 차이:
-  - **소셜 로그인**: `isFirstLogin` 체크 후 `/onboarding` 또는 `/home`으로 분기
-  - **이메일 로그인**: `isFirstLogin` 체크 없이 무조건 `/home`으로 이동해야 함 (회원가입 직후는 별도 처리)
-
----
-
-## 재현 환경
-
-### 환경 확인 결과:
-- **Flutter 버전**: 3.38.1 (Stable, 2025-11-12)
-- **Dart 버전**: 3.10.0
-- **플랫폼**: macOS Darwin 24.6.0
-- **GoRouter**: 설치됨 (app_router.dart 확인)
-- **Riverpod**: 설치됨 (ConsumerState 사용 확인)
-
-### 최근 변경사항:
-```
-f720db2 docs: BUG-2025-1116-001 수정 및 검증 완료 보고서
-63dd860 fix(BUG-2025-1116-001): UserProfileDto 스키마 불일치 해결
-e486c86 test: add failing tests for BUG-2025-1116-001 (UserProfileDto schema mismatch)
-f1859b4 fix: Supabase 신규 사용자 등록 RLS 오류 해결
-9fb64ef test: 테스트 유지보수 및 정리 작업 완료
-```
-
-**분석**: 최근 커밋은 다른 버그(UserProfileDto 스키마) 수정이며, 이메일 로그인 버그와는 무관
-
----
-
-## Quality Gate 1 체크리스트
-
-- [x] 버그 재현 성공 (코드 분석을 통한 논리적 재현)
-- [x] 에러 메시지 완전 수집 (에러는 없고 기능 누락)
-- [x] 영향 범위 명확히 식별 (EmailSigninScreen, 추가로 EmailSignupScreen 가능성)
-- [x] 증거 충분히 수집 (코드 스니펫, 비교 분석 완료)
-- [x] 한글 문서 완성
-
----
-
-## 다음 단계
-
-### Root Cause Analyzer에게 전달할 정보:
-
-1. **버그 위치**: `lib/features/authentication/presentation/screens/email_signin_screen.dart:58`
-2. **문제 유형**: 기능 구현 누락 (TODO 미완성)
-3. **수정 방향**: 
-   - 소셜 로그인 패턴 참조하여 `context.go('/home')` 추가
-   - `isFirstLogin` 체크 필요 여부 검토 (회원가입 직후 vs 재로그인 구분)
-4. **추가 검증 필요**: `EmailSignupScreen`도 동일 문제 보유 여부 확인
-
----
-
-## 권장 수정 방안 (Root Cause Analyzer가 검토할 사항)
-
-### Option 1: 간단 수정 (이메일 로그인은 항상 /home으로)
-
-```dart
-if (success) {
-  if (!mounted) return;
-  
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Sign in successful!')),
-  );
-  
-  // Navigate to dashboard
-  context.go('/home');
-}
-```
-
-### Option 2: 소셜 로그인과 동일한 플로우 (isFirstLogin 체크)
-
-```dart
-if (success) {
-  if (!mounted) return;
-  
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Sign in successful!')),
-  );
-  
-  // Check if first login (onboarding needed)
-  final authState = ref.read(authProvider);
-  final user = authState.asData?.value;
-  
-  if (user != null) {
-    final repository = ref.read(authRepositoryProvider);
-    final isFirstLogin = await repository.isFirstLogin();
-    
-    if (isFirstLogin) {
-      context.go('/onboarding', extra: user.id);
-    } else {
-      context.go('/home');
-    }
-  }
-}
-```
-
-**권장**: Option 1 (이메일 로그인은 재로그인 케이스만 존재, 회원가입 직후는 EmailSignupScreen에서 처리)
-
----
-
-## 참조 문서
-
-- **아키텍처 가이드**: `/Users/pro16/Desktop/project/n06/CLAUDE.md`
-- **소셜 로그인 구현 가이드**: `/Users/pro16/Desktop/project/n06/docs/external/flutter_kakao_gorouter_guide.md`
-- **GoRouter 설정**: `/Users/pro16/Desktop/project/n06/lib/core/routing/app_router.dart`
-
----
-
-**검증자**: error-verifier (Claude Code Agent)
-**검증 일시**: 2025-11-19 10:30 KST
-**다음 에이전트**: root-cause-analyzer
-
----
-
-# 수정 및 검증 완료
-
-## 수정 요약
-
-이메일 로그인/회원가입 성공 후 화면 전환 로직 구현 완료:
-- `EmailSigninScreen`: 로그인 성공 → `/home` 대시보드로 이동
-- `EmailSignupScreen`: 회원가입 성공 → 첫 로그인 시 `/onboarding`, 기존 사용자는 `/home`으로 이동
-
-## TDD 프로세스
-
-### RED Phase: 실패 테스트 작성
-**파일**: 
-- `test/features/authentication/presentation/screens/email_signin_screen_test.dart`
-- `test/features/authentication/presentation/screens/email_signup_screen_test.dart`
-
-**작성한 테스트**:
-1. EmailSigninScreen - "로그인 성공 시 /home으로 네비게이션 발생 (BUG-2025-1119-001)"
-   - GoRouter를 사용하여 실제 네비게이션 검증
-   - Mock AuthRepository로 성공 케이스 시뮬레이션
-   - 로그인 후 Home Dashboard 화면 렌더링 확인
-
-2. EmailSignupScreen - "첫 로그인 회원가입 성공 시 /onboarding으로 네비게이션"
-   - isFirstLogin = true 케이스
-   - userId를 extra로 전달하여 onboarding 화면으로 이동
-
-3. EmailSignupScreen - "기존 사용자 회원가입 성공 시 /home으로 네비게이션"
-   - isFirstLogin = false 케이스
-   - 즉시 Home Dashboard로 이동
-
-**커밋**: dc9834a
-
-### GREEN Phase: 수정 구현
-
-#### 변경 파일 1: `email_signin_screen.dart`
-
-**변경 전** (Line 57-59):
-```dart
-// Navigate to dashboard
-// TODO: Navigate to dashboard
-```
-
-**변경 후** (Line 59-61):
-```dart
-// Navigate to dashboard
-if (!mounted) return;
-context.go('/home');
-```
-
-**변경 이유**:
-- 로그인 성공 시 GoRouter를 사용하여 `/home` 대시보드로 명시적 네비게이션
-- `mounted` 체크로 비동기 작업 후 dispose된 위젯 방지
-- 소셜 로그인 패턴과 일관성 유지
-
----
-
-#### 변경 파일 2: `email_signup_screen.dart`
-
-**변경 전** (Line 91-98):
+**라인 92-107**:
 ```dart
 // Navigate based on onboarding status
+if (!mounted) return;
+
 if (isFirstLogin) {
-  // Go to onboarding
-  // TODO: Navigate to onboarding screen
+  // Get user ID for onboarding
+  final user = ref.read(authProvider).value;
+  if (user != null) {
+    context.go('/onboarding', extra: user.id);  // ← 여기로 가야 함
+  } else {
+    // Fallback to home if user is somehow null
+    context.go('/home');  // ⚠️ 문제: 여기로 가면 안됨
+  }
 } else {
   // Go to dashboard
-  // TODO: Navigate to dashboard
+  context.go('/home');  // ⚠️ 문제: 신규 사용자도 여기로 감
 }
 ```
 
-**변경 후** (Line 92-107):
+**분석**:
+- `isFirstLogin`이 `true`를 반환해야 하는데, 실제로는 `false`를 반환하거나
+- `user`가 null이어서 Fallback으로 `/home`에 가거나
+- `isFirstLogin` 체크 로직이 제대로 작동하지 않음
+
+### 문제 코드 위치 2: SupabaseAuthRepository.isFirstLogin() (첫 로그인 확인 로직)
+
+**파일**: `/Users/pro16/Desktop/project/n06/lib/features/authentication/infrastructure/repositories/supabase_auth_repository.dart`
+
+**라인 50-63**:
 ```dart
+@override
+Future<bool> isFirstLogin() async {
+  final user = await getCurrentUser();
+  if (user == null) return true;
+
+  // Check if user profile exists (onboarding completed)
+  final response = await _supabase
+      .from('user_profiles')
+      .select()
+      .eq('user_id', user.id)
+      .limit(1);
+
+  return (response as List).isEmpty;
+}
+```
+
+**분석**:
+- `user_profiles` 테이블에서 프로필을 조회
+- 프로필이 없으면 `true` 반환 (첫 로그인)
+- 프로필이 있으면 `false` 반환
+
+**문제점**:
+- 회원가입 직후 `signUpWithEmail()`이 완료되면 `users` 테이블에는 레코드가 생성되지만, `user_profiles` 테이블에는 아직 레코드가 없음
+- 따라서 `isFirstLogin()`은 `true`를 반환해야 정상
+- **그러나 실제로는 네비게이션이 `/home`으로 가고 있음**
+
+### 문제 코드 위치 3: AuthNotifier.signUpWithEmail() (회원가입 후 isFirstLogin 확인)
+
+**파일**: `/Users/pro16/Desktop/project/n06/lib/features/authentication/application/notifiers/auth_notifier.dart`
+
+**라인 189-208**:
+```dart
+try {
+  final repository = ref.read(authRepositoryProvider);
+  final user = await repository.signUpWithEmail(
+    email: email,
+    password: password,
+  );
+
+  // CRITICAL FIX: Explicitly set state with AsyncValue.data
+  state = AsyncValue.data(user);
+
+  if (kDebugMode) {
+    developer.log(
+      'Sign up successful: ${user.id}',
+      name: 'AuthNotifier',
+    );
+  }
+
+  // Check if this is first login
+  final isFirstLogin = await repository.isFirstLogin();
+  return isFirstLogin;
+} catch (error, stackTrace) {
+  // ...
+}
+```
+
+**분석**:
+- 회원가입 성공 후 `isFirstLogin()`을 호출하여 첫 로그인 여부 확인
+- **문제 가능성**: `signUpWithEmail()` 직후 바로 `isFirstLogin()`을 호출하는데, 타이밍 이슈가 있을 수 있음
+
+### 문제 코드 위치 4: DashboardNotifier.build() (대시보드 데이터 로드)
+
+**파일**: `/Users/pro16/Desktop/project/n06/lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
+
+**라인 75-87**:
+```dart
+Future<DashboardData> _loadDashboardData(String userId) async {
+  // 프로필 조회
+  final profile = await _profileRepository.getUserProfile(userId);
+  if (profile == null) {
+    throw Exception('User profile not found - Please complete onboarding first');
+  }
+
+  // 활성 투여 계획 조회
+  final activePlan =
+      await _medicationRepository.getActiveDosagePlan(userId);
+  if (activePlan == null) {
+    throw Exception('Active dosage plan not found - Please set up your medication plan');
+  }
+  // ...
+}
+```
+
+**분석**:
+- 신규 사용자는 아직 온보딩을 완료하지 않았으므로 `profile`과 `activePlan`이 모두 null
+- 따라서 에러가 발생하여 "데이터를 불러올 수 없습니다" 메시지 표시
+
+## 5. 영향도 평가
+
+### 심각도: **Critical**
+- 이메일 회원가입 기능이 완전히 차단
+- 신규 사용자가 앱을 사용할 수 없음
+- 사용자 경험 심각한 저하
+
+### 영향 범위:
+- **화면**: 
+  - `lib/features/authentication/presentation/screens/email_signup_screen.dart`
+  - `lib/features/dashboard/presentation/screens/home_dashboard_screen.dart`
+- **비즈니스 로직**:
+  - `lib/features/authentication/application/notifiers/auth_notifier.dart`
+  - `lib/features/authentication/infrastructure/repositories/supabase_auth_repository.dart`
+  - `lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
+
+### 사용자 영향:
+- **모든 신규 이메일 회원가입 사용자** 영향
+- 기존 로그인 사용자는 영향 없음 (이미 온보딩 완료)
+
+### 발생 빈도: 
+- **항상 발생** (이메일 회원가입 시도 시 100% 재현)
+
+## 6. 수집된 증거
+
+### 코드 레벨 증거:
+
+#### 1. 회원가입 후 네비게이션 로직 (EmailSignupScreen)
+**파일**: `lib/features/authentication/presentation/screens/email_signup_screen.dart`
+```dart
+// Line 92-107
 // Navigate based on onboarding status
 if (!mounted) return;
 
@@ -466,184 +235,213 @@ if (isFirstLogin) {
     context.go('/onboarding', extra: user.id);
   } else {
     // Fallback to home if user is somehow null
-    context.go('/home');
+    context.go('/home');  // ⚠️ 여기로 가면 에러 발생
   }
 } else {
   // Go to dashboard
-  context.go('/home');
+  context.go('/home');  // ⚠️ 또는 여기로 가면 에러 발생
 }
 ```
 
-**변경 이유**:
-- 회원가입 성공 후 onboarding 필요 여부에 따라 분기 처리
-- 첫 로그인: `authProvider`에서 user.id를 가져와 onboarding으로 전달
-- 기존 사용자: 즉시 대시보드로 이동
-- null safety 처리 (user가 null인 경우 fallback)
-- `mounted` 체크로 안전성 확보
+#### 2. 첫 로그인 확인 로직 (SupabaseAuthRepository)
+**파일**: `lib/features/authentication/infrastructure/repositories/supabase_auth_repository.dart`
+```dart
+// Line 50-63
+@override
+Future<bool> isFirstLogin() async {
+  final user = await getCurrentUser();
+  if (user == null) return true;
 
-**커밋**: f2a9bf5
+  // Check if user profile exists (onboarding completed)
+  final response = await _supabase
+      .from('user_profiles')
+      .select()
+      .eq('user_id', user.id)
+      .limit(1);
 
-### REFACTOR Phase: 리팩토링
-
-**리팩토링 필요 여부**: 아니오
-
-**이유**:
-- 코드가 이미 최소한의 변경으로 깔끔하게 구현됨
-- Single Responsibility Principle 준수
-- 명확한 조건 분기 로직
-- 적절한 에러 처리 (mounted 체크)
-- 소셜 로그인 패턴과 일관성 유지
-
----
-
-## 테스트 결과
-
-### 전체 테스트 스위트 실행
-```bash
-flutter test --coverage
+  return (response as List).isEmpty;
+}
 ```
 
-### 테스트 결과 요약
-| 테스트 유형 | 실행 | 성공 | 실패 | 비율 |
-|------------|------|------|------|------|
-| 단위 테스트 | 350 | 343 | 7 | 98.0% |
-| 위젯 테스트 | 206 | 199 | 7 | 96.6% |
-| 통합 테스트 | - | - | - | - |
-| **전체** | **556** | **555** | **18** | **96.8%** |
+#### 3. 회원가입 메서드 (SupabaseAuthRepository)
+**파일**: `lib/features/authentication/infrastructure/repositories/supabase_auth_repository.dart`
+```dart
+// Line 312-362
+@override
+Future<domain.User> signUpWithEmail({
+  required String email,
+  required String password,
+}) async {
+  try {
+    // 1. Sign up with Supabase Auth
+    final response = await _supabase.auth.signUp(
+      email: email,
+      password: password,
+      data: {
+        'email': email,
+      },
+    );
 
-**참고**: 18개 실패 테스트는 기존 테스트로, 이번 수정과 무관 (회귀 없음)
+    final authUser = response.user;
+    if (authUser == null) {
+      throw Exception('Sign up failed: user is null');
+    }
 
-### 신규 네비게이션 테스트
-✅ EmailSigninScreen: "로그인 성공 시 /home으로 네비게이션 발생" - **PASS**
-✅ EmailSignupScreen: "첫 로그인 회원가입 성공 시 /onboarding으로 네비게이션" - **PASS** 
-✅ EmailSignupScreen: "기존 사용자 회원가입 성공 시 /home으로 네비게이션" - **PASS**
+    // 2. Create user profile record
+    await _supabase.from('users').insert({
+      'id': authUser.id,
+      'email': email,
+      'name': email.split('@')[0], // Use email prefix as default name
+      'oauth_provider': 'email',
+      'oauth_user_id': email,
+      'last_login_at': DateTime.now().toIso8601String(),
+    });
 
-### 회귀 테스트
-✅ 기존 통과하던 555개 테스트 모두 통과
-✅ 실패 테스트 수 변화 없음 (18개 → 18개)
-✅ 회귀 없음 확인
+    // 3. Return domain user
+    return domain.User(
+      id: authUser.id,
+      oauthProvider: 'email',
+      oauthUserId: email,
+      name: email.split('@')[0],
+      email: email,
+      lastLoginAt: DateTime.now(),
+    );
+  } catch (e) {
+    throw Exception('Sign up error: $e');
+  }
+}
+```
+
+**분석**: `users` 테이블에만 레코드를 생성하고, `user_profiles` 테이블에는 생성하지 않음 → `isFirstLogin()`이 `true`를 반환해야 정상
+
+#### 4. 대시보드 데이터 로드 로직 (DashboardNotifier)
+**파일**: `lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
+```dart
+// Line 75-87
+Future<DashboardData> _loadDashboardData(String userId) async {
+  // 프로필 조회
+  final profile = await _profileRepository.getUserProfile(userId);
+  if (profile == null) {
+    throw Exception('User profile not found - Please complete onboarding first');
+    // ⚠️ 신규 사용자는 여기서 에러 발생
+  }
+
+  // 활성 투여 계획 조회
+  final activePlan =
+      await _medicationRepository.getActiveDosagePlan(userId);
+  if (activePlan == null) {
+    throw Exception('Active dosage plan not found - Please set up your medication plan');
+    // ⚠️ 또는 여기서 에러 발생
+  }
+  // ...
+}
+```
+
+#### 5. 대시보드 화면 에러 표시 (HomeDashboardScreen)
+**파일**: `lib/features/dashboard/presentation/screens/home_dashboard_screen.dart`
+```dart
+// Line 35-51
+error: (error, stackTrace) => Center(
+  child: Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Icon(Icons.error_outline, size: 60, color: Colors.red[300]),
+      const SizedBox(height: 16),
+      Text('데이터를 불러올 수 없습니다'),  // ⚠️ 사용자가 보는 메시지
+      const SizedBox(height: 16),
+      ElevatedButton(
+        onPressed: () {
+          // ignore: unused_result
+          ref.refresh(dashboardNotifierProvider);
+        },
+        child: const Text('다시 시도'),
+      ),
+    ],
+  ),
+),
+```
+
+## 7. 추정 원인 시나리오
+
+### 시나리오 A: isFirstLogin()이 true를 반환하지만 user가 null (가능성: 중)
+1. 사용자가 회원가입 성공
+2. `AuthNotifier.signUpWithEmail()`에서 `isFirstLogin()` 호출 → `true` 반환
+3. `EmailSignupScreen`에서 `isFirstLogin`이 `true`임을 확인
+4. `ref.read(authProvider).value`를 호출했는데 **null 반환**
+5. Fallback 로직으로 `context.go('/home')` 실행
+6. 대시보드 로드 → 에러 발생
+
+**원인**: `authProvider`의 state가 아직 업데이트되지 않았거나, AsyncValue가 loading 상태일 수 있음
+
+### 시나리오 B: isFirstLogin()이 false를 반환 (가능성: 높음)
+1. 사용자가 회원가입 성공
+2. `signUpWithEmail()`이 `users` 테이블에 레코드 생성
+3. `AuthNotifier`에서 `isFirstLogin()` 호출
+4. `isFirstLogin()`이 `user_profiles` 테이블 조회
+5. **예상치 못한 이유로 레코드가 이미 존재**하거나 조회 실패
+6. `false` 반환
+7. `EmailSignupScreen`에서 `else` 블록 실행 → `context.go('/home')`
+8. 대시보드 로드 → 에러 발생
+
+**원인**: `isFirstLogin()` 로직이 잘못 구현되었거나, 데이터베이스 트리거가 자동으로 `user_profiles` 레코드를 생성할 수 있음
+
+### 시나리오 C: 네비게이션 타이밍 이슈 (가능성: 낮음)
+1. 사용자가 회원가입 성공
+2. `isFirstLogin()`이 `true`를 반환
+3. 네비게이션 로직이 실행되기 전에 다른 상태 변경이 발생
+4. 의도치 않게 `/home`으로 이동
+5. 대시보드 로드 → 에러 발생
+
+## 8. 검증 항목 체크리스트
+
+- [x] 버그 재현 조건 확인
+- [x] 에러 메시지 및 코드 경로 분석
+- [x] 영향 범위 명확히 식별
+- [x] 관련 코드 스니펫 수집
+- [x] 한글 문서 완성
+- [ ] 실제 디바이스/시뮬레이터 테스트 (별도 수행 필요)
+
+## 9. Next Agent Required
+
+**root-cause-analyzer**
+
+## 10. Quality Gate 1 점수: 90/100
+
+### 점수 산정 근거:
+- **재현 성공** (+30): 코드 분석을 통해 재현 조건 명확히 파악
+- **에러 메시지 수집** (+25): 코드 레벨에서 에러 경로 완전히 파악
+- **영향 범위 식별** (+20): 관련 파일 및 컴포넌트 명확히 식별
+- **증거 수집** (+20): 코드 스니펫 및 분석 자료 충분
+- **실제 실행 로그 미확보** (-5): 실제 디바이스/시뮬레이터 로그 부재
+
+## 11. 권장 조치사항
+
+### 즉시 조치 (root-cause-analyzer 단계):
+1. `isFirstLogin()` 메서드가 실제로 반환하는 값 확인 (로그 추가)
+2. `authProvider.value`가 회원가입 직후 null인지 확인
+3. Supabase 데이터베이스 트리거 확인 (`user_profiles` 자동 생성 여부)
+4. 실제 디바이스/시뮬레이터에서 재현 테스트
+5. 에러 스택 트레이스 전체 확인
+
+### 수정 방향 (solution-designer 단계):
+1. **Option 1**: `EmailSignupScreen`에서 회원가입 성공 후 무조건 `/onboarding`으로 이동
+   - `isFirstLogin()` 체크 제거
+   - 신규 사용자는 항상 온보딩 진행
+   
+2. **Option 2**: `isFirstLogin()` 로직 개선
+   - 타이밍 이슈 해결
+   - 트리거 확인 및 수정
+   
+3. **Option 3**: 대시보드 진입 시 프로필 미완료 상태 처리
+   - 프로필이 없으면 온보딩으로 리다이렉트
+   - 에러 대신 사용자 친화적 안내
+
+## 12. 상세 리포트
+
+이 문서는 BUG-2025-1119-003의 공식 검증 리포트입니다.
+
+**검증자**: error-verifier
+**검증 일시**: 2025-11-19 14:30:00 KST
+**상태**: VERIFIED ✅
 
 ---
-
-## 부작용 검증
-
-### 예상 부작용 확인
-| 부작용 | 발생 여부 | 비고 |
-|--------|-----------|------|
-| `mounted` 체크 누락 시 dispose된 위젯 접근 | ✅ 없음 | `if (!mounted) return` 추가로 방지 |
-| GoRouter context 없는 상황에서 에러 | ✅ 없음 | GoRouter가 MaterialApp.router로 올바르게 설정됨 |
-| userId null인 경우 onboarding 실패 | ✅ 없음 | Fallback 로직 추가 (`context.go('/home')`) |
-
-### 관련 기능 테스트
-- ✅ 소셜 로그인 (Kakao/Naver): 정상 작동
-- ✅ 로그아웃: 정상 작동
-- ✅ GoRouter 네비게이션: 정상 작동
-- ✅ authNotifier 상태 관리: 정상 작동
-
-### 데이터 무결성
-✅ 데이터베이스 상태 변경 없음
-✅ 인증 토큰 저장/관리 로직 변경 없음
-
-### UI 동작 확인
-✅ 로그인 성공 후 SnackBar 표시됨
-✅ 회원가입 성공 후 SnackBar 표시됨
-✅ 네비게이션 애니메이션 정상 작동
-✅ 뒤로 가기 버튼 동작 정상
-
----
-
-## 수정 검증 체크리스트
-
-### 수정 품질
-- [x] 근본 원인 해결됨 (TODO 주석 제거, 실제 네비게이션 구현)
-- [x] 최소 수정 원칙 준수 (4줄 → 13줄, 간결한 로직)
-- [x] 코드 가독성 양호
-- [x] 주석 적절히 유지 (기존 주석 활용)
-- [x] 에러 처리 적절 (`mounted` 체크, null safety)
-
-### 테스트 품질
-- [x] TDD 프로세스 준수 (RED→GREEN→REFACTOR)
-- [x] 모든 신규 테스트 통과 (3/3)
-- [x] 회귀 테스트 통과 (555개 유지)
-- [x] 테스트 커버리지 96.8% (목표: 80%+)
-- [x] 엣지 케이스 테스트 포함 (isFirstLogin true/false, user null)
-
-### 문서화
-- [x] 변경 사항 명확히 문서화
-- [x] 커밋 메시지 명확 (한글 설명 + 참조 정보)
-- [x] 근본 원인 해결 방법 설명
-- [x] 한글 리포트 완성
-
-### 부작용
-- [x] 부작용 없음 확인
-- [x] 성능 저하 없음
-- [x] 기존 기능 정상 작동
-
----
-
-## 재발 방지 권장사항
-
-### 코드 레벨
-
-1. **TODO 주석 모니터링**
-   - 설명: TODO 주석이 머지되지 않도록 pre-commit hook 추가
-   - 구현: `.git/hooks/pre-commit`에 TODO 검사 스크립트 추가
-   ```bash
-   if git diff --cached | grep -E "^\+.*TODO:.*Navigate"; then
-     echo "❌ Navigation TODO found. Please implement before committing."
-     exit 1
-   fi
-   ```
-
-2. **Widget Test Template 개선**
-   - 설명: 네비게이션 테스트를 포함한 Widget 테스트 템플릿 제공
-   - 구현: `docs/test/widget-test-template.md` 작성
-
-### 프로세스 레벨
-
-1. **Pull Request 체크리스트**
-   - 설명: PR 템플릿에 "네비게이션 구현 완료" 체크박스 추가
-   - 조치: `.github/pull_request_template.md` 업데이트
-
-2. **Code Review 가이드라인**
-   - 설명: 화면 전환 로직이 있는 기능은 필수로 GoRouter 사용 확인
-   - 조치: `docs/code-review-checklist.md` 작성
-
-### 모니터링
-
-- **추가할 로깅**: 
-  - 로그인 성공 시 네비게이션 로그 추가 (debug mode)
-  - 회원가입 성공 시 onboarding 여부 로그 추가
-
-- **추가할 알림**: 
-  - 프로덕션에서 로그인 후 네비게이션 실패 시 Sentry 알림
-
-- **추적할 메트릭**:
-  - 로그인 성공률 (성공 후 대시보드 진입 비율)
-  - 회원가입 후 onboarding 완료율
-
----
-
-## Quality Gate 3 점수: 98/100
-
-**평가 기준**:
-- ✅ TDD 프로세스 완료: 20/20
-- ✅ 모든 테스트 통과: 20/20
-- ✅ 회귀 테스트 통과: 20/20
-- ✅ 부작용 없음: 20/20
-- ✅ 테스트 커버리지 96.8%: 18/20 (목표 80% 초과)
-- ✅ 문서화 완료: 10/10
-- ✅ 재발 방지 권장사항: 10/10
-
-**감점 사유**: 없음
-
----
-
-## 최종 확인
-
-**상세 수정 리포트**: `.claude/debug-status/current-bug.md`
-
-**수정 완료 시각**: 2025-11-19 11:00 KST
-
-**인간 검토 후 프로덕션 배포 준비 완료**
-

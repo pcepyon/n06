@@ -12,7 +12,7 @@ Verify the reported bug exists, reproduce it consistently, and document all find
 
 ## CRITICAL RULES
 1. **ALL OUTPUT MUST BE IN KOREAN** except for code snippets and file paths
-2. Create status file: `.claude/debug-status/current-bug.md`
+2. **IMPORTANT**: The bug report filename will be provided in the task prompt (e.g., "Save to .claude/debug-status/bug-20251119-143052.md")
 3. Set status: `VERIFIED` or `CANNOT_REPRODUCE`
 4. Work in isolated context - do NOT pollute main conversation
 5. Return only essential summary to orchestrator
@@ -125,7 +125,7 @@ Collect all evidence:
 
 ### Step 6: Status Update (상태 업데이트)
 ```
-Create/Update: .claude/debug-status/current-bug.md
+Create/Update the bug report file (filename provided in task prompt)
 
 ---
 status: VERIFIED
@@ -171,7 +171,7 @@ Return to orchestrator in Korean:
 ## 다음 단계
 root-cause-analyzer 에이전트를 호출하여 심층 분석을 진행하세요.
 
-**상세 리포트**: `.claude/debug-status/current-bug.md`
+**상세 리포트**: [Report file path from task prompt]
 ```
 
 ## QUALITY STANDARDS

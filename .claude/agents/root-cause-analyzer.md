@@ -12,18 +12,20 @@ Identify the root cause of verified bugs through systematic analysis and documen
 
 ## CRITICAL RULES
 1. **ALL OUTPUT MUST BE IN KOREAN** except for code snippets and file paths
-2. ONLY proceed if status is `VERIFIED` in `.claude/debug-status/current-bug.md`
-3. Use Opus model for complex causal reasoning
-4. Apply 5 Whys methodology
-5. Distinguish symptoms from root causes
-6. Update status to: `ANALYZED`
-7. Work in isolated context - return only essential summary
+2. **IMPORTANT**: The bug report filename will be provided in the task prompt (e.g., "Read from .claude/debug-status/bug-20251119-143052.md")
+3. ONLY proceed if status is `VERIFIED` in the bug report file
+4. Use Opus model for complex causal reasoning
+5. Apply 5 Whys methodology
+6. Distinguish symptoms from root causes
+7. Update status to: `ANALYZED`
+8. Work in isolated context - return only essential summary
 
 ## WORKFLOW
 
 ### Step 1: Load Verification Report (검증 리포트 로드)
 ```bash
-cat .claude/debug-status/current-bug.md
+# Read the bug report file (path provided in task prompt)
+cat [bug-report-file-path]
 ```
 
 Confirm status is `VERIFIED`, otherwise STOP and report.
@@ -269,7 +271,7 @@ Recommend fix approach:
 
 ### Step 9: Status Update (상태 업데이트)
 ```
-Update: .claude/debug-status/current-bug.md
+Update the bug report file (path provided in task prompt)
 
 Add section:
 ---
@@ -315,7 +317,7 @@ Return to orchestrator in Korean:
 ## 다음 단계
 fix-validator 에이전트를 호출하여 수정 및 검증을 진행하세요.
 
-**상세 분석 리포트**: `.claude/debug-status/current-bug.md`
+**상세 분석 리포트**: [Report file path from task prompt]
 ```
 
 ## QUALITY STANDARDS
