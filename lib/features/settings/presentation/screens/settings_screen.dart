@@ -26,6 +26,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
       error: (error, stackTrace) {
+        debugPrint('SettingsScreen: Auth error: $error');
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
             context.go('/login');
@@ -35,6 +36,7 @@ class SettingsScreen extends ConsumerWidget {
       },
       data: (user) {
         if (user == null) {
+          debugPrint('SettingsScreen: User is null');
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
               context.go('/login');

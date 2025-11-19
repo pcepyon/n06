@@ -21,6 +21,9 @@ part 'auth_notifier.g.dart';
 class AuthNotifier extends _$AuthNotifier {
   @override
   Future<User?> build() async {
+    if (kDebugMode) {
+      developer.log('AuthNotifier.build() called', name: 'AuthNotifier');
+    }
     // Load current user on initialization
     final repository = ref.read(authRepositoryProvider);
     return await repository.getCurrentUser();

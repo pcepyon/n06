@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/onboarding/domain/repositories/profile_repository.dart';
+import 'package:n06/features/onboarding/application/providers.dart' as onboarding_providers;
 import 'package:n06/features/profile/domain/usecases/update_profile_usecase.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';
@@ -26,7 +27,7 @@ class ProfileNotifier extends _$ProfileNotifier {
     }
 
     try {
-      final repository = ref.read(profileRepositoryProvider);
+      final repository = ref.read(onboarding_providers.profileRepositoryProvider);
       return await repository.getUserProfile(authState.value!.id);
     } catch (e) {
       // Re-throw as AsyncValue will handle error state
@@ -38,7 +39,7 @@ class ProfileNotifier extends _$ProfileNotifier {
   Future<void> loadProfile(String userId) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repository = ref.read(profileRepositoryProvider);
+      final repository = ref.read(onboarding_providers.profileRepositoryProvider);
       return await repository.getUserProfile(userId);
     });
   }
@@ -49,7 +50,7 @@ class ProfileNotifier extends _$ProfileNotifier {
   Future<void> updateProfile(UserProfile profile) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repository = ref.read(profileRepositoryProvider);
+      final repository = ref.read(onboarding_providers.profileRepositoryProvider);
       final trackingRepository = ref.read(trackingRepositoryProvider);
       final useCase = UpdateProfileUseCase(
         profileRepository: repository,
@@ -88,7 +89,7 @@ class ProfileNotifier extends _$ProfileNotifier {
 
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repository = ref.read(profileRepositoryProvider);
+      final repository = ref.read(onboarding_providers.profileRepositoryProvider);
 
       // Update weekly goals in repository
       await repository.updateWeeklyGoals(
