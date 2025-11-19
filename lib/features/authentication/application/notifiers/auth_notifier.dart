@@ -169,9 +169,9 @@ class AuthNotifier extends _$AuthNotifier {
   /// [agreedToTerms] User agreed to terms of service
   /// [agreedToPrivacy] User agreed to privacy policy
   ///
-  /// Returns true if signup successful, false otherwise
+  /// Returns User object on successful signup
   /// Throws exception on validation or network errors
-  Future<bool> signUpWithEmail({
+  Future<User> signUpWithEmail({
     required String email,
     required String password,
     required bool agreedToTerms,
@@ -203,9 +203,8 @@ class AuthNotifier extends _$AuthNotifier {
         );
       }
 
-      // Check if this is first login
-      final isFirstLogin = await repository.isFirstLogin();
-      return isFirstLogin;
+      // Return user directly instead of isFirstLogin boolean
+      return user;
     } catch (error, stackTrace) {
       // Set error state
       state = AsyncValue.error(error, stackTrace);
@@ -220,7 +219,7 @@ class AuthNotifier extends _$AuthNotifier {
         );
       }
 
-      return false;
+      rethrow; // Re-throw instead of returning false
     }
   }
 

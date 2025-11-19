@@ -76,7 +76,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
 
     try {
       final authNotifier = ref.read(authProvider.notifier);
-      final isFirstLogin = await authNotifier.signUpWithEmail(
+      final user = await authNotifier.signUpWithEmail(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         agreedToTerms: _agreeToTerms,
@@ -89,22 +89,10 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
         const SnackBar(content: Text('Sign up successful!')),
       );
 
-      // Navigate based on onboarding status
+      // FIX BUG-2025-1119-003: 회원가입 성공 시 무조건 온보딩으로 이동
+      // signUpWithEmail이 User 객체를 직접 반환하므로 authProvider 재조회 불필요
       if (!mounted) return;
-
-      if (isFirstLogin) {
-        // Get user ID for onboarding
-        final user = ref.read(authProvider).value;
-        if (user != null) {
-          context.go('/onboarding', extra: user.id);
-        } else {
-          // Fallback to home if user is somehow null
-          context.go('/home');
-        }
-      } else {
-        // Go to dashboard
-        context.go('/home');
-      }
+      context.go('/onboarding', extra: user.id);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
