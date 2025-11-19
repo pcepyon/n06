@@ -277,10 +277,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
                 // Sign in link
                 Center(
                   child: TextButton(
-                    onPressed: () {
-                      // Navigate to sign in
-                      // TODO: Navigate to EmailSignInScreen
-                    },
+                    onPressed: () => context.go('/email-signin'),
                     child: const Text('Already have an account? Sign in'),
                   ),
                 ),

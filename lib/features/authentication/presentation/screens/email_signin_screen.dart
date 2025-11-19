@@ -146,10 +146,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      // Navigate to password reset
-                      // TODO: Navigate to PasswordResetScreen
-                    },
+                    onPressed: () => context.go('/password-reset'),
                     child: const Text('Forgot password?'),
                   ),
                 ),
@@ -168,10 +165,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
                 // Sign up link
                 Center(
                   child: TextButton(
-                    onPressed: () {
-                      // Navigate to sign up
-                      // TODO: Navigate to EmailSignupScreen
-                    },
+                    onPressed: () => context.go('/email-signup'),
                     child: const Text('Don\'t have an account? Sign up'),
                   ),
                 ),

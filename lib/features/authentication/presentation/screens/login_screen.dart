@@ -487,10 +487,68 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
               const SizedBox(height: 24),
 
+              // Divider
+              Row(
+                children: [
+                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      '또는',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Email Login Button
+              OutlinedButton.icon(
+                key: const Key('email_login_button'),
+                onPressed: () => context.go('/email-signin'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  side: BorderSide(color: Colors.grey.shade400),
+                ),
+                icon: const Icon(Icons.email_outlined),
+                label: const Text(
+                  '이메일로 로그인',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Email Signup Link
+              TextButton(
+                key: const Key('email_signup_link'),
+                onPressed: () => context.go('/email-signup'),
+                child: const Text(
+                  '이메일로 회원가입',
+                  style: TextStyle(
+                    fontSize: 14,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
               // Helper text
               if (!_canLogin && !_isLoading)
                 const Text(
-                  '로그인하려면 약관에 동의해주세요',
+                  '소셜 로그인하려면 약관에 동의해주세요',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
