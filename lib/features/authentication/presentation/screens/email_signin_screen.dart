@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/core/utils/validators.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
+import 'package:n06/features/onboarding/application/providers.dart';
 
 /// Email sign in screen
 /// Allows users to sign in with email and password
@@ -56,9 +57,28 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
           const SnackBar(content: Text('Sign in successful!')),
         );
 
-        // Navigate to dashboard
         if (!mounted) return;
-        context.go('/home');
+
+        // FIX BUG-2025-1119-004: Check if user has completed onboarding
+        // Same pattern as OAuth login (login_screen.dart)
+        final user = ref.read(authProvider).value;
+        if (user != null) {
+          final profileRepo = ref.read(profileRepositoryProvider);
+          final profile = await profileRepo.getUserProfile(user.id);
+
+          if (!mounted) return;
+
+          if (profile == null) {
+            // User hasn't completed onboarding, redirect to onboarding
+            context.go('/onboarding', extra: user.id);
+          } else {
+            // User has profile, go to dashboard
+            context.go('/home');
+          }
+        } else {
+          // Fallback: user is null (unlikely after successful signin)
+          context.go('/home');
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Sign in failed')),
