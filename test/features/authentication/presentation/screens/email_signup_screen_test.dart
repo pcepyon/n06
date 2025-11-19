@@ -277,10 +277,15 @@ void main() {
 
     testWidgets('첫 로그인 회원가입 성공 시 /onboarding으로 네비게이션 (BUG-2025-1119-001)', (WidgetTester tester) async {
       // GIVEN: Mock repository returns user for first login
+      final testUser = FakeUser(id: 'first-login-user');
       when(() => mockRepository.signUpWithEmail(
         email: any(named: 'email'),
         password: any(named: 'password'),
-      )).thenAnswer((_) async => FakeUser());
+      )).thenAnswer((_) async => testUser);
+
+      // Mock getCurrentUser to return null initially
+      when(() => mockRepository.getCurrentUser())
+          .thenAnswer((_) async => null);
 
       // Mock GoRouter for navigation tracking
       final goRouter = GoRouter(
@@ -343,12 +348,17 @@ void main() {
       }
     });
 
-    testWidgets('기존 사용자 회원가입 성공 시 /home으로 네비게이션 (BUG-2025-1119-001)', (WidgetTester tester) async {
+    testWidgets('[BUG-2025-1119-003] 회원가입 성공 시 항상 /onboarding으로 네비게이션', (WidgetTester tester) async {
       // GIVEN: Mock repository returns user
+      final testUser = FakeUser(id: 'new-user-123');
       when(() => mockRepository.signUpWithEmail(
         email: any(named: 'email'),
         password: any(named: 'password'),
-      )).thenAnswer((_) async => FakeUser());
+      )).thenAnswer((_) async => testUser);
+
+      // Mock getCurrentUser to return null initially (no cached user)
+      when(() => mockRepository.getCurrentUser())
+          .thenAnswer((_) async => null);
 
       // Mock GoRouter for navigation tracking
       final goRouter = GoRouter(
@@ -359,10 +369,13 @@ void main() {
             builder: (context, state) => const EmailSignupScreen(),
           ),
           GoRoute(
-            path: '/home',
-            builder: (context, state) => const Scaffold(
-              body: Center(child: Text('Home Dashboard')),
-            ),
+            path: '/onboarding',
+            builder: (context, state) {
+              final userId = state.extra as String?;
+              return Scaffold(
+                body: Center(child: Text('Onboarding: $userId')),
+              );
+            },
           ),
         ],
       );
@@ -382,7 +395,7 @@ void main() {
       // WHEN: User fills in all fields and agrees to terms
       final textFields = find.byType(TextField);
       if (textFields.evaluate().length >= 3) {
-        await tester.enterText(textFields.at(0), 'existing@example.com');
+        await tester.enterText(textFields.at(0), 'newuser@example.com');
         await tester.enterText(textFields.at(1), 'ValidPass123!');
         await tester.enterText(textFields.at(2), 'ValidPass123!');
         await tester.pump();
@@ -401,8 +414,8 @@ void main() {
             await tester.tap(submitButton.first);
             await tester.pumpAndSettle();
 
-            // THEN: Should navigate to /home
-            expect(find.text('Home Dashboard'), findsOneWidget);
+            // THEN: Should navigate to /onboarding with userId (no more /home fallback)
+            expect(find.textContaining('Onboarding: new-user-123'), findsOneWidget);
           }
         }
       }
