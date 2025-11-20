@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/onboarding/presentation/widgets/basic_profile_form.dart';
 import 'package:n06/features/onboarding/presentation/widgets/weight_goal_form.dart';
 import 'package:n06/features/onboarding/presentation/widgets/dosage_plan_form.dart';
@@ -33,7 +32,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   DateTime _startDate = DateTime.now();
   int _cycleDays = 7;
   double _initialDose = 0.25;
-  List<EscalationStep>? _escalationPlan;
 
   @override
   void initState() {
@@ -115,12 +113,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 // Step 3: 투여 계획
                 DosagePlanForm(
-                  onDataChanged: (medication, date, cycle, dose, escalation) {
+                  onDataChanged: (medication, date, cycle, dose) {
                     _medicationName = medication;
                     _startDate = date;
                     _cycleDays = cycle;
                     _initialDose = dose;
-                    _escalationPlan = escalation;
                   },
                   onNext: _nextStep,
                 ),
@@ -135,7 +132,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   startDate: _startDate,
                   cycleDays: _cycleDays,
                   initialDose: _initialDose,
-                  escalationPlan: _escalationPlan,
                   onComplete: widget.onComplete,
                 ),
               ],

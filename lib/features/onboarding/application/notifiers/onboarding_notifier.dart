@@ -6,7 +6,6 @@ import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/onboarding/domain/value_objects/weight.dart';
 import 'package:n06/features/onboarding/domain/usecases/calculate_weekly_goal_usecase.dart';
-import 'package:n06/features/onboarding/domain/usecases/validate_dosage_plan_usecase.dart';
 import 'package:n06/features/onboarding/domain/usecases/generate_dose_schedules_usecase.dart';
 import 'package:n06/features/onboarding/application/providers.dart';
 import 'package:n06/features/tracking/application/providers.dart' as tracking_providers;
@@ -30,7 +29,6 @@ class OnboardingNotifier extends _$OnboardingNotifier {
     required DateTime startDate,
     required int cycleDays,
     required double initialDose,
-    List<EscalationStep>? escalationPlan,
   }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
@@ -46,7 +44,6 @@ class OnboardingNotifier extends _$OnboardingNotifier {
 
       // UseCase 인스턴스 생성
       final calculateGoalUseCase = CalculateWeeklyGoalUseCase();
-      final validatePlanUseCase = ValidateDosagePlanUseCase();
       final generateSchedulesUseCase = GenerateDoseSchedulesUseCase();
 
       // Note: Supabase handles transactions at the database level.
@@ -57,15 +54,7 @@ class OnboardingNotifier extends _$OnboardingNotifier {
         final currentWeightObj = Weight.create(currentWeight);
         final targetWeightObj = Weight.create(targetWeight);
 
-        // 증량 계획 검증
-        if (escalationPlan != null) {
-          final validation = validatePlanUseCase.execute(escalationPlan);
-          if (!validation['isValid']) {
-            throw Exception(validation['errors'].join(', '));
-          }
-        }
-
-        // 2. 투여 계획 생성
+        // 2. 투여 계획 생성 (escalationPlan은 null - 용량은 처방을 통해 수동 변경)
         final dosagePlan = DosagePlan(
           id: const Uuid().v4(),
           userId: userId,
@@ -73,7 +62,7 @@ class OnboardingNotifier extends _$OnboardingNotifier {
           startDate: startDate,
           cycleDays: cycleDays,
           initialDoseMg: initialDose,
-          escalationPlan: escalationPlan,
+          escalationPlan: null,
           isActive: true,
         );
 
@@ -155,7 +144,6 @@ class OnboardingNotifier extends _$OnboardingNotifier {
     required DateTime startDate,
     required int cycleDays,
     required double initialDose,
-    List<EscalationStep>? escalationPlan,
   }) async {
     await saveOnboardingData(
       userId: userId,
@@ -167,7 +155,6 @@ class OnboardingNotifier extends _$OnboardingNotifier {
       startDate: startDate,
       cycleDays: cycleDays,
       initialDose: initialDose,
-      escalationPlan: escalationPlan,
     );
   }
 }

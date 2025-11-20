@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/onboarding/application/notifiers/onboarding_notifier.dart';
 
 /// 온보딩 정보 요약 및 최종 확인 화면
@@ -15,7 +14,6 @@ class SummaryScreen extends ConsumerWidget {
   final DateTime startDate;
   final int cycleDays;
   final double initialDose;
-  final List<EscalationStep>? escalationPlan;
   final VoidCallback? onComplete;
 
   const SummaryScreen({
@@ -29,7 +27,6 @@ class SummaryScreen extends ConsumerWidget {
     required this.startDate,
     required this.cycleDays,
     required this.initialDose,
-    required this.escalationPlan,
     this.onComplete,
   });
 
@@ -67,20 +64,6 @@ class SummaryScreen extends ConsumerWidget {
                 ('초기 용량', '$initialDose mg'),
               ],
             ),
-            if (escalationPlan != null && escalationPlan!.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              const Text('증량 계획', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 8),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: escalationPlan!.length,
-                itemBuilder: (context, index) {
-                  final step = escalationPlan![index];
-                  return ListTile(title: Text('${step.weeksFromStart}주차: ${step.doseMg} mg'));
-                },
-              ),
-            ],
             const SizedBox(height: 32),
             if (onboardingState.isLoading)
               const Center(child: CircularProgressIndicator())
@@ -116,7 +99,6 @@ class SummaryScreen extends ConsumerWidget {
                               startDate: startDate,
                               cycleDays: cycleDays,
                               initialDose: initialDose,
-                              escalationPlan: escalationPlan,
                             );
                       },
                       child: const Text('재시도'),
@@ -141,7 +123,6 @@ class SummaryScreen extends ConsumerWidget {
                           startDate: startDate,
                           cycleDays: cycleDays,
                           initialDose: initialDose,
-                          escalationPlan: escalationPlan,
                         );
 
                     if (context.mounted) {
