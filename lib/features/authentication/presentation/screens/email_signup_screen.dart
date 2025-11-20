@@ -7,7 +7,13 @@ import 'package:n06/features/authentication/application/notifiers/auth_notifier.
 /// Email signup screen
 /// Allows users to create an account with email and password
 class EmailSignupScreen extends ConsumerStatefulWidget {
-  const EmailSignupScreen({super.key});
+  /// Optional pre-filled email (from sign-in screen)
+  final String? prefillEmail;
+
+  const EmailSignupScreen({
+    super.key,
+    this.prefillEmail,
+  });
 
   @override
   ConsumerState<EmailSignupScreen> createState() => _EmailSignupScreenState();
@@ -30,7 +36,10 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
   @override
   void initState() {
     super.initState();
-    _emailController = TextEditingController();
+    // Pre-fill email if provided from sign-in screen
+    _emailController = TextEditingController(
+      text: widget.prefillEmail ?? '',
+    );
     _passwordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
     _formKey = GlobalKey<FormState>();
@@ -156,6 +165,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
               children: [
                 // Email field
                 TextFormField(
+                  key: const Key('email_field'),
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(

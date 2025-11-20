@@ -80,9 +80,8 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
           context.go('/home');
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sign in failed')),
-        );
+        // Show friendly signup prompt bottom sheet
+        _showSigninFailedBottomSheet();
       }
     } catch (e) {
       if (!mounted) return;
@@ -107,6 +106,92 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
       return 'Password is required';
     }
     return null;
+  }
+
+  /// Show friendly bottom sheet when sign-in fails
+  /// Guides user to sign up if they don't have an account
+  void _showSigninFailedBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icon
+            const Icon(
+              Icons.lock_outline,
+              size: 48,
+              color: Colors.orange,
+            ),
+            const SizedBox(height: 16),
+
+            // Title
+            const Text(
+              '로그인에 실패했습니다',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Description
+            const Text(
+              '입력하신 이메일 또는 비밀번호가\n일치하지 않습니다.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Divider
+            Divider(color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+
+            // Sign up prompt
+            const Text(
+              '💡 혹시 계정이 없으신가요?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Sign up button
+            ElevatedButton(
+              key: const Key('goto_signup_button'),
+              onPressed: () {
+                Navigator.pop(context); // Close bottom sheet
+                // Navigate to signup with pre-filled email
+                context.go(
+                  '/email-signup',
+                  extra: _emailController.text.trim(),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+              ),
+              child: const Text('이메일로 회원가입 하러가기'),
+            ),
+            const SizedBox(height: 8),
+
+            // Close button
+            TextButton(
+              key: const Key('close_bottomsheet_button'),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('닫기'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override

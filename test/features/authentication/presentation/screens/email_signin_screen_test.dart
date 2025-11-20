@@ -579,5 +579,151 @@ void main() {
       // Verify profile was checked
       verify(() => mockProfileRepository.getUserProfile('test-user-id')).called(1);
     });
+
+    // UX 개선: 로그인 실패 시 회원가입 유도 BottomSheet
+    testWidgets('로그인 실패 시 회원가입 유도 BottomSheet 표시', (WidgetTester tester) async {
+      // GIVEN: Mock repository that returns failure
+      when(() => mockRepository.getCurrentUser())
+          .thenAnswer((_) async => null);
+
+      when(() => mockRepository.signInWithEmail(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      )).thenThrow(Exception('Invalid email or password'));
+
+      final testApp = ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(mockRepository),
+        ],
+        child: const MaterialApp(
+          home: EmailSigninScreen(),
+        ),
+      );
+
+      await tester.pumpWidget(testApp);
+      await tester.pumpAndSettle();
+
+      // WHEN: User attempts to sign in with invalid credentials
+      final textFields = find.byType(TextField);
+      await tester.enterText(textFields.at(0), 'test@example.com');
+      await tester.enterText(textFields.at(1), 'WrongPassword!');
+      await tester.pump();
+
+      final submitButton = find.byType(ElevatedButton);
+      await tester.tap(submitButton.first);
+      await tester.pumpAndSettle();
+
+      // THEN: BottomSheet should be displayed
+      expect(find.text('로그인에 실패했습니다'), findsOneWidget);
+      expect(find.text('💡 혹시 계정이 없으신가요?'), findsOneWidget);
+      expect(find.text('이메일로 회원가입 하러가기'), findsOneWidget);
+    });
+
+    testWidgets('BottomSheet에서 회원가입 버튼 클릭 시 회원가입 페이지로 이동', (WidgetTester tester) async {
+      // GIVEN: Mock repository that returns failure
+      when(() => mockRepository.signInWithEmail(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      )).thenThrow(Exception('Invalid email or password'));
+
+      when(() => mockRepository.getCurrentUser())
+          .thenAnswer((_) async => null);
+
+      // Mock GoRouter for navigation tracking
+      final goRouter = GoRouter(
+        initialLocation: '/email-signin',
+        routes: [
+          GoRoute(
+            path: '/email-signin',
+            builder: (context, state) => const EmailSigninScreen(),
+          ),
+          GoRoute(
+            path: '/email-signup',
+            builder: (context, state) {
+              final prefillEmail = state.extra as String?;
+              return Scaffold(
+                body: Center(
+                  child: Text('Signup Screen: ${prefillEmail ?? "no email"}'),
+                ),
+              );
+            },
+          ),
+        ],
+      );
+
+      final testApp = ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(mockRepository),
+        ],
+        child: MaterialApp.router(
+          routerConfig: goRouter,
+        ),
+      );
+
+      await tester.pumpWidget(testApp);
+      await tester.pumpAndSettle();
+
+      // WHEN: User attempts sign in and clicks signup button in BottomSheet
+      final textFields = find.byType(TextField);
+      await tester.enterText(textFields.at(0), 'newuser@example.com');
+      await tester.enterText(textFields.at(1), 'Password123!');
+      await tester.pump();
+
+      final submitButton = find.byType(ElevatedButton);
+      await tester.tap(submitButton.first);
+      await tester.pumpAndSettle();
+
+      // Tap signup button in BottomSheet
+      final signupButton = find.byKey(const Key('goto_signup_button'));
+      await tester.tap(signupButton);
+      await tester.pumpAndSettle();
+
+      // THEN: Should navigate to signup screen with email pre-filled
+      expect(find.textContaining('Signup Screen: newuser@example.com'), findsOneWidget);
+    });
+
+    testWidgets('BottomSheet에서 닫기 버튼 클릭 시 BottomSheet 닫힘', (WidgetTester tester) async {
+      // GIVEN: Mock repository that returns failure
+      when(() => mockRepository.getCurrentUser())
+          .thenAnswer((_) async => null);
+
+      when(() => mockRepository.signInWithEmail(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      )).thenThrow(Exception('Invalid email or password'));
+
+      final testApp = ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(mockRepository),
+        ],
+        child: const MaterialApp(
+          home: EmailSigninScreen(),
+        ),
+      );
+
+      await tester.pumpWidget(testApp);
+      await tester.pumpAndSettle();
+
+      // WHEN: User attempts sign in and clicks close button
+      final textFields = find.byType(TextField);
+      await tester.enterText(textFields.at(0), 'test@example.com');
+      await tester.enterText(textFields.at(1), 'WrongPassword!');
+      await tester.pump();
+
+      final submitButton = find.byType(ElevatedButton);
+      await tester.tap(submitButton.first);
+      await tester.pumpAndSettle();
+
+      // BottomSheet should be visible
+      expect(find.text('로그인에 실패했습니다'), findsOneWidget);
+
+      // Tap close button
+      final closeButton = find.byKey(const Key('close_bottomsheet_button'));
+      await tester.tap(closeButton);
+      await tester.pumpAndSettle();
+
+      // THEN: BottomSheet should be closed
+      expect(find.text('로그인에 실패했습니다'), findsNothing);
+    });
   });
 }

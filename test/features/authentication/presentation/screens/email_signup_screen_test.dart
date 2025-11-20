@@ -482,5 +482,90 @@ void main() {
         true,
       );
     });
+
+    // UX 개선: 이메일 자동 입력 (로그인 실패 시 전달)
+    testWidgets('prefillEmail이 제공되면 이메일 필드에 자동 입력됨', (WidgetTester tester) async {
+      // GIVEN: EmailSignupScreen with prefilled email
+      const testEmail = 'prefilled@example.com';
+
+      when(() => mockRepository.getCurrentUser())
+          .thenAnswer((_) async => null);
+
+      final testApp = ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(mockRepository),
+        ],
+        child: const MaterialApp(
+          home: EmailSignupScreen(prefillEmail: testEmail),
+        ),
+      );
+
+      // WHEN: Screen loads
+      await tester.pumpWidget(testApp);
+      await tester.pumpAndSettle();
+
+      // THEN: Email field should contain the prefilled email
+      final emailField = find.byKey(const Key('email_field'));
+      expect(emailField, findsOneWidget);
+
+      final textField = tester.widget<TextFormField>(emailField);
+      expect(textField.controller?.text, testEmail);
+    });
+
+    testWidgets('prefillEmail이 null이면 이메일 필드가 비어있음', (WidgetTester tester) async {
+      // GIVEN: EmailSignupScreen without prefilled email
+      when(() => mockRepository.getCurrentUser())
+          .thenAnswer((_) async => null);
+
+      final testApp = ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(mockRepository),
+        ],
+        child: const MaterialApp(
+          home: EmailSignupScreen(prefillEmail: null),
+        ),
+      );
+
+      // WHEN: Screen loads
+      await tester.pumpWidget(testApp);
+      await tester.pumpAndSettle();
+
+      // THEN: Email field should be empty
+      final emailField = find.byKey(const Key('email_field'));
+      expect(emailField, findsOneWidget);
+
+      final textField = tester.widget<TextFormField>(emailField);
+      expect(textField.controller?.text, '');
+    });
+
+    testWidgets('prefillEmail이 제공된 후에도 이메일 수정 가능', (WidgetTester tester) async {
+      // GIVEN: EmailSignupScreen with prefilled email
+      const initialEmail = 'prefilled@example.com';
+      const newEmail = 'changed@example.com';
+
+      when(() => mockRepository.getCurrentUser())
+          .thenAnswer((_) async => null);
+
+      final testApp = ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(mockRepository),
+        ],
+        child: const MaterialApp(
+          home: EmailSignupScreen(prefillEmail: initialEmail),
+        ),
+      );
+
+      await tester.pumpWidget(testApp);
+      await tester.pumpAndSettle();
+
+      // WHEN: User changes the email
+      final emailField = find.byKey(const Key('email_field'));
+      await tester.enterText(emailField, newEmail);
+      await tester.pump();
+
+      // THEN: Email field should contain the new email
+      final textField = tester.widget<TextFormField>(emailField);
+      expect(textField.controller?.text, newEmail);
+    });
   });
 }

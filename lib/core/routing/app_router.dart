@@ -162,7 +162,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/email-signup',
       name: 'email_signup',
-      builder: (context, state) => const EmailSignupScreen(),
+      builder: (context, state) {
+        final prefillEmail = state.extra as String?;
+        return EmailSignupScreen(prefillEmail: prefillEmail);
+      },
     ),
 
     GoRoute(
