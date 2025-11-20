@@ -81,7 +81,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
         }
       } else {
         // Show friendly signup prompt bottom sheet
-        _showSigninFailedBottomSheet();
+        await _showSigninFailedBottomSheet();
       }
     } catch (e) {
       if (!mounted) return;
@@ -110,12 +110,13 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
 
   /// Show friendly bottom sheet when sign-in fails
   /// Guides user to sign up if they don't have an account
-  void _showSigninFailedBottomSheet() async {
+  Future<void> _showSigninFailedBottomSheet() async {
     // FIX BUG-2025-1120-008: Await bottom sheet result and navigate with parent context
     final email = _emailController.text.trim();
 
     final shouldNavigateToSignup = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true, // Required for GoRouter navigation after dismiss
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
