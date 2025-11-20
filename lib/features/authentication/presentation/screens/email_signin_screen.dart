@@ -110,17 +110,27 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
 
   /// Show friendly bottom sheet when sign-in fails
   /// Guides user to sign up if they don't have an account
-  void _showSigninFailedBottomSheet() {
-    showModalBottomSheet(
+  void _showSigninFailedBottomSheet() async {
+    // FIX BUG-2025-1120-008: Await bottom sheet result and navigate with parent context
+    final email = _emailController.text.trim();
+
+    final shouldNavigateToSignup = await showModalBottomSheet<bool>(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      isScrollControlled: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 24,
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             // Icon
             const Icon(
               Icons.lock_outline,
@@ -168,12 +178,8 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
             ElevatedButton(
               key: const Key('goto_signup_button'),
               onPressed: () {
-                Navigator.pop(context); // Close bottom sheet
-                // Navigate to signup with pre-filled email
-                context.go(
-                  '/email-signup',
-                  extra: _emailController.text.trim(),
-                );
+                // Close sheet and signal to navigate
+                Navigator.pop(sheetContext, true);
               },
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 50),
@@ -185,13 +191,19 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
             // Close button
             TextButton(
               key: const Key('close_bottomsheet_button'),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(sheetContext, false),
               child: const Text('닫기'),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
+
+    // Navigate after sheet is closed
+    if (mounted && shouldNavigateToSignup == true) {
+      context.go('/email-signup', extra: email);
+    }
   }
 
   @override
