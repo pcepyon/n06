@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/core/theme/app_colors.dart';
 import 'package:n06/core/theme/app_text_styles.dart';
 import 'package:n06/core/widgets/app_button.dart';
-import 'package:n06/core/widgets/app_card.dart';
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';

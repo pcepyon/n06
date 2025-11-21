@@ -13,6 +13,7 @@ class AppButton extends StatelessWidget {
   final IconData? icon;
   final Color? backgroundColor;
   final Color? textColor;
+  final Color? borderColor;
 
   const AppButton({
     super.key,
@@ -24,6 +25,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.backgroundColor,
     this.textColor,
+    this.borderColor,
   });
 
   @override
@@ -119,7 +121,7 @@ class AppButton extends StatelessWidget {
         return OutlinedButton.styleFrom(
           backgroundColor: backgroundColor ?? Colors.transparent,
           foregroundColor: textColor ?? AppColors.darkGray,
-          side: const BorderSide(color: AppColors.lightGray),
+          side: BorderSide(color: borderColor ?? AppColors.lightGray),
           elevation: 0,
           textStyle: AppTextStyles.button.copyWith(color: textColor ?? AppColors.darkGray),
           shape: RoundedRectangleBorder(

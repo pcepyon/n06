@@ -427,7 +427,7 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
                         '24시간 이상 지속되고 있나요?',
                         style: AppTextStyles.body1.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: AppColors.black,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -446,7 +446,7 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
                                   ? AppColors.lightGray
                                   : Colors.transparent,
                               textColor: isPersistent24h == false
-                                  ? AppColors.textPrimary
+                                  ? AppColors.black
                                   : AppColors.gray,
                             ),
                           ),

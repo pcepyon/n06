@@ -245,7 +245,6 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
 
   Widget _buildAdherenceRateSection(dynamic report) {
     final rate = report.calculateAdherenceRate();
-    final rate = report.calculateAdherenceRate();
     return AppCard(
       padding: const EdgeInsets.all(16),
       child: Column(
