@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_button.dart';
+import 'package:n06/core/widgets/app_card.dart';
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
@@ -28,13 +32,15 @@ class EditDosagePlanScreen extends ConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('오류가 발생했습니다: $error'),
+                Text('오류가 발생했습니다: $error', style: AppTextStyles.body1.copyWith(color: AppColors.error)),
                 const SizedBox(height: 16),
-                ElevatedButton(
+                AppButton(
+                  text: '다시 시도',
                   onPressed: () {
                     ref.invalidate(medicationNotifierProvider);
                   },
-                  child: const Text('다시 시도'),
+                  type: AppButtonType.secondary,
+                  isFullWidth: false,
                 ),
               ],
             ),
@@ -43,7 +49,7 @@ class EditDosagePlanScreen extends ConsumerWidget {
             final plan = state.activePlan;
             if (plan == null) {
               return const Center(
-                child: Text('활성 투여 계획이 없습니다.'),
+                child: Text('활성 투여 계획이 없습니다.', style: AppTextStyles.body1),
               );
             }
 
@@ -154,42 +160,46 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('투여 계획 변경'),
+        title: Text('투여 계획 변경', style: AppTextStyles.h3),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('투여 계획 변경 시 이후 스케줄이 재계산됩니다.'),
+            Text('투여 계획 변경 시 이후 스케줄이 재계산됩니다.', style: AppTextStyles.body1),
             const SizedBox(height: 16),
             if (impact.affectedScheduleCount > 0)
-              Text('영향받는 스케줄: ${impact.affectedScheduleCount}개'),
+              Text('영향받는 스케줄: ${impact.affectedScheduleCount}개', style: AppTextStyles.body2),
             if (impact.changedFields.isNotEmpty)
-              Text('변경되는 항목: ${impact.changedFields.join(', ')}'),
+              Text('변경되는 항목: ${impact.changedFields.join(', ')}', style: AppTextStyles.body2),
             if (impact.warningMessage != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.amber.shade100,
+                    color: AppColors.warning.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     impact.warningMessage!,
-                    style: const TextStyle(fontSize: 12),
+                    style: AppTextStyles.caption.copyWith(color: AppColors.warning),
                   ),
                 ),
               ),
           ],
         ),
         actions: [
-          TextButton(
+          AppButton(
+            text: '취소',
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
+            type: AppButtonType.ghost,
+            isFullWidth: false,
           ),
-          ElevatedButton(
+          AppButton(
+            text: '확인',
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('확인'),
+            type: AppButtonType.primary,
+            isFullWidth: false,
           ),
         ],
       ),
@@ -210,8 +220,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
+        content: Text(message, style: AppTextStyles.body2.copyWith(color: Colors.white)),
+        backgroundColor: AppColors.success,
       ),
     );
   }
@@ -303,15 +313,10 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
         const SizedBox(height: 32),
 
         // Save Button
-        ElevatedButton(
+        AppButton(
+          text: '저장',
           onPressed: _handleSave,
-          child: const Padding(
-            padding: EdgeInsets.all(12),
-            child: Text(
-              '저장',
-              style: TextStyle(fontSize: 16),
-            ),
-          ),
+          type: AppButtonType.primary,
         ),
       ],
     );

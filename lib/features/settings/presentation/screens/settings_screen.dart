@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_button.dart';
+import 'package:n06/core/widgets/app_card.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/authentication/presentation/widgets/logout_confirm_dialog.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
@@ -80,29 +84,32 @@ class SettingsScreen extends ConsumerWidget {
     return ListView(
       children: [
         // User information section
-        Container(
-          padding: const EdgeInsets.all(16.0),
-          color: Colors.grey[50],
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '사용자 정보',
-                style: Theme.of(context).textTheme.titleSmall,
-                textAlign: TextAlign.left,
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                title: const Text('이름'),
-                subtitle: Text(userName),
-                contentPadding: EdgeInsets.zero,
-              ),
-              ListTile(
-                title: const Text('목표 체중'),
-                subtitle: Text('${profile.targetWeight.value}kg'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ],
+        // User information section
+        Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: AppCard(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '사용자 정보',
+                  style: AppTextStyles.h3,
+                  textAlign: TextAlign.left,
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  title: const Text('이름', style: AppTextStyles.body2),
+                  subtitle: Text(userName, style: AppTextStyles.body1),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                ListTile(
+                  title: const Text('목표 체중', style: AppTextStyles.body2),
+                  subtitle: Text('${profile.targetWeight.value}kg', style: AppTextStyles.body1),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 24),
@@ -115,7 +122,7 @@ class SettingsScreen extends ConsumerWidget {
             children: [
               Text(
                 '설정',
-                style: Theme.of(context).textTheme.titleSmall,
+                style: AppTextStyles.h3,
               ),
               const SizedBox(height: 16),
               // Business Rule 3: Clear labels and descriptions
@@ -194,12 +201,13 @@ class SettingsScreen extends ConsumerWidget {
             Icon(
               Icons.error_outline,
               size: 60,
-              color: Colors.red[300],
+              color: AppColors.error,
             ),
             const SizedBox(height: 16),
-            const Text('프로필 정보를 불러올 수 없습니다'),
+            Text('프로필 정보를 불러올 수 없습니다', style: AppTextStyles.body1),
             const SizedBox(height: 16),
-            ElevatedButton(
+            AppButton(
+              text: '다시 시도',
               onPressed: () {
                 final authState = ref.read(authNotifierProvider);
                 if (authState.hasValue && authState.value != null) {
@@ -208,7 +216,8 @@ class SettingsScreen extends ConsumerWidget {
                       .loadProfile(authState.value!.id);
                 }
               },
-              child: const Text('다시 시도'),
+              type: AppButtonType.secondary,
+              isFullWidth: false,
             ),
           ],
         ),

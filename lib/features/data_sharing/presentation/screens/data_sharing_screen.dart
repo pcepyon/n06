@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_button.dart';
+import 'package:n06/core/widgets/app_card.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/data_sharing/application/notifiers/data_sharing_notifier.dart';
 import 'package:n06/features/data_sharing/domain/repositories/date_range.dart';
@@ -66,11 +70,12 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: AppColors.error),
           const SizedBox(height: 16),
-          Text('오류가 발생했습니다: $error'),
+          Text('오류가 발생했습니다: $error', style: AppTextStyles.body1.copyWith(color: AppColors.error)),
           const SizedBox(height: 16),
-          ElevatedButton(
+          AppButton(
+            text: '다시 시도',
             onPressed: () {
               final userId = ref.read(authNotifierProvider).value?.id;
               if (userId != null) {
@@ -79,7 +84,8 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                     .enterSharingMode(userId, _selectedPeriod);
               }
             },
-            child: const Text('다시 시도'),
+            type: AppButtonType.secondary,
+            isFullWidth: false,
           ),
         ],
       ),
@@ -97,9 +103,9 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.inbox_outlined, size: 48, color: Colors.grey),
+            const Icon(Icons.inbox_outlined, size: 48, color: AppColors.gray),
             const SizedBox(height: 16),
-            const Text('선택된 기간에 기록이 없습니다.'),
+            Text('선택된 기간에 기록이 없습니다.', style: AppTextStyles.body1.copyWith(color: AppColors.gray)),
           ],
         ),
       );
@@ -150,18 +156,16 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
             // Exit Sharing Mode Button
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: AppButton(
+                text: '공유 종료',
                 onPressed: () {
                   ref.read(dataSharingNotifierProvider.notifier).exitSharingMode();
                   Navigator.of(context).pop();
                 },
-                icon: const Icon(Icons.exit_to_app),
-                label: const Text('공유 종료'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
+                icon: Icons.exit_to_app,
+                type: AppButtonType.primary,
+                backgroundColor: AppColors.warning,
+                borderColor: Colors.transparent,
               ),
             ),
           ],
@@ -174,7 +178,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('표시 기간', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text('표시 기간', style: AppTextStyles.h3),
         const SizedBox(height: 12),
         Row(
           children: DateRange.values.map<Widget>((period) {
@@ -182,8 +186,16 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: ChoiceChip(
-                  label: Text(period.label, textAlign: TextAlign.center),
+                  label: Text(
+                    period.label,
+                    textAlign: TextAlign.center,
+                    style: _selectedPeriod == period
+                        ? AppTextStyles.caption.copyWith(color: Colors.white)
+                        : AppTextStyles.caption,
+                  ),
                   selected: _selectedPeriod == period,
+                  selectedColor: AppColors.primary,
+                  backgroundColor: AppColors.lightGray,
                   onSelected: (selected) {
                     setState(() => _selectedPeriod = period);
                     if (selected) {
@@ -207,7 +219,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+      child: Text(title, style: AppTextStyles.h3),
     );
   }
 
@@ -215,12 +227,15 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     final records = report.getDoseRecordsSorted();
     return Column(
       children: records.map<Widget>((record) {
-        return Card(
+        return AppCard(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: EdgeInsets.zero,
           child: ListTile(
-            leading: const Icon(Icons.medical_services),
-            title: Text('${record.actualDoseMg} mg'),
+            leading: const Icon(Icons.medical_services, color: AppColors.primary),
+            title: Text('${record.actualDoseMg} mg', style: AppTextStyles.body2.copyWith(fontWeight: FontWeight.bold)),
             subtitle: Text(
               '${record.administeredAt.toLocal().toString().split('.')[0]} | ${record.injectionSite ?? '부위 미지정'}',
+              style: AppTextStyles.caption,
             ),
           ),
         );
@@ -230,31 +245,38 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
 
   Widget _buildAdherenceRateSection(dynamic report) {
     final rate = report.calculateAdherenceRate();
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('투여 순응도', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${rate.toStringAsFixed(1)}%',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 16),
-                    child: LinearProgressIndicator(value: rate / 100, minHeight: 8),
+    final rate = report.calculateAdherenceRate();
+    return AppCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('투여 순응도', style: AppTextStyles.h3),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${rate.toStringAsFixed(1)}%',
+                style: AppTextStyles.h1.copyWith(color: AppColors.primary),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: rate / 100,
+                      minHeight: 8,
+                      backgroundColor: AppColors.lightGray,
+                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    ),
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -263,9 +285,13 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     final sites = report.getInjectionSiteHistory();
     return Column(
       children: sites.entries.map<Widget>((entry) {
-        return ListTile(
-          title: Text(entry.key),
-          trailing: Text('${entry.value}회', style: const TextStyle(fontWeight: FontWeight.bold)),
+        return AppCard(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: EdgeInsets.zero,
+          child: ListTile(
+            title: Text(entry.key, style: AppTextStyles.body2),
+            trailing: Text('${entry.value}회', style: AppTextStyles.body2.copyWith(fontWeight: FontWeight.bold)),
+          ),
         );
       }).toList(),
     );
@@ -275,10 +301,14 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     final logs = report.getWeightLogsSorted();
     return Column(
       children: logs.map<Widget>((log) {
-        return ListTile(
-          leading: const Icon(Icons.scale),
-          title: Text('${log.weightKg} kg'),
-          subtitle: Text(log.logDate.toString().split(' ')[0]),
+        return AppCard(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: EdgeInsets.zero,
+          child: ListTile(
+            leading: const Icon(Icons.scale, color: AppColors.primary),
+            title: Text('${log.weightKg} kg', style: AppTextStyles.body2.copyWith(fontWeight: FontWeight.bold)),
+            subtitle: Text(log.logDate.toString().split(' ')[0], style: AppTextStyles.caption),
+          ),
         );
       }).toList(),
     );
@@ -288,12 +318,14 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     final logs = report.getSymptomLogsSorted();
     return Column(
       children: logs.map<Widget>((log) {
-        return Card(
+        return AppCard(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: EdgeInsets.zero,
           child: ListTile(
-            leading: const Icon(Icons.warning),
-            title: Text(log.symptomName),
-            subtitle: Text('심각도: ${log.severity}/10'),
-            trailing: Text(log.logDate.toString().split(' ')[0]),
+            leading: const Icon(Icons.warning, color: AppColors.warning),
+            title: Text(log.symptomName, style: AppTextStyles.body2.copyWith(fontWeight: FontWeight.bold)),
+            subtitle: Text('심각도: ${log.severity}/10', style: AppTextStyles.caption),
+            trailing: Text(log.logDate.toString().split(' ')[0], style: AppTextStyles.caption),
           ),
         );
       }).toList(),
@@ -304,17 +336,26 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('공유 종료'),
-        content: const Text('공유를 종료하시겠습니까?'),
+        title: Text('공유 종료', style: AppTextStyles.h3),
+        content: Text('공유를 종료하시겠습니까?', style: AppTextStyles.body1),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('취소')),
-          TextButton(
+          AppButton(
+            text: '취소',
+            onPressed: () => Navigator.of(context).pop(),
+            type: AppButtonType.ghost,
+            isFullWidth: false,
+          ),
+          AppButton(
+            text: '종료',
             onPressed: () {
               ref.read(dataSharingNotifierProvider.notifier).exitSharingMode();
               Navigator.of(context).pop();
               Navigator.of(context).pop();
             },
-            child: const Text('종료'),
+            type: AppButtonType.primary,
+            isFullWidth: false,
+            backgroundColor: AppColors.warning,
+            borderColor: Colors.transparent,
           ),
         ],
       ),

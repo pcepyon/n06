@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
 import 'package:n06/features/onboarding/presentation/widgets/basic_profile_form.dart';
 import 'package:n06/features/onboarding/presentation/widgets/weight_goal_form.dart';
 import 'package:n06/features/onboarding/presentation/widgets/dosage_plan_form.dart';
@@ -83,13 +85,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: Column(
         children: [
           // 진행 표시기
-          LinearProgressIndicator(value: (_currentStep + 1) / 4, minHeight: 4),
-          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: (_currentStep + 1) / 4,
+              minHeight: 4,
+              backgroundColor: AppColors.extraLightGray,
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+          const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
               '${_currentStep + 1}/4단계',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              style: AppTextStyles.body2.copyWith(color: AppColors.gray),
             ),
           ),
           const SizedBox(height: 16),

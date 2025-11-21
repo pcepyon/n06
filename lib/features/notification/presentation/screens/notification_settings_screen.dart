@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_card.dart';
 import 'package:n06/features/notification/application/notifiers/notification_notifier.dart';
 import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:n06/features/notification/presentation/widgets/time_picker_button.dart';
@@ -39,13 +42,17 @@ class NotificationSettingsScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       children: [
         // 알림 활성화 토글
-        Card(
-          elevation: 2,
+        AppCard(
+          padding: EdgeInsets.zero,
           child: ListTile(
-            title: const Text('알림 활성화'),
-            subtitle: Text(settings.notificationEnabled ? '알림이 활성화되었습니다' : '알림이 비활성화되었습니다'),
+            title: const Text('알림 활성화', style: AppTextStyles.body2),
+            subtitle: Text(
+              settings.notificationEnabled ? '알림이 활성화되었습니다' : '알림이 비활성화되었습니다',
+              style: AppTextStyles.caption,
+            ),
             trailing: Switch(
               value: settings.notificationEnabled,
+              activeColor: AppColors.primary,
               onChanged: (value) async {
                 await notifier.toggleNotificationEnabled();
               },
@@ -55,34 +62,31 @@ class NotificationSettingsScreen extends ConsumerWidget {
         const SizedBox(height: 16),
 
         // 알림 시간 설정
-        Card(
-          elevation: 2,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('알림 시간', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                TimePickerButton(
-                  // NotificationTime → TimeOfDay 변환 (Presentation Layer에서만)
-                  currentTime: _toTimeOfDay(settings.notificationTime),
-                  onTimeSelected: (selectedTime) async {
-                    // TimeOfDay → NotificationTime 변환
-                    final notificationTime = _fromTimeOfDay(selectedTime);
-                    await notifier.updateNotificationTime(notificationTime);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('알림 설정이 저장되었습니다'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ],
-            ),
+        AppCard(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('알림 시간', style: AppTextStyles.body2.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              TimePickerButton(
+                // NotificationTime → TimeOfDay 변환 (Presentation Layer에서만)
+                currentTime: _toTimeOfDay(settings.notificationTime),
+                onTimeSelected: (selectedTime) async {
+                  // TimeOfDay → NotificationTime 변환
+                  final notificationTime = _fromTimeOfDay(selectedTime);
+                  await notifier.updateNotificationTime(notificationTime);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('알림 설정이 저장되었습니다'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
@@ -91,12 +95,12 @@ class NotificationSettingsScreen extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.blue.shade50,
+            color: AppColors.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Text(
+          child: Text(
             '알림은 매 투여 예정일 설정된 시간에 발송됩니다.',
-            style: TextStyle(fontSize: 12, color: Colors.blue),
+            style: AppTextStyles.caption.copyWith(color: AppColors.primary),
           ),
         ),
       ],

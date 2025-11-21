@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_text_field.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/onboarding/domain/value_objects/weight.dart';
 
@@ -115,23 +118,17 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Name field
-          TextField(
+          AppTextField(
             controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: '이름',
-              border: OutlineInputBorder(),
-            ),
+            label: '이름',
             onChanged: (_) => _notifyProfileChanged(),
           ),
           const SizedBox(height: 16),
 
           // Target weight field
-          TextField(
+          AppTextField(
             controller: _targetWeightController,
-            decoration: const InputDecoration(
-              labelText: '목표 체중 (kg)',
-              border: OutlineInputBorder(),
-            ),
+            label: '목표 체중 (kg)',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onChanged: (_) {
               _calculateWeeklyGoal();
@@ -141,12 +138,9 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
           const SizedBox(height: 16),
 
           // Current weight field
-          TextField(
+          AppTextField(
             controller: _currentWeightController,
-            decoration: const InputDecoration(
-              labelText: '현재 체중 (kg)',
-              border: OutlineInputBorder(),
-            ),
+            label: '현재 체중 (kg)',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onChanged: (_) {
               _calculateWeeklyGoal();
@@ -156,12 +150,9 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
           const SizedBox(height: 16),
 
           // Target period field
-          TextField(
+          AppTextField(
             controller: _targetPeriodController,
-            decoration: const InputDecoration(
-              labelText: '목표 기간 (주)',
-              border: OutlineInputBorder(),
-            ),
+            label: '목표 기간 (주)',
             keyboardType: TextInputType.number,
             onChanged: (_) {
               _calculateWeeklyGoal();
@@ -176,7 +167,7 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: _showWeeklyGoalWarning ? Colors.orange : Colors.grey,
+                  color: _showWeeklyGoalWarning ? AppColors.warning : AppColors.gray,
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -185,19 +176,19 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
                 children: [
                   Text(
                     '주간 감량 목표: ${_calculatedWeeklyGoal!.toStringAsFixed(2)}kg',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: AppTextStyles.body2,
                   ),
                   if (_showWeeklyGoalWarning) ...[
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.warning, color: Colors.orange, size: 20),
+                        const Icon(Icons.warning, color: AppColors.warning, size: 20),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             '주당 1kg 초과의 감량 목표는 위험할 수 있습니다.',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.orange,
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.warning,
                             ),
                           ),
                         ),

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_button.dart';
+import 'package:n06/core/widgets/app_card.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
@@ -51,20 +55,20 @@ class _WeightRecordsTab extends ConsumerWidget {
 
     return authState.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text('오류: $err')),
+      error: (err, stack) => Center(child: Text('오류: $err', style: AppTextStyles.body1.copyWith(color: AppColors.error))),
       data: (user) {
         if (user == null) {
-          return const Center(child: Text('로그인이 필요합니다'));
+          return Center(child: Text('로그인이 필요합니다', style: AppTextStyles.body1.copyWith(color: AppColors.gray)));
         }
 
         return trackingState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('오류: $err')),
+          error: (err, stack) => Center(child: Text('오류: $err', style: AppTextStyles.body1.copyWith(color: AppColors.error))),
           data: (state) {
             final weights = state.weights;
 
             if (weights.isEmpty) {
-              return const Center(child: Text('기록이 없습니다'));
+              return Center(child: Text('기록이 없습니다', style: AppTextStyles.body1.copyWith(color: AppColors.gray)));
             }
 
             // 최신순으로 정렬
@@ -103,23 +107,27 @@ class _WeightRecordTile extends ConsumerWidget {
     final dateStr = DateFormat('yyyy-MM-dd').format(record.logDate);
     final timeStr = DateFormat('HH:mm').format(record.createdAt);
 
-    return ListTile(
-      title: Text('${record.weightKg} kg'),
-      subtitle: Text('$dateStr $timeStr'),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete, color: Colors.red),
-        onPressed: () => _showDeleteDialog(
+    return AppCard(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.zero,
+      child: ListTile(
+        title: Text('${record.weightKg} kg', style: AppTextStyles.body1.copyWith(fontWeight: FontWeight.bold)),
+        subtitle: Text('$dateStr $timeStr', style: AppTextStyles.caption),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete, color: AppColors.error),
+          onPressed: () => _showDeleteDialog(
+            context,
+            ref,
+            '${record.weightKg} kg',
+            () => _deleteWeight(context, ref),
+          ),
+        ),
+        onLongPress: () => _showDeleteDialog(
           context,
           ref,
           '${record.weightKg} kg',
           () => _deleteWeight(context, ref),
         ),
-      ),
-      onLongPress: () => _showDeleteDialog(
-        context,
-        ref,
-        '${record.weightKg} kg',
-        () => _deleteWeight(context, ref),
       ),
     );
   }
@@ -153,19 +161,25 @@ class _WeightRecordTile extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('기록 삭제'),
-        content: Text('$info 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.'),
+        title: Text('기록 삭제', style: AppTextStyles.h3),
+        content: Text('$info 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.', style: AppTextStyles.body1),
         actions: [
-          TextButton(
+          AppButton(
+            text: '취소',
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('취소'),
+            type: AppButtonType.ghost,
+            isFullWidth: false,
           ),
-          TextButton(
+          AppButton(
+            text: '삭제',
             onPressed: () {
               Navigator.pop(dialogContext);
               onDelete();
             },
-            child: const Text('삭제', style: TextStyle(color: Colors.red)),
+            type: AppButtonType.primary,
+            isFullWidth: false,
+            backgroundColor: AppColors.error,
+            borderColor: Colors.transparent,
           ),
         ],
       ),
@@ -184,20 +198,20 @@ class _SymptomRecordsTab extends ConsumerWidget {
 
     return authState.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text('오류: $err')),
+      error: (err, stack) => Center(child: Text('오류: $err', style: AppTextStyles.body1.copyWith(color: AppColors.error))),
       data: (user) {
         if (user == null) {
-          return const Center(child: Text('로그인이 필요합니다'));
+          return Center(child: Text('로그인이 필요합니다', style: AppTextStyles.body1.copyWith(color: AppColors.gray)));
         }
 
         return trackingState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('오류: $err')),
+          error: (err, stack) => Center(child: Text('오류: $err', style: AppTextStyles.body1.copyWith(color: AppColors.error))),
           data: (state) {
             final symptoms = state.symptoms;
 
             if (symptoms.isEmpty) {
-              return const Center(child: Text('기록이 없습니다'));
+              return Center(child: Text('기록이 없습니다', style: AppTextStyles.body1.copyWith(color: AppColors.gray)));
             }
 
             // 최신순으로 정렬
@@ -236,23 +250,27 @@ class _SymptomRecordTile extends ConsumerWidget {
     final dateStr = DateFormat('yyyy-MM-dd').format(record.logDate);
     final timeStr = DateFormat('HH:mm').format(record.createdAt ?? DateTime.now());
 
-    return ListTile(
-      title: Text('${record.symptomName} (심각도: ${record.severity}/10)'),
-      subtitle: Text('$dateStr $timeStr'),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete, color: Colors.red),
-        onPressed: () => _showDeleteDialog(
+    return AppCard(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.zero,
+      child: ListTile(
+        title: Text('${record.symptomName} (심각도: ${record.severity}/10)', style: AppTextStyles.body1.copyWith(fontWeight: FontWeight.bold)),
+        subtitle: Text('$dateStr $timeStr', style: AppTextStyles.caption),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete, color: AppColors.error),
+          onPressed: () => _showDeleteDialog(
+            context,
+            ref,
+            '${record.symptomName} (심각도: ${record.severity})',
+            () => _deleteSymptom(context, ref),
+          ),
+        ),
+        onLongPress: () => _showDeleteDialog(
           context,
           ref,
           '${record.symptomName} (심각도: ${record.severity})',
           () => _deleteSymptom(context, ref),
         ),
-      ),
-      onLongPress: () => _showDeleteDialog(
-        context,
-        ref,
-        '${record.symptomName} (심각도: ${record.severity})',
-        () => _deleteSymptom(context, ref),
       ),
     );
   }
@@ -286,19 +304,25 @@ class _SymptomRecordTile extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('기록 삭제'),
-        content: Text('$info 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.'),
+        title: Text('기록 삭제', style: AppTextStyles.h3),
+        content: Text('$info 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.', style: AppTextStyles.body1),
         actions: [
-          TextButton(
+          AppButton(
+            text: '취소',
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('취소'),
+            type: AppButtonType.ghost,
+            isFullWidth: false,
           ),
-          TextButton(
+          AppButton(
+            text: '삭제',
             onPressed: () {
               Navigator.pop(dialogContext);
               onDelete();
             },
-            child: const Text('삭제', style: TextStyle(color: Colors.red)),
+            type: AppButtonType.primary,
+            isFullWidth: false,
+            backgroundColor: AppColors.error,
+            borderColor: Colors.transparent,
           ),
         ],
       ),
@@ -317,20 +341,20 @@ class _DoseRecordsTab extends ConsumerWidget {
 
     return authState.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text('오류: $err')),
+      error: (err, stack) => Center(child: Text('오류: $err', style: AppTextStyles.body1.copyWith(color: AppColors.error))),
       data: (user) {
         if (user == null) {
-          return const Center(child: Text('로그인이 필요합니다'));
+          return Center(child: Text('로그인이 필요합니다', style: AppTextStyles.body1.copyWith(color: AppColors.gray)));
         }
 
         return medicationState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('오류: $err')),
+          error: (err, stack) => Center(child: Text('오류: $err', style: AppTextStyles.body1.copyWith(color: AppColors.error))),
           data: (state) {
             final records = state.records;
 
             if (records.isEmpty) {
-              return const Center(child: Text('기록이 없습니다'));
+              return Center(child: Text('기록이 없습니다', style: AppTextStyles.body1.copyWith(color: AppColors.gray)));
             }
 
             // 최신순으로 정렬
@@ -369,23 +393,27 @@ class _DoseRecordTile extends ConsumerWidget {
     final dateStr = DateFormat('yyyy-MM-dd HH:mm').format(record.administeredAt);
     final siteDisplay = record.injectionSite ?? '미지정';
 
-    return ListTile(
-      title: Text('${record.actualDoseMg} mg (부위: $siteDisplay)'),
-      subtitle: Text(dateStr),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete, color: Colors.red),
-        onPressed: () => _showDeleteDialog(
+    return AppCard(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.zero,
+      child: ListTile(
+        title: Text('${record.actualDoseMg} mg (부위: $siteDisplay)', style: AppTextStyles.body1.copyWith(fontWeight: FontWeight.bold)),
+        subtitle: Text(dateStr, style: AppTextStyles.caption),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete, color: AppColors.error),
+          onPressed: () => _showDeleteDialog(
+            context,
+            ref,
+            '${record.actualDoseMg} mg ($siteDisplay)',
+            () => _deleteDose(context, ref),
+          ),
+        ),
+        onLongPress: () => _showDeleteDialog(
           context,
           ref,
           '${record.actualDoseMg} mg ($siteDisplay)',
           () => _deleteDose(context, ref),
         ),
-      ),
-      onLongPress: () => _showDeleteDialog(
-        context,
-        ref,
-        '${record.actualDoseMg} mg ($siteDisplay)',
-        () => _deleteDose(context, ref),
       ),
     );
   }
@@ -422,19 +450,25 @@ class _DoseRecordTile extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('기록 삭제'),
-        content: Text('$info 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.'),
+        title: Text('기록 삭제', style: AppTextStyles.h3),
+        content: Text('$info 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.', style: AppTextStyles.body1),
         actions: [
-          TextButton(
+          AppButton(
+            text: '취소',
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('취소'),
+            type: AppButtonType.ghost,
+            isFullWidth: false,
           ),
-          TextButton(
+          AppButton(
+            text: '삭제',
             onPressed: () {
               Navigator.pop(dialogContext);
               onDelete();
             },
-            child: const Text('삭제', style: TextStyle(color: Colors.red)),
+            type: AppButtonType.primary,
+            isFullWidth: false,
+            backgroundColor: AppColors.error,
+            borderColor: Colors.transparent,
           ),
         ],
       ),

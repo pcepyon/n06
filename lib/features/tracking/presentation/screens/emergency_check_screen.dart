@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_button.dart';
+import 'package:n06/core/widgets/app_card.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
@@ -99,7 +102,10 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('기록 실패: $e'), backgroundColor: Colors.red));
+        ).showSnackBar(SnackBar(
+          content: Text('기록 실패: $e', style: AppTextStyles.body2.copyWith(color: Colors.white)),
+          backgroundColor: AppColors.error,
+        ));
       }
     }
   }
@@ -122,16 +128,19 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
             // 헤더
             Container(
               padding: const EdgeInsets.all(16),
-              color: Colors.blue.shade50,
+              color: AppColors.primary.withOpacity(0.1),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     '다음 증상 중 해당하는 것이 있나요?',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: AppTextStyles.h3.copyWith(color: AppColors.primary),
                   ),
                   const SizedBox(height: 8),
-                  Text('해당하는 증상을 선택해주세요.', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                  Text(
+                    '해당하는 증상을 선택해주세요.',
+                    style: AppTextStyles.body2.copyWith(color: AppColors.gray),
+                  ),
                 ],
               ),
             ),
@@ -142,16 +151,21 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
               child: Column(
                 children: List.generate(
                   emergencySymptoms.length,
-                  (index) => CheckboxListTile(
-                    value: selectedStates[index],
-                    onChanged: (value) {
-                      setState(() {
-                        selectedStates[index] = value ?? false;
-                      });
-                    },
-                    title: Text(emergencySymptoms[index], style: const TextStyle(fontSize: 14)),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 0),
+                  (index) => AppCard(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: EdgeInsets.zero,
+                    child: CheckboxListTile(
+                      value: selectedStates[index],
+                      activeColor: AppColors.primary,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedStates[index] = value ?? false;
+                        });
+                      },
+                      title: Text(emergencySymptoms[index], style: AppTextStyles.body2),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    ),
                   ),
                 ),
               ),
@@ -164,14 +178,18 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
         child: Row(
           children: [
             Expanded(
-              child: OutlinedButton(onPressed: _handleNoSymptoms, child: const Text('해당 없음')),
+              child: AppButton(
+                text: '해당 없음',
+                onPressed: _handleNoSymptoms,
+                type: AppButtonType.outline,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: ElevatedButton(
-                // 증상이 선택되지 않으면 비활성화
+              child: AppButton(
+                text: '확인',
                 onPressed: selectedStates.any((state) => state) ? _handleConfirm : null,
-                child: const Text('확인'),
+                type: AppButtonType.primary,
               ),
             ),
           ],

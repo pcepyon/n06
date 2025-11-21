@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_button.dart';
+import 'package:n06/core/widgets/app_card.dart';
+import 'package:n06/core/widgets/app_text_field.dart';
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
@@ -23,14 +28,14 @@ class DoseScheduleScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.assignment_outlined, size: 48, color: Colors.grey),
+                  const Icon(Icons.assignment_outlined, size: 48, color: AppColors.gray),
                   const SizedBox(height: 16),
-                  const Text('투여 계획이 없습니다'),
+                  Text('투여 계획이 없습니다', style: AppTextStyles.body1),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     '온보딩을 완료하여 투여 계획을 설정하세요',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
+                    style: AppTextStyles.body2.copyWith(color: AppColors.gray),
                   ),
                 ],
               ),
@@ -45,14 +50,14 @@ class DoseScheduleScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.calendar_today_outlined, size: 48, color: Colors.grey),
+                  const Icon(Icons.calendar_today_outlined, size: 48, color: AppColors.gray),
                   const SizedBox(height: 16),
-                  const Text('스케줄이 없습니다'),
+                  Text('스케줄이 없습니다', style: AppTextStyles.body1),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     '투여 계획에 따라 스케줄이 자동으로 생성됩니다',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
+                    style: AppTextStyles.body2.copyWith(color: AppColors.gray),
                   ),
                 ],
               ),
@@ -90,9 +95,9 @@ class DoseScheduleScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 16),
-              Text('오류가 발생했습니다: $error'),
+              Text('오류가 발생했습니다: $error', style: AppTextStyles.body1.copyWith(color: AppColors.error)),
             ],
           ),
         ),
@@ -132,69 +137,73 @@ class DoseScheduleScreen extends ConsumerWidget {
       textColor = Colors.amber.shade700;
     }
 
-    return Container(
+    return AppCard(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        border: Border.all(color: borderColor),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        title: Text(
-          '${schedule.scheduledDoseMg} mg',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: textColor,
-                fontWeight: FontWeight.bold,
-              ),
+      padding: EdgeInsets.zero,
+      backgroundColor: backgroundColor,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: borderColor),
+          borderRadius: BorderRadius.circular(20),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            Text(
-              _formatDate(schedule.scheduledDate),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: textColor),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          title: Text(
+            '${schedule.scheduledDoseMg} mg',
+            style: AppTextStyles.h3.copyWith(
+              color: textColor,
             ),
-            if (isToday)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '오늘',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.blue.shade700,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 8),
+              Text(
+                _formatDate(schedule.scheduledDate),
+                style: AppTextStyles.body2.copyWith(color: textColor),
               ),
-            if (isCompleted)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '완료됨',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.green.shade700,
-                        fontWeight: FontWeight.bold,
-                      ),
+              if (isToday)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    '오늘',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-              ),
-          ],
+              if (isCompleted)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    '완료됨',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          trailing: isCompleted
+              ? Icon(Icons.check_circle, color: AppColors.success)
+              : isOverdue
+                  ? Icon(Icons.warning, color: AppColors.error)
+                  : isToday || isUpcoming
+                      ? AppButton(
+                          text: '기록',
+                          onPressed: () => _showRecordDialog(context, ref, schedule),
+                          type: AppButtonType.primary,
+                          isFullWidth: false,
+                        )
+                      : null,
+          onTap: isCompleted || isOverdue
+              ? null
+              : isToday || isUpcoming
+                  ? () => _showRecordDialog(context, ref, schedule)
+                  : null,
         ),
-        trailing: isCompleted
-            ? Icon(Icons.check_circle, color: Colors.green.shade700)
-            : isOverdue
-                ? Icon(Icons.warning, color: Colors.red.shade700)
-                : isToday || isUpcoming
-                    ? ElevatedButton(
-                        onPressed: () => _showRecordDialog(context, ref, schedule),
-                        child: const Text('기록'),
-                      )
-                    : null,
-        onTap: isCompleted || isOverdue
-            ? null
-            : isToday || isUpcoming
-                ? () => _showRecordDialog(context, ref, schedule)
-                : null,
       ),
     );
   }
@@ -245,7 +254,7 @@ class _DoseRecordDialogState extends ConsumerState<DoseRecordDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('투여 기록'),
+      title: Text('투여 기록', style: AppTextStyles.h3),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -253,12 +262,12 @@ class _DoseRecordDialogState extends ConsumerState<DoseRecordDialog> {
           children: [
             Text(
               '${widget.schedule.scheduledDoseMg} mg를 투여했습니다.',
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: AppTextStyles.body1,
             ),
             const SizedBox(height: 24),
             Text(
               '주사 부위',
-              style: Theme.of(context).textTheme.labelLarge,
+              style: AppTextStyles.body2.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             InjectionSiteSelectWidget(
@@ -271,39 +280,32 @@ class _DoseRecordDialogState extends ConsumerState<DoseRecordDialog> {
             const SizedBox(height: 24),
             Text(
               '메모 (선택사항)',
-              style: Theme.of(context).textTheme.labelLarge,
+              style: AppTextStyles.body2.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            TextField(
+            AppTextField(
               controller: noteController,
-              decoration: InputDecoration(
-                hintText: '메모를 입력하세요',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
+              hintText: '메모를 입력하세요',
               maxLines: 3,
-              maxLength: 100,
             ),
           ],
         ),
       ),
       actions: [
-        TextButton(
+        AppButton(
+          text: '취소',
           onPressed: isLoading ? null : () => Navigator.of(context).pop(),
-          child: const Text('취소'),
+          type: AppButtonType.ghost,
+          isFullWidth: false,
         ),
-        ElevatedButton(
+        AppButton(
+          text: '저장',
           onPressed: isLoading || selectedSite == null
               ? null
               : () => _saveDoseRecord(),
-          child: isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('저장'),
+          isLoading: isLoading,
+          type: AppButtonType.primary,
+          isFullWidth: false,
         ),
       ],
     );

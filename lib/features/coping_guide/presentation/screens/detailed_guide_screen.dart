@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
 
 import '../../domain/entities/coping_guide.dart';
 
@@ -12,7 +13,7 @@ class DetailedGuideScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${guide.symptomName} 대처 가이드'),
+        title: Text('${guide.symptomName} 대처 가이드', style: AppTextStyles.h3),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -21,7 +22,7 @@ class DetailedGuideScreen extends StatelessWidget {
           children: [
             Text(
               guide.symptomName,
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: AppTextStyles.h2,
             ),
             SizedBox(height: 16),
             if (guide.detailedSections != null &&
@@ -32,14 +33,12 @@ class DetailedGuideScreen extends StatelessWidget {
                   children: [
                     Text(
                       section.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style: AppTextStyles.h3,
                     ),
                     SizedBox(height: 8),
                     Text(
                       section.content,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: AppTextStyles.body1,
                     ),
                     SizedBox(height: 24),
                   ],

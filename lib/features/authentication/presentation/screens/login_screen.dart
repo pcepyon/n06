@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/authentication/domain/exceptions/auth_exceptions.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_button.dart';
 
 /// Login screen with social authentication options
 ///
@@ -373,24 +376,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const Icon(
                 Icons.medication,
                 size: 80,
-                color: Colors.blue,
+                color: AppColors.primary,
               ),
               const SizedBox(height: 24),
               const Text(
                 'GLP-1 치료 관리',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyles.h1,
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 '안전하고 효과적인 치료를 위해',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
+                style: AppTextStyles.body1.copyWith(
+                  color: AppColors.gray,
                 ),
               ),
               const SizedBox(height: 48),
@@ -398,91 +397,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               // Terms checkboxes
               CheckboxListTile(
                 key: const Key('terms_checkbox'),
-                title: const Text('이용약관 동의 (필수)'),
+                title: const Text('이용약관 동의 (필수)', style: AppTextStyles.body2),
                 value: _agreedToTerms,
+                activeColor: AppColors.primary,
                 onChanged: _isLoading
                     ? null
                     : (value) {
                         setState(() => _agreedToTerms = value ?? false);
                       },
                 controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
               ),
               CheckboxListTile(
                 key: const Key('privacy_checkbox'),
-                title: const Text('개인정보처리방침 동의 (필수)'),
+                title: const Text('개인정보처리방침 동의 (필수)', style: AppTextStyles.body2),
                 value: _agreedToPrivacy,
+                activeColor: AppColors.primary,
                 onChanged: _isLoading
                     ? null
                     : (value) {
                         setState(() => _agreedToPrivacy = value ?? false);
                       },
                 controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
               ),
 
               const SizedBox(height: 32),
 
               // Kakao Login Button
-              ElevatedButton.icon(
-                key: const Key('kakao_login_button'),
+              AppButton(
+                text: '카카오 로그인',
                 onPressed: _canLogin ? _handleKakaoLogin : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFEE500),
-                  foregroundColor: Colors.black87,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.black87,
-                        ),
-                      )
-                    : const Icon(Icons.chat_bubble),
-                label: const Text(
-                  '카카오 로그인',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                type: AppButtonType.primary,
+                backgroundColor: const Color(0xFFFEE500),
+                textColor: Colors.black87,
+                icon: Icons.chat_bubble,
+                isLoading: _isLoading,
               ),
 
               const SizedBox(height: 12),
 
               // Naver Login Button
-              ElevatedButton.icon(
-                key: const Key('naver_login_button'),
+              AppButton(
+                text: '네이버 로그인',
                 onPressed: _canLogin ? _handleNaverLogin : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF03C75A),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.language),
-                label: const Text(
-                  '네이버 로그인',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                type: AppButtonType.primary,
+                backgroundColor: const Color(0xFF03C75A),
+                textColor: Colors.white,
+                icon: Icons.language,
+                isLoading: _isLoading,
               ),
 
               const SizedBox(height: 24),
@@ -508,39 +471,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 24),
 
               // Email Login Button
-              OutlinedButton.icon(
-                key: const Key('email_login_button'),
+              AppButton(
+                text: '이메일로 로그인',
                 onPressed: () => context.go('/email-signin'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  side: BorderSide(color: Colors.grey.shade400),
-                ),
-                icon: const Icon(Icons.email_outlined),
-                label: const Text(
-                  '이메일로 로그인',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                type: AppButtonType.outline,
+                icon: Icons.email_outlined,
               ),
 
               const SizedBox(height: 12),
 
               // Email Signup Link
-              TextButton(
-                key: const Key('email_signup_link'),
+              AppButton(
+                text: '이메일로 회원가입',
                 onPressed: () => context.go('/email-signup'),
-                child: const Text(
-                  '이메일로 회원가입',
-                  style: TextStyle(
-                    fontSize: 14,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
+                type: AppButtonType.ghost,
               ),
 
               const SizedBox(height: 24),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_button.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
 import 'package:n06/features/profile/presentation/widgets/profile_edit_form.dart';
@@ -33,13 +36,15 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('오류가 발생했습니다: $error'),
+              Text('오류가 발생했습니다: $error', style: AppTextStyles.body1.copyWith(color: AppColors.error)),
               const SizedBox(height: 16),
-              ElevatedButton(
+              AppButton(
+                text: '다시 시도',
                 onPressed: () {
                   ref.invalidate(profileNotifierProvider);
                 },
-                child: const Text('다시 시도'),
+                type: AppButtonType.secondary,
+                isFullWidth: false,
               ),
             ],
           ),
@@ -47,7 +52,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         data: (profile) {
           if (profile == null) {
             return const Center(
-              child: Text('프로필 정보를 찾을 수 없습니다.'),
+              child: Text('프로필 정보를 찾을 수 없습니다.', style: AppTextStyles.body1),
             );
           }
 
@@ -73,7 +78,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                     padding: const EdgeInsets.all(16),
                     child: Text(
                       _validationError!,
-                      style: const TextStyle(color: Colors.white),
+                      style: AppTextStyles.body2.copyWith(color: Colors.white),
                     ),
                   ),
                 ),

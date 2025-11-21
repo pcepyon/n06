@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/core/utils/validators.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_button.dart';
+import 'package:n06/core/widgets/app_text_field.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 
 /// Password reset screen
@@ -153,7 +157,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reset Password'),
+        title: const Text('비밀번호 재설정'),
       ),
       body: authState.maybeWhen(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -170,50 +174,44 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                 if (!_hasToken) ...[
                   // Step 1: Request reset email
                   Text(
-                    'Enter your email to receive a password reset link',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    '가입하신 이메일 주소를 입력하시면\n비밀번호 재설정 링크를 보내드립니다.',
+                    style: AppTextStyles.body1,
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 24),
-                  TextFormField(
+                  const SizedBox(height: 32),
+                  AppTextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      hintText: 'user@example.com',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
+                    label: '이메일',
+                    hintText: 'example@email.com',
                     validator: _validateEmail,
                   ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
+                  const SizedBox(height: 32),
+                  AppButton(
+                    text: '재설정 메일 보내기',
                     onPressed: _handleResetEmailRequest,
-                    child: const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('Send Reset Email'),
-                    ),
+                    type: AppButtonType.primary,
                   ),
                 ] else ...[
                   // Step 2: Change password
                   Text(
-                    'Enter your new password',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    '새로운 비밀번호를 입력해주세요',
+                    style: AppTextStyles.h2,
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 24),
-                  TextFormField(
+                  const SizedBox(height: 32),
+                  AppTextField(
                     controller: _newPasswordController,
                     obscureText: !_showPassword,
+                    label: '새 비밀번호',
+                    hintText: '영문, 숫자, 특수문자 포함 8자 이상',
                     onChanged: _updatePasswordStrength,
-                    decoration: InputDecoration(
-                      labelText: 'New Password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _showPassword ? Icons.visibility : Icons.visibility_off,
+                        color: AppColors.gray,
                       ),
-                      suffixIcon: IconButton(
-                        icon: Icon(_showPassword ? Icons.visibility : Icons.visibility_off),
-                        onPressed: () => setState(() => _showPassword = !_showPassword),
-                      ),
+                      onPressed: () => setState(() => _showPassword = !_showPassword),
                     ),
                     validator: _validatePassword,
                   ),
@@ -221,56 +219,67 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: LinearProgressIndicator(
-                          value: _passwordStrength.index / PasswordStrength.values.length,
-                          minHeight: 4,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(2),
+                          child: LinearProgressIndicator(
+                            value: _passwordStrength.index / PasswordStrength.values.length,
+                            minHeight: 4,
+                            backgroundColor: AppColors.extraLightGray,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              switch (_passwordStrength) {
+                                PasswordStrength.weak => AppColors.error,
+                                PasswordStrength.medium => AppColors.warning,
+                                PasswordStrength.strong => AppColors.success,
+                              },
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        _passwordStrength.name,
-                        style: TextStyle(
+                        switch (_passwordStrength) {
+                          PasswordStrength.weak => '약함',
+                          PasswordStrength.medium => '보통',
+                          PasswordStrength.strong => '안전',
+                        },
+                        style: AppTextStyles.caption.copyWith(
                           color: switch (_passwordStrength) {
-                            PasswordStrength.weak => Colors.red,
-                            PasswordStrength.medium => Colors.orange,
-                            PasswordStrength.strong => Colors.green,
+                            PasswordStrength.weak => AppColors.error,
+                            PasswordStrength.medium => AppColors.warning,
+                            PasswordStrength.strong => AppColors.success,
                           },
-                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
+                  const SizedBox(height: 24),
+                  AppTextField(
                     controller: _confirmPasswordController,
                     obscureText: !_showConfirmPassword,
-                    decoration: InputDecoration(
-                      labelText: 'Confirm Password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                    label: '새 비밀번호 확인',
+                    hintText: '비밀번호를 다시 입력해주세요',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _showConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                        color: AppColors.gray,
                       ),
-                      suffixIcon: IconButton(
-                        icon: Icon(_showConfirmPassword ? Icons.visibility : Icons.visibility_off),
-                        onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
-                      ),
+                      onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
                     ),
                     validator: _validateConfirmPassword,
                   ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
+                  const SizedBox(height: 32),
+                  AppButton(
+                    text: '비밀번호 변경하기',
                     onPressed: _handlePasswordChange,
-                    child: const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('Change Password'),
-                    ),
+                    type: AppButtonType.primary,
                   ),
                 ],
                 const SizedBox(height: 16),
-                Center(
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Back to Sign In'),
-                  ),
+                AppButton(
+                  text: '로그인 화면으로 돌아가기',
+                  onPressed: () => Navigator.of(context).pop(),
+                  type: AppButtonType.ghost,
                 ),
               ],
             ),

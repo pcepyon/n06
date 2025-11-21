@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:go_router/go_router.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_button.dart';
+import 'package:n06/core/widgets/app_card.dart';
+import 'package:n06/core/widgets/app_text_field.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/application/providers.dart';
@@ -300,14 +305,17 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 날짜 선택
-              const Text(
+              Text(
                 '날짜 선택',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: AppTextStyles.h3,
               ),
               const SizedBox(height: 12),
-              DateSelectionWidget(
-                initialDate: selectedDate,
-                onDateSelected: _handleDateSelected,
+              AppCard(
+                padding: const EdgeInsets.all(16),
+                child: DateSelectionWidget(
+                  initialDate: selectedDate,
+                  onDateSelected: _handleDateSelected,
+                ),
               ),
 
               // 경과일 표시
@@ -316,14 +324,14 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '용량 증량 후 $daysSinceEscalation일째',
-                    style: TextStyle(
-                      color: Colors.blue.shade900,
-                      fontWeight: FontWeight.w500,
+                    style: AppTextStyles.body2.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -331,9 +339,9 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
 
               // 증상 선택
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 '증상 선택',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: AppTextStyles.h3,
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -342,8 +350,16 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
                 children: _symptoms.map((symptom) {
                   final isSelected = selectedSymptoms.contains(symptom);
                   return FilterChip(
-                    label: Text(symptom),
+                    label: Text(
+                      symptom,
+                      style: isSelected
+                          ? AppTextStyles.body2.copyWith(color: Colors.white)
+                          : AppTextStyles.body2,
+                    ),
                     selected: isSelected,
+                    selectedColor: AppColors.primary,
+                    backgroundColor: AppColors.lightGray,
+                    checkmarkColor: Colors.white,
                     onSelected: (selected) {
                       setState(() {
                         if (selected) {
@@ -359,87 +375,100 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
 
               // 심각도 선택
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 '심각도 (1-10점)',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: AppTextStyles.h3,
               ),
               const SizedBox(height: 12),
-              Column(
-                children: [
-                  Slider(
-                    value: severity.toDouble(),
-                    min: 1,
-                    max: 10,
-                    divisions: 9,
-                    label: severity.toString(),
-                    onChanged: (value) {
-                      setState(() {
-                        severity = value.toInt();
-                        // 심각도가 6 이하로 낮아지면 isPersistent24h 리셋
-                        if (severity < 7) {
-                          isPersistent24h = null;
-                        }
-                      });
-                    },
-                  ),
-                  Text(
-                    '현재: $severity점',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ],
+              AppCard(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Slider(
+                      value: severity.toDouble(),
+                      min: 1,
+                      max: 10,
+                      divisions: 9,
+                      label: severity.toString(),
+                      activeColor: AppColors.primary,
+                      inactiveColor: AppColors.lightGray,
+                      onChanged: (value) {
+                        setState(() {
+                          severity = value.toInt();
+                          // 심각도가 6 이하로 낮아지면 isPersistent24h 리셋
+                          if (severity < 7) {
+                            isPersistent24h = null;
+                          }
+                        });
+                      },
+                    ),
+                    Text(
+                      '현재: $severity점',
+                      style: AppTextStyles.body1.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
               ),
 
               // 심각도 7-10점인 경우 24시간 지속 여부 질문
               if (severity >= 7) ...[
                 const SizedBox(height: 24),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange.shade300),
+                    color: AppColors.warning.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.warning),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         '24시간 이상 지속되고 있나요?',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
+                        style: AppTextStyles.body1.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(
-                            child: OutlinedButton(
+                            child: AppButton(
+                              text: '아니오',
                               onPressed: () {
                                 setState(() => isPersistent24h = false);
                               },
-                              style: OutlinedButton.styleFrom(
-                                backgroundColor: isPersistent24h == false
-                                    ? Colors.grey.shade200
-                                    : Colors.transparent,
-                              ),
-                              child: const Text('아니오'),
+                              type: isPersistent24h == false
+                                  ? AppButtonType.secondary
+                                  : AppButtonType.outline,
+                              backgroundColor: isPersistent24h == false
+                                  ? AppColors.lightGray
+                                  : Colors.transparent,
+                              textColor: isPersistent24h == false
+                                  ? AppColors.textPrimary
+                                  : AppColors.gray,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 12),
                           Expanded(
-                            child: ElevatedButton(
+                            child: AppButton(
+                              text: '예',
                               onPressed: () {
                                 setState(() => isPersistent24h = true);
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isPersistent24h == true
-                                    ? Colors.orange
-                                    : Colors.grey,
-                              ),
-                              child: const Text(
-                                '예',
-                                style: TextStyle(color: Colors.white),
-                              ),
+                              type: isPersistent24h == true
+                                  ? AppButtonType.primary
+                                  : AppButtonType.outline,
+                              backgroundColor: isPersistent24h == true
+                                  ? AppColors.warning
+                                  : Colors.transparent,
+                              textColor: isPersistent24h == true
+                                  ? Colors.white
+                                  : AppColors.gray,
+                              borderColor: isPersistent24h == true
+                                  ? Colors.transparent
+                                  : AppColors.lightGray,
                             ),
                           ),
                         ],
@@ -452,9 +481,9 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
               // 컨텍스트 태그 선택 (심각도 1-6점일 때만)
               if (severity < 7) ...[
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   '컨텍스트 태그 (선택)',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: AppTextStyles.h3,
                 ),
                 const SizedBox(height: 12),
                 Wrap(
@@ -463,8 +492,15 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
                   children: _contextTags.map((tag) {
                     final isSelected = selectedTags.contains(tag);
                     return ChoiceChip(
-                      label: Text('#$tag'),
+                      label: Text(
+                        '#$tag',
+                        style: isSelected
+                            ? AppTextStyles.caption.copyWith(color: Colors.white)
+                            : AppTextStyles.caption,
+                      ),
                       selected: isSelected,
+                      selectedColor: AppColors.primary,
+                      backgroundColor: AppColors.lightGray,
                       onSelected: (selected) {
                         setState(() {
                           if (selected) {
@@ -481,44 +517,26 @@ class _SymptomRecordScreenState extends ConsumerState<SymptomRecordScreen> {
 
               // 메모 입력
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 '메모 (선택)',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: AppTextStyles.h3,
               ),
               const SizedBox(height: 12),
-              TextField(
+              AppTextField(
                 onChanged: (value) {
                   setState(() => memo = value);
                 },
                 maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: '추가 정보를 입력하세요',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  contentPadding: const EdgeInsets.all(12),
-                ),
+                hintText: '추가 정보를 입력하세요',
               ),
 
               // 저장 버튼
               const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : _handleSave,
-                  child: isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text('저장'),
-                ),
+              AppButton(
+                text: '저장',
+                onPressed: isLoading ? null : _handleSave,
+                isLoading: isLoading,
+                type: AppButtonType.primary,
               ),
 
               const SizedBox(height: 16),

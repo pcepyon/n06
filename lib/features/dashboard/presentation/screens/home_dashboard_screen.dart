@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_button.dart';
 import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';
 import 'package:n06/features/dashboard/presentation/widgets/greeting_widget.dart';
 import 'package:n06/features/dashboard/presentation/widgets/weekly_progress_widget.dart';
@@ -36,16 +39,18 @@ class HomeDashboardScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 60, color: Colors.red[300]),
+              Icon(Icons.error_outline, size: 60, color: AppColors.error),
               const SizedBox(height: 16),
-              Text('데이터를 불러올 수 없습니다'),
+              Text('데이터를 불러올 수 없습니다', style: AppTextStyles.body1),
               const SizedBox(height: 16),
-              ElevatedButton(
+              AppButton(
+                text: '다시 시도',
                 onPressed: () {
                   // ignore: unused_result
                   ref.refresh(dashboardNotifierProvider);
                 },
-                child: const Text('다시 시도'),
+                type: AppButtonType.secondary,
+                isFullWidth: false,
               ),
             ],
           ),
@@ -57,7 +62,7 @@ class HomeDashboardScreen extends ConsumerWidget {
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

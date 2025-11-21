@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/core/utils/validators.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_button.dart';
+import 'package:n06/core/widgets/app_text_field.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 
 /// Email signup screen
@@ -149,7 +153,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Account'),
+        title: const Text('회원가입'),
       ),
       body: authState.maybeWhen(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -164,35 +168,29 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Email field
-                TextFormField(
+                AppTextField(
                   key: const Key('email_field'),
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'user@example.com',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
+                  label: '이메일',
+                  hintText: 'example@email.com',
                   validator: _validateEmail,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
                 // Password field
-                TextFormField(
+                AppTextField(
                   controller: _passwordController,
                   obscureText: !_showPassword,
+                  label: '비밀번호',
+                  hintText: '영문, 숫자, 특수문자 포함 8자 이상',
                   onChanged: _updatePasswordStrength,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _showPassword ? Icons.visibility : Icons.visibility_off,
+                      color: AppColors.gray,
                     ),
-                    suffixIcon: IconButton(
-                      icon: Icon(_showPassword ? Icons.visibility : Icons.visibility_off),
-                      onPressed: () => setState(() => _showPassword = !_showPassword),
-                    ),
+                    onPressed: () => setState(() => _showPassword = !_showPassword),
                   ),
                   validator: _validatePassword,
                 ),
@@ -202,82 +200,99 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: LinearProgressIndicator(
-                        value: _passwordStrength.index / PasswordStrength.values.length,
-                        minHeight: 4,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: _passwordStrength.index / PasswordStrength.values.length,
+                          minHeight: 4,
+                          backgroundColor: AppColors.extraLightGray,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            switch (_passwordStrength) {
+                              PasswordStrength.weak => AppColors.error,
+                              PasswordStrength.medium => AppColors.warning,
+                              PasswordStrength.strong => AppColors.success,
+                            },
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      _passwordStrength.name,
-                      style: TextStyle(
+                      switch (_passwordStrength) {
+                        PasswordStrength.weak => '약함',
+                        PasswordStrength.medium => '보통',
+                        PasswordStrength.strong => '안전',
+                      },
+                      style: AppTextStyles.caption.copyWith(
                         color: switch (_passwordStrength) {
-                          PasswordStrength.weak => Colors.red,
-                          PasswordStrength.medium => Colors.orange,
-                          PasswordStrength.strong => Colors.green,
+                          PasswordStrength.weak => AppColors.error,
+                          PasswordStrength.medium => AppColors.warning,
+                          PasswordStrength.strong => AppColors.success,
                         },
-                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
                 // Confirm password field
-                TextFormField(
+                AppTextField(
                   controller: _confirmPasswordController,
                   obscureText: !_showConfirmPassword,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                  label: '비밀번호 확인',
+                  hintText: '비밀번호를 다시 입력해주세요',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _showConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                      color: AppColors.gray,
                     ),
-                    suffixIcon: IconButton(
-                      icon: Icon(_showConfirmPassword ? Icons.visibility : Icons.visibility_off),
-                      onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
-                    ),
+                    onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
                   ),
                   validator: _validateConfirmPassword,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
                 // Consent checkboxes
                 CheckboxListTile(
                   value: _agreeToTerms,
                   onChanged: (value) => setState(() => _agreeToTerms = value ?? false),
-                  title: const Text('I agree to Terms of Service (required)'),
+                  title: const Text('이용약관 동의 (필수)', style: AppTextStyles.body2),
+                  activeColor: AppColors.primary,
                   controlAffinity: ListTileControlAffinity.leading,
+                  contentPadding: EdgeInsets.zero,
                 ),
                 CheckboxListTile(
                   value: _agreeToPrivacy,
                   onChanged: (value) => setState(() => _agreeToPrivacy = value ?? false),
-                  title: const Text('I agree to Privacy Policy (required)'),
+                  title: const Text('개인정보처리방침 동의 (필수)', style: AppTextStyles.body2),
+                  activeColor: AppColors.primary,
                   controlAffinity: ListTileControlAffinity.leading,
+                  contentPadding: EdgeInsets.zero,
                 ),
                 CheckboxListTile(
                   value: _agreeToMarketing,
                   onChanged: (value) => setState(() => _agreeToMarketing = value ?? false),
-                  title: const Text('I agree to Marketing Email (optional)'),
+                  title: const Text('마케팅 정보 수신 동의 (선택)', style: AppTextStyles.body2),
+                  activeColor: AppColors.primary,
                   controlAffinity: ListTileControlAffinity.leading,
+                  contentPadding: EdgeInsets.zero,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
                 // Sign up button
-                ElevatedButton(
+                AppButton(
+                  text: '회원가입',
                   onPressed: _handleSignup,
-                  child: const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('Sign Up'),
-                  ),
+                  type: AppButtonType.primary,
                 ),
                 const SizedBox(height: 16),
 
                 // Sign in link
-                Center(
-                  child: TextButton(
-                    onPressed: () => context.go('/email-signin'),
-                    child: const Text('Already have an account? Sign in'),
-                  ),
+                AppButton(
+                  text: '이미 계정이 있으신가요? 로그인',
+                  onPressed: () => context.go('/email-signin'),
+                  type: AppButtonType.ghost,
                 ),
               ],
             ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
 
 import '../../application/notifiers/coping_guide_notifier.dart';
 import '../widgets/coping_guide_card.dart';
@@ -29,14 +31,14 @@ class _CopingGuideScreenState extends ConsumerState<CopingGuideScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('부작용 대처 가이드'),
+        title: Text('부작용 대처 가이드', style: AppTextStyles.h3),
       ),
       body: guideList.when(
         loading: () => Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('오류가 발생했습니다')),
+        error: (err, stack) => Center(child: Text('오류가 발생했습니다', style: AppTextStyles.body1.copyWith(color: AppColors.error))),
         data: (guides) {
           if (guides.isEmpty) {
-            return Center(child: Text('가이드가 없습니다'));
+            return Center(child: Text('가이드가 없습니다', style: AppTextStyles.body1.copyWith(color: AppColors.gray)));
           }
 
           return ListView.builder(

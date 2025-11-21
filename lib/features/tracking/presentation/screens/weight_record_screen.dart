@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_button.dart';
+import 'package:n06/core/widgets/app_card.dart';
 import 'package:uuid/uuid.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
@@ -197,37 +201,43 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
             children: [
               // 날짜 선택 섹션
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 '날짜 선택',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: AppTextStyles.h3,
               ),
               const SizedBox(height: 12),
-              DateSelectionWidget(
-                initialDate: selectedDate,
-                onDateSelected: _handleDateSelected,
+              AppCard(
+                padding: const EdgeInsets.all(16),
+                child: DateSelectionWidget(
+                  initialDate: selectedDate,
+                  onDateSelected: _handleDateSelected,
+                ),
               ),
 
               // 체중 입력 섹션
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 '체중 입력',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: AppTextStyles.h3,
               ),
               const SizedBox(height: 12),
-              InputValidationWidget(
-                controller: _weightController, // 외부 controller 전달
-                fieldName: '체중',
-                onChanged: (_) {
-                  setState(() {
-                    // 입력 변경 시 경고 메시지 초기화
-                    _validationWarning = null;
-                  });
-                },
-                label: '체중 (kg)',
-                hint: '예: 75.5',
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                  signed: false,
+              AppCard(
+                padding: const EdgeInsets.all(16),
+                child: InputValidationWidget(
+                  controller: _weightController, // 외부 controller 전달
+                  fieldName: '체중',
+                  onChanged: (_) {
+                    setState(() {
+                      // 입력 변경 시 경고 메시지 초기화
+                      _validationWarning = null;
+                    });
+                  },
+                  label: '체중 (kg)',
+                  hint: '예: 75.5',
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: false,
+                  ),
                 ),
               ),
               // 경고 메시지 표시
@@ -236,18 +246,18 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
+                    color: AppColors.warning.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange),
+                    border: Border.all(color: AppColors.warning),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.warning_amber, color: Colors.orange, size: 20),
+                      const Icon(Icons.warning_amber, color: AppColors.warning, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _validationWarning!,
-                          style: const TextStyle(color: Colors.orange, fontSize: 12),
+                          style: AppTextStyles.caption.copyWith(color: AppColors.warning),
                         ),
                       ),
                     ],
@@ -257,23 +267,11 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
 
               // 저장 버튼
               const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : _handleSave,
-                  child: isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text('저장'),
-                ),
+              AppButton(
+                text: '저장',
+                onPressed: isLoading ? null : _handleSave,
+                isLoading: isLoading,
+                type: AppButtonType.primary,
               ),
             ],
           ),

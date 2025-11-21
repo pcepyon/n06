@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/core/utils/validators.dart';
+import 'package:n06/core/theme/app_colors.dart';
+import 'package:n06/core/theme/app_text_styles.dart';
+import 'package:n06/core/widgets/app_button.dart';
+import 'package:n06/core/widgets/app_text_field.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/onboarding/application/providers.dart';
 
@@ -213,7 +217,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sign In'),
+        title: const Text('이메일 로그인'),
       ),
       body: authState.maybeWhen(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -228,64 +232,58 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Email field
-                TextFormField(
+                AppTextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'user@example.com',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
+                  label: '이메일',
+                  hintText: 'example@email.com',
                   validator: _validateEmail,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
                 // Password field
-                TextFormField(
+                AppTextField(
                   controller: _passwordController,
                   obscureText: !_showPassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                  label: '비밀번호',
+                  hintText: '비밀번호를 입력해주세요',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _showPassword ? Icons.visibility : Icons.visibility_off,
+                      color: AppColors.gray,
                     ),
-                    suffixIcon: IconButton(
-                      icon: Icon(_showPassword ? Icons.visibility : Icons.visibility_off),
-                      onPressed: () => setState(() => _showPassword = !_showPassword),
-                    ),
+                    onPressed: () => setState(() => _showPassword = !_showPassword),
                   ),
                   validator: _validatePassword,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
 
                 // Forgot password link
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => context.go('/password-reset'),
-                    child: const Text('Forgot password?'),
+                    child: Text(
+                      '비밀번호를 잊으셨나요?',
+                      style: AppTextStyles.caption.copyWith(color: AppColors.gray),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
                 // Sign in button
-                ElevatedButton(
+                AppButton(
+                  text: '로그인',
                   onPressed: _handleSignin,
-                  child: const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('Sign In'),
-                  ),
+                  type: AppButtonType.primary,
                 ),
                 const SizedBox(height: 16),
 
                 // Sign up link
-                Center(
-                  child: TextButton(
-                    onPressed: () => context.go('/email-signup'),
-                    child: const Text('Don\'t have an account? Sign up'),
-                  ),
+                AppButton(
+                  text: '계정이 없으신가요? 회원가입',
+                  onPressed: () => context.go('/email-signup'),
+                  type: AppButtonType.ghost,
                 ),
               ],
             ),
