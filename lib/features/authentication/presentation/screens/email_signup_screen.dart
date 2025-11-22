@@ -3,6 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/core/utils/validators.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
+import 'package:n06/features/authentication/presentation/widgets/auth_hero_section.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_text_field.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
+import 'package:n06/features/authentication/presentation/widgets/password_strength_indicator.dart';
+import 'package:n06/features/authentication/presentation/widgets/consent_checkbox.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_toast.dart';
 
 /// Email signup screen
 /// Allows users to create an account with email and password
@@ -30,6 +36,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
   bool _agreeToMarketing = false;
   bool _showPassword = false;
   bool _showConfirmPassword = false;
+  bool _isLoading = false;
 
   PasswordStrength _passwordStrength = PasswordStrength.weak;
 
@@ -68,18 +75,24 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
       termsOfService: _agreeToTerms,
       privacyPolicy: _agreeToPrivacy,
     )) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please agree to terms and privacy policy')),
+      if (!mounted) return;
+      GabiumToast.showError(
+        context,
+        '이용약관과 개인정보 처리방침에 동의해주세요',
       );
       return;
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
+      if (!mounted) return;
+      GabiumToast.showError(
+        context,
+        '비밀번호가 일치하지 않습니다',
       );
       return;
     }
+
+    setState(() => _isLoading = true);
 
     if (!mounted) return;
 
@@ -94,8 +107,9 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sign up successful!')),
+      GabiumToast.showSuccess(
+        context,
+        '회원가입이 완료되었습니다!',
       );
 
       // FIX BUG-2025-1119-003: 회원가입 성공 시 무조건 온보딩으로 이동
@@ -104,186 +118,194 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
       context.go('/onboarding', extra: user.id);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign up failed: $e')),
+      setState(() => _isLoading = false);
+      GabiumToast.showError(
+        context,
+        '회원가입에 실패했습니다: $e',
       );
     }
   }
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Email is required';
+      return '이메일을 입력해주세요';
     }
     if (!isValidEmail(value)) {
-      return 'Please enter a valid email';
+      return '올바른 이메일 형식을 입력해주세요';
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Password is required';
+      return '비밀번호를 입력해주세요';
     }
     if (value.length < 8) {
-      return 'Password must be at least 8 characters';
+      return '비밀번호는 최소 8자 이상이어야 합니다';
     }
     if (!isValidPassword(value)) {
-      return 'Password must contain uppercase, lowercase, number, and special character';
+      return '비밀번호는 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다';
     }
     return null;
   }
 
   String? _validateConfirmPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Confirm password is required';
+      return '비밀번호 확인을 입력해주세요';
     }
     if (value != _passwordController.text) {
-      return 'Passwords do not match';
+      return '비밀번호가 일치하지 않습니다';
     }
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
-
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
       appBar: AppBar(
-        title: const Text('Create Account'),
-      ),
-      body: authState.maybeWhen(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(
-          child: Text('Error: $error'),
+        backgroundColor: const Color(0xFFFFFFFF),
+        elevation: 0,
+        title: const Text(
+          '가비움 시작하기',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1E293B), // Neutral-800
+          ),
         ),
-        data: (_) => SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Email field
-                TextFormField(
-                  key: const Key('email_field'),
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'user@example.com',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  validator: _validateEmail,
-                ),
-                const SizedBox(height: 16),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF334155)), // Neutral-700
+          onPressed: () => context.pop(),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: const Color(0xFFE2E8F0), // Neutral-200
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Hero Section
+              const AuthHeroSection(
+                title: '가비움과 함께 시작해요',
+                subtitle: '건강한 변화의 첫 걸음',
+              ),
+              const SizedBox(height: 16),
 
-                // Password field
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: !_showPassword,
-                  onChanged: _updatePasswordStrength,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(_showPassword ? Icons.visibility : Icons.visibility_off),
-                      onPressed: () => setState(() => _showPassword = !_showPassword),
-                    ),
-                  ),
-                  validator: _validatePassword,
-                ),
-                const SizedBox(height: 8),
+              // Email field
+              GabiumTextField(
+                key: const Key('email_field'),
+                controller: _emailController,
+                label: '이메일',
+                hint: 'user@example.com',
+                keyboardType: TextInputType.emailAddress,
+                validator: _validateEmail,
+              ),
+              const SizedBox(height: 16),
 
-                // Password strength indicator
-                Row(
+              // Password field
+              GabiumTextField(
+                controller: _passwordController,
+                label: '비밀번호',
+                obscureText: !_showPassword,
+                onChanged: _updatePasswordStrength,
+                validator: _validatePassword,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _showPassword ? Icons.visibility : Icons.visibility_off,
+                    color: const Color(0xFF64748B), // Neutral-500
+                  ),
+                  onPressed: () => setState(() => _showPassword = !_showPassword),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Password strength indicator
+              PasswordStrengthIndicator(strength: _passwordStrength),
+              const SizedBox(height: 16),
+
+              // Confirm password field
+              GabiumTextField(
+                controller: _confirmPasswordController,
+                label: '비밀번호 확인',
+                obscureText: !_showConfirmPassword,
+                validator: _validateConfirmPassword,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _showConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                    color: const Color(0xFF64748B), // Neutral-500
+                  ),
+                  onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Consent section
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC), // Neutral-50
+                  border: Border.all(color: const Color(0xFFE2E8F0)), // Neutral-200
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
                   children: [
-                    Expanded(
-                      child: LinearProgressIndicator(
-                        value: _passwordStrength.index / PasswordStrength.values.length,
-                        minHeight: 4,
-                      ),
+                    ConsentCheckbox(
+                      value: _agreeToTerms,
+                      onChanged: (value) => setState(() => _agreeToTerms = value ?? false),
+                      label: '이용약관에 동의합니다',
+                      isRequired: true,
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _passwordStrength.name,
-                      style: TextStyle(
-                        color: switch (_passwordStrength) {
-                          PasswordStrength.weak => Colors.red,
-                          PasswordStrength.medium => Colors.orange,
-                          PasswordStrength.strong => Colors.green,
-                        },
-                        fontSize: 12,
-                      ),
+                    const SizedBox(height: 16),
+                    ConsentCheckbox(
+                      value: _agreeToPrivacy,
+                      onChanged: (value) => setState(() => _agreeToPrivacy = value ?? false),
+                      label: '개인정보 처리방침에 동의합니다',
+                      isRequired: true,
+                    ),
+                    const SizedBox(height: 16),
+                    ConsentCheckbox(
+                      value: _agreeToMarketing,
+                      onChanged: (value) => setState(() => _agreeToMarketing = value ?? false),
+                      label: '마케팅 정보 수신에 동의합니다',
+                      isRequired: false,
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+              ),
+              const SizedBox(height: 32),
 
-                // Confirm password field
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: !_showConfirmPassword,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(_showConfirmPassword ? Icons.visibility : Icons.visibility_off),
-                      onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
-                    ),
-                  ),
-                  validator: _validateConfirmPassword,
-                ),
-                const SizedBox(height: 24),
+              // Sign up button
+              GabiumButton(
+                text: '회원가입',
+                onPressed: _handleSignup,
+                isLoading: _isLoading,
+                variant: GabiumButtonVariant.primary,
+                size: GabiumButtonSize.large,
+              ),
+              const SizedBox(height: 16),
 
-                // Consent checkboxes
-                CheckboxListTile(
-                  value: _agreeToTerms,
-                  onChanged: (value) => setState(() => _agreeToTerms = value ?? false),
-                  title: const Text('I agree to Terms of Service (required)'),
-                  controlAffinity: ListTileControlAffinity.leading,
+              // Sign in link
+              Center(
+                child: GabiumButton(
+                  text: '이미 계정이 있으신가요? 로그인',
+                  onPressed: () => context.go('/email-signin'),
+                  variant: GabiumButtonVariant.ghost,
+                  size: GabiumButtonSize.medium,
                 ),
-                CheckboxListTile(
-                  value: _agreeToPrivacy,
-                  onChanged: (value) => setState(() => _agreeToPrivacy = value ?? false),
-                  title: const Text('I agree to Privacy Policy (required)'),
-                  controlAffinity: ListTileControlAffinity.leading,
-                ),
-                CheckboxListTile(
-                  value: _agreeToMarketing,
-                  onChanged: (value) => setState(() => _agreeToMarketing = value ?? false),
-                  title: const Text('I agree to Marketing Email (optional)'),
-                  controlAffinity: ListTileControlAffinity.leading,
-                ),
-                const SizedBox(height: 24),
-
-                // Sign up button
-                ElevatedButton(
-                  onPressed: _handleSignup,
-                  child: const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('Sign Up'),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Sign in link
-                Center(
-                  child: TextButton(
-                    onPressed: () => context.go('/email-signin'),
-                    child: const Text('Already have an account? Sign in'),
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 32), // Bottom padding for scroll
+            ],
           ),
         ),
-        orElse: () => const Center(child: CircularProgressIndicator()),
       ),
     );
   }

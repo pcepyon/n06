@@ -3,10 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/core/utils/validators.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
+import 'package:n06/features/authentication/presentation/widgets/auth_hero_section.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_text_field.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_toast.dart';
 import 'package:n06/features/onboarding/application/providers.dart';
 
 /// Email sign in screen
 /// Allows users to sign in with email and password
+/// REDESIGNED: Gabium-branded UI with Design System compliance
 class EmailSigninScreen extends ConsumerStatefulWidget {
   const EmailSigninScreen({super.key});
 
@@ -53,9 +58,8 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
       if (!mounted) return;
 
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sign in successful!')),
-        );
+        // SUCCESS: Show toast
+        GabiumToast.showSuccess(context, '로그인 성공!');
 
         if (!mounted) return;
 
@@ -80,30 +84,28 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
           context.go('/home');
         }
       } else {
-        // Show friendly signup prompt bottom sheet
+        // FAILURE: Show friendly signup prompt bottom sheet
         await _showSigninFailedBottomSheet();
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign in error: $e')),
-      );
+      GabiumToast.showError(context, '로그인 실패: $e');
     }
   }
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Email is required';
+      return '이메일을 입력해주세요';
     }
     if (!isValidEmail(value)) {
-      return 'Please enter a valid email';
+      return '올바른 이메일 형식을 입력해주세요';
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Password is required';
+      return '비밀번호를 입력해주세요';
     }
     return null;
   }
@@ -111,14 +113,13 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
   /// Show friendly bottom sheet when sign-in fails
   /// Guides user to sign up if they don't have an account
   Future<void> _showSigninFailedBottomSheet() async {
-    // FIX BUG-2025-1120-008: Await bottom sheet result and navigate with parent context
     final email = _emailController.text.trim();
 
     final shouldNavigateToSignup = await showModalBottomSheet<bool>(
       context: context,
       useRootNavigator: true, // Required for GoRouter navigation after dismiss
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)), // lg
       ),
       isScrollControlled: true,
       builder: (sheetContext) => Padding(
@@ -132,69 +133,84 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-            // Icon
-            const Icon(
-              Icons.lock_outline,
-              size: 48,
-              color: Colors.orange,
-            ),
-            const SizedBox(height: 16),
-
-            // Title
-            const Text(
-              '로그인에 실패했습니다',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+              // Handle
+              Container(
+                width: 32,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCBD5E1), // Neutral-300
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
+              const SizedBox(height: 12),
 
-            // Description
-            const Text(
-              '입력하신 이메일 또는 비밀번호가\n일치하지 않습니다.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
+              // Icon
+              const Icon(
+                Icons.lock_outline,
+                size: 48,
+                color: Color(0xFFF59E0B), // Warning
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
-            // Divider
-            Divider(color: Colors.grey.shade300),
-            const SizedBox(height: 16),
-
-            // Sign up prompt
-            const Text(
-              '💡 혹시 계정이 없으신가요?',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+              // Title
+              const Text(
+                '로그인에 실패했습니다',
+                style: TextStyle(
+                  fontSize: 24, // 2xl
+                  fontWeight: FontWeight.w700, // Bold
+                  color: Color(0xFF1E293B), // Neutral-800
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 8),
 
-            // Sign up button
-            ElevatedButton(
-              key: const Key('goto_signup_button'),
-              onPressed: () {
-                // Close sheet and signal to navigate
-                Navigator.pop(sheetContext, true);
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
+              // Description
+              const Text(
+                '입력하신 이메일 또는 비밀번호가\n일치하지 않습니다.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16, // base
+                  fontWeight: FontWeight.w400, // Regular
+                  color: Color(0xFF475569), // Neutral-600
+                ),
               ),
-              child: const Text('이메일로 회원가입 하러가기'),
-            ),
-            const SizedBox(height: 8),
+              const SizedBox(height: 24),
 
-            // Close button
-            TextButton(
-              key: const Key('close_bottomsheet_button'),
-              onPressed: () => Navigator.pop(sheetContext, false),
-              child: const Text('닫기'),
-            ),
+              // Divider
+              const Divider(
+                color: Color(0xFFE2E8F0), // Neutral-200
+                thickness: 1,
+              ),
+              const SizedBox(height: 24),
+
+              // Prompt
+              const Text(
+                '💡 혹시 계정이 없으신가요?',
+                style: TextStyle(
+                  fontSize: 18, // lg
+                  fontWeight: FontWeight.w600, // Semibold
+                  color: Color(0xFF334155), // Neutral-700
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Primary Button
+              GabiumButton(
+                key: const Key('goto_signup_button'),
+                text: '이메일로 회원가입 하러가기',
+                onPressed: () => Navigator.pop(sheetContext, true),
+                variant: GabiumButtonVariant.primary,
+                size: GabiumButtonSize.large,
+              ),
+              const SizedBox(height: 8),
+
+              // Secondary Button
+              GabiumButton(
+                key: const Key('close_bottomsheet_button'),
+                text: '닫기',
+                onPressed: () => Navigator.pop(sheetContext, false),
+                variant: GabiumButtonVariant.ghost,
+                size: GabiumButtonSize.medium,
+              ),
             ],
           ),
         ),
@@ -210,88 +226,124 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final isLoading = authState.isLoading;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
       appBar: AppBar(
-        title: const Text('Sign In'),
+        backgroundColor: const Color(0xFFFFFFFF), // White
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF334155)), // Neutral-700
+        title: const Text(
+          '이메일로 로그인',
+          style: TextStyle(
+            fontSize: 20, // xl
+            fontWeight: FontWeight.w600, // Semibold
+            color: Color(0xFF1E293B), // Neutral-800
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            color: const Color(0xFFE2E8F0), // Neutral-200
+            height: 1,
+          ),
+        ),
       ),
       body: authState.maybeWhen(
-        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(
-          child: Text('Error: $error'),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Color(0xFFEF4444)),
+              const SizedBox(height: 16),
+              Text(
+                '오류 발생: $error',
+                style: const TextStyle(color: Color(0xFFEF4444)),
+              ),
+            ],
+          ),
         ),
-        data: (_) => SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+        orElse: () => SingleChildScrollView(
+          padding: const EdgeInsets.only(
+            left: 16, // md
+            right: 16, // md
+            bottom: 32, // xl
+          ),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Hero Section
+                const AuthHeroSection(
+                  title: '이메일로 로그인',
+                  subtitle: '가비움 계정으로 로그인해주세요',
+                  icon: Icons.lock_outline,
+                ),
+                const SizedBox(height: 24), // lg
+
                 // Email field
-                TextFormField(
+                GabiumTextField(
                   controller: _emailController,
+                  label: '이메일',
+                  hint: 'user@example.com',
                   keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'user@example.com',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
                   validator: _validateEmail,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 16), // md
 
                 // Password field
-                TextFormField(
+                GabiumTextField(
                   controller: _passwordController,
+                  label: '비밀번호',
                   obscureText: !_showPassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(_showPassword ? Icons.visibility : Icons.visibility_off),
-                      onPressed: () => setState(() => _showPassword = !_showPassword),
-                    ),
-                  ),
                   validator: _validatePassword,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _showPassword ? Icons.visibility : Icons.visibility_off,
+                      color: const Color(0xFF64748B), // Neutral-500
+                    ),
+                    onPressed: () => setState(() => _showPassword = !_showPassword),
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 8), // sm
 
                 // Forgot password link
                 Align(
                   alignment: Alignment.centerRight,
-                  child: TextButton(
+                  child: GabiumButton(
+                    text: '비밀번호를 잊으셨나요?',
                     onPressed: () => context.go('/password-reset'),
-                    child: const Text('Forgot password?'),
+                    variant: GabiumButtonVariant.ghost,
+                    size: GabiumButtonSize.medium,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 24), // lg
 
                 // Sign in button
-                ElevatedButton(
+                GabiumButton(
+                  text: '로그인',
                   onPressed: _handleSignin,
-                  child: const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('Sign In'),
-                  ),
+                  variant: GabiumButtonVariant.primary,
+                  size: GabiumButtonSize.large,
+                  isLoading: isLoading,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 16), // md
 
                 // Sign up link
                 Center(
-                  child: TextButton(
+                  child: GabiumButton(
+                    text: '계정이 없으신가요? 회원가입',
                     onPressed: () => context.go('/email-signup'),
-                    child: const Text('Don\'t have an account? Sign up'),
+                    variant: GabiumButtonVariant.ghost,
+                    size: GabiumButtonSize.medium,
                   ),
                 ),
               ],
             ),
           ),
         ),
-        orElse: () => const Center(child: CircularProgressIndicator()),
       ),
     );
   }
