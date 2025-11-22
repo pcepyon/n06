@@ -1,3 +1,12 @@
+<!-- 
+  ⚠️ AUTO-GENERATED FILE - DO NOT EDIT MANUALLY
+  
+  This file is generated from component-library/registry.json
+  To update: Edit registry.json, then run:
+  
+  python scripts/generate_components_docs.py --output-components-md
+-->
+
 # Gabium UI Component Library
 
 This library contains reusable UI components extracted from the email signup screen redesign, following the Gabium Design System.
@@ -6,13 +15,13 @@ This library contains reusable UI components extracted from the email signup scr
 
 | Component | Created Date | Used In | Framework | File Location | Notes |
 |-----------|--------------|---------|-----------|---------------|-------|
-| GabiumBottomNavigation | 2025-11-22 | Home Dashboard + All Main Screens | Flutter | `flutter/gabium_bottom_navigation.dart` | 5-tab bottom navigation with scale animation on tap. Active: Primary, Inactive: Neutral-500. Height 56px + safe area. |
-| AuthHeroSection | 2025-11-22 | Email Signup Screen | Flutter | `flutter/AuthHeroSection.dart` | Welcoming hero with title, subtitle, optional icon. Reusable for all auth screens (sign in, signup, password reset). |
-| GabiumTextField | 2025-11-22 | Email Signup Screen | Flutter | `flutter/GabiumTextField.dart` | Branded text input with label, validation, focus/error states. Height 48px. Includes helper text and error message support. |
-| GabiumButton | 2025-11-22 | Email Signup Screen | Flutter | `flutter/GabiumButton.dart` | Button with Primary/Secondary/Tertiary/Ghost variants. Small/Medium/Large sizes. Loading state support with spinner. |
-| PasswordStrengthIndicator | 2025-11-22 | Email Signup Screen | Flutter | `flutter/PasswordStrengthIndicator.dart` | Visual password strength indicator with semantic colors. Shows Weak/Medium/Strong with animated progress bar. |
-| ConsentCheckbox | 2025-11-22 | Email Signup Screen | Flutter | `flutter/ConsentCheckbox.dart` | Styled checkbox with required/optional badge. 44x44px touch area. Card container background optional. |
-| GabiumToast | 2025-11-22 | Email Signup Screen | Flutter | `flutter/GabiumToast.dart` | Toast notification with Error/Success/Warning/Info variants. Replaces SnackBar with branded styling. |
+| GabiumBottomNavigation | 2025-11-22 | Home Dashboard Screen, Weight Tracking Screen + 4 more | Flutter | `flutter/gabium_bottom_navigation.dart` | Bottom navigation bar with 5 tabs following Gabium Design System. Features scale animation on tap an |
+| AuthHeroSection | 2025-11-22 | Email Signup Screen, Email Signin Screen | Flutter | `flutter/AuthHeroSection.dart` | Welcoming hero section with title, subtitle, and optional icon. Reusable for all authentication scre |
+| GabiumTextField | 2025-11-22 | Email Signup Screen, Email Signin Screen | Flutter | `flutter/GabiumTextField.dart` | Branded text input field with label, validation, focus and error states. Height 48px. |
+| GabiumButton | 2025-11-22 | Email Signup Screen, Email Signin Screen | Flutter | `flutter/GabiumButton.dart` | Branded button with Primary and Ghost variants. Supports Small, Medium, and Large sizes. Includes lo |
+| PasswordStrengthIndicator | 2025-11-22 | Email Signup Screen | Flutter | `flutter/PasswordStrengthIndicator.dart` | Visual password strength indicator with semantic colors showing Weak, Medium, or Strong states. |
+| ConsentCheckbox | 2025-11-22 | Email Signup Screen | Flutter | `flutter/ConsentCheckbox.dart` | Styled checkbox with required/optional badge. Touch area 44x44px for accessibility. |
+| GabiumToast | 2025-11-22 | Email Signup Screen, Email Signin Screen | Flutter | `flutter/GabiumToast.dart` | Toast notification with Error, Success, Warning, and Info variants. Replaces SnackBar with branded s |
 
 ---
 
@@ -20,399 +29,231 @@ This library contains reusable UI components extracted from the email signup scr
 
 ### GabiumBottomNavigation
 
-**Purpose:** Bottom navigation bar for main app screens
+**Purpose:** Bottom navigation bar with 5 tabs following Gabium Design System. Features scale animation on tap and semantic color states (Primary for active, Neutral-500 for inactive).
 
 **Design Tokens:**
-- Background: White `#FFFFFF`
-- Border Top: Neutral-200 `#E2E8F0`, 1px
+- Background: #FFFFFF (White)
+- Bordertop: Neutral-200 (#E2E8F0), 1px
 - Shadow: Reverse md (0 -4px 8px rgba(15, 23, 42, 0.08))
 - Height: 56px + SafeArea bottom inset
-- Active Color: Primary `#4ADE80`
-- Inactive Color: Neutral-500 `#64748B`
-- Icon Size: 24px
-- Label Font: xs (12px Medium)
-- Touch Target: 56px × 56px per item
+- Activecolor: Primary (#4ADE80)
+- Inactivecolor: Neutral-500 (#64748B)
+- Iconsize: 24px
+- Labelfont: xs (12px Medium)
 
 **Props:**
 ```dart
 GabiumBottomNavigation({
-  required List<GabiumBottomNavItem> items,
-  required int currentIndex,
-  required ValueChanged<int> onTap,
-})
-```
-
-**GabiumBottomNavItem:**
-```dart
-GabiumBottomNavItem({
-  required String label,
-  required IconData icon,
-  required IconData activeIcon,
-  required String route,
+  List<GabiumBottomNavItem> (required) items,
+  int (required, 0-4) currentIndex,
+  ValueChanged<int> (required) onTap,
 })
 ```
 
 **Usage Example:**
 ```dart
 GabiumBottomNavigation(
-  items: [
-    GabiumBottomNavItem(
-      label: '홈',
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home,
-      route: '/home',
-    ),
-    GabiumBottomNavItem(
-      label: '기록',
-      icon: Icons.edit_note_outlined,
-      activeIcon: Icons.edit_note,
-      route: '/tracking/weight',
-    ),
-    GabiumBottomNavItem(
-      label: '일정',
-      icon: Icons.calendar_today_outlined,
-      activeIcon: Icons.calendar_today,
-      route: '/dose-schedule',
-    ),
-    GabiumBottomNavItem(
-      label: '가이드',
-      icon: Icons.menu_book_outlined,
-      activeIcon: Icons.menu_book,
-      route: '/coping-guide',
-    ),
-    GabiumBottomNavItem(
-      label: '설정',
-      icon: Icons.settings_outlined,
-      activeIcon: Icons.settings,
-      route: '/settings',
-    ),
-  ],
-  currentIndex: 0,
-  onTap: (index) => context.go(items[index].route),
+  // Set required properties
 )
 ```
-
-**Router Integration (ShellRoute):**
-```dart
-ShellRoute(
-  builder: (context, state, child) => ScaffoldWithBottomNav(child: child),
-  routes: [
-    GoRoute(path: '/home', builder: (context, state) => HomeDashboardScreen()),
-    GoRoute(path: '/tracking/weight', builder: (context, state) => WeightTrackingScreen()),
-    GoRoute(path: '/dose-schedule', builder: (context, state) => DoseScheduleScreen()),
-    GoRoute(path: '/coping-guide', builder: (context, state) => CopingGuideScreen()),
-    GoRoute(path: '/settings', builder: (context, state) => SettingsScreen()),
-  ],
-)
-```
-
-**Interactive States:**
-- Default: As specified above
-- Active: Icon + Label change to Primary color
-- Tap: Scale 0.95 animation (150ms ease-out), then restore
-
-**Accessibility:**
-- Touch target: 56px × 56px per item (exceeds 44px minimum)
-- Color contrast: Active (Primary on White) 3.1:1 (AA Large Text), Inactive (Neutral-500 on White) 4.7:1 (AA)
-- Semantic labels: Each tab labeled for screen readers
-- Current index announced
-- Keyboard navigation: Tab cycles through items
-
-**Notes:**
-- Reverse shadow (0 -4px) creates elevation above content
-- SafeArea automatically respects iOS bottom notch
-- Use ScaffoldWithBottomNav wrapper for consistent integration
-- State preservation: Use IndexedStack or AutomaticKeepAliveClientMixin if needed
 
 ---
 
 ### AuthHeroSection
 
-**Purpose:** Welcoming hero section for authentication screens
+**Purpose:** Welcoming hero section with title, subtitle, and optional icon. Reusable for all authentication screens.
 
 **Design Tokens:**
-- Background: Neutral-50 `#F8FAFC`
-- Title: 3xl (28px Bold), Neutral-800 `#1E293B`
-- Subtitle: base (16px Regular), Neutral-600 `#475569`
-- Padding: xl top (32px), md horizontal/bottom (16px)
-- Optional icon: 48px, Primary `#4ADE80`
+- Background: Neutral-50 (#F8FAFC)
+- Titlecolor: Neutral-800 (#1E293B)
+- Subtitlecolor: Neutral-600 (#475569)
+- Titlesize: 3xl (28px Bold)
+- Subtitlesize: base (16px Regular)
 
 **Props:**
 ```dart
 AuthHeroSection({
-  required String title,
-  required String subtitle,
-  IconData? icon,
+  String (required) title,
+  String (required) subtitle,
+  IconData (optional) icon,
 })
 ```
 
 **Usage Example:**
 ```dart
 AuthHeroSection(
-  title: '가비움과 함께 시작해요',
-  subtitle: '건강한 변화의 첫 걸음',
+  // Set required properties
 )
 ```
-
-**Variants:** None (single design)
-
-**Accessibility:**
-- Semantic heading level: H1 for title
-- Color contrast: Title 10.5:1, Subtitle 6.8:1 (WCAG AAA)
 
 ---
 
 ### GabiumTextField
 
-**Purpose:** Branded text input field for forms
+**Purpose:** Branded text input field with label, validation, focus and error states. Height 48px.
 
 **Design Tokens:**
 - Height: 48px
-- Border: 2px solid (Neutral-300 default, Primary focus, Error error)
-- Border Radius: sm (8px)
-- Padding: md (12px vertical, 16px horizontal)
-- Background: `#FFFFFF`, focus tint Primary 10%
-- Label: sm (14px Semibold), Neutral-700 `#334155`
-- Text: base (16px Regular), Neutral-800 `#1E293B`
-- Error Message: xs (12px Medium), Error `#EF4444`
+- Borderradius: sm (8px)
+- Borderdefault: 2px solid Neutral-300
+- Borderfocus: 2px solid Primary (#4ADE80)
+- Bordererror: 2px solid Error (#EF4444)
+- Backgroundcolor: #FFFFFF
+- Backgroundfocus: Primary 10%
 
 **Props:**
 ```dart
 GabiumTextField({
-  TextEditingController? controller,
-  required String label,
-  String? hint,
-  String? helperText,
-  String? errorText,
-  bool obscureText = false,
-  TextInputType? keyboardType,
-  Widget? suffixIcon,
-  String? Function(String?)? validator,
-  void Function(String)? onChanged,
-  Key? key,
+  TextEditingController (optional) controller,
+  String (required) label,
+  String (optional) hint,
+  String (optional) helperText,
+  String (optional) errorText,
+  bool (default: false) obscureText,
+  TextInputType (optional) keyboardType,
+  Widget (optional) suffixIcon,
+  String? Function(String?) (optional) validator,
+  void Function(String) (optional) onChanged,
 })
 ```
 
 **Usage Example:**
 ```dart
 GabiumTextField(
-  controller: _emailController,
-  label: '이메일',
-  hint: 'user@example.com',
-  keyboardType: TextInputType.emailAddress,
-  validator: _validateEmail,
+  // Set required properties
 )
 ```
-
-**Interactive States:**
-- Default: Border Neutral-300, Background White
-- Focus: Border Primary, Background Primary 10%
-- Error: Border Error, Error message below
-- Disabled: Background Neutral-50, Border Neutral-200, opacity 0.6
-
-**Accessibility:**
-- Label always visible above input
-- Touch target: 48px height (exceeds 44px minimum)
-- Color contrast: Text 10.5:1, Label 8.2:1
 
 ---
 
 ### GabiumButton
 
-**Purpose:** Primary button component with multiple variants and sizes
+**Purpose:** Branded button with Primary and Ghost variants. Supports Small, Medium, and Large sizes. Includes loading state with spinner.
 
 **Design Tokens:**
-- **Primary Large:** 52px height, Primary `#4ADE80` bg, lg (18px Semibold) text, 32px horizontal padding, sm (8px) radius, sm shadow
-- **Ghost Medium:** 44px height, Primary `#4ADE80` text, transparent bg, no shadow
-- Loading: 24px white spinner, button disabled
-- Hover: Primary `#22C55E` (Primary), Primary 8% opacity (Ghost)
-- Active: Primary `#16A34A` (Primary), Primary 12% opacity (Ghost)
-- Disabled: Primary at 40% opacity
+- Primarybackground: Primary (#4ADE80)
+- Primarytext: #FFFFFF
+- Ghostbackground: transparent
+- Ghosttext: Primary (#4ADE80)
+- Heightlarge: 52px
+- Heightmedium: 44px
+- Heightsmall: 36px
+- Borderradius: sm (8px)
 
 **Props:**
 ```dart
 GabiumButton({
-  required String text,
-  required VoidCallback? onPressed,
-  GabiumButtonVariant variant = GabiumButtonVariant.primary,
-  GabiumButtonSize size = GabiumButtonSize.medium,
-  bool isLoading = false,
+  VoidCallback (required) onPressed,
+  String (required) label,
+  ButtonVariant (Primary or Ghost) variant,
+  ButtonSize (Small, Medium, or Large) size,
+  bool (default: false) isLoading,
+  bool (default: false) fullWidth,
 })
 ```
-
-**Variants:**
-- `GabiumButtonVariant.primary`: Primary green button
-- `GabiumButtonVariant.secondary`: (to be implemented)
-- `GabiumButtonVariant.tertiary`: (to be implemented)
-- `GabiumButtonVariant.ghost`: Transparent button with Primary text
-
-**Sizes:**
-- `GabiumButtonSize.small`: 36px height, 14px text
-- `GabiumButtonSize.medium`: 44px height, 16px text
-- `GabiumButtonSize.large`: 52px height, 18px text
 
 **Usage Example:**
 ```dart
 GabiumButton(
-  text: '회원가입',
-  onPressed: _handleSignup,
-  isLoading: _isLoading,
-  variant: GabiumButtonVariant.primary,
-  size: GabiumButtonSize.large,
+  // Set required properties
 )
 ```
-
-**Accessibility:**
-- Touch target: All sizes ≥44px height (or effective area with spacing)
-- Color contrast: 3.5:1 (meets WCAG AA for large text 18px+)
-- Keyboard navigation: Tab order, Enter/Space trigger
-- Loading state: Disabled during async operation, ARIA label announced
 
 ---
 
 ### PasswordStrengthIndicator
 
-**Purpose:** Visual feedback for password strength
+**Purpose:** Visual password strength indicator with semantic colors showing Weak, Medium, or Strong states.
 
 **Design Tokens:**
-- Height: 8px, full radius (999px)
-- Background: Neutral-200 `#E2E8F0`
-- Fill: Error `#EF4444` (Weak), Warning `#F59E0B` (Medium), Success `#10B981` (Strong)
-- Label: xs (12px Medium), color matches fill
-- Animation: 200ms ease transition
+- Weakcolor: Error (#EF4444)
+- Mediumcolor: Warning (#F59E0B)
+- Strongcolor: Success (#10B981)
+- Height: 4px
+- Borderradius: full (999px)
+- Animationduration: 200ms
 
 **Props:**
 ```dart
 PasswordStrengthIndicator({
-  required PasswordStrength strength,
+  PasswordStrength (enum: weak, medium, strong) strength,
 })
 ```
 
 **Usage Example:**
 ```dart
 PasswordStrengthIndicator(
-  strength: _passwordStrength,
+  // Set required properties
 )
 ```
-
-**Strength Values:**
-- `PasswordStrength.weak`: 33% fill, Error color, label "약함"
-- `PasswordStrength.medium`: 66% fill, Warning color, label "보통"
-- `PasswordStrength.strong`: 100% fill, Success color, label "강함"
-
-**Accessibility:**
-- Label announces strength to screen reader
-- Color contrast: Labels meet WCAG AA (4.5:1+)
-- Not keyboard focusable (decorative)
 
 ---
 
 ### ConsentCheckbox
 
-**Purpose:** Styled checkbox for consent forms with required/optional badge
+**Purpose:** Styled checkbox with required/optional badge. Touch area 44x44px for accessibility.
 
 **Design Tokens:**
-- Checkbox: 24x24px visual, 44x44px touch, 4px radius
-- Border: Neutral-400 `#94A3B8` (unchecked), Primary `#4ADE80` (checked)
-- Background: Transparent (unchecked), Primary `#4ADE80` (checked)
-- Checkmark: White, 16px icon
-- Label: sm (14px Regular), Neutral-700 `#334155`
-- Badge: xs (12px Medium), Error `#EF4444` (required) or Neutral-500 `#64748B` (optional)
+- Toucharea: 44x44px
+- Checkboxsize: 24x24px
+- Badgerequired: Error (#EF4444)
+- Badgeoptional: Neutral-500
+- Labelsize: sm (14px Regular)
+- Containerbackground: Neutral-50 (#F8FAFC)
+- Containerradius: md (12px)
 
 **Props:**
 ```dart
 ConsentCheckbox({
-  required String label,
-  required bool isRequired,
-  required bool value,
-  required ValueChanged<bool?>? onChanged,
+  bool (required) value,
+  void Function(bool?) (required) onChanged,
+  String (required) label,
+  bool (default: false) isRequired,
 })
 ```
 
 **Usage Example:**
 ```dart
 ConsentCheckbox(
-  value: _agreeToTerms,
-  onChanged: (value) => setState(() => _agreeToTerms = value ?? false),
-  label: '이용약관에 동의합니다',
-  isRequired: true,
+  // Set required properties
 )
 ```
-
-**Usage in Container (recommended):**
-```dart
-Container(
-  padding: EdgeInsets.all(16),
-  decoration: BoxDecoration(
-    color: Color(0xFFF8FAFC), // Neutral-50
-    border: Border.all(color: Color(0xFFE2E8F0)), // Neutral-200
-    borderRadius: BorderRadius.circular(12),
-  ),
-  child: Column(
-    children: [
-      ConsentCheckbox(...),
-      SizedBox(height: 16),
-      ConsentCheckbox(...),
-    ],
-  ),
-)
-```
-
-**Accessibility:**
-- Touch target: 44x44px minimum
-- Color contrast: Label 8.2:1, Required badge 4.8:1
-- Keyboard navigation: Tab order, Space to toggle
-- ARIA: role="checkbox", aria-checked state
-- Label: Associated with checkbox (clickable)
 
 ---
 
 ### GabiumToast
 
-**Purpose:** Branded toast notifications replacing SnackBar
+**Purpose:** Toast notification with Error, Success, Warning, and Info variants. Replaces SnackBar with branded styling.
 
 **Design Tokens:**
-- Width: 90% viewport (max 360px)
-- Padding: md (16px), md (12px) radius
-- Border: 4px left (Error/Success/Warning/Info color)
-- Background: Tinted (Error: `#FEF2F2`, Success: `#ECFDF5`, Warning: `#FEF3C7`, Info: `#EFF6FF`)
-- Text: sm (14px Regular), dark variant of semantic color
-- Icon: 24px, left-aligned, 12px spacing to text
-- Shadow: lg (0 8px 16px rgba(15, 23, 42, 0.10))
-- Duration: 4s (success), 6s (error/warning/info)
+- Errorbackground: Error-50
+- Errorborder: Error (#EF4444)
+- Successbackground: Success-50
+- Successborder: Success (#10B981)
+- Warningbackground: Warning-50
+- Warningborder: Warning (#F59E0B)
+- Infobackground: Info-50
+- Infoborder: Info (#3B82F6)
+- Borderradius: sm (8px)
+- Borderwidth: 4px (left only)
+- Padding: md (16px)
+- Iconsize: 24px
 
-**Static Methods:**
+**Props:**
 ```dart
-GabiumToast.showError(BuildContext context, String message)
-GabiumToast.showSuccess(BuildContext context, String message)
-GabiumToast.showWarning(BuildContext context, String message)
-GabiumToast.showInfo(BuildContext context, String message)
+GabiumToast({
+  BuildContext (required) context,
+  String (required) message,
+  ToastVariant (error, success, warning, info) variant,
+})
 ```
 
 **Usage Example:**
 ```dart
-GabiumToast.showError(
-  context,
-  '이메일을 입력해주세요',
-);
-
-GabiumToast.showSuccess(
-  context,
-  '회원가입이 완료되었습니다!',
-);
+GabiumToast(
+  // Set required properties
+)
 ```
-
-**Variants:**
-- **Error:** Red border/icon, red-tinted background, dark red text
-- **Success:** Green border/icon, green-tinted background, dark green text
-- **Warning:** Orange border/icon, orange-tinted background, dark orange text
-- **Info:** Blue border/icon, blue-tinted background, dark blue text
-
-**Accessibility:**
-- ARIA role: "alert"
-- Screen reader: Announces message immediately
-- Color contrast: Error 7.2:1, Success 8.5:1
-- Position: Bottom-center, does not block primary content
 
 ---
 
@@ -476,12 +317,13 @@ All components follow the Gabium Design System tokens:
 ### Import Components
 
 ```dart
-import 'package:n06/features/authentication/presentation/widgets/auth_hero_section.dart';
-import 'package:n06/features/authentication/presentation/widgets/gabium_text_field.dart';
-import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
-import 'package:n06/features/authentication/presentation/widgets/password_strength_indicator.dart';
-import 'package:n06/features/authentication/presentation/widgets/consent_checkbox.dart';
-import 'package:n06/features/authentication/presentation/widgets/gabium_toast.dart';
+import 'package:n06/lib/core/presentation/widgets/gabium_bottom_navigation.dart';
+import 'package:n06/lib/features/authentication/presentation/widgets/auth_hero_section.dart';
+import 'package:n06/lib/features/authentication/presentation/widgets/gabium_text_field.dart';
+import 'package:n06/lib/features/authentication/presentation/widgets/gabium_button.dart';
+import 'package:n06/lib/features/authentication/presentation/widgets/password_strength_indicator.dart';
+import 'package:n06/lib/features/authentication/presentation/widgets/consent_checkbox.dart';
+import 'package:n06/lib/features/authentication/presentation/widgets/gabium_toast.dart';
 ```
 
 ### Consistency Checklist
@@ -507,8 +349,8 @@ Components planned for extraction:
 ## Maintenance
 
 **Last Updated:** 2025-11-22
-**Component Count:** 7 Flutter components
-**Design System Version:** Gabium v1.0 (approved 2025-11-22)
+**Component Count:** 8 Flutter components
+**Design System Version:** Gabium Design System v1.0
 
 For questions or updates, refer to:
 - Implementation Guide: `.claude/skills/ui-renewal/implementation-guides/email-signup-screen-implementation-guide.md`

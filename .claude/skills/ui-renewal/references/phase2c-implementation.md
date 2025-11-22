@@ -6,6 +6,34 @@ This guide is for the Automated Implementation sub-agent. Use this when the orch
 
 Automatically implement UI code in the project based on the approved Implementation Guide, modifying ONLY the Presentation layer while maintaining project architecture and code quality.
 
+## Table of Contents
+
+1. [Objective](#objective)
+2. [Prerequisites](#prerequisites)
+3. [Git Branch Workflow](#git-branch-workflow-recommended)
+4. [Process](#process)
+   - [Step 1a: Validate Implementation Guide](#step-1a-validate-implementation-guide)
+   - [Step 1b: Explore Project Structure](#step-1b-explore-project-structure)
+   - [Step 1c: Validate Presentation Layer](#step-1c-validate-presentation-layer-pre-implementation-check)
+   - [Step 1d: Load Context and Understand Architecture](#step-1d-load-context-and-understand-architecture)
+   - [Step 2: Explore Project Structure](#step-2-explore-project-structure)
+   - [Step 3: Plan Implementation](#step-3-plan-implementation)
+   - [Step 4: Implement Components](#step-4-implement-components)
+   - [Step 5: Ensure Presentation Layer Only](#step-5-ensure-presentation-layer-only)
+   - [Step 6: Code Quality Check](#step-6-code-quality-check)
+   - [Step 7: Create Implementation Log](#step-7-create-implementation-log)
+   - [Step 8: Update metadata.json](#step-8-update-metadatajson)
+   - [Step 9: Present to User](#step-9-present-to-user)
+5. [Critical Guidelines](#critical-guidelines)
+6. [Implementation Scope](#implementation-scope-critical)
+7. [Handling Errors](#handling-errors)
+8. [When Re-invoked (Phase 3 Step 2 Fixes)](#when-re-invoked-phase-3-step-2-fixes)
+9. [Quality Checklist](#quality-checklist)
+10. [Success Criteria](#success-criteria)
+11. [Output Language](#output-language)
+
+---
+
 ## Prerequisites
 
 **Required:**
@@ -19,9 +47,146 @@ Automatically implement UI code in the project based on the approved Implementat
 - Analyze existing code patterns
 - Do NOT modify Application/Domain/Infrastructure layers
 
+## Git Branch Workflow (Recommended)
+
+**For safety and easy rollback, use Git branch-based workflow:**
+
+### Option A: Git Available (Recommended)
+
+**Before Phase 2C starts:**
+```bash
+# Create feature branch for this screen
+git checkout -b ui-renewal/{screen-name}
+
+# Commit current state (if needed)
+git add .
+git commit -m "Before UI renewal: {screen-name}"
+```
+
+**Benefits:**
+- ✅ Easy rollback if verification fails
+- ✅ Clean separation of changes
+- ✅ Can review all changes with `git diff main`
+- ✅ Safe experimentation
+
+**After Phase 3 verification passes:**
+```bash
+# Merge changes to main
+git checkout main
+git merge ui-renewal/{screen-name}
+git branch -d ui-renewal/{screen-name}
+```
+
+**If Phase 3 verification fails and you want to rollback:**
+```bash
+# Discard all changes and return to main
+git checkout main
+git branch -D ui-renewal/{screen-name}
+```
+
+### Option B: No Git (Manual Backup)
+
+**If Git is not available or project doesn't use version control:**
+
+```bash
+# Before Phase 2C, backup Presentation layer
+cp -r lib/features/{feature}/presentation \
+      lib/features/{feature}/presentation.backup-$(date +%Y%m%d-%H%M%S)
+```
+
+**Rollback if needed:**
+```bash
+# Restore from backup
+rm -rf lib/features/{feature}/presentation
+mv lib/features/{feature}/presentation.backup-YYYYMMDD-HHMMSS \
+   lib/features/{feature}/presentation
+```
+
+**Note:** Option A (Git branch) is strongly recommended for production projects.
+
+---
+
 ## Process
 
-### Step 1: Load Context and Understand Architecture
+### Step 1a: Validate Implementation Guide
+
+**Before loading the Implementation Guide, validate it exists and is complete:**
+
+```bash
+bash .claude/skills/ui-renewal/scripts/validate_artifact.sh \
+  implementation \
+  .claude/skills/ui-renewal/projects/{screen-name}/{date}-implementation-v{n}.md
+```
+
+**Expected output:** `✅ Artifact validated successfully`
+
+**If validation fails:**
+- ❌ Return to Phase 2B to fix the Implementation Guide
+- ❌ Do NOT proceed to Phase 2C
+
+**Validation checks:**
+- File exists
+- Component Specifications section present
+- Layout Structure section present
+- Code examples included
+
+---
+
+### Step 1b: Explore Project Structure
+
+**IMPORTANT: Before starting, ensure Git branch workflow is set up (see Git Branch Workflow section above).**
+
+If using Git (recommended):
+```bash
+# Verify you're on the feature branch
+git branch --show-current
+# Should show: ui-renewal/{screen-name}
+```
+
+If not on feature branch, create it now:
+```bash
+git checkout -b ui-renewal/{screen-name}
+```
+
+---
+
+### Step 1c: Validate Presentation Layer (Pre-Implementation Check)
+
+**IMPORTANT: Before implementing any code, set up validation:**
+
+If using Git (recommended):
+```bash
+# Add git hook to validate on commit
+cat > .git/hooks/pre-commit << 'EOF'
+#!/bin/bash
+bash .claude/skills/ui-renewal/scripts/validate_presentation_layer.sh stage
+EOF
+chmod +x .git/hooks/pre-commit
+```
+
+This ensures every commit is validated automatically.
+
+**Manual validation (anytime):**
+```bash
+# Check current changes
+bash .claude/skills/ui-renewal/scripts/validate_presentation_layer.sh check
+
+# Check staged changes
+bash .claude/skills/ui-renewal/scripts/validate_presentation_layer.sh stage
+```
+
+**Validation Rules:**
+- ✅ **Allowed:** `lib/features/{feature}/presentation/`, `lib/core/presentation/`
+- ❌ **Forbidden:** `application/`, `domain/`, `infrastructure/` layers
+
+**If validation fails:**
+- Review which files are in forbidden layers
+- Revert those changes
+- Only use existing providers/notifiers, don't modify them
+
+---
+
+### Step 1d: Load Context and Understand Architecture
 
 **CRITICAL: Read project architecture first:**
 
@@ -43,10 +208,12 @@ Automatically implement UI code in the project based on the approved Implementat
 
 **Verify checklist:**
 ```
+✅ Implementation Guide validated
 ✅ Implementation Guide loaded
 ✅ Project architecture understood
 ✅ Layer boundaries identified
 ✅ Presentation layer scope confirmed
+✅ Git branch created (if using Git)
 ```
 
 ---
@@ -317,6 +484,27 @@ Report to user:
 
 **Run analysis before reporting completion:**
 
+---
+
+#### 6a. Validate Presentation Layer
+
+**Before linting, validate architecture compliance:**
+
+```bash
+bash .claude/skills/ui-renewal/scripts/validate_presentation_layer.sh check
+```
+
+**Expected output:** `✅ VALIDATION PASSED`
+
+**If validation fails:**
+- ❌ You have modified Application/Domain/Infrastructure layers
+- ❌ This violates Phase 2C constraints
+- ❌ Revert forbidden changes and use only Presentation layer
+
+---
+
+#### 6b. Run Code Quality Checks
+
 1. **Run flutter analyze:**
    ```bash
    flutter analyze lib/features/{feature}/presentation/
@@ -444,43 +632,24 @@ Phase 3 Step 1 (검증)으로 자동 진행.
 
 ```json
 {
-  "screenName": "{screen-name}",
+  "project_name": "{screen-name}",
+  "status": "in_progress",
+  "current_phase": "phase2c",
+  "created_date": "{YYYY-MM-DD}",
+  "last_updated": "{now}",
   "framework": "Flutter",
-  "createdDate": "{YYYY-MM-DD}",
-  "lastUpdated": "{YYYY-MM-DD}",
-  "designSystem": "{Product} Design System v{version}",
-  "documents": [
-    {
-      "type": "proposal",
-      "version": 1,
-      "date": "{YYYY-MM-DD}",
-      "file": "{YYYYMMDD}-proposal-v1.md",
-      "approved": true
-    },
-    {
-      "type": "implementation",
-      "version": 1,
-      "date": "{YYYY-MM-DD}",
-      "file": "{YYYYMMDD}-implementation-v1.md"
-    },
-    {
-      "type": "implementation-log",
-      "version": 1,
-      "date": "{YYYY-MM-DD}",
-      "file": "{YYYYMMDD}-implementation-log-v1.md",
-      "status": "completed"
-    }
-  ],
-  "implementedFiles": [
-    "lib/core/presentation/widgets/gabium_button.dart",
-    "lib/features/authentication/presentation/widgets/email_input_widget.dart",
-    "lib/features/authentication/presentation/screens/login_screen.dart"
-  ],
-  "reusableComponents": [
+  "design_system_version": "v1.0",
+  "versions": {
+    "proposal": "v1",
+    "implementation": "v1",
+    "implementation_log": "v1"
+  },
+  "dependencies": [],
+  "components_created": [
     "GabiumButton"
   ],
-  "status": "implemented",
-  "phase": "2C"
+  "retry_count": 0,
+  "last_error": null
 }
 ```
 
@@ -535,6 +704,8 @@ Phase 3 (검증)으로 진행합니다.
 ❌ Change routing logic (only add routes)
 ❌ Save to component library (done in Phase 3 Step 4)
 ❌ Update Component Registry (done in Phase 3 Step 4)
+
+**Note:** Component Registry is NOT updated in Phase 2C. This is done in Phase 3 Step 4 after verification and user confirmation.
 
 ---
 

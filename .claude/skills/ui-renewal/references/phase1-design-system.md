@@ -6,6 +6,26 @@ This guide is for the Design System Creation sub-agent. Use this when the orches
 
 Create a comprehensive, reusable Design System that establishes visual consistency and brand identity across the entire product.
 
+## Table of Contents
+
+1. [Objective](#objective)
+2. [Input Requirements](#input-requirements)
+3. [Process](#process)
+   - [Step 1: Brand Analysis](#step-1-brand-analysis)
+   - [Step 2: Design System Generation](#step-2-design-system-generation)
+   - [Step 3: Create Design System Document](#step-3-create-design-system-document)
+   - [Step 4: Generate Proposal](#step-4-generate-proposal)
+   - [Step 5: Handle Feedback](#step-5-handle-feedback)
+   - [Step 6: Save Design System File](#step-6-save-design-system-file)
+4. [Quality Standards](#quality-standards)
+5. [Export Design Tokens](#export-design-tokens)
+6. [Common Pitfalls to Avoid](#common-pitfalls-to-avoid)
+7. [Example Workflow](#example-workflow)
+8. [Success Criteria](#success-criteria)
+9. [Output Language Rule](#output-language-rule)
+
+---
+
 ## Input Requirements
 
 Required inputs from user:
@@ -210,6 +230,47 @@ User may:
 mkdir -p ./design-systems
 cp [artifact-content] ./design-systems/[product-name]-design-system.md
 ```
+
+### Step 6b: Save with Version Number
+
+**Save Design System with version number:**
+
+```bash
+# Save as versioned file
+DESIGN_SYSTEM_FILE=".claude/skills/ui-renewal/design-systems/[product]-design-system-v1.0.md"
+
+# Create symlink to latest version (for easy access)
+cd .claude/skills/ui-renewal/design-systems/
+ln -sf [product]-design-system-v1.0.md [product]-design-system.md
+```
+
+**Version Number:**
+- **v1.0**: Initial Design System
+- **v1.X**: Minor updates (new components, tokens)
+- **v2.0**: Major redesign
+
+**Update VERSION_HISTORY.md:**
+
+Add entry to `.claude/skills/ui-renewal/design-systems/VERSION_HISTORY.md`:
+
+```markdown
+### v1.0 (YYYY-MM-DD)
+
+**Status:** ✅ Current
+**File:** `[product]-design-system-v1.0.md`
+**Created by:** Phase 1 - Initial Design System Creation
+
+**Changes:**
+- Initial design system created
+- [List key features]
+
+**Projects using this version:**
+- [Will be tracked as projects are created]
+
+**Breaking Changes:** N/A (initial version)
+```
+
+---
 
 **Korean message to user:**
 ```

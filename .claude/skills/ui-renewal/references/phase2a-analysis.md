@@ -6,6 +6,28 @@ This guide is for the Analysis sub-agent. Use this when the orchestrator routes 
 
 Analyze current UI and determine improvement direction WITHOUT implementing details. Output a clear, structured **Improvement Proposal artifact** that Phase 2B will use as Single Source of Truth.
 
+## Table of Contents
+
+1. [Objective](#objective)
+2. [Prerequisites](#prerequisites)
+3. [Process](#process)
+   - [Step 1: Load Design System](#step-1-load-design-system)
+   - [Step 2: Dependency Analysis](#step-2-dependency-analysis)
+   - [Step 3: Component Registry & Library Check](#step-3-component-registry--library-check)
+   - [Step 4: Current UI Analysis](#step-4-current-ui-analysis)
+   - [Step 5: Determine Improvement Direction](#step-5-determine-improvement-direction)
+   - [Step 6: Create Improvement Proposal Artifact](#step-6-create-improvement-proposal-artifact)
+   - [Step 7: Save Proposal Document](#step-7-save-proposal-document)
+   - [Step 8: Create metadata.json](#step-8-create-metadatajson)
+   - [Step 9: Present Proposal to User](#step-9-present-proposal-to-user)
+   - [Step 10: Handle Feedback](#step-10-handle-feedback)
+4. [Critical Guidelines](#critical-guidelines)
+5. [Quality Checklist](#quality-checklist)
+6. [Success Criteria](#success-criteria)
+7. [Output Language Rule](#output-language-rule)
+
+---
+
 ## Prerequisites
 
 **Required:**
@@ -292,7 +314,32 @@ If file not found, search for it:
 find . -name "{YYYYMMDD}-proposal-v1.md" -type f
 ```
 
-### Step 8: Present Proposal to User
+### Step 8: Create metadata.json
+
+**Create initial project metadata:**
+
+`.claude/skills/ui-renewal/projects/{screen-name}/metadata.json`
+
+```json
+{
+  "project_name": "{screen-name}",
+  "status": "in_progress",
+  "current_phase": "phase2a",
+  "created_date": "{today}",
+  "last_updated": "{now}",
+  "framework": "{framework}",
+  "design_system_version": "v1.0",
+  "versions": {
+    "proposal": "v1"
+  },
+  "dependencies": [],
+  "components_created": [],
+  "retry_count": 0,
+  "last_error": null
+}
+```
+
+### Step 9: Present Proposal to User
 
 Provide concise summary:
 
@@ -320,7 +367,7 @@ Provide concise summary:
 Review full Improvement Proposal (artifact) and approve to proceed to implementation phase.
 ```
 
-### Step 9: Handle Feedback
+### Step 10: Handle Feedback
 
 **If approved:** Notify orchestrator to proceed to Phase 2B
 
@@ -328,6 +375,7 @@ Review full Improvement Proposal (artifact) and approve to proceed to implementa
 - Update artifact
 - Save as new version (increment version number)
 - Example: `20251122-proposal-v2.md`
+- Update metadata.json with new proposal version
 - Re-present
 
 **If rejected:** Understand concerns, create alternative

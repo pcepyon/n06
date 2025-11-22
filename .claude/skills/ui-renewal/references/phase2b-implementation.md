@@ -6,6 +6,28 @@ This guide is for the Implementation sub-agent. Use this when the orchestrator r
 
 Convert approved Improvement Proposal into precise, developer-ready implementation specifications. Follow the Proposal as **Single Source of Truth** with minimal additional interpretation.
 
+## Table of Contents
+
+1. [Objective](#objective)
+2. [Prerequisites](#prerequisites)
+3. [Process](#process)
+   - [Step 1a: Validate Improvement Proposal](#step-1a-validate-improvement-proposal)
+   - [Step 1b: Load Context (Precisely)](#step-1b-load-context-precisely)
+   - [Step 2: Extract Design System Tokens from Proposal](#step-2-extract-design-system-tokens-from-proposal)
+   - [Step 3: For Each Change in Proposal](#step-3-for-each-change-in-proposal)
+   - [Step 4: Create Complete Implementation Guide](#step-4-create-complete-implementation-guide)
+   - [Step 5: Quality Verification](#step-5-quality-verification)
+   - [Step 6: Save Implementation Guide Document](#step-6-save-implementation-guide-document)
+   - [Step 7: Update metadata.json](#step-7-update-metadatajson)
+   - [Step 8: Present to User](#step-8-present-to-user)
+4. [Critical Guidelines](#critical-guidelines)
+5. [Context Efficiency Rules](#context-efficiency-rules)
+6. [Quality Checklist](#quality-checklist)
+7. [Success Criteria](#success-criteria)
+8. [Output Language Rule](#output-language-rule)
+
+---
+
 ## Prerequisites
 
 **Required:**
@@ -20,7 +42,33 @@ Convert approved Improvement Proposal into precise, developer-ready implementati
 
 ## Process
 
-### Step 1: Load Context (Precisely)
+### Step 1a: Validate Improvement Proposal
+
+**Before loading the Proposal, validate it exists and is complete:**
+
+```bash
+bash .claude/skills/ui-renewal/scripts/validate_artifact.sh \
+  proposal \
+  .claude/skills/ui-renewal/projects/{screen-name}/{date}-proposal-v{n}.md
+```
+
+**Expected output:** `✅ Artifact validated successfully`
+
+**If validation fails:**
+- ❌ Return to Phase 2A to fix the Proposal
+- ❌ Do NOT proceed to Phase 2B
+
+**Validation checks:**
+- File exists at expected path
+- Required sections present:
+  - Current State Analysis
+  - Proposed Changes
+  - Design System Token Reference
+- Token Reference table has content
+
+---
+
+### Step 1b: Load Context (Precisely)
 
 **CRITICAL: Load only what's necessary:**
 
@@ -444,15 +492,7 @@ const handleClick = () => {
 **Assets Needed:**
 - [Icons, images, fonts if any]
 
-## Component Registry Update
-
-Add to Design System Section 7:
-
-| Component | Created Date | Used In | Notes |
-|-----------|--------------|---------|-------|
-| [Component Name] | [Today's date] | [This feature] | [Special notes] |
-
-[Include complete component spec summary for registry]
+**Note:** Component Registry is NOT updated in Phase 2B. This is done in Phase 3 Step 4 after user confirms completion.
 ```
 
 ### Step 5: Quality Verification
@@ -501,7 +541,22 @@ Add to Design System Section 7:
 ls .claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-implementation-v1.md
 ```
 
-### Step 7: Present to User
+### Step 7: Update metadata.json
+
+**Update project metadata:**
+
+```json
+{
+  "current_phase": "phase2b",
+  "last_updated": "{now}",
+  "versions": {
+    "proposal": "v1",
+    "implementation": "v1"
+  }
+}
+```
+
+### Step 8: Present to User
 
 **Concise summary (Korean):**
 
@@ -545,8 +600,9 @@ ls .claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-implementation-v1
 ❌ Load unnecessary context
 ❌ Re-analyze original UI
 ❌ Save components to library (done in Phase 3 Step 4)
-❌ Update Component Registry (done in Phase 3 Step 4)
 ❌ Implement actual code (done in Phase 2C)
+
+**Note:** Component Registry is updated in Phase 3 Step 4, NOT in Phase 2B.
 
 **If something is missing from Proposal:**
 ```
@@ -593,10 +649,7 @@ Please update Proposal or approve default: [suggestion]
 - Code examples are complete and correct
 - Clear file structure
 
-✅ **Registry:**
-- Component Registry updated
-- New components documented
-- Reused components noted
+**Note:** Component Registry is NOT updated in Phase 2B - this will be done in Phase 3 Step 4.
 
 ## Success Criteria
 
@@ -604,10 +657,11 @@ Phase 2B succeeds when:
 - ✅ Complete Implementation Guide created
 - ✅ All specifications precise and developer-ready
 - ✅ Only used tokens from Proposal
-- ✅ Component Registry updated
 - ✅ Framework-specific code provided
 - ✅ User confirms guide is complete
 - ✅ Minimal context consumed
+
+**Note:** Component Registry will be updated in Phase 3 Step 4, not here.
 
 ## Output Language Rule
 
@@ -639,12 +693,13 @@ Phase 2B succeeds when:
 - ✅ 인터랙션 동작 정의
 - ✅ React 구현 코드
 - ✅ 접근성 체크리스트
-- ✅ Component Registry 업데이트
 
 ## 다음 단계
 1. 구현 가이드 검토
-2. 개발 시작 가능
+2. Phase 2C (자동 구현) 또는 수동 개발
 3. 완료 후 Phase 3 검증 요청
+
+**참고:** Component Registry는 Phase 3 Step 4에서 업데이트됩니다.
 ```
 
 **Implementation Guide artifact itself can be in English** (technical document)

@@ -17,7 +17,13 @@ def load_metadata(project_dir):
         return None
 
     with open(metadata_path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+        data = json.load(f)
+
+        # Backward compatibility: use 'phase' if 'current_phase' missing
+        if 'current_phase' not in data and 'phase' in data:
+            data['current_phase'] = data['phase']
+
+        return data
 
 
 def generate_index():
@@ -60,22 +66,41 @@ def generate_index():
 """
 
     for project_name, metadata in completed_projects:
-        # Build documents links
+        # Build documents links from versions
         doc_links = []
-        for doc in metadata.get('documents', []):
-            doc_type = doc['type'].capitalize()
-            doc_file = doc['file']
-            doc_links.append(f"[{doc_type}]({project_name}/{doc_file})")
+        versions = metadata.get('versions', {})
 
-        docs_str = ", ".join(doc_links)
+        if 'proposal' in versions:
+            doc_links.append(f"[Proposal]({project_name}/<date>-proposal-v{versions['proposal']}.md)")
+        if 'implementation' in versions:
+            doc_links.append(f"[Implementation]({project_name}/<date>-implementation-v{versions['implementation']}.md)")
+        if 'implementation_log' in versions:
+            doc_links.append(f"[Log]({project_name}/<date>-implementation-log-v{versions['implementation_log']}.md)")
+        if 'verification' in versions:
+            doc_links.append(f"[Verification]({project_name}/<date>-verification-v{versions['verification']}.md)")
 
-        # Build components list
-        components = metadata.get('components', [])
-        components_str = f"{len(components)} ({', '.join(components[:3])}{'...' if len(components) > 3 else ''})"
+        docs_str = ", ".join(doc_links) if doc_links else "No docs"
 
-        status_emoji = "✅" if metadata.get('status') == 'completed' else "🔄"
+        # Build components list (support both old 'components' and new 'components_created')
+        components = metadata.get('components_created', metadata.get('components', []))
+        components_str = f"{len(components)} ({', '.join(components[:3])}{'...' if len(components) > 3 else ''})" if components else "0"
 
-        index_content += f"| {metadata.get('screenName', project_name).replace('-', ' ').title()} | {metadata.get('framework', 'Unknown')} | {status_emoji} {metadata.get('status', 'Unknown').title()} | {metadata.get('lastUpdated', 'N/A')} | {docs_str} | {components_str} |\n"
+        # Get retry count if > 0
+        retry_count = metadata.get('retry_count', 0)
+        retry_indicator = f" (retry: {retry_count})" if retry_count > 0 else ""
+
+        # Status display
+        status = metadata.get('status', 'Unknown')
+        status_emoji = "✅" if status == 'completed' else "❌" if status == 'failed' else "🔄"
+        status_str = f"{status_emoji} {status.title()}{retry_indicator}"
+
+        # Handle both old 'screenName' and new 'project_name'
+        project_display = metadata.get('project_name', metadata.get('screenName', project_name)).replace('-', ' ').title()
+
+        # Last updated
+        last_updated = metadata.get('last_updated', metadata.get('lastUpdated', 'N/A'))
+
+        index_content += f"| {project_display} | {metadata.get('framework', 'Unknown')} | {status_str} | {last_updated} | {docs_str} | {components_str} |\n"
 
     index_content += """
 ---
@@ -95,6 +120,8 @@ def generate_index():
 - **Total Completed Projects**: {len(completed_projects)}
 - **Total Frameworks**: {len(set(m.get('framework', 'Unknown') for _, m in completed_projects))}
 - **Design System Version**: Gabium Design System v1.0
+- **Projects with Retries**: {sum(1 for _, m in completed_projects if m.get('retry_count', 0) > 0)}
+- **Failed Projects**: {sum(1 for _, m in completed_projects if m.get('status') == 'failed')}
 
 ---
 
@@ -105,7 +132,9 @@ def generate_index():
     # Build component reusability matrix
     component_usage = {}
     for project_name, metadata in completed_projects:
-        for component in metadata.get('components', []):
+        # Support both old 'components' and new 'components_created'
+        components = metadata.get('components_created', metadata.get('components', []))
+        for component in components:
             if component not in component_usage:
                 component_usage[component] = {
                     'created_in': project_name,

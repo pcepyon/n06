@@ -6,6 +6,39 @@ This guide is for the Verification & Finalization sub-agent. Use this when the o
 
 Verify implemented code matches design intent, support revision iterations, obtain final user confirmation, and properly organize all assets for future reuse.
 
+## Table of Contents
+
+1. [Objective](#objective)
+2. [Prerequisites](#prerequisites)
+3. [Step 1: Initial Verification](#step-1-initial-verification)
+   - [1.1 Validate Prerequisites](#11-validate-prerequisites)
+   - [1.2 Load Context](#12-load-context)
+   - [1.3 Verification Checklist](#13-verification-checklist)
+   - [1.4 Issue Categorization](#14-issue-categorization)
+   - [1.5 Create Verification Report](#15-create-verification-report-korean)
+   - [1.6 Present Results to User](#16-present-results-to-user-korean)
+4. [Step 2: Revision Loop](#step-2-revision-loop-if-issues-found)
+   - [2.1 User Fixes Issues](#21-user-fixes-issues)
+   - [2.2 Re-verification](#22-re-verification)
+   - [2.3 Update metadata.json](#23-update-metadatajson-for-step-2)
+   - [2.4 Iteration](#24-iteration)
+5. [Step 3: Final Confirmation](#step-3-final-confirmation)
+   - [3.1 Ask User for Completion Confirmation](#31-ask-user-for-completion-confirmation-korean)
+   - [3.2 Handle User Response](#32-handle-user-response)
+6. [Step 4: Asset Organization & Completion](#step-4-asset-organization--completion)
+   - [4.1 Update Component Registry](#41-update-component-registry-ssot)
+   - [4.2 Create/Update metadata.json](#42-createupdate-metadatajson)
+   - [4.3 Update projects/INDEX.md](#43-update-projectsindexmd)
+   - [4.4 Save Verification Report](#44-save-verification-report-optional)
+   - [4.5 Create Final Summary](#45-create-final-summary-korean)
+   - [4.6 Mark Project as Completed](#46-mark-project-as-completed)
+7. [Quality Gates](#quality-gates)
+8. [Edge Cases](#edge-cases)
+9. [Success Criteria](#success-criteria)
+10. [Output Language](#output-language)
+
+---
+
 ## Prerequisites
 
 **Required:**
@@ -21,7 +54,36 @@ Verify implemented code matches design intent, support revision iterations, obta
 
 ## Step 1: Initial Verification
 
-### 1.1 Load Context
+### 1.1 Validate Prerequisites
+
+**Before verification, validate all required artifacts:**
+
+```bash
+# Validate Improvement Proposal
+bash .claude/skills/ui-renewal/scripts/validate_artifact.sh \
+  proposal \
+  .claude/skills/ui-renewal/projects/{screen-name}/{date}-proposal-v{n}.md
+
+# Validate Implementation Guide
+bash .claude/skills/ui-renewal/scripts/validate_artifact.sh \
+  implementation \
+  .claude/skills/ui-renewal/projects/{screen-name}/{date}-implementation-v{n}.md
+
+# Validate Implementation Log
+bash .claude/skills/ui-renewal/scripts/validate_artifact.sh \
+  implementation-log \
+  .claude/skills/ui-renewal/projects/{screen-name}/{date}-implementation-log-v{n}.md
+```
+
+**All must pass before proceeding to verification.**
+
+**If any validation fails:**
+- ❌ Return to the failed phase to fix the artifact
+- ❌ Do NOT proceed with verification
+
+---
+
+### 1.2 Load Context
 
 Load precisely:
 1. Improvement Proposal (design intent)
@@ -29,7 +91,7 @@ Load precisely:
 3. User's implemented code
 4. Design System tokens from Implementation Guide ONLY
 
-### 1.2 Verification Checklist
+### 1.3 Verification Checklist
 
 **Design Intent Compliance:**
 - [ ] All changes from Proposal implemented?
@@ -59,7 +121,7 @@ Load precisely:
 - [ ] No regressions?
 - [ ] New features work as expected?
 
-### 1.3 Issue Categorization
+### 1.4 Issue Categorization
 
 **Critical (❌ Blocker)**:
 - Design System tokens not used
@@ -76,7 +138,7 @@ Load precisely:
 - Code style improvements
 - Documentation additions
 
-### 1.4 Create Verification Report (Korean)
+### 1.5 Create Verification Report (Korean)
 
 **Format:**
 ```markdown
@@ -115,7 +177,21 @@ Load precisely:
 ✅ PASS: Step 3 (최종 확인)으로 진행
 ```
 
-### 1.5 Present Results to User (Korean)
+### 1.5 Update metadata.json for Step 1
+
+**Update phase tracking:**
+
+```json
+{
+  "current_phase": "phase3_step1",
+  "last_updated": "{now}",
+  "versions": {
+    "verification": "v1"
+  }
+}
+```
+
+### 1.6 Present Results to User (Korean)
 
 **If PASS:**
 ```
@@ -135,7 +211,30 @@ Step 3 (최종 확인)으로 진행합니다.
 
 ---
 
-## Step 2: Revision Loop
+## Step 2: Revision Loop (If Issues Found)
+
+**Git Workflow Check:**
+
+If using Git branch workflow:
+```bash
+# Verify still on feature branch
+git branch --show-current
+# Should show: ui-renewal/{screen-name}
+```
+
+**Rollback Options (if needed):**
+
+1. **Minor fixes** - Let Phase 2C fix automatically (standard flow)
+2. **Major issues** - Rollback and restart:
+   ```bash
+   # Discard all changes
+   git checkout main
+   git branch -D ui-renewal/{screen-name}
+
+   # Restart from Phase 2B or 2A
+   ```
+
+---
 
 ### 2.1 User Fixes Issues
 
@@ -173,7 +272,25 @@ Wait for user to fix issues and request re-verification.
 ❌ FAIL: 추가 수정 필요
 ```
 
-### 2.3 Iteration
+### 2.3 Update metadata.json for Step 2
+
+**When retrying (if Phase 2C is re-invoked for fixes):**
+
+```json
+{
+  "current_phase": "phase3_step2",
+  "retry_count": 1,
+  "last_updated": "{now}",
+  "versions": {
+    "implementation_log": "v2",
+    "verification": "v2"
+  }
+}
+```
+
+**Note:** Increment `retry_count` and version numbers with each retry iteration.
+
+### 2.4 Iteration
 
 Repeat Step 2 until PASS.
 
@@ -214,29 +331,36 @@ Repeat Step 2 until PASS.
 → Proceed to Step 4 for current screen
 → Then return to Phase 2A for next screen
 
+**Git Workflow - Merge Decision:**
+
+If user confirms "완료" and using Git:
+```bash
+# Merge feature branch to main
+git checkout main
+git merge ui-renewal/{screen-name} --no-ff -m "UI Renewal: {screen-name} completed"
+git branch -d ui-renewal/{screen-name}
+```
+
+If user requests changes:
+```bash
+# Stay on feature branch for more iterations
+git branch --show-current
+# Continue with revisions
+```
+
 ---
 
 ## Step 4: Asset Organization & Completion
 
 **CRITICAL: This step ensures all work is preserved for future reuse.**
 
-### 4.1 Update Component Registry (3 Locations)
+### 4.1 Update Component Registry (SSOT)
 
-**If new components were created in Phase 2B:**
+**IMPORTANT: This step is done ONLY in Phase 3 Step 4, after user confirms completion.**
 
-#### Location 1: Design System Component Registry
+**If new components were created in Phase 2C:**
 
-Update `design-systems/{product}-design-system.md` Section 7:
-
-```markdown
-## 7. Component Registry
-
-| Component | Created Date | Used In | Notes |
-|-----------|--------------|---------|-------|
-| {ComponentName} | {YYYY-MM-DD} | {screen-name} | {description} |
-```
-
-#### Location 2: registry.json
+#### Step 1: Update registry.json (Single Source of Truth)
 
 Update `.claude/skills/ui-renewal/component-library/registry.json`:
 ```json
@@ -251,25 +375,54 @@ Update `.claude/skills/ui-renewal/component-library/registry.json`:
       "usedIn": ["{screen-name}"],
       "category": "{category}",
       "description": "{description}",
-      ...
+      "designTokens": {
+        "colors": ["Primary", "Neutral-900"],
+        "typography": ["base", "lg"],
+        "spacing": ["md", "lg"],
+        "borderRadius": ["sm"],
+        "shadows": ["sm"]
+      },
+      "props": [
+        {
+          "name": "text",
+          "type": "String",
+          "required": true,
+          "description": "Button text"
+        }
+      ]
     }
   ]
 }
 ```
 
-#### Location 3: COMPONENTS.md
+#### Step 2: Generate Documentation (Automated)
 
-Update `.claude/skills/ui-renewal/component-library/COMPONENTS.md`:
-- Add row to Component Registry table
-- Add component specification section
-
-**Automation (if script exists):**
+Run the generation script to update COMPONENTS.md and Design System section:
 ```bash
-python scripts/update_component_registry.py \
-  --component {ComponentName} \
-  --framework {framework} \
-  --used-in "{screen-name}"
+python .claude/skills/ui-renewal/scripts/generate_components_docs.py \
+  --output-components-md \
+  --output-design-system-section
 ```
+
+This will:
+- Update `.claude/skills/ui-renewal/component-library/COMPONENTS.md` (Component Registry table + specs)
+- Generate `design-system-section-7.md` (for Design System artifact)
+
+#### Step 3: Update Design System Artifact
+
+Copy content from generated `design-system-section-7.md` and paste into Design System artifact Section 7.
+
+**Process:**
+1. ✅ ONLY edit `registry.json` manually (SSOT)
+2. ✅ Run generation script to update COMPONENTS.md
+3. ✅ Copy generated content to Design System artifact
+4. ❌ DO NOT edit COMPONENTS.md or Design System manually
+
+**Why SSOT Pattern:**
+- Single source ensures consistency
+- Automation prevents manual errors
+- Easy to maintain and update
+- Scripts handle formatting and cross-references
 
 ### 4.2 Create/Update metadata.json
 
@@ -284,39 +437,26 @@ Create the metadata file:
 
 ```json
 {
-  "screenName": "{screen-name}",
+  "project_name": "{screen-name}",
+  "status": "completed",
+  "current_phase": "completed",
+  "created_date": "{YYYY-MM-DD}",
+  "last_updated": "{now}",
   "framework": "{framework}",
-  "createdDate": "{YYYY-MM-DD}",
-  "lastUpdated": "{YYYY-MM-DD}",
-  "designSystem": "{Product} Design System v{version}",
-  "documents": [
-    {
-      "type": "proposal",
-      "version": 1,
-      "date": "{YYYY-MM-DD}",
-      "file": "{YYYYMMDD}-proposal-v1.md",
-      "approved": true
-    },
-    {
-      "type": "implementation",
-      "version": 1,
-      "date": "{YYYY-MM-DD}",
-      "file": "{YYYYMMDD}-implementation-v1.md"
-    },
-    {
-      "type": "verification",
-      "version": 1,
-      "date": "{YYYY-MM-DD}",
-      "file": "{YYYYMMDD}-verification-v1.md",
-      "status": "PASS"
-    }
-  ],
-  "components": [
+  "design_system_version": "v1.0",
+  "versions": {
+    "proposal": "v1",
+    "implementation": "v1",
+    "implementation_log": "v1",
+    "verification": "v1"
+  },
+  "dependencies": [],
+  "components_created": [
     "{ComponentName1}",
     "{ComponentName2}"
   ],
-  "status": "completed",
-  "iterations": 1
+  "retry_count": 0,
+  "last_error": null
 }
 ```
 
@@ -406,11 +546,22 @@ ls .claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-verification-v1.m
 
 ### 4.6 Mark Project as Completed
 
-**In metadata.json:**
+**In metadata.json (success):**
 ```json
 {
   "status": "completed",
-  "completedDate": "{YYYY-MM-DD}"
+  "current_phase": "completed",
+  "last_updated": "{now}"
+}
+```
+
+**In metadata.json (failure - optional):**
+```json
+{
+  "status": "failed",
+  "current_phase": "completed",
+  "last_updated": "{now}",
+  "last_error": "Verification failed after 3 retries. Issues: [list]"
 }
 ```
 
@@ -441,11 +592,13 @@ ls .claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-verification-v1.m
 - ✅ User satisfied with implementation
 
 ### Step 4 Quality Gate:
-- ✅ Component Registry updated (3 locations if new components)
+- ✅ Component Registry updated (registry.json + generated docs if new components)
 - ✅ metadata.json created/updated
 - ✅ INDEX.md updated
 - ✅ Final Summary presented to user
 - ✅ Project marked as "completed"
+
+**Note:** Component Registry uses SSOT pattern - only registry.json is edited manually, other files are generated.
 
 ---
 
