@@ -1,52 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:n06/features/dashboard/domain/entities/timeline_event.dart';
+import '../../domain/entities/timeline_event.dart';
 
 class TimelineWidget extends StatelessWidget {
-  final List<TimelineEvent> timeline;
+  final List<TimelineEvent> events;
 
   const TimelineWidget({
     super.key,
-    required this.timeline,
+    required this.events,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (timeline.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Center(
-          child: Text(
-            '아직 이벤트가 없습니다',
-            style: TextStyle(color: Colors.grey),
-          ),
-        ),
-      );
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        // Section Title
+        Text(
           '치료 여정',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 18, // lg
+            fontWeight: FontWeight.w600, // Semibold
+            color: Color(0xFF1E293B), // Neutral-800
+            height: 1.3,
+          ),
         ),
-        const SizedBox(height: 16),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: timeline.length,
-          itemBuilder: (context, index) {
-            final event = timeline[index];
-            final isLast = index == timeline.length - 1;
+
+        SizedBox(height: 16), // md spacing
+
+        // Timeline Events
+        Column(
+          children: List.generate(events.length, (index) {
+            final event = events[index];
+            final isLast = index == events.length - 1;
+
             return _TimelineEventItem(
               event: event,
               isLast: isLast,
             );
-          },
+          }),
         ),
       ],
     );
@@ -62,65 +53,93 @@ class _TimelineEventItem extends StatelessWidget {
     required this.isLast,
   });
 
+  Color _getEventColor(TimelineEventType type) {
+    switch (type) {
+      case TimelineEventType.treatmentStart:
+        return Color(0xFF3B82F6); // Info (Blue-500)
+      case TimelineEventType.escalation:
+        return Color(0xFFF59E0B); // Warning (Amber-500)
+      case TimelineEventType.weightMilestone:
+        return Color(0xFF10B981); // Success (Emerald-500)
+      case TimelineEventType.badgeAchievement:
+        return Color(0xFFF59E0B); // Warning (Amber-500, Gold)
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final color = _getColorForEventType(event.eventType);
+    final eventColor = _getEventColor(event.eventType);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+    return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: color,
-                ),
-              ),
-              if (!isLast) // For visual connecting line
-                Container(
-                  width: 2,
-                  height: 40,
-                  color: Colors.grey[300],
-                ),
-            ],
-          ),
-          const SizedBox(width: 12),
-          Expanded(
+          // Dot and Connector Column
+          SizedBox(
+            width: 16,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  event.title,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                // Timeline Dot
+                Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    border: Border.all(
+                      color: eventColor,
+                      width: 3,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  event.description,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
+
+                // Connector Line (if not last)
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 3,
+                      color: Color(0xFFCBD5E1), // Neutral-300
+                      margin: EdgeInsets.only(top: 4, bottom: 4),
+                    ),
+                  ),
               ],
+            ),
+          ),
+
+          SizedBox(width: 16), // md spacing
+
+          // Event Content
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 24), // lg spacing between events
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    event.title,
+                    style: TextStyle(
+                      fontSize: 16, // base
+                      fontWeight: FontWeight.w600, // Semibold
+                      color: Color(0xFF1E293B), // Neutral-800
+                      height: 1.4,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    event.description,
+                    style: TextStyle(
+                      fontSize: 14, // sm
+                      fontWeight: FontWeight.w400, // Regular
+                      color: Color(0xFF475569), // Neutral-600
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
       ),
     );
-  }
-
-  Color _getColorForEventType(TimelineEventType type) {
-    switch (type) {
-      case TimelineEventType.treatmentStart:
-        return Colors.blue;
-      case TimelineEventType.escalation:
-        return Colors.orange;
-      case TimelineEventType.weightMilestone:
-        return Colors.green;
-      case TimelineEventType.badgeAchievement:
-        return Colors.amber;
-    }
   }
 }

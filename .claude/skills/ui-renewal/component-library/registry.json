@@ -4,6 +4,38 @@
   "lastUpdated": "2025-11-22",
   "components": [
     {
+      "name": "GabiumBottomNavigation",
+      "createdDate": "2025-11-22",
+      "framework": "Flutter",
+      "file": "flutter/gabium_bottom_navigation.dart",
+      "projectFile": "lib/core/presentation/widgets/gabium_bottom_navigation.dart",
+      "usedIn": [
+        "Home Dashboard Screen",
+        "Weight Tracking Screen",
+        "Symptom Tracking Screen",
+        "Dose Schedule Screen",
+        "Coping Guide Screen",
+        "Settings Screen"
+      ],
+      "category": "Navigation",
+      "description": "Bottom navigation bar with 5 tabs following Gabium Design System. Features scale animation on tap and semantic color states (Primary for active, Neutral-500 for inactive).",
+      "props": {
+        "items": "List<GabiumBottomNavItem> (required)",
+        "currentIndex": "int (required, 0-4)",
+        "onTap": "ValueChanged<int> (required)"
+      },
+      "designTokens": {
+        "background": "#FFFFFF (White)",
+        "borderTop": "Neutral-200 (#E2E8F0), 1px",
+        "shadow": "Reverse md (0 -4px 8px rgba(15, 23, 42, 0.08))",
+        "height": "56px + SafeArea bottom inset",
+        "activeColor": "Primary (#4ADE80)",
+        "inactiveColor": "Neutral-500 (#64748B)",
+        "iconSize": "24px",
+        "labelFont": "xs (12px Medium)"
+      }
+    },
+    {
       "name": "AuthHeroSection",
       "createdDate": "2025-11-22",
       "framework": "Flutter",
@@ -177,13 +209,14 @@
     }
   ],
   "metadata": {
-    "totalComponents": 6,
+    "totalComponents": 8,
     "frameworks": ["Flutter"],
     "categories": [
       "Authentication",
       "Form",
       "Button",
-      "Feedback"
+      "Feedback",
+      "Navigation"
     ]
   }
 }

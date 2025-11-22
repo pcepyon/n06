@@ -1,11 +1,11 @@
 ---
 name: ui-renewal
-description: Framework-agnostic UI renewal skill that maintains brand consistency while improving visual quality and UX. Use when users request UI/design improvements, redesign, or design system creation for any platform (web, mobile, desktop). Orchestrates a four-phase workflow - Phase 1 creates Design System, Phase 2A analyzes and proposes improvements, Phase 2B creates implementation specifications, Phase 3 verifies implementation quality. Handles both new design system creation and iterative improvements. All user-facing communication in Korean, internal processing in English.
+description: Fully automated UI renewal skill with end-to-end implementation. Orchestrates a five-phase workflow - Phase 1 creates Design System, Phase 2A analyzes and proposes improvements, Phase 2B creates implementation specifications, Phase 2C automatically implements code in Presentation layer only, Phase 3 verifies and auto-fixes issues. User only makes decisions (approve/reject), agent handles all implementation. Maintains Clean Architecture, modifies only UI layer. All user-facing communication in Korean.
 ---
 
 # UI Renewal Skill
 
-Orchestrate professional UI renewal through systematic design system creation and incremental improvements.
+Fully automated professional UI renewal with systematic design system creation, automatic code implementation, and quality verification.
 
 ## ⚠️ File Path Rule (CRITICAL)
 
@@ -45,7 +45,7 @@ Trigger this skill when users request:
 
 ## Workflow Overview
 
-This skill operates in four phases, executed in a single continuous session:
+This skill operates in five phases, executed in a single continuous session:
 
 ```
 Phase 1: Design System Creation
@@ -58,16 +58,18 @@ Phase 2A: Analysis & Direction (for each screen/feature)
    ↓
 Phase 2B: Implementation Specification
    ↓
-[User receives implementation guide]
+[User approves specification]
    ↓
-[User implements]
+Phase 2C: Automated Implementation (NEW)
+   ↓
+[Agent implements code automatically]
    ↓
 Phase 3: Verification, Revision & Finalization
    ↓ Step 1: Verify → Step 2: Revise (if needed) → Step 3: Confirm → Step 4: Organize
    ↓
-[Complete: Assets organized] [Revise: Fix and re-verify]
+[Complete: Assets organized in component library] [Revise: Fix and re-verify]
    ↓
-[Repeat 2A→2B→3 for next screen/feature]
+[Repeat 2A→2B→2C→3 for next screen/feature]
 ```
 
 ## Document Naming Convention
@@ -82,6 +84,7 @@ All documents created by this skill follow a strict naming convention:
 ### Document Types
 - **proposal**: Improvement Proposal (Phase 2A output)
 - **implementation**: Implementation Specification (Phase 2B output)
+- **implementation-log**: Implementation Log (Phase 2C output)
 - **verification**: Verification Report (Phase 3 output)
 
 ### Examples
@@ -89,6 +92,7 @@ All documents created by this skill follow a strict naming convention:
 20251122-proposal-v1.md          (First proposal, created Nov 22, 2025)
 20251122-proposal-v2.md          (Revised proposal, same day)
 20251122-implementation-v1.md    (Implementation spec)
+20251122-implementation-log-v1.md (Implementation log from Phase 2C)
 20251123-verification-v1.md      (First verification)
 20251123-verification-v2.md      (Re-verification after fixes)
 ```
@@ -101,6 +105,7 @@ All documents created by this skill follow a strict naming convention:
 ### Where Applied
 - **Phase 2A**: Saves proposal as `{date}-proposal-v{n}.md` in `projects/{screen-name}/`
 - **Phase 2B**: Saves implementation as `{date}-implementation-v{n}.md` in `projects/{screen-name}/`
+- **Phase 2C**: Saves implementation log as `{date}-implementation-log-v{n}.md` in `projects/{screen-name}/`
 - **Phase 3**: Saves verification as `{date}-verification-v{n}.md` in `projects/{screen-name}/`
 
 ## Directory Structure
@@ -375,9 +380,7 @@ If not, I can create one first to ensure consistency.
    - Create complete component specifications
    - Define layout structure precisely
    - Specify all interactive states
-   - Provide framework-specific implementation code
-   - **Save component code to library: `./component-library/[framework]/[Component].[ext]`**
-   - **Update Component Registry (3 locations - see Component Registry Management)**
+   - Provide framework-specific implementation code examples
    - Create Implementation Guide artifact
    - **Save implementation to: `projects/{screen-name}/{date}-implementation-v{n}.md`**
    - **Update `projects/{screen-name}/metadata.json`**
@@ -385,21 +388,104 @@ If not, I can create one first to ensure consistency.
 5. **After Completion:**
    ```
    [To user]:
-   Implementation guide complete!
+   구현 가이드가 완성되었습니다!
 
-   Would you like to:
-   - Improve another screen/feature? (→ Return to Phase 2A)
-   - Export design tokens for development?
-   - Get additional implementation support?
+   승인하시면 Phase 2C (자동 구현)로 진행합니다.
+   수정이 필요하면 말씀해주세요.
    ```
 
 **Orchestrator's Role:**
 - Route to Phase 2B guide
 - Ensure sub-agent reads `references/phase2b-implementation.md`
 - **Provide ONLY Improvement Proposal + Token Reference** to sub-agent
-- Ensure Component Registry is updated in Design System artifact
 - **Ensure implementation is saved to projects directory with proper naming**
-- After implementation guide is complete, inform user about Phase 3
+- After implementation guide is complete, get user approval and proceed to Phase 2C
+
+## Phase 2C: Automated Implementation
+
+**Objective:** Automatically implement UI code in the project based on the approved Implementation Guide.
+
+### Execution
+
+1. **Verify Prerequisites:**
+   ```
+   [Check]: Is Implementation Guide artifact in context?
+   [Check]: Has user approved the specification?
+
+   If NO → Return to Phase 2B
+   If YES → Proceed
+   ```
+
+2. **Invoke Phase 2C Sub-Agent:**
+   ```
+   [Internal]: Read references/phase2c-implementation.md for detailed instructions.
+
+   [To user]: 구현 가이드를 바탕으로 코드를 자동 생성하겠습니다.
+   ```
+
+3. **Provide Context to Sub-Agent:**
+   ```
+   CRITICAL: Provide:
+   1. Implementation Guide artifact (complete)
+   2. Project architecture documentation (CLAUDE.md, docs/code_structure.md)
+   3. Existing codebase patterns (for consistency)
+
+   DO NOT modify:
+   - Application layer (providers/notifiers)
+   - Domain layer (entities/repositories)
+   - Infrastructure layer (database/APIs)
+   - Only modify Presentation layer (screens/widgets)
+   ```
+
+4. **Delegate to Sub-Agent:**
+   The Phase 2C sub-agent will:
+   - Load Implementation Guide as Single Source of Truth
+   - Explore project structure (lib/features/{feature}/presentation/)
+   - Analyze existing code patterns and conventions
+   - Identify files to create/modify in Presentation layer only
+   - Generate widget code following project architecture
+   - Update/create screen files
+   - Update routing if new screens added
+   - Ensure no Application/Domain/Infrastructure changes
+   - Run code analysis (flutter analyze)
+   - Create implementation log
+   - **Save implementation log to: `projects/{screen-name}/{date}-implementation-log-v{n}.md`**
+   - **Update `projects/{screen-name}/metadata.json`**
+
+5. **Implementation Scope (CRITICAL):**
+   ```
+   ✅ CAN modify:
+   - lib/features/{feature}/presentation/screens/
+   - lib/features/{feature}/presentation/widgets/
+   - lib/core/routing/ (only add routes, not modify logic)
+   - lib/core/presentation/ (shared UI components)
+
+   ❌ CANNOT modify:
+   - lib/features/{feature}/application/
+   - lib/features/{feature}/domain/
+   - lib/features/{feature}/infrastructure/
+   - Any business logic, state management, or data layers
+   ```
+
+6. **After Completion:**
+   ```
+   [To user]:
+   코드 구현이 완료되었습니다!
+
+   생성/수정된 파일:
+   - [파일 목록]
+
+   Phase 3 (검증)으로 진행합니다.
+   ```
+
+**Orchestrator's Role:**
+- Route to Phase 2C guide
+- Ensure sub-agent reads `references/phase2c-implementation.md`
+- **Provide Implementation Guide + Project Architecture Context**
+- **Verify only Presentation layer is modified**
+- **Ensure implementation log is saved**
+- After implementation complete, proceed to Phase 3
+- **DO NOT save to component library yet** (will be done in Phase 3 Step 4)
 
 ## Component Registry Management
 
@@ -494,19 +580,20 @@ Step 4: Asset Organization (when complete)
 
 ### Step 1: Initial Verification
 
-**When:** User completes implementation and shares code/screenshots
+**When:** Phase 2C automatic implementation completes
 
 **Process:**
-1. **User Signals Readiness:**
+1. **Automatic Trigger:**
    ```
-   [User says]: "구현 완료했습니다" or shares code/screenshots
+   Phase 2C completes → Automatically proceed to Phase 3 Step 1
+   No user action needed
    ```
 
 2. **Invoke Phase 3 Sub-Agent:**
    ```
    [Internal]: Read references/phase3-verification.md for detailed instructions.
 
-   [To user]: 구현하신 코드를 검증하겠습니다.
+   [To user]: 구현된 코드를 검증하겠습니다.
    ```
 
 3. **Provide Minimal Context to Sub-Agent:**
@@ -514,8 +601,9 @@ Step 4: Asset Organization (when complete)
    CRITICAL: Only provide:
    1. Improvement Proposal artifact (design intent)
    2. Implementation Guide artifact (specifications)
-   3. User's implemented code
-   4. Design System tokens referenced in Implementation Guide (not full Design System)
+   3. Implementation Log from Phase 2C (what was implemented)
+   4. Implemented code files (from project)
+   5. Design System tokens referenced in Implementation Guide (not full Design System)
 
    DO NOT provide:
    - Full Design System document
@@ -526,10 +614,14 @@ Step 4: Asset Organization (when complete)
 4. **Sub-Agent Verification:**
    The Phase 3 sub-agent will:
    - Load Proposal (design intent) and Implementation Guide (spec)
+   - Load Implementation Log from Phase 2C
+   - Read implemented code files
    - Verify design intent is met
    - Check specification compliance
-   - Run lint/build quality checks
+   - Verify only Presentation layer was modified
+   - Run lint/build quality checks (flutter analyze)
    - Verify accessibility requirements
+   - Check for architectural violations
    - Categorize issues by severity (Critical/Major/Minor)
    - Create Verification Report (in Korean)
    - **Save verification to: `projects/{screen-name}/{date}-verification-v{n}.md`**
@@ -554,7 +646,7 @@ Step 4: Asset Organization (when complete)
 
    [검증 보고서 제공 - 한글]
 
-   수정 후 다시 검증을 요청해주세요.
+   자동으로 수정하여 재검증합니다.
    (Step 2: Revision Loop으로 진행합니다)
    ```
 
@@ -563,24 +655,43 @@ Step 4: Asset Organization (when complete)
 **When:** Verification found issues that need fixing
 
 **Process:**
-1. **User Fixes Issues:**
-   - User applies fixes based on verification report
-   - User may ask clarifying questions
-
-2. **User Requests Re-verification:**
+1. **Automatic Fix Trigger:**
    ```
-   [User says]: "수정했습니다" or "다시 검증해주세요"
+   Verification FAIL → Automatically invoke Phase 2C for fixes
+   No user action needed (unless user wants to intervene)
    ```
 
-3. **Run Verification Again:**
-   - Return to Step 1: Initial Verification
+2. **Re-invoke Phase 2C Sub-Agent:**
+   ```
+   [Internal]: Read references/phase2c-implementation.md
+
+   [To user]: 검증 보고서를 바탕으로 문제를 수정하겠습니다.
+
+   Provide to sub-agent:
+   - Implementation Guide
+   - Verification Report (issues to fix)
+   - Current code files
+   - Focus on fixing reported issues only
+   ```
+
+3. **Phase 2C Fixes Issues:**
+   - Load verification report
+   - Identify failed items
+   - Fix code based on specific guidance
+   - Update implementation log
+   - Save updated implementation-log-v{n+1}.md
+
+4. **Run Verification Again:**
+   - Automatically return to Step 1: Initial Verification
    - Focus on previously failed items
    - Create new verification report with incremented version
    - Save as `{date}-verification-v{n+1}.md`
 
-4. **Iterate Until Pass:**
+5. **Iterate Until Pass:**
    - Repeat Step 2 until verification passes
-   - Each iteration creates new versioned report
+   - Each iteration creates new versioned reports
+   - Maximum 3 iterations recommended
+   - If still failing after 3 iterations, ask user for direction
 
 ### Step 3: Final Confirmation
 
@@ -612,21 +723,38 @@ Step 4: Asset Organization (when complete)
 
 **When:** User confirms "완료" in Step 3
 
+**CRITICAL:** This is the ONLY step where components are saved to component library.
+
 **Process:**
-1. **Update Component Registry (All 3 Locations):**
+1. **Copy Components to Component Library:**
+   ```
+   For each reusable component created in Phase 2C:
+
+   Source (project files):
+   lib/features/{feature}/presentation/widgets/{widget_name}.dart
+   lib/core/presentation/widgets/{widget_name}.dart
+
+   Destination (component library):
+   .claude/skills/ui-renewal/component-library/flutter/{WidgetName}.dart
+
+   Copy components identified as reusable during implementation.
+   ```
+
+2. **Update Component Registry (All 3 Locations):**
    ```
    [Agent updates]:
    1. Design System artifact (Section 7)
-   2. component-library/registry.json
-   3. component-library/COMPONENTS.md
+   2. .claude/skills/ui-renewal/component-library/registry.json
+   3. .claude/skills/ui-renewal/component-library/COMPONENTS.md
 
    Adds/updates:
    - Components created in this project
    - "used_in" field with this screen name
-   - File paths and design tokens
+   - File paths (both project and component library)
+   - Design tokens used
    ```
 
-2. **Generate/Update metadata.json:**
+3. **Generate/Update metadata.json:**
    ```json
    {
      "project_name": "login-screen",
@@ -634,11 +762,12 @@ Step 4: Asset Organization (when complete)
      "created_date": "2025-11-22",
      "last_updated": "2025-11-23",
      "phase": "completed",
-     "framework": "React",
+     "framework": "Flutter",
      "design_system_version": "v1.0",
      "versions": {
        "proposal": "v1",
        "implementation": "v1",
+       "implementation-log": "v2",
        "verification": "v2"
      },
      "dependencies": [],
@@ -649,26 +778,32 @@ Step 4: Asset Organization (when complete)
    }
    ```
 
-3. **Update projects/INDEX.md:**
+4. **Update projects/INDEX.md:**
    ```markdown
    ## Completed Projects
    - **login-screen** (Completed) - Finished: 2025-11-23
    ```
 
-4. **Create Final Summary:**
+5. **Create Final Summary:**
    ```
    [To user in Korean]:
    🎉 login-screen 프로젝트가 완료되었습니다!
 
-   생성된 파일:
+   생성된 문서:
    - projects/login-screen/20251122-proposal-v1.md
    - projects/login-screen/20251122-implementation-v1.md
+   - projects/login-screen/20251122-implementation-log-v2.md
    - projects/login-screen/20251123-verification-v2.md
    - projects/login-screen/metadata.json
 
-   생성된 컴포넌트:
-   - PrimaryButton (component-library/react/Button.tsx)
-   - EmailInput (component-library/react/Input.tsx)
+   구현된 파일 (프로젝트):
+   - lib/features/auth/presentation/screens/login_screen.dart
+   - lib/features/auth/presentation/widgets/primary_button.dart
+   - lib/features/auth/presentation/widgets/email_input.dart
+
+   저장된 컴포넌트 (재사용 라이브러리):
+   - .claude/skills/ui-renewal/component-library/flutter/PrimaryButton.dart
+   - .claude/skills/ui-renewal/component-library/flutter/EmailInput.dart
 
    다음 단계:
    - 다른 화면/기능 개선? (→ Phase 2A로)
@@ -676,7 +811,7 @@ Step 4: Asset Organization (when complete)
    - 세션 종료?
    ```
 
-5. **Mark Project as COMPLETED:**
+6. **Mark Project as COMPLETED:**
    - Set `metadata.json` status to "completed"
    - Move project from "Active" to "Completed" in INDEX.md
    - Ensure all assets are preserved
@@ -779,6 +914,28 @@ Follow those instructions completely.
 OUTPUT LANGUAGE: All user-facing content in Korean.
 ```
 
+### For Phase 2C Sub-Agent:
+```
+You are the Automated Implementation agent.
+
+Your instructions: Read /home/claude/ui-renewal/references/phase2c-implementation.md
+
+CRITICAL - Load these contexts:
+1. Implementation Guide artifact (complete)
+2. Project architecture (CLAUDE.md, docs/code_structure.md)
+3. Existing codebase patterns (for consistency)
+
+CRITICAL RULES:
+- ONLY modify Presentation layer (lib/features/{feature}/presentation/, lib/core/presentation/)
+- DO NOT modify Application/Domain/Infrastructure layers
+- Use EXISTING providers/notifiers only
+- Follow Clean Architecture strictly
+
+Follow those instructions completely.
+
+OUTPUT LANGUAGE: All user-facing content in Korean.
+```
+
 ### For Phase 3 Sub-Agent:
 ```
 You are the Verification agent.
@@ -788,8 +945,9 @@ Your instructions: Read /home/claude/ui-renewal/references/phase3-verification.m
 CRITICAL - Load ONLY these contexts:
 1. Improvement Proposal artifact (design intent)
 2. Implementation Guide artifact (specifications)
-3. User's implemented code
-4. Design System tokens from Implementation Guide ONLY
+3. Implementation Log from Phase 2C
+4. Implemented code files (from project)
+5. Design System tokens from Implementation Guide ONLY
 
 DO NOT LOAD:
 - Full Design System document
@@ -810,65 +968,74 @@ Only load the specific reference guide needed for each phase.
 
 1. **Design System Artifact & File:**
    - Created in Phase 1 as artifact
-   - **Saved to file: `./design-systems/[product]-design-system.md`**
+   - **Saved to file: `.claude/skills/ui-renewal/design-systems/[product]-design-system.md`**
    - Referenced in Phase 2A for analysis
    - Specific tokens referenced in Phase 2B (via Proposal)
-   - Updated when new components are added (in Phase 2B & Phase 3 Step 4)
+   - Updated when new components are added (in Phase 3 Step 4 only)
    - Never recreate, only update
 
 2. **Improvement Proposal Artifact:**
    - Created in Phase 2A
    - **Saved to: `projects/{screen-name}/{date}-proposal-v{n}.md`**
-   - Used as Single Source of Truth in Phase 2B
+   - Used as Single Source of Truth in Phase 2B and Phase 2C
    - Contains all context Phase 2B needs
 
 3. **Implementation Guide Artifact:**
    - Created in Phase 2B
    - **Saved to: `projects/{screen-name}/{date}-implementation-v{n}.md`**
+   - Used as Single Source of Truth in Phase 2C
    - Used in Phase 3 for verification
 
-4. **Verification Reports:**
+4. **Implementation Log:**
+   - Created in Phase 2C
+   - **Saved to: `projects/{screen-name}/{date}-implementation-log-v{n}.md`**
+   - Documents what was implemented (files created/modified)
+   - Versioned for each re-implementation (during Phase 3 Step 2)
+   - Used in Phase 3 for verification
+
+5. **Verification Reports:**
    - Created in Phase 3 Step 1
    - **Saved to: `projects/{screen-name}/{date}-verification-v{n}.md`**
    - Versioned for each re-verification
+   - Used in Phase 3 Step 2 for fixing issues
 
-5. **Component Registry (3 Locations):**
+6. **Component Registry (3 Locations):**
    - Initialized in Phase 1 (empty)
    - Checked in Phase 2A for reuse
-   - Updated in Phase 2B when components are implemented
-   - **Final update in Phase 3 Step 4**
+   - **ONLY updated in Phase 3 Step 4** (when project is complete)
    - Lives in:
      - Design System artifact (Section 7)
-     - `component-library/registry.json`
-     - `component-library/COMPONENTS.md`
+     - `.claude/skills/ui-renewal/component-library/registry.json`
+     - `.claude/skills/ui-renewal/component-library/COMPONENTS.md`
 
-6. **Component Library Files:**
-   - **Location: `./component-library/[framework]/[Component].[ext]`**
-   - Created in Phase 2B when new components are implemented
+7. **Component Library Files:**
+   - **Location: `.claude/skills/ui-renewal/component-library/[framework]/[Component].[ext]`**
+   - **ONLY saved in Phase 3 Step 4** (final asset organization)
    - Searched in Phase 2A for reusability
    - Managed by `scripts/manage_components.py`
 
-7. **Project Metadata:**
+8. **Project Metadata:**
    - **Location: `projects/{screen-name}/metadata.json`**
    - Created/updated in Phase 2A
-   - Updated throughout Phase 2B and Phase 3
+   - Updated in Phase 2B, Phase 2C, and Phase 3
    - Final update in Phase 3 Step 4
 
-8. **Project Index:**
+9. **Project Index:**
    - **Location: `projects/INDEX.md`**
    - Updated when projects are created (Phase 2A)
    - Updated when projects are completed (Phase 3 Step 4)
    - Shows status of all projects
 
-9. **Session Flow:**
+10. **Session Flow:**
    ```
    Phase 1 → [Approval + Save Design System File] →
    Phase 2A (Screen A) → [Check Component Library] → [Approval] → [Save Proposal] →
-   Phase 2B (Screen A) → [Save Components to Library] → [Save Implementation] → [User implements] →
-   Phase 3 Step 1 (Screen A) → [Verify + Save Report] →
-   Phase 3 Step 2 (if issues) → [Fix + Re-verify + Save v2 Report] →
+   Phase 2B (Screen A) → [Save Implementation Guide] → [Approval] →
+   Phase 2C (Screen A) → [Auto-implement code in project] → [Save Implementation Log] →
+   Phase 3 Step 1 (Screen A) → [Auto-verify + Save Report] →
+   Phase 3 Step 2 (if issues) → [Auto-fix via Phase 2C + Re-verify + Save v2 Reports] →
    Phase 3 Step 3 (Screen A) → [User confirms "완료"] →
-   Phase 3 Step 4 (Screen A) → [Update Registry + metadata + INDEX] → [COMPLETED] →
+   Phase 3 Step 4 (Screen A) → [Copy to Component Library + Update Registry + metadata + INDEX] → [COMPLETED] →
    Phase 2A (Screen B) → [Reuse Components from Library] → ...
    ```
 
@@ -876,11 +1043,14 @@ Only load the specific reference guide needed for each phase.
 - Start over or lose Design System
 - Create duplicate Design Systems
 - Skip Phase 2A and go directly to Phase 2B
-- Load full Design System in Phase 2B or Phase 3 (use Proposal/Guide references)
+- Skip Phase 2C (automatic implementation is mandatory)
+- Load full Design System in Phase 2B, 2C, or Phase 3 (use Proposal/Guide references)
 - Skip Phase 3 verification (quality assurance)
+- **Save to component library before Phase 3 Step 4**
 - **Skip Phase 3 Step 4 asset organization (loses Component Registry updates)**
 - **Forget to save documents with proper naming convention**
 - **Mark project complete before user confirms in Step 3**
+- **Modify Application/Domain/Infrastructure layers in Phase 2C**
 
 ## Design Token Export (Optional)
 

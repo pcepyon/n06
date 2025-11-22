@@ -1,0 +1,86 @@
+{
+  "screen_name": "home-dashboard",
+  "phase": "completed",
+  "status": "completed",
+  "created_date": "2025-11-22",
+  "last_updated": "2025-11-22",
+  "design_system_version": "Gabium v1.0",
+  "framework": "Flutter",
+  "documents": {
+    "proposal": "20251122-proposal-v1.md",
+    "implementation": "20251122-implementation-v1.md",
+    "verification": "20251122-verification-v1.md"
+  },
+  "versions": {
+    "proposal": "v1",
+    "implementation": "v1",
+    "verification": "v1"
+  },
+  "verification_status": "PASS",
+  "verification_date": "2025-11-22",
+  "components_reused": [
+    "GabiumButton",
+    "GabiumToast"
+  ],
+  "components_created": [
+    "GabiumBottomNavigation",
+    "ScaffoldWithBottomNav"
+  ],
+  "components_to_create": [
+    "GabiumAppBar",
+    "ProgressItem",
+    "BadgeItem",
+    "TimelineEventItem"
+  ],
+  "key_changes": [
+    "Introduce Bottom Navigation Bar (5 tabs)",
+    "Redesign all widgets with Gabium Design System colors",
+    "Unify card backgrounds to white with Neutral borders",
+    "Enhance visual hierarchy with consistent typography scale",
+    "Improve timeline and badge visual distinction",
+    "Add motivational empty states",
+    "Brand loading/error states"
+  ],
+  "dependencies": {
+    "prerequisites": [],
+    "impact": [
+      "Bottom Nav requires router refactor (ShellRoute)",
+      "6 main screens need Bottom Nav integration",
+      "Quick Action Widget becomes redundant (can be removed)"
+    ]
+  },
+  "special_requirements": {
+    "bottom_navigation": {
+      "recommended": true,
+      "tabs": [
+        {
+          "label": "홈",
+          "route": "/home",
+          "icon": "home"
+        },
+        {
+          "label": "기록",
+          "route": "/tracking/weight",
+          "icon": "scale",
+          "sub_routes": ["/tracking/weight", "/tracking/symptom"]
+        },
+        {
+          "label": "일정",
+          "route": "/dose-schedule",
+          "icon": "calendar_today"
+        },
+        {
+          "label": "가이드",
+          "route": "/coping-guide",
+          "icon": "menu_book"
+        },
+        {
+          "label": "설정",
+          "route": "/settings",
+          "icon": "settings"
+        }
+      ],
+      "rationale": "50% reduction in navigation depth, industry standard, improved discoverability"
+    }
+  }
+}

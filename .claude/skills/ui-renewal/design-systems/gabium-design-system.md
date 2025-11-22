@@ -604,6 +604,7 @@ This section tracks all designed components for reuse and consistency.
 
 | Component | Created Date | Used In | Notes |
 |-----------|--------------|---------|-------|
+| GabiumBottomNavigation | 2025-11-22 | Home Dashboard, All main screens | 5-tab bottom navigation with scale animation. Persistent across main app screens. Height 56px + safe area. |
 | AuthHeroSection | 2025-11-22 | Email Signup, Email Signin | Welcoming hero with title, subtitle, optional icon. Reusable for all auth screens. |
 | GabiumTextField | 2025-11-22 | Email Signup, Email Signin | Branded text input with label, validation, focus/error states. Height 48px. |
 | GabiumButton | 2025-11-22 | Email Signup, Email Signin | Button with Primary/Ghost variants. Small/Medium/Large sizes. Loading state support. |

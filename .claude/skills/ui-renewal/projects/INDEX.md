@@ -4,12 +4,13 @@
 
 ---
 
-## Active Projects
+## Completed Projects
 
 | Screen/Feature | Framework | Status | Last Updated | Documents | Components |
 |---------------|-----------|--------|--------------|-----------|------------|
 | Email Signin Screen | Flutter | ✅ Completed | 2025-11-22 | [Proposal](email-signin-screen/20251122-proposal-v1.md), [Implementation](email-signin-screen/20251122-implementation-v1.md) | 4 (AuthHeroSection, GabiumTextField, GabiumButton...) |
 | Email Signup Screen | Flutter | ✅ Completed | 2025-11-22 | [Proposal](email-signup-screen/20251122-proposal-v1.md), [Implementation](email-signup-screen/20251122-implementation-v1.md) | 6 (AuthHeroSection, GabiumTextField, GabiumButton...) |
+| Home Dashboard | Flutter | ✅ Completed | 2025-11-22 | [Proposal](home-dashboard/20251122-proposal-v1.md), [Implementation](home-dashboard/20251122-implementation-v1.md), [Verification](home-dashboard/20251122-verification-v1.md) | 2 (GabiumBottomNavigation, ScaffoldWithBottomNav) |
 
 ---
 
@@ -19,14 +20,13 @@
 |---------------|----------|-----------|-------|---------------------|
 | Password Reset Screen | High | Flutter | 기존 컴포넌트 재사용 가능 | AuthHeroSection, GabiumTextField, GabiumButton, GabiumToast |
 | Onboarding Screen | Medium | Flutter | 새로운 컴포넌트 필요 가능성 | GabiumButton, GabiumTextField |
-| Home Dashboard | High | Flutter | 데이터 시각화 컴포넌트 신규 필요 | - |
 
 ---
 
 ## Summary Statistics
 
-- **Total Completed Projects**: {len(completed_projects)}
-- **Total Frameworks**: {len(set(m.get('framework', 'Unknown') for _, m in completed_projects))}
+- **Total Completed Projects**: 3
+- **Total Frameworks**: 1 (Flutter)
 - **Design System Version**: Gabium Design System v1.0
 
 ---
@@ -35,12 +35,14 @@
 
 | Component | Created In | Also Used In | Reuse Count |
 |-----------|-----------|--------------|-------------|
+| GabiumBottomNavigation | Home Dashboard | All main screens (Weight Tracking, Dose Schedule, Coping Guide, Settings) | 5 |
 | AuthHeroSection | Email Signin Screen | Email Signup Screen | 2 |
 | ConsentCheckbox | Email Signup Screen | - | 1 |
-| GabiumButton | Email Signin Screen | Email Signup Screen | 2 |
+| GabiumButton | Email Signin Screen | Email Signup Screen, Home Dashboard | 3 |
 | GabiumTextField | Email Signin Screen | Email Signup Screen | 2 |
-| GabiumToast | Email Signin Screen | Email Signup Screen | 2 |
+| GabiumToast | Email Signin Screen | Email Signup Screen, Home Dashboard | 3 |
 | PasswordStrengthIndicator | Email Signup Screen | - | 1 |
+| ScaffoldWithBottomNav | Home Dashboard | All main screens | 5 |
 
 ---
 

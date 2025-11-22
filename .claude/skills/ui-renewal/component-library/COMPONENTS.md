@@ -6,6 +6,7 @@ This library contains reusable UI components extracted from the email signup scr
 
 | Component | Created Date | Used In | Framework | File Location | Notes |
 |-----------|--------------|---------|-----------|---------------|-------|
+| GabiumBottomNavigation | 2025-11-22 | Home Dashboard + All Main Screens | Flutter | `flutter/gabium_bottom_navigation.dart` | 5-tab bottom navigation with scale animation on tap. Active: Primary, Inactive: Neutral-500. Height 56px + safe area. |
 | AuthHeroSection | 2025-11-22 | Email Signup Screen | Flutter | `flutter/AuthHeroSection.dart` | Welcoming hero with title, subtitle, optional icon. Reusable for all auth screens (sign in, signup, password reset). |
 | GabiumTextField | 2025-11-22 | Email Signup Screen | Flutter | `flutter/GabiumTextField.dart` | Branded text input with label, validation, focus/error states. Height 48px. Includes helper text and error message support. |
 | GabiumButton | 2025-11-22 | Email Signup Screen | Flutter | `flutter/GabiumButton.dart` | Button with Primary/Secondary/Tertiary/Ghost variants. Small/Medium/Large sizes. Loading state support with spinner. |
@@ -16,6 +17,114 @@ This library contains reusable UI components extracted from the email signup scr
 ---
 
 ## Component Specifications
+
+### GabiumBottomNavigation
+
+**Purpose:** Bottom navigation bar for main app screens
+
+**Design Tokens:**
+- Background: White `#FFFFFF`
+- Border Top: Neutral-200 `#E2E8F0`, 1px
+- Shadow: Reverse md (0 -4px 8px rgba(15, 23, 42, 0.08))
+- Height: 56px + SafeArea bottom inset
+- Active Color: Primary `#4ADE80`
+- Inactive Color: Neutral-500 `#64748B`
+- Icon Size: 24px
+- Label Font: xs (12px Medium)
+- Touch Target: 56px × 56px per item
+
+**Props:**
+```dart
+GabiumBottomNavigation({
+  required List<GabiumBottomNavItem> items,
+  required int currentIndex,
+  required ValueChanged<int> onTap,
+})
+```
+
+**GabiumBottomNavItem:**
+```dart
+GabiumBottomNavItem({
+  required String label,
+  required IconData icon,
+  required IconData activeIcon,
+  required String route,
+})
+```
+
+**Usage Example:**
+```dart
+GabiumBottomNavigation(
+  items: [
+    GabiumBottomNavItem(
+      label: '홈',
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home,
+      route: '/home',
+    ),
+    GabiumBottomNavItem(
+      label: '기록',
+      icon: Icons.edit_note_outlined,
+      activeIcon: Icons.edit_note,
+      route: '/tracking/weight',
+    ),
+    GabiumBottomNavItem(
+      label: '일정',
+      icon: Icons.calendar_today_outlined,
+      activeIcon: Icons.calendar_today,
+      route: '/dose-schedule',
+    ),
+    GabiumBottomNavItem(
+      label: '가이드',
+      icon: Icons.menu_book_outlined,
+      activeIcon: Icons.menu_book,
+      route: '/coping-guide',
+    ),
+    GabiumBottomNavItem(
+      label: '설정',
+      icon: Icons.settings_outlined,
+      activeIcon: Icons.settings,
+      route: '/settings',
+    ),
+  ],
+  currentIndex: 0,
+  onTap: (index) => context.go(items[index].route),
+)
+```
+
+**Router Integration (ShellRoute):**
+```dart
+ShellRoute(
+  builder: (context, state, child) => ScaffoldWithBottomNav(child: child),
+  routes: [
+    GoRoute(path: '/home', builder: (context, state) => HomeDashboardScreen()),
+    GoRoute(path: '/tracking/weight', builder: (context, state) => WeightTrackingScreen()),
+    GoRoute(path: '/dose-schedule', builder: (context, state) => DoseScheduleScreen()),
+    GoRoute(path: '/coping-guide', builder: (context, state) => CopingGuideScreen()),
+    GoRoute(path: '/settings', builder: (context, state) => SettingsScreen()),
+  ],
+)
+```
+
+**Interactive States:**
+- Default: As specified above
+- Active: Icon + Label change to Primary color
+- Tap: Scale 0.95 animation (150ms ease-out), then restore
+
+**Accessibility:**
+- Touch target: 56px × 56px per item (exceeds 44px minimum)
+- Color contrast: Active (Primary on White) 3.1:1 (AA Large Text), Inactive (Neutral-500 on White) 4.7:1 (AA)
+- Semantic labels: Each tab labeled for screen readers
+- Current index announced
+- Keyboard navigation: Tab cycles through items
+
+**Notes:**
+- Reverse shadow (0 -4px) creates elevation above content
+- SafeArea automatically respects iOS bottom notch
+- Use ScaffoldWithBottomNav wrapper for consistent integration
+- State preservation: Use IndexedStack or AutomaticKeepAliveClientMixin if needed
+
+---
 
 ### AuthHeroSection
 
@@ -398,7 +507,7 @@ Components planned for extraction:
 ## Maintenance
 
 **Last Updated:** 2025-11-22
-**Component Count:** 6 Flutter components
+**Component Count:** 7 Flutter components
 **Design System Version:** Gabium v1.0 (approved 2025-11-22)
 
 For questions or updates, refer to:

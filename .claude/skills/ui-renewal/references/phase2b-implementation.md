@@ -501,91 +501,7 @@ Add to Design System Section 7:
 ls .claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-implementation-v1.md
 ```
 
-### Step 7: Save Components & Update Registry
-
-#### 7.1 Save Component Code to Library
-
-For each new component created, save to component library:
-
-**CRITICAL - Component library path:**
-
-`.claude/skills/ui-renewal/component-library/{framework}/{ComponentName}.{ext}`
-
-**Examples:**
-- ✅ `.claude/skills/ui-renewal/component-library/flutter/GabiumButton.dart`
-- ✅ `.claude/skills/ui-renewal/component-library/react/Button.tsx`
-- ❌ `component-library/flutter/...` (WRONG - saves to root/)
-
-**Before saving:**
-```bash
-mkdir -p .claude/skills/ui-renewal/component-library/{framework}
-```
-
-**Process:**
-```bash
-# 1. Component files go to project directory first
-# Example: lib/features/authentication/presentation/widgets/
-
-# 2. For backup/documentation, also copy to component-library:
-cp [project-component-file] .claude/skills/ui-renewal/component-library/{framework}/
-```
-
-**After saving, verify:**
-```bash
-ls .claude/skills/ui-renewal/component-library/{framework}/{ComponentName}.{ext}
-```
-
-#### 7.2 Update Component Registry (Automated)
-
-**Use the automation script:**
-
-```bash
-python .claude/skills/ui-renewal/scripts/update_component_registry.py \
-  --component "[ComponentName]" \
-  --framework "[framework]" \
-  --used-in "[screen-name]" \
-  --category "[category]" \
-  --description "[description]" \
-  --file "[relative-path-to-file]"
-```
-
-**Example:**
-```bash
-# Update registry for GabiumButton component
-python .claude/skills/ui-renewal/scripts/update_component_registry.py \
-  --component "GabiumButton" \
-  --framework "flutter" \
-  --used-in "email-signup-screen" \
-  --category "Form" \
-  --description "Branded primary button with states" \
-  --file "flutter/GabiumButton.dart"
-```
-
-**This automatically updates:**
-1. Design System Component Registry (Section 7)
-2. `component-library/registry.json`
-3. `component-library/COMPONENTS.md`
-
-**For multiple components, run script for each one.**
-
-#### 7.3 Korean Message to User
-
-```
-✅ 컴포넌트가 라이브러리에 저장되었습니다!
-
-저장된 컴포넌트:
-- [ComponentName1] ([framework])
-  위치: ./component-library/[framework]/[ComponentName1].[ext]
-  
-- [ComponentName2] ([framework])
-  위치: ./component-library/[framework]/[ComponentName2].[ext]
-
-📚 전체 컴포넌트 목록: ./component-library/COMPONENTS.md
-
-다음 Phase 2A 작업 시 이 컴포넌트들을 재사용할 수 있습니다.
-```
-
-### Step 8: Present to User
+### Step 7: Present to User
 
 **Concise summary (Korean):**
 
@@ -596,22 +512,20 @@ python .claude/skills/ui-renewal/scripts/update_component_registry.py \
 - ✅ 전체 컴포넌트 명세
 - ✅ 레이아웃 구조 상세
 - ✅ 인터랙션 동작 정의
-- ✅ [Framework] 구현 코드
+- ✅ [Framework] 구현 코드 예시
 - ✅ 접근성 체크리스트
-- ✅ Component Registry 업데이트 완료
 
 ## 주요 명세
 - [X]개 컴포넌트 완전 명세
 - 모든 값은 Design System 토큰 사용
-- [Framework] 코드 제공
+- [Framework] 코드 예시 제공
 
 ## 문서 저장 위치
 - 구현 가이드: `.claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-implementation-v1.md`
 
 ## 다음 단계
-1. 구현 가이드 검토
-2. 개발 시작
-3. 완료 후 Phase 3 검증 요청
+1. 구현 가이드 검토 및 승인
+2. Phase 2C (자동 구현)으로 진행
 
 전체 구현 가이드는 artifact를 확인하세요.
 ```
@@ -620,10 +534,9 @@ python .claude/skills/ui-renewal/scripts/update_component_registry.py \
 
 ### Phase 2B DOES:
 ✅ Convert Proposal to exact implementation specs
-✅ Provide framework-specific code
+✅ Provide framework-specific code examples
 ✅ Define every interactive state
-✅ Update Component Registry
-✅ Create developer-ready guide
+✅ Create developer-ready specification guide
 
 ### Phase 2B DOES NOT:
 ❌ Make new design decisions
@@ -631,6 +544,9 @@ python .claude/skills/ui-renewal/scripts/update_component_registry.py \
 ❌ Guess at missing values
 ❌ Load unnecessary context
 ❌ Re-analyze original UI
+❌ Save components to library (done in Phase 3 Step 4)
+❌ Update Component Registry (done in Phase 3 Step 4)
+❌ Implement actual code (done in Phase 2C)
 
 **If something is missing from Proposal:**
 ```

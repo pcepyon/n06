@@ -14,30 +14,39 @@ class WeeklyProgressWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        // Section Title
+        Text(
           '주간 목표 진행도',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 18, // lg
+            fontWeight: FontWeight.w600, // Semibold
+            color: Color(0xFF1E293B), // Neutral-800
+            height: 1.3,
+          ),
         ),
-        const SizedBox(height: 16),
-        _ProgressItem(
-          label: '투여',
-          completed: weeklyProgress.doseCompletedCount,
-          target: weeklyProgress.doseTargetCount,
-          rate: weeklyProgress.doseRate,
-        ),
-        const SizedBox(height: 12),
-        _ProgressItem(
-          label: '체중 기록',
-          completed: weeklyProgress.weightRecordCount,
-          target: weeklyProgress.weightTargetCount,
-          rate: weeklyProgress.weightRate,
-        ),
-        const SizedBox(height: 12),
-        _ProgressItem(
-          label: '부작용 기록',
-          completed: weeklyProgress.symptomRecordCount,
-          target: weeklyProgress.symptomTargetCount,
-          rate: weeklyProgress.symptomRate,
+        SizedBox(height: 16), // md spacing
+
+        // Progress Items
+        Column(
+          children: [
+            _ProgressItem(
+              label: '투여',
+              current: weeklyProgress.doseCompletedCount,
+              total: weeklyProgress.doseTargetCount,
+            ),
+            SizedBox(height: 16),
+            _ProgressItem(
+              label: '체중 기록',
+              current: weeklyProgress.weightRecordCount,
+              total: weeklyProgress.weightTargetCount,
+            ),
+            SizedBox(height: 16),
+            _ProgressItem(
+              label: '부작용 기록',
+              current: weeklyProgress.symptomRecordCount,
+              total: weeklyProgress.symptomTargetCount,
+            ),
+          ],
         ),
       ],
     );
@@ -46,57 +55,87 @@ class WeeklyProgressWidget extends StatelessWidget {
 
 class _ProgressItem extends StatelessWidget {
   final String label;
-  final int completed;
-  final int target;
-  final double rate;
+  final int current;
+  final int total;
 
   const _ProgressItem({
     required this.label,
-    required this.completed,
-    required this.target,
-    required this.rate,
+    required this.current,
+    required this.total,
   });
 
   @override
   Widget build(BuildContext context) {
-    final percentage = (rate * 100).toStringAsFixed(0);
-    final isCompleted = rate >= 1.0;
+    final progress = total > 0 ? current / total : 0.0;
+    final isComplete = progress >= 1.0;
+    final fillColor = isComplete ? Color(0xFF10B981) : Color(0xFF4ADE80); // Success : Primary
+    final percentage = (progress * 100).toInt();
 
     return Container(
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isCompleted ? Colors.green[50] : Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
+        color: Color(0xFFF8FAFC), // Neutral-50
+        border: Border.all(
+          color: Color(0xFFE2E8F0), // Neutral-200
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(8), // sm
       ),
+      padding: EdgeInsets.all(16), // md padding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Label and Fraction
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
               Text(
-                '$completed/$target',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                label,
+                style: TextStyle(
+                  fontSize: 16, // base
+                  fontWeight: FontWeight.w500, // Medium
+                  color: Color(0xFF334155), // Neutral-700
+                  height: 1.4,
+                ),
+              ),
+              Text(
+                '$current/$total',
+                style: TextStyle(
+                  fontSize: 14, // sm
+                  fontWeight: FontWeight.w400, // Regular
+                  color: Color(0xFF64748B), // Neutral-500
+                  height: 1.5,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
+
+          // Progress Bar
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: rate.clamp(0.0, 1.0),
-              minHeight: 8,
-              backgroundColor: Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation<Color>(
-                isCompleted ? Colors.green : Colors.blue,
+            borderRadius: BorderRadius.circular(999), // full (pill)
+            child: SizedBox(
+              height: 8,
+              child: LinearProgressIndicator(
+                value: progress,
+                backgroundColor: Color(0xFFE2E8F0), // Neutral-200
+                valueColor: AlwaysStoppedAnimation<Color>(fillColor),
               ),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            '$percentage%',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          SizedBox(height: 8),
+
+          // Percentage
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              '$percentage%',
+              style: TextStyle(
+                fontSize: 14, // sm
+                fontWeight: FontWeight.w500, // Medium
+                color: fillColor,
+                height: 1.5,
+              ),
+            ),
           ),
         ],
       ),
