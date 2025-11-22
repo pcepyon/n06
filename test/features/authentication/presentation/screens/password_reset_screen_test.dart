@@ -42,10 +42,8 @@ class FakeUser extends Fake implements User {
 }
 
 void main() {
-  late MockAuthRepository mockRepository;
-
   setUp(() {
-    mockRepository = MockAuthRepository();
+    // Setup code if needed
   });
 
   Widget createWidgetUnderTest({String? token}) {

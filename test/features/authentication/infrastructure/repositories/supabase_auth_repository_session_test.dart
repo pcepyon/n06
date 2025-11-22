@@ -38,8 +38,8 @@ void main() {
           .thenAnswer((_) => authStateStream);
       
       // Act: Create repository (constructor should set up listener)
-      final repository = SupabaseAuthRepository(mockSupabaseClient);
-      
+      SupabaseAuthRepository(mockSupabaseClient);
+
       // Assert: Verify that onAuthStateChange was accessed during initialization
       // This test will FAIL because current implementation doesn't listen to auth state changes
       verify(() => mockGoTrueClient.onAuthStateChange).called(greaterThan(0));

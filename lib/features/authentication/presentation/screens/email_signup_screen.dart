@@ -176,7 +176,13 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF334155)), // Neutral-700
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

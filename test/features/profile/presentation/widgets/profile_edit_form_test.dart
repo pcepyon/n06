@@ -19,15 +19,13 @@ void main() {
           weeklyLossGoalKg: 0.83,
         );
 
-        UserProfile? changedProfile;
-
         // Act
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
               body: ProfileEditForm(
                 profile: profile,
-                onProfileChanged: (p) => changedProfile = p,
+                onProfileChanged: (p) {},
               ),
             ),
           ),
@@ -56,15 +54,13 @@ void main() {
           weeklyLossGoalKg: 0.83,
         );
 
-        UserProfile? changedProfile;
-
         // Act
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
               body: ProfileEditForm(
                 profile: profile,
-                onProfileChanged: (p) => changedProfile = p,
+                onProfileChanged: (p) {},
               ),
             ),
           ),

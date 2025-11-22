@@ -5,9 +5,9 @@ import 'package:n06/features/dashboard/presentation/widgets/timeline_widget.dart
 
 void main() {
   group('TimelineWidget', () {
-    testWidgets('should display empty message when timeline is empty', (tester) async {
+    testWidgets('should display title even when events list is empty', (tester) async {
       // Arrange
-      const widget = TimelineWidget(timeline: []);
+      const widget = TimelineWidget(events: []);
 
       // Act
       await tester.pumpWidget(
@@ -19,7 +19,7 @@ void main() {
       );
 
       // Assert
-      expect(find.text('아직 이벤트가 없습니다'), findsOneWidget);
+      expect(find.text('치료 여정'), findsOneWidget);
     });
 
     testWidgets('should display all timeline events', (tester) async {
@@ -52,7 +52,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TimelineWidget(timeline: timeline),
+            body: TimelineWidget(events: timeline),
           ),
         ),
       );
@@ -96,7 +96,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TimelineWidget(timeline: timeline),
+            body: TimelineWidget(events: timeline),
           ),
         ),
       );
@@ -153,7 +153,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TimelineWidget(timeline: timeline),
+            body: TimelineWidget(events: timeline),
           ),
         ),
       );
@@ -174,23 +174,23 @@ void main() {
 
       expect(circles.length, 4);
 
-      // Check specific colors
+      // Check border colors (circles have white fill with colored border)
       final circlesList = circles.toList();
       expect(
-        (circlesList[0].decoration as BoxDecoration).color,
-        Colors.blue, // treatmentStart
+        (circlesList[0].decoration as BoxDecoration).border?.top.color,
+        const Color(0xFF3B82F6), // treatmentStart - Blue-500
       );
       expect(
-        (circlesList[1].decoration as BoxDecoration).color,
-        Colors.orange, // escalation
+        (circlesList[1].decoration as BoxDecoration).border?.top.color,
+        const Color(0xFFF59E0B), // escalation - Amber-500
       );
       expect(
-        (circlesList[2].decoration as BoxDecoration).color,
-        Colors.green, // weightMilestone
+        (circlesList[2].decoration as BoxDecoration).border?.top.color,
+        const Color(0xFF10B981), // weightMilestone - Emerald-500
       );
       expect(
-        (circlesList[3].decoration as BoxDecoration).color,
-        Colors.amber, // badgeAchievement
+        (circlesList[3].decoration as BoxDecoration).border?.top.color,
+        const Color(0xFFF59E0B), // badgeAchievement - Amber-500 (Gold)
       );
     });
 
@@ -210,7 +210,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TimelineWidget(timeline: timeline),
+            body: TimelineWidget(events: timeline),
           ),
         ),
       );

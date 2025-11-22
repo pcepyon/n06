@@ -392,10 +392,30 @@ void main() {
 /// Helper function to extract named routes from GoRouter configuration
 Map<String, String> _extractNamedRoutes(GoRouter router) {
   final routes = <String, String>{};
-  for (final route in router.configuration.routes) {
+
+  void extractFromRouteBase(RouteBase route) {
     if (route is GoRoute && route.name != null) {
       routes[route.name!] = route.path;
     }
+
+    // Handle ShellRoute - recursively extract child routes
+    if (route is ShellRoute) {
+      for (final childRoute in route.routes) {
+        extractFromRouteBase(childRoute);
+      }
+    }
+
+    // Handle nested GoRoute routes
+    if (route is GoRoute && route.routes.isNotEmpty) {
+      for (final childRoute in route.routes) {
+        extractFromRouteBase(childRoute);
+      }
+    }
   }
+
+  for (final route in router.configuration.routes) {
+    extractFromRouteBase(route);
+  }
+
   return routes;
 }

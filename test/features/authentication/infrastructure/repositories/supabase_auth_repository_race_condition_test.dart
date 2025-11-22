@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:n06/features/authentication/infrastructure/repositories/supabase_auth_repository.dart';
 
 /// Race Condition 방지 테스트
 ///
