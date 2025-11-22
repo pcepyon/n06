@@ -49,7 +49,48 @@
 
 ---
 
-## 2. Color System
+## 2. Logo & Brand Mark
+
+### Primary Logo
+- **Type**: 3D Soft Cube Icon
+- **Style**: Rounded cube with glossy gradient surface, Toss-inspired dimensionality
+- **File**: `.claude/skills/ui-renewal/assets/logos/gabium-logo-primary.png`
+- **Color**: Emerald Green gradient (base: #4ADE80)
+- **Format**: PNG, square (1:1 aspect ratio)
+- **Background**: Light gray/white
+
+### Logo Symbolism
+- **Soft Rounded Cube**: 안정감(큐브) + 친근함(둥근 모서리)
+- **Glossy Surface**: 희망, 긍정적 미래, 투명성
+- **Green Gradient**: 건강, 성장, 치료 여정의 진행
+- **3D Dimensionality**: 새로운 차원의 건강 관리 (토스 스타일 오마주)
+
+### Logo Variants
+| Variant | File | Size | Usage |
+|---------|------|------|-------|
+| App Icon | `gabium-logo-1024.png` | 1024x1024px | iOS/Android 앱 아이콘 |
+| Large | `gabium-logo-512.png` | 512x512px | 스플래시 스크린, 웹 |
+| Medium | `gabium-logo-192.png` | 192x192px | 네비게이션 바, UI 요소 |
+| Transparent BG | `gabium-logo-transparent.png` | Variable | 다양한 배경 오버레이 |
+| Dark Mode | `gabium-logo-dark-mode.png` | Variable | 다크 테마 |
+
+### Usage Guidelines
+- **Minimum Size**: 32x32px (digital), 10mm (print)
+- **Clear Space**: 로고 높이의 25% 이상 여백
+- **Backgrounds**: 흰색, 밝은 회색 (#F8FAFC ~ #F1F5F9), 어두운 회색 (다크모드)
+- **Prohibited**: 비율 왜곡, 회전, 색상 변경, 외곽선 추가
+
+### Integration Points
+- **App Icon**: 1024x1024px (iOS/Android)
+- **Splash Screen**: 512x512px, center-aligned on #F8FAFC background
+- **Navigation Bar**: 32-48px in app bar header
+- **Loading States**: 192px with pulse animation (scale 1.0 → 1.05)
+
+**Detailed Guidelines**: See `.claude/skills/ui-renewal/assets/logo-guidelines.md`
+
+---
+
+## 3. Color System
 
 ### Brand Colors
 
@@ -143,7 +184,7 @@
 
 ---
 
-## 3. Typography
+## 4. Typography
 
 ### Font Family
 - **Primary:** Pretendard Variable, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif
@@ -179,7 +220,7 @@
 
 ---
 
-## 4. Spacing & Sizing
+## 5. Spacing & Sizing
 
 ### Spacing Scale
 4px 기반 8의 배수 시스템 사용 (디자인-개발 정합성)
@@ -217,7 +258,7 @@
 
 ---
 
-## 5. Visual Effects
+## 6. Visual Effects
 
 ### Border Radius
 
@@ -258,7 +299,7 @@
 
 ---
 
-## 6. Core Components
+## 7. Core Components
 
 ### Buttons
 
@@ -557,7 +598,7 @@
 
 ---
 
-## 7. Component Registry
+## 8. Component Registry
 
 This section tracks all designed components for reuse and consistency.
 
@@ -578,7 +619,7 @@ This section tracks all designed components for reuse and consistency.
 
 ---
 
-## 8. Design Tokens Export
+## 9. Design Tokens Export
 
 This Design System can be exported to various formats:
 - **Flutter Theme** (ThemeData + ThemeExtension)
@@ -589,7 +630,7 @@ See `scripts/export_design_tokens.py` for conversion.
 
 ---
 
-## 9. Icon System
+## 10. Icon System
 
 ### Icon Library
 - **Primary:** Material Symbols (Outlined style)
@@ -618,7 +659,7 @@ See `scripts/export_design_tokens.py` for conversion.
 
 ---
 
-## 10. Data Visualization
+## 11. Data Visualization
 
 ### Chart Colors (순서대로 사용)
 1. `#4ADE80` (Primary - 주요 데이터)
@@ -647,7 +688,7 @@ See `scripts/export_design_tokens.py` for conversion.
 
 ---
 
-## 11. Accessibility Guidelines
+## 12. Accessibility Guidelines
 
 ### Color Contrast
 - **Text on Background:** WCAG AA 적합 (4.5:1 이상)
@@ -675,7 +716,7 @@ See `scripts/export_design_tokens.py` for conversion.
 
 ---
 
-## 12. Notes & Decisions
+## 13. Notes & Decisions
 
 ### Design Decisions Log
 
