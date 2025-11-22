@@ -189,6 +189,20 @@ Parent Container
 
 ### Step 4: Create Complete Implementation Guide
 
+**Document Storage:**
+Save to: `projects/{screen-name}/{YYYYMMDD}-implementation-v1.md`
+
+**Naming Convention:**
+- Format: `{YYYYMMDD}-{document-type}-v{version}.md`
+- Example: `20251122-implementation-v1.md`
+- Version increments if revisions needed
+
+**Directory Structure:**
+All documents for a screen/feature go in `projects/{screen-name}/`:
+- `{YYYYMMDD}-proposal-v1.md` (Phase 2A)
+- `{YYYYMMDD}-implementation-v1.md` (Phase 2B)
+- `metadata.json` (auto-generated in Phase 3)
+
 **Structure the full guide as follows:**
 
 ```markdown
@@ -454,74 +468,66 @@ Add to Design System Section 7:
 - Did not make design decisions
 - Stayed within Proposal scope
 
-### Step 6: Save Components & Update Registry
+### Step 6: Save Implementation Guide Document
 
-#### 6.1 Save Component Code to Library
+**Save the Implementation Guide to the project directory:**
+
+**Path:** `projects/{screen-name}/{YYYYMMDD}-implementation-v1.md`
+
+**Examples:**
+- `projects/email-signup-screen/20251122-implementation-v1.md`
+- `projects/password-reset-screen/20251123-implementation-v1.md`
+
+**The screen directory should already exist from Phase 2A.**
+
+### Step 7: Save Components & Update Registry
+
+#### 7.1 Save Component Code to Library
 
 For each new component created, save to component library:
 
 ```bash
-# Create temporary component file first
-cat > /tmp/[ComponentName].[ext] << 'EOF'
-[component code from Implementation Guide]
-EOF
+# Component files go to project directory
+# Example: lib/features/authentication/presentation/widgets/
 
-# Add to component library
-python scripts/manage_components.py add \
-  "[ComponentName]" \
-  "[framework]" \
-  "/tmp/[ComponentName].[ext]" \
-  "[used-in: feature/screen name]" \
-  "[notes: special considerations]"
+# For backup/documentation, also copy to component-library:
+cp [project-component-file] .claude/skills/ui-renewal/component-library/[framework]/
+```
+
+#### 7.2 Update Component Registry (Automated)
+
+**Use the automation script:**
+
+```bash
+python .claude/skills/ui-renewal/scripts/update_component_registry.py \
+  --component "[ComponentName]" \
+  --framework "[framework]" \
+  --used-in "[screen-name]" \
+  --category "[category]" \
+  --description "[description]" \
+  --file "[relative-path-to-file]"
 ```
 
 **Example:**
 ```bash
-# Save PrimaryButton React component
-cat > /tmp/PrimaryButton.jsx << 'EOF'
-export default function PrimaryButton({ children, onClick, disabled, loading }) {
-  return (
-    <button
-      className="primary-button"
-      onClick={onClick}
-      disabled={disabled || loading}
-    >
-      {loading ? <Spinner /> : children}
-    </button>
-  );
-}
-EOF
-
-python scripts/manage_components.py add \
-  "PrimaryButton" \
-  "react" \
-  "/tmp/PrimaryButton.jsx" \
-  "Login Screen" \
-  "Large variant with loading state"
+# Update registry for GabiumButton component
+python .claude/skills/ui-renewal/scripts/update_component_registry.py \
+  --component "GabiumButton" \
+  --framework "flutter" \
+  --used-in "email-signup-screen" \
+  --category "Form" \
+  --description "Branded primary button with states" \
+  --file "flutter/GabiumButton.dart"
 ```
 
-**This creates:**
-- `./component-library/react/PrimaryButton.jsx` (actual code file)
-- Entry in `./component-library/registry.json` (metadata)
-- Documentation in `./component-library/COMPONENTS.md` (auto-generated)
+**This automatically updates:**
+1. Design System Component Registry (Section 7)
+2. `component-library/registry.json`
+3. `component-library/COMPONENTS.md`
 
-#### 6.2 Update Design System Component Registry
+**For multiple components, run script for each one.**
 
-**In the Design System artifact (Section 7), add new components:**
-
-```markdown
-| Component | Created Date | Used In | Frameworks | Notes |
-|-----------|--------------|---------|------------|-------|
-| [ComponentName] | 2024-11-22 | [Feature] | React, Flutter | [Description, variants] |
-```
-
-**Include component summary:**
-- Key specifications (size, colors, states)
-- Token references used
-- Variants (if any)
-- File location: `./component-library/[framework]/[ComponentName].[ext]`
-
-#### 6.3 Korean Message to User
+#### 7.3 Korean Message to User
 
 ```
 ✅ 컴포넌트가 라이브러리에 저장되었습니다!
@@ -538,32 +544,35 @@ python scripts/manage_components.py add \
 다음 Phase 2A 작업 시 이 컴포넌트들을 재사용할 수 있습니다.
 ```
 
-### Step 7: Present to User
+### Step 8: Present to User
 
-**Concise summary:**
+**Concise summary (Korean):**
 
 ```markdown
-# Implementation Guide Complete
+# 구현 가이드 완성
 
-## Deliverables
-- ✅ Complete component specifications
-- ✅ Layout structure detailed
-- ✅ Interaction behaviors defined
-- ✅ [Framework] implementation code
-- ✅ Accessibility checklist
-- ✅ Component Registry updated
+## 산출물
+- ✅ 전체 컴포넌트 명세
+- ✅ 레이아웃 구조 상세
+- ✅ 인터랙션 동작 정의
+- ✅ [Framework] 구현 코드
+- ✅ 접근성 체크리스트
+- ✅ Component Registry 업데이트 완료
 
-## Key Specifications
-- [X] components fully specified
-- All values from Design System tokens
-- [Framework]-specific code provided
+## 주요 명세
+- [X]개 컴포넌트 완전 명세
+- 모든 값은 Design System 토큰 사용
+- [Framework] 코드 제공
 
-## Next Steps
-1. Review implementation guide
-2. Developers can begin implementation
-3. Test against accessibility checklist
+## 문서 저장 위치
+- 구현 가이드: `projects/{screen-name}/{YYYYMMDD}-implementation-v1.md`
 
-[Link to complete Implementation Guide artifact]
+## 다음 단계
+1. 구현 가이드 검토
+2. 개발 시작
+3. 완료 후 Phase 3 검증 요청
+
+전체 구현 가이드는 artifact를 확인하세요.
 ```
 
 ## Critical Guidelines

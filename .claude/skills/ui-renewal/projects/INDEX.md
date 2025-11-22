@@ -8,8 +8,8 @@
 
 | Screen/Feature | Framework | Status | Last Updated | Documents | Components |
 |---------------|-----------|--------|--------------|-----------|------------|
-| Email Signup Screen | Flutter | ✅ Completed | 2025-11-22 | [Proposal](email-signup-screen/20251122-proposal-v1.md), [Implementation](email-signup-screen/20251122-implementation-v1.md) | 6 (AuthHeroSection, GabiumTextField, GabiumButton, PasswordStrengthIndicator, ConsentCheckbox, GabiumToast) |
-| Email Signin Screen | Flutter | ✅ Completed | 2025-11-22 | [Proposal](email-signin-screen/20251122-proposal-v1.md), [Implementation](email-signin-screen/20251122-implementation-v1.md) | 4 (AuthHeroSection, GabiumTextField, GabiumButton, GabiumToast) |
+| Email Signin Screen | Flutter | ✅ Completed | 2025-11-22 | [Proposal](email-signin-screen/20251122-proposal-v1.md), [Implementation](email-signin-screen/20251122-implementation-v1.md) | 4 (AuthHeroSection, GabiumTextField, GabiumButton...) |
+| Email Signup Screen | Flutter | ✅ Completed | 2025-11-22 | [Proposal](email-signup-screen/20251122-proposal-v1.md), [Implementation](email-signup-screen/20251122-implementation-v1.md) | 6 (AuthHeroSection, GabiumTextField, GabiumButton...) |
 
 ---
 
@@ -25,10 +25,8 @@
 
 ## Summary Statistics
 
-- **Total Completed Projects**: 2
-- **Total Components Created**: 6
-- **Component Reuse Rate**: 4/6 (67%) - Email Signin 화면에서 4개 재사용
-- **Frameworks**: Flutter
+- **Total Completed Projects**: {len(completed_projects)}
+- **Total Frameworks**: {len(set(m.get('framework', 'Unknown') for _, m in completed_projects))}
 - **Design System Version**: Gabium Design System v1.0
 
 ---
@@ -37,18 +35,18 @@
 
 | Component | Created In | Also Used In | Reuse Count |
 |-----------|-----------|--------------|-------------|
-| AuthHeroSection | Email Signup | Email Signin | 2 |
-| GabiumTextField | Email Signup | Email Signin | 2 |
-| GabiumButton | Email Signup | Email Signin | 2 |
-| GabiumToast | Email Signup | Email Signin | 2 |
-| PasswordStrengthIndicator | Email Signup | - | 1 |
-| ConsentCheckbox | Email Signup | - | 1 |
+| AuthHeroSection | Email Signin Screen | Email Signup Screen | 2 |
+| ConsentCheckbox | Email Signup Screen | - | 1 |
+| GabiumButton | Email Signin Screen | Email Signup Screen | 2 |
+| GabiumTextField | Email Signin Screen | Email Signup Screen | 2 |
+| GabiumToast | Email Signin Screen | Email Signup Screen | 2 |
+| PasswordStrengthIndicator | Email Signup Screen | - | 1 |
 
 ---
 
 ## Next Steps
 
-1. **Continue UI Renewal**: Start Phase 2A for next screen (Password Reset recommended)
+1. **Continue UI Renewal**: Start Phase 2A for next screen
 2. **Expand Component Library**: Create new components as needed
 3. **Update Design System**: Add new patterns/tokens as project evolves
 4. **Export Design Tokens**: Generate Flutter ThemeData, JSON, CSS for development

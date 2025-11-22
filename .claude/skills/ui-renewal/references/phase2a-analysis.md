@@ -126,6 +126,20 @@ Recommendation: Add to Design System OR use [alternative]
 
 **CRITICAL: This is the ONLY output Phase 2B will receive.**
 
+**Document Storage:**
+Save to: `projects/{screen-name}/{YYYYMMDD}-proposal-v1.md`
+
+**Naming Convention:**
+- Format: `{YYYYMMDD}-{document-type}-v{version}.md`
+- Example: `20251122-proposal-v1.md`
+- Version increments if revisions needed
+
+**Directory Structure:**
+All documents for a screen/feature go in `projects/{screen-name}/`:
+- `{YYYYMMDD}-proposal-v1.md` (Phase 2A)
+- `{YYYYMMDD}-implementation-v1.md` (Phase 2B)
+- `metadata.json` (auto-generated in Phase 3)
+
 **Use exact structure below:**
 
 ```markdown
@@ -250,7 +264,19 @@ Example:
 - ✅ Dependencies clear
 - ✅ No vague descriptions
 
-### Step 7: Present Proposal to User
+### Step 7: Save Proposal Document
+
+**Save the Improvement Proposal to the project directory:**
+
+**Path:** `projects/{screen-name}/{YYYYMMDD}-proposal-v1.md`
+
+**Examples:**
+- `projects/email-signup-screen/20251122-proposal-v1.md`
+- `projects/password-reset-screen/20251123-proposal-v1.md`
+
+**If screen directory doesn't exist, create it first.**
+
+### Step 8: Present Proposal to User
 
 Provide concise summary:
 
@@ -271,15 +297,22 @@ Provide concise summary:
 - Prerequisites: [List or "None"]
 - Impact: [List or "Isolated"]
 
+## 문서 저장 위치
+- 제안서: `projects/{screen-name}/{YYYYMMDD}-proposal-v1.md`
+
 ## Next Step
 Review full Improvement Proposal (artifact) and approve to proceed to implementation phase.
 ```
 
-### Step 8: Handle Feedback
+### Step 9: Handle Feedback
 
 **If approved:** Notify orchestrator to proceed to Phase 2B
 
-**If changes requested:** Update artifact, re-present
+**If changes requested:**
+- Update artifact
+- Save as new version (increment version number)
+- Example: `20251122-proposal-v2.md`
+- Re-present
 
 **If rejected:** Understand concerns, create alternative
 
