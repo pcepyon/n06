@@ -1,604 +1,504 @@
-# Phase 3: Verification & Quality Check Guide
+# Phase 3: Verification, Revision & Finalization Guide
 
-This guide is for the Verification sub-agent. Use this when the orchestrator routes a Phase 3 task.
+This guide is for the Verification & Finalization sub-agent. Use this when the orchestrator routes a Phase 3 task.
 
 ## Objective
 
-Verify that implemented code matches the design intent and specifications, check for lint/build errors, and ensure quality standards are met.
+Verify implemented code matches design intent, support revision iterations, obtain final user confirmation, and properly organize all assets for future reuse.
 
 ## Prerequisites
 
 **Required:**
-- Improvement Proposal artifact from Phase 2A (design intent)
-- Implementation Guide artifact from Phase 2B (specification)
-- User's implemented code (files or screenshots)
+- Improvement Proposal artifact from Phase 2A
+- Implementation Guide artifact from Phase 2B
+- User's implemented code (screenshots or actual code files)
 
 **Context Strategy:**
-- Load ONLY: Improvement Proposal, Implementation Guide, User's code
-- Do NOT load: Full Design System, original UI analysis
-- Extract ONLY necessary Design System tokens from Implementation Guide
+- Load ONLY: Proposal + Implementation Guide + User's code
+- DO NOT load full Design System
 
-## Process
+---
 
-### Step 1: Load Context (Precisely)
+## Step 1: Initial Verification
 
-**CRITICAL: Load only what's necessary:**
+### 1.1 Load Context
 
-1. **Improvement Proposal artifact** (design intent and success criteria)
-2. **Implementation Guide artifact** (specifications)
-3. **User's implemented code** (files, screenshots, or description)
-4. **Design System tokens** - ONLY those referenced in Implementation Guide
+Load precisely:
+1. Improvement Proposal (design intent)
+2. Implementation Guide (specifications)
+3. User's implemented code
+4. Design System tokens from Implementation Guide ONLY
 
-**Do NOT load:**
-- ❌ Full Design System document
-- ❌ Original UI screenshots from Phase 2A
-- ❌ Analysis notes
+### 1.2 Verification Checklist
 
-### Step 2: Verification Framework
+**Design Intent Compliance:**
+- [ ] All changes from Proposal implemented?
+- [ ] Design goals achieved?
+- [ ] Brand consistency maintained?
 
-Check implemented code against three levels:
+**Specification Compliance:**
+- [ ] All component specs from Implementation Guide followed?
+- [ ] Correct Design System token values used?
+- [ ] Interactive states (hover, active, disabled) implemented?
+- [ ] Layout structure matches specs?
 
-#### 2.1 Design Intent Verification
+**Code Quality:**
+- [ ] No lint errors (`flutter analyze` or equivalent)
+- [ ] No build errors
+- [ ] Proper imports
+- [ ] Clean code structure
 
-**Compare implementation against Improvement Proposal:**
+**Accessibility:**
+- [ ] Color contrast ≥ WCAG AA (4.5:1 for text, 3:1 for UI)
+- [ ] Touch targets ≥ 44x44px
+- [ ] Keyboard navigation works
+- [ ] Screen reader labels present
 
-**For each Change in Proposal:**
-```
-Change 1: [Title from Proposal]
+**Functionality:**
+- [ ] All existing features still work?
+- [ ] No regressions?
+- [ ] New features work as expected?
 
-Expected Intent:
-- Current: [What it was]
-- Proposed: [What it should become]
-- Rationale: [Why this change]
+### 1.3 Issue Categorization
 
-Actual Implementation:
-✅/❌ Intent achieved?
-✅/❌ Rationale satisfied?
-✅/❌ User experience improved as intended?
+**Critical (❌ Blocker)**:
+- Design System tokens not used
+- Accessibility violations (contrast < 4.5:1, touch targets < 44px)
+- Broken functionality
+- Build/lint errors
 
-Issues (if any):
-- [Specific deviation from intent]
-```
-
-**Success Criteria Check:**
-```
-From Proposal Success Criteria:
-1. [Criterion 1]: ✅/❌ [Result]
-2. [Criterion 2]: ✅/❌ [Result]
-3. [Criterion 3]: ✅/❌ [Result]
-```
-
-#### 2.2 Specification Compliance
-
-**Compare implementation against Implementation Guide:**
-
-**Component Specifications:**
-```
-[Component Name] from Implementation Guide
-
-Visual Specs:
-- Background: Expected [value] → Actual [value] ✅/❌
-- Text Color: Expected [value] → Actual [value] ✅/❌
-- Font Size: Expected [value] → Actual [value] ✅/❌
-- Padding: Expected [value] → Actual [value] ✅/❌
-- Border Radius: Expected [value] → Actual [value] ✅/❌
-- Shadow: Expected [value] → Actual [value] ✅/❌
-
-Interactive States:
-- Hover: ✅/❌ Implemented correctly
-- Active: ✅/❌ Implemented correctly
-- Disabled: ✅/❌ Implemented correctly
-- Focus: ✅/❌ Implemented correctly
-
-Issues:
-- [Specific deviation from spec]
-```
-
-**Layout Compliance:**
-```
-Expected Layout Structure: [From Implementation Guide]
-Actual Layout Structure: [From user's code]
-
-✅/❌ Hierarchy matches
-✅/❌ Spacing correct
-✅/❌ Responsive behavior implemented
-✅/❌ Grid/flex configuration matches
-
-Issues:
-- [Specific layout deviation]
-```
-
-**Interaction Compliance:**
-```
-Expected Interactions: [From Implementation Guide]
-
-For each interaction:
-- [Interaction name]: ✅/❌ Implemented correctly
-- Loading state: ✅/❌ Present and correct
-- Error handling: ✅/❌ Present and correct
-- Success feedback: ✅/❌ Present and correct
-
-Issues:
-- [Specific interaction issue]
-```
-
-#### 2.3 Code Quality Check
-
-**Lint/Build Errors:**
-
-Based on platform/framework:
-
-**React/Next.js:**
-```bash
-# If code files provided, check:
-- ESLint errors
-- TypeScript errors (if applicable)
-- Missing dependencies
-- Unused imports
-- Console warnings
-```
-
-**Flutter:**
-```bash
-# If code files provided, check:
-- Dart analysis issues
-- Missing imports
-- Unused variables
-- Widget key warnings
-- Performance warnings
-```
-
-**Vue/Nuxt:**
-```bash
-# If code files provided, check:
-- ESLint errors
-- Template syntax errors
-- Missing props validation
-- Unused variables
-```
-
-**General Code Quality:**
-```
-✅/❌ Proper component structure
-✅/❌ No hardcoded values (uses tokens/variables)
-✅/❌ Consistent naming conventions
-✅/❌ Proper error handling
-✅/❌ Accessibility attributes present
-✅/❌ No code duplication
-✅/❌ Proper state management
-```
-
-**Accessibility Compliance:**
-```
-From Implementation Guide Accessibility Checklist:
-
-✅/❌ Color contrast meets WCAG AA
-✅/❌ Keyboard navigation functional
-✅/❌ Focus indicators visible
-✅/❌ ARIA labels present
-✅/❌ Touch targets minimum 44×44px
-✅/❌ Screen reader compatible
-```
-
-### Step 3: Issue Categorization
-
-**Categorize all found issues:**
-
-**Critical Issues (Must Fix):**
-- Breaks functionality
-- Violates design intent
-- Accessibility failures
-- Build/runtime errors
-
-**Major Issues (Should Fix):**
-- Significant spec deviation
+**Major (⚠️ Important)**:
 - Missing interactive states
-- Performance concerns
-- Incomplete error handling
+- Incorrect specifications
+- Visual inconsistencies
 
-**Minor Issues (Nice to Fix):**
-- Slight visual differences
-- Code style inconsistencies
-- Missing edge case handling
-- Optimization opportunities
+**Minor (ℹ️ Nice-to-have)**:
+- Code style improvements
+- Documentation additions
 
-### Step 4: Create Verification Report
+### 1.4 Create Verification Report (Korean)
 
-**CRITICAL: Output in Korean for user.**
+**Format:**
+```markdown
+# [Screen Name] 검증 보고서
 
-**Structure:**
+**검증일**: {date}
+**상태**: ✅ PASS / ❌ FAIL / ⚠️ NEEDS WORK
+
+## 검증 결과 요약
+
+- 디자인 의도 준수: ✅/❌
+- 명세 준수: ✅/❌
+- 코드 품질: ✅/❌
+- 접근성: ✅/❌
+- 기능성: ✅/❌
+
+## 발견된 문제점
+
+### Critical Issues (필수 수정)
+1. [Issue description]
+   - 위치: [file:line]
+   - 현재: [current state]
+   - 기대: [expected state]
+   - 수정방법: [how to fix]
+
+### Major Issues (권장 수정)
+...
+
+### Minor Issues (선택 수정)
+...
+
+## 다음 단계
+
+❌ FAIL: [N]개 Critical 이슈 수정 필요
+⚠️ NEEDS WORK: [N]개 Major 이슈 검토 필요
+✅ PASS: Step 3 (최종 확인)으로 진행
+```
+
+### 1.5 Present Results to User (Korean)
+
+**If PASS:**
+```
+✅ 검증 완료! 모든 항목이 통과했습니다.
+
+Step 3 (최종 확인)으로 진행합니다.
+```
+
+**If FAIL or NEEDS WORK:**
+```
+검증 완료. 수정이 필요한 부분이 있습니다.
+
+[검증 보고서 제공]
+
+수정 후 재검증을 요청해주세요.
+```
+
+---
+
+## Step 2: Revision Loop
+
+### 2.1 User Fixes Issues
+
+Wait for user to fix issues and request re-verification.
+
+### 2.2 Re-verification
+
+**Focus on fixed items:**
+- Load previous Verification Report
+- Check ONLY the issues that were listed
+- Verify fixes are correct
+- Update Verification Report
+
+**Re-verification Report:**
+```markdown
+# [Screen Name] 재검증 보고서 (v{N})
+
+**재검증일**: {date}
+**이전 상태**: ❌ FAIL
+**현재 상태**: ✅ PASS / ❌ STILL FAIL
+
+## 수정 확인
+
+### Issue #1: [Title]
+- ✅ 수정 완료 / ❌ 미수정 / ⚠️ 부분 수정
+- 확인 내용: [what was checked]
+
+...
+
+## 남은 문제점
+[If any]
+
+## 다음 단계
+✅ PASS: Step 3로 진행
+❌ FAIL: 추가 수정 필요
+```
+
+### 2.3 Iteration
+
+Repeat Step 2 until PASS.
+
+**Guideline:**
+- Maximum 3-4 iterations recommended
+- If stuck, suggest returning to Phase 2A/2B for redesign
+
+---
+
+## Step 3: Final Confirmation
+
+### 3.1 Ask User for Completion Confirmation (Korean)
+
+**When verification PASS:**
+
+```
+✅ 검증 완료! 모든 항목이 통과했습니다.
+
+구현이 완료되었습니까? 추가로 수정하실 부분이 있습니까?
+
+1. ✅ 완료 - 이 화면 작업을 종료하고 에셋을 정리합니다
+2. 🔄 수정 필요 - 추가 수정 사항을 알려주세요
+3. ➡️ 다음 화면 - 이 화면은 완료하고 다른 화면을 개선합니다
+```
+
+### 3.2 Handle User Response
+
+**Option 1: "완료"**
+→ Proceed to Step 4 (Asset Organization)
+
+**Option 2: "수정 필요"**
+→ User describes changes
+→ Determine if:
+  - Minor fix: Guide user, then re-verify (Step 1)
+  - Major change: Return to Phase 2A (re-analysis) or Phase 2B (re-spec)
+
+**Option 3: "다음 화면"**
+→ Proceed to Step 4 for current screen
+→ Then return to Phase 2A for next screen
+
+---
+
+## Step 4: Asset Organization & Completion
+
+**CRITICAL: This step ensures all work is preserved for future reuse.**
+
+### 4.1 Update Component Registry (3 Locations)
+
+**If new components were created in Phase 2B:**
+
+#### Location 1: Design System Component Registry
+
+Update `design-systems/{product}-design-system.md` Section 7:
 
 ```markdown
-# [기능/화면명] 검증 보고서
+## 7. Component Registry
 
-## 검증 개요
-
-**검증 일시:** [날짜]  
-**검증 범위:** [구현된 기능/화면]  
-**전체 평가:** ✅ 통과 / ⚠️ 수정 필요 / ❌ 주요 문제 발견
-
----
-
-## 1. 기획 의도 충족도
-
-### 성공 기준 달성 여부
-
-[Improvement Proposal의 Success Criteria 기준]
-
-| 성공 기준 | 달성 여부 | 평가 |
-|----------|----------|------|
-| [기준 1] | ✅/❌ | [구체적 평가] |
-| [기준 2] | ✅/❌ | [구체적 평가] |
-| [기준 3] | ✅/❌ | [구체적 평가] |
-
-**총평:** [전반적인 기획 의도 달성도]
-
-### 변경 사항별 검증
-
-#### 변경 1: [제목]
-
-**기획 의도:**
-- 현재 상태: [기존]
-- 목표 상태: [변경 후]
-- 개선 이유: [이유]
-
-**구현 결과:**
-- ✅/❌ 의도대로 구현됨
-- 세부 평가: [구체적 평가]
-
-#### 변경 2: [제목]
-[같은 구조 반복]
-
----
-
-## 2. 명세 준수도
-
-### 컴포넌트 스펙 검증
-
-#### [컴포넌트명]
-
-**시각적 요소:**
-
-| 항목 | 명세 | 구현 | 일치 여부 |
-|-----|------|------|----------|
-| 배경색 | [값] | [값] | ✅/❌ |
-| 텍스트 색상 | [값] | [값] | ✅/❌ |
-| 폰트 크기 | [값] | [값] | ✅/❌ |
-| 패딩 | [값] | [값] | ✅/❌ |
-| 테두리 반경 | [값] | [값] | ✅/❌ |
-| 그림자 | [값] | [값] | ✅/❌ |
-
-**인터랙션 상태:**
-
-| 상태 | 명세 여부 | 구현 여부 | 정확도 |
-|-----|----------|----------|--------|
-| Hover | ✅ | ✅/❌ | [평가] |
-| Active | ✅ | ✅/❌ | [평가] |
-| Disabled | ✅ | ✅/❌ | [평가] |
-| Focus | ✅ | ✅/❌ | [평가] |
-
-### 레이아웃 검증
-
-**예상 구조:** [Implementation Guide의 레이아웃]  
-**실제 구조:** [구현된 레이아웃]
-
-- ✅/❌ 계층 구조 일치
-- ✅/❌ 간격 일치
-- ✅/❌ 반응형 동작 구현
-- ✅/❌ 정렬 방식 일치
-
-### 인터랙션 검증
-
-| 인터랙션 | 명세 존재 | 구현 존재 | 정확도 |
-|---------|----------|----------|--------|
-| [인터랙션 1] | ✅ | ✅/❌ | [평가] |
-| 로딩 상태 | ✅ | ✅/❌ | [평가] |
-| 에러 처리 | ✅ | ✅/❌ | [평가] |
-| 성공 피드백 | ✅ | ✅/❌ | [평가] |
-
----
-
-## 3. 코드 품질 검증
-
-### 린트/빌드 오류
-
-**분석 결과:**
-- ✅/❌ 빌드 성공
-- ✅/❌ 린트 오류 없음
-- ✅/❌ 타입 오류 없음 (TypeScript인 경우)
-
-**발견된 오류:**
-[오류가 있는 경우 목록]
-
-```
-[오류 메시지 및 위치]
+| Component | Created Date | Used In | Notes |
+|-----------|--------------|---------|-------|
+| {ComponentName} | {YYYY-MM-DD} | {screen-name} | {description} |
 ```
 
-**수정 방법:**
-[구체적인 수정 가이드]
+#### Location 2: registry.json
 
-### 코드 품질
-
-| 항목 | 평가 | 비고 |
-|-----|------|------|
-| 컴포넌트 구조 | ✅/❌ | [평가] |
-| 토큰 사용 (하드코딩 없음) | ✅/❌ | [평가] |
-| 네이밍 컨벤션 | ✅/❌ | [평가] |
-| 에러 핸들링 | ✅/❌ | [평가] |
-| 코드 중복 | ✅/❌ | [평가] |
-| 상태 관리 | ✅/❌ | [평가] |
-
-### 접근성 검증
-
-| 항목 | 명세 요구사항 | 구현 여부 | 평가 |
-|-----|------------|----------|------|
-| 색상 대비 | WCAG AA (4.5:1) | ✅/❌ | [대비율] |
-| 키보드 네비게이션 | 필수 | ✅/❌ | [평가] |
-| 포커스 표시 | 필수 | ✅/❌ | [평가] |
-| ARIA 레이블 | 필요 시 | ✅/❌ | [평가] |
-| 터치 타겟 크기 | 44×44px 이상 | ✅/❌ | [실제 크기] |
-| 스크린 리더 | 호환 | ✅/❌ | [평가] |
-
----
-
-## 4. 발견된 문제점
-
-### 🔴 심각 (즉시 수정 필요)
-
-[기능 중단, 기획 의도 위배, 접근성 실패, 빌드/런타임 오류]
-
-1. **[문제점]**
-   - 위치: [파일명:줄번호 또는 컴포넌트명]
-   - 상세: [구체적 설명]
-   - 영향: [사용자/시스템에 미치는 영향]
-   - 수정 방법:
-     ```
-     [구체적인 수정 코드 또는 가이드]
-     ```
-
-### 🟡 중요 (수정 권장)
-
-[명세 이탈, 인터랙션 상태 누락, 성능 문제, 에러 핸들링 미흡]
-
-1. **[문제점]**
-   - 위치: [위치]
-   - 상세: [설명]
-   - 수정 방법:
-     ```
-     [수정 가이드]
-     ```
-
-### 🟢 경미 (개선 제안)
-
-[시각적 차이, 코드 스타일, 엣지 케이스, 최적화 기회]
-
-1. **[문제점]**
-   - 위치: [위치]
-   - 개선 방법: [간단한 가이드]
-
----
-
-## 5. 수정 우선순위
-
-### 1순위 (즉시 수정)
-- [ ] [심각 문제 1]
-- [ ] [심각 문제 2]
-
-### 2순위 (가능한 빨리)
-- [ ] [중요 문제 1]
-- [ ] [중요 문제 2]
-
-### 3순위 (여유 있을 때)
-- [ ] [경미 문제 1]
-- [ ] [경미 문제 2]
-
----
-
-## 6. 종합 평가
-
-**점수:** [0-100점]
-
-**평가 기준:**
-- 기획 의도 충족: [점수/40]
-- 명세 준수: [점수/30]
-- 코드 품질: [점수/20]
-- 접근성: [점수/10]
-
-**최종 판정:**
-- ✅ **승인**: 문제없음, 바로 배포 가능
-- ⚠️ **조건부 승인**: 경미한 문제만 있음, 배포 가능하나 개선 권장
-- ❌ **재작업 필요**: 심각/중요 문제 있음, 수정 후 재검증 필요
-
-**종합 의견:**
-[전반적인 평가 및 권장사항]
-
----
-
-## 7. 다음 단계
-
-**문제 없는 경우:**
-1. ✅ 구현 완료 확인
-2. Component Registry 최종 업데이트 확인
-3. 다른 화면/기능으로 진행 가능
-
-**수정 필요한 경우:**
-1. 위의 수정 사항 적용
-2. 수정 후 Phase 3 재검증 요청
-3. 또는 특정 부분만 재검증 요청 가능
-
-**질문/지원 필요:**
-- 수정 방법이 불명확한 부분이 있으면 질문해주세요
-- 추가 구현 가이드가 필요하면 요청해주세요
+Update `.claude/skills/ui-renewal/component-library/registry.json`:
+```json
+{
+  "components": [
+    {
+      "name": "{ComponentName}",
+      "createdDate": "{YYYY-MM-DD}",
+      "framework": "{framework}",
+      "file": "{framework}/{ComponentName}.{ext}",
+      "projectFile": "lib/.../widgets/{component_name}.{ext}",
+      "usedIn": ["{screen-name}"],
+      "category": "{category}",
+      "description": "{description}",
+      ...
+    }
+  ]
+}
 ```
 
-### Step 5: Provide Specific Fix Guidance
+#### Location 3: COMPONENTS.md
 
-**For each issue found, provide actionable fix:**
+Update `.claude/skills/ui-renewal/component-library/COMPONENTS.md`:
+- Add row to Component Registry table
+- Add component specification section
 
-**Critical/Major issues:**
+**Automation (if script exists):**
+```bash
+python scripts/update_component_registry.py \
+  --component {ComponentName} \
+  --framework {framework} \
+  --used-in "{screen-name}"
+```
+
+### 4.2 Create/Update metadata.json
+
+Create `projects/{screen-name}/metadata.json`:
+
+```json
+{
+  "screenName": "{screen-name}",
+  "framework": "{framework}",
+  "createdDate": "{YYYY-MM-DD}",
+  "lastUpdated": "{YYYY-MM-DD}",
+  "designSystem": "{Product} Design System v{version}",
+  "documents": [
+    {
+      "type": "proposal",
+      "version": 1,
+      "date": "{YYYY-MM-DD}",
+      "file": "{YYYYMMDD}-proposal-v1.md",
+      "approved": true
+    },
+    {
+      "type": "implementation",
+      "version": 1,
+      "date": "{YYYY-MM-DD}",
+      "file": "{YYYYMMDD}-implementation-v1.md"
+    },
+    {
+      "type": "verification",
+      "version": 1,
+      "date": "{YYYY-MM-DD}",
+      "file": "{YYYYMMDD}-verification-v1.md",
+      "status": "PASS"
+    }
+  ],
+  "components": [
+    "{ComponentName1}",
+    "{ComponentName2}"
+  ],
+  "status": "completed",
+  "iterations": 1
+}
+```
+
+### 4.3 Update projects/INDEX.md
+
+Update `.claude/skills/ui-renewal/projects/INDEX.md`:
+
 ```markdown
-### 수정 가이드: [문제명]
+## Active Projects
 
-**현재 코드:**
-```[language]
-[문제가 있는 코드]
+| Screen/Feature | Framework | Status | Last Updated | Documents |
+|---------------|-----------|--------|--------------|-----------|
+| {screen-name} | {framework} | ✅ Completed | {date} | [Proposal](link), [Implementation](link), [Verification](link) |
 ```
 
-**수정된 코드:**
-```[language]
-[올바른 코드]
+**Automation (if script exists):**
+```bash
+python scripts/generate_project_index.py
 ```
 
-**설명:**
-[왜 이렇게 수정해야 하는지]
+### 4.4 Save Verification Report (Optional)
 
-**참고:**
-- Implementation Guide의 [섹션명] 참조
-- Design System 토큰: [토큰명] = [값]
-```
+If user wants to keep verification history:
 
-### Step 6: Handle Re-verification
+Save to `projects/{screen-name}/{YYYYMMDD}-verification-v1.md`
 
-If user fixes issues and requests re-verification:
+### 4.5 Create Final Summary (Korean)
 
-**Load:**
-- Previous verification report
-- Updated code
+**Present to user:**
 
-**Process:**
-- Focus ONLY on previously identified issues
-- Check if fixes are correct
-- Look for any new issues introduced by fixes
-
-**Output:**
 ```markdown
-# 재검증 보고서
+# ✅ [{Screen Name}] 작업 완료
 
-## 이전 문제점 수정 확인
+## 완료된 작업
 
-| 문제점 | 이전 상태 | 수정 확인 | 비고 |
-|-------|----------|----------|------|
-| [문제 1] | ❌ | ✅/❌ | [평가] |
-| [문제 2] | ❌ | ✅/❌ | [평가] |
+✅ Phase 2A: 개선 방향 분석 및 제안
+✅ Phase 2B: 구현 명세 작성
+✅ Phase 3: 검증 및 최종 확인
 
-## 새로 발견된 문제점
-[있는 경우만]
+## 생성된 문서
 
-## 최종 판정
-[승인/조건부 승인/재작업 필요]
+- 📄 개선 제안서: `projects/{screen-name}/{YYYYMMDD}-proposal-v1.md`
+- 📄 구현 가이드: `projects/{screen-name}/{YYYYMMDD}-implementation-v1.md`
+- 📄 검증 보고서: `projects/{screen-name}/{YYYYMMDD}-verification-v1.md` (선택)
+- 📄 프로젝트 메타데이터: `projects/{screen-name}/metadata.json`
+
+## 생성/재사용된 컴포넌트
+
+| 컴포넌트 | 상태 | 위치 |
+|---------|------|------|
+| {ComponentName1} | ✅ 신규 생성 | `component-library/{framework}/{ComponentName1}.{ext}` |
+| {ComponentName2} | ♻️ 재사용 | - |
+
+## 업데이트된 에셋
+
+✅ Component Registry (3곳 업데이트 완료)
+✅ metadata.json 생성
+✅ INDEX.md 업데이트
+
+## 다음 단계
+
+- **다른 화면 개선**: Phase 2A로 돌아가서 다음 화면 분석 시작
+- **디자인 토큰 내보내기**: `flutter ThemeData`, `JSON`, `CSS` 등
+- **프로젝트 종료**: 모든 화면 완료 시 최종 정리
+
+---
+
+**이 화면의 모든 작업이 완료되었으며, 향후 재사용을 위해 체계적으로 보존되었습니다.** ✅
 ```
 
-## Output Language Rule
+### 4.6 Mark Project as Completed
 
-**CRITICAL: All user-facing output MUST be in Korean.**
+**In metadata.json:**
+```json
+{
+  "status": "completed",
+  "completedDate": "{YYYY-MM-DD}"
+}
+```
 
-### Korean Output (사용자 대면):
-- ✅ Verification Report
-- ✅ Issue descriptions
-- ✅ Fix guidance
-- ✅ Evaluation comments
-- ✅ Questions to user
-- ✅ Next steps
+**In INDEX.md:**
+```markdown
+| {screen-name} | {framework} | ✅ Completed | {date} | ... |
+```
 
-### English OK (Internal):
-- ✅ Code examples
-- ✅ Technical terms in code
-- ✅ Framework-specific terminology
-- ✅ Internal processing notes
+---
 
-## Quality Checklist
+## Quality Gates
 
-✅ **Completeness:**
-- All three levels verified (Intent, Spec, Code Quality)
-- Every component checked
-- All interactive states verified
-- Accessibility fully checked
+### Step 1 Quality Gate:
+- ✅ Verification Report created (Korean)
+- ✅ All 5 categories checked (Design Intent, Specs, Code Quality, Accessibility, Functionality)
+- ✅ Issues categorized by severity
+- ✅ Specific fix guidance provided
 
-✅ **Accuracy:**
-- Compared against Proposal and Implementation Guide
-- No assumptions beyond provided specs
-- Specific line numbers/locations for issues
+### Step 2 Quality Gate:
+- ✅ Re-verification Report updated
+- ✅ Fixed issues marked as resolved
+- ✅ Remaining issues documented
+- ✅ User notified of re-verification results
 
-✅ **Actionability:**
-- Every issue has fix guidance
-- Code examples for complex fixes
-- Clear priority ordering
+### Step 3 Quality Gate:
+- ✅ User explicitly confirms completion ("완료")
+- ✅ No outstanding Critical or Major issues
+- ✅ User satisfied with implementation
 
-✅ **Language:**
-- All user-facing content in Korean
-- Code examples can have English comments
-- Technical terms translated where appropriate
+### Step 4 Quality Gate:
+- ✅ Component Registry updated (3 locations if new components)
+- ✅ metadata.json created/updated
+- ✅ INDEX.md updated
+- ✅ Final Summary presented to user
+- ✅ Project marked as "completed"
+
+---
 
 ## Edge Cases
 
-### Code not provided, only screenshots:
+### User wants to skip verification
 ```
-스크린샷으로는 [X] 검증이 어렵습니다.
-보다 정확한 검증을 위해 코드 파일을 공유해주시겠어요?
+Phase 3 Step 1 검증은 필수 단계입니다.
 
-현재 스크린샷으로 확인 가능한 부분:
-- 시각적 요소 일치 여부
-- 레이아웃 구조
+검증을 통해:
+- 디자인 의도대로 구현되었는지 확인
+- 명세 준수 여부 확인
+- 코드 품질 및 접근성 검증
 
-확인 불가능한 부분:
-- 인터랙션 상태 구현
-- 코드 품질
-- 접근성 속성
+구현 완료 후 Phase 3 검증을 요청해주세요.
 ```
 
-### Partial implementation:
+### User wants to skip Step 4 (Asset Organization)
 ```
-현재 [X] 부분만 구현되었습니다.
+Step 4 에셋 정리는 재사용성을 위해 필수입니다.
 
-구현된 부분 검증:
-[검증 결과]
+이 단계를 건너뛰면:
+❌ Component Registry가 업데이트되지 않음
+❌ 다음 화면에서 컴포넌트 재사용 불가
+❌ 작업 히스토리 추적 불가
 
-미구현 부분:
-- [항목 1]
-- [항목 2]
-
-전체 구현 완료 후 재검증을 권장합니다.
-```
-
-### Implementation differs intentionally:
-```
-구현이 명세와 다릅니다. 의도적인 변경인가요?
-
-차이점:
-- 명세: [값]
-- 구현: [값]
-
-의도적이라면 이유를 설명해주시면 Improvement Proposal을 업데이트하겠습니다.
-아니라면 명세대로 수정을 권장합니다.
+자동으로 처리되므로 시간이 거의 걸리지 않습니다.
+진행하시겠습니까?
 ```
 
-### Framework/platform mismatch:
+### Too many revision iterations (>4)
 ```
-Implementation Guide는 [Framework A]용인데 
-구현은 [Framework B]로 되어있습니다.
+4회 이상 재검증이 반복되고 있습니다.
 
-현재 구현 기준으로 검증하되, 
-가능하면 [Framework B]용 가이드를 새로 제공할 수 있습니다.
+다음 옵션을 고려해주세요:
+1. Phase 2A로 돌아가서 개선 방향 재검토
+2. Phase 2B로 돌아가서 구현 명세 수정
+3. 현재 접근 방식을 계속 시도
+
+어떻게 진행하시겠습니까?
 ```
+
+### User requests changes after "완료" confirmation
+```
+완료 확인 후 변경사항이 있으시군요.
+
+옵션:
+1. 경미한 수정: Step 1 (검증)부터 재시작
+2. 큰 변경: Phase 2A (재분석) 또는 Phase 2B (재명세)
+3. 새 버전: 현재 v1 유지, 새로 v2 시작
+
+어떤 방식으로 진행하시겠습니까?
+```
+
+---
 
 ## Success Criteria
 
-Phase 3 succeeds when:
-- ✅ Complete verification report created (in Korean)
-- ✅ All three levels checked (Intent, Spec, Code Quality)
-- ✅ Issues categorized by severity
-- ✅ Specific fix guidance provided
-- ✅ Clear next steps communicated
-- ✅ User understands what needs to be done
+**Overall Phase 3 Success:**
+- ✅ Code verified and passes all checks
+- ✅ User confirms completion
+- ✅ All assets properly organized
+- ✅ Component Registry updated (if applicable)
+- ✅ metadata.json created
+- ✅ INDEX.md updated
+- ✅ Final Summary provided to user
+- ✅ Project marked as "completed"
+- ✅ Ready for next screen or session end
 
-## Automation Potential
+---
 
-**For future enhancement:**
-- Automated lint/build checks
-- Automated accessibility testing
-- Visual regression testing
-- Performance benchmarking
+## OUTPUT LANGUAGE
 
-**Currently:**
-- Manual verification based on provided code/screenshots
-- Focus on design intent and specification compliance
+**CRITICAL: All user-facing communication in Korean.**
+
+Examples:
+- ✅ "검증 완료! 모든 항목이 통과했습니다."
+- ✅ "구현이 완료되었습니까?"
+- ✅ "에셋 정리가 완료되었습니다."
+- ❌ "Verification complete!" (English)

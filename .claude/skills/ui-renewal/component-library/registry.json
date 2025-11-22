@@ -1,0 +1,189 @@
+{
+  "version": "1.0.0",
+  "designSystem": "Gabium Design System v1.0",
+  "lastUpdated": "2025-11-22",
+  "components": [
+    {
+      "name": "AuthHeroSection",
+      "createdDate": "2025-11-22",
+      "framework": "Flutter",
+      "file": "flutter/AuthHeroSection.dart",
+      "projectFile": "lib/features/authentication/presentation/widgets/auth_hero_section.dart",
+      "usedIn": [
+        "Email Signup Screen",
+        "Email Signin Screen"
+      ],
+      "category": "Authentication",
+      "description": "Welcoming hero section with title, subtitle, and optional icon. Reusable for all authentication screens.",
+      "props": {
+        "title": "String (required)",
+        "subtitle": "String (required)",
+        "icon": "IconData (optional)"
+      },
+      "designTokens": {
+        "background": "Neutral-50 (#F8FAFC)",
+        "titleColor": "Neutral-800 (#1E293B)",
+        "subtitleColor": "Neutral-600 (#475569)",
+        "titleSize": "3xl (28px Bold)",
+        "subtitleSize": "base (16px Regular)"
+      }
+    },
+    {
+      "name": "GabiumTextField",
+      "createdDate": "2025-11-22",
+      "framework": "Flutter",
+      "file": "flutter/GabiumTextField.dart",
+      "projectFile": "lib/features/authentication/presentation/widgets/gabium_text_field.dart",
+      "usedIn": [
+        "Email Signup Screen",
+        "Email Signin Screen"
+      ],
+      "category": "Form",
+      "description": "Branded text input field with label, validation, focus and error states. Height 48px.",
+      "props": {
+        "controller": "TextEditingController (optional)",
+        "label": "String (required)",
+        "hint": "String (optional)",
+        "helperText": "String (optional)",
+        "errorText": "String (optional)",
+        "obscureText": "bool (default: false)",
+        "keyboardType": "TextInputType (optional)",
+        "suffixIcon": "Widget (optional)",
+        "validator": "String? Function(String?) (optional)",
+        "onChanged": "void Function(String) (optional)"
+      },
+      "designTokens": {
+        "height": "48px",
+        "borderRadius": "sm (8px)",
+        "borderDefault": "2px solid Neutral-300",
+        "borderFocus": "2px solid Primary (#4ADE80)",
+        "borderError": "2px solid Error (#EF4444)",
+        "backgroundColor": "#FFFFFF",
+        "backgroundFocus": "Primary 10%"
+      }
+    },
+    {
+      "name": "GabiumButton",
+      "createdDate": "2025-11-22",
+      "framework": "Flutter",
+      "file": "flutter/GabiumButton.dart",
+      "projectFile": "lib/features/authentication/presentation/widgets/gabium_button.dart",
+      "usedIn": [
+        "Email Signup Screen",
+        "Email Signin Screen"
+      ],
+      "category": "Button",
+      "description": "Branded button with Primary and Ghost variants. Supports Small, Medium, and Large sizes. Includes loading state with spinner.",
+      "props": {
+        "onPressed": "VoidCallback (required)",
+        "label": "String (required)",
+        "variant": "ButtonVariant (Primary or Ghost)",
+        "size": "ButtonSize (Small, Medium, or Large)",
+        "isLoading": "bool (default: false)",
+        "fullWidth": "bool (default: false)"
+      },
+      "designTokens": {
+        "primaryBackground": "Primary (#4ADE80)",
+        "primaryText": "#FFFFFF",
+        "ghostBackground": "transparent",
+        "ghostText": "Primary (#4ADE80)",
+        "heightLarge": "52px",
+        "heightMedium": "44px",
+        "heightSmall": "36px",
+        "borderRadius": "sm (8px)"
+      }
+    },
+    {
+      "name": "PasswordStrengthIndicator",
+      "createdDate": "2025-11-22",
+      "framework": "Flutter",
+      "file": "flutter/PasswordStrengthIndicator.dart",
+      "projectFile": "lib/features/authentication/presentation/widgets/password_strength_indicator.dart",
+      "usedIn": [
+        "Email Signup Screen"
+      ],
+      "category": "Form",
+      "description": "Visual password strength indicator with semantic colors showing Weak, Medium, or Strong states.",
+      "props": {
+        "strength": "PasswordStrength (enum: weak, medium, strong)"
+      },
+      "designTokens": {
+        "weakColor": "Error (#EF4444)",
+        "mediumColor": "Warning (#F59E0B)",
+        "strongColor": "Success (#10B981)",
+        "height": "4px",
+        "borderRadius": "full (999px)",
+        "animationDuration": "200ms"
+      }
+    },
+    {
+      "name": "ConsentCheckbox",
+      "createdDate": "2025-11-22",
+      "framework": "Flutter",
+      "file": "flutter/ConsentCheckbox.dart",
+      "projectFile": "lib/features/authentication/presentation/widgets/consent_checkbox.dart",
+      "usedIn": [
+        "Email Signup Screen"
+      ],
+      "category": "Form",
+      "description": "Styled checkbox with required/optional badge. Touch area 44x44px for accessibility.",
+      "props": {
+        "value": "bool (required)",
+        "onChanged": "void Function(bool?) (required)",
+        "label": "String (required)",
+        "isRequired": "bool (default: false)"
+      },
+      "designTokens": {
+        "touchArea": "44x44px",
+        "checkboxSize": "24x24px",
+        "badgeRequired": "Error (#EF4444)",
+        "badgeOptional": "Neutral-500",
+        "labelSize": "sm (14px Regular)",
+        "containerBackground": "Neutral-50 (#F8FAFC)",
+        "containerRadius": "md (12px)"
+      }
+    },
+    {
+      "name": "GabiumToast",
+      "createdDate": "2025-11-22",
+      "framework": "Flutter",
+      "file": "flutter/GabiumToast.dart",
+      "projectFile": "lib/features/authentication/presentation/widgets/gabium_toast.dart",
+      "usedIn": [
+        "Email Signup Screen",
+        "Email Signin Screen"
+      ],
+      "category": "Feedback",
+      "description": "Toast notification with Error, Success, Warning, and Info variants. Replaces SnackBar with branded styling.",
+      "props": {
+        "context": "BuildContext (required)",
+        "message": "String (required)",
+        "variant": "ToastVariant (error, success, warning, info)"
+      },
+      "designTokens": {
+        "errorBackground": "Error-50",
+        "errorBorder": "Error (#EF4444)",
+        "successBackground": "Success-50",
+        "successBorder": "Success (#10B981)",
+        "warningBackground": "Warning-50",
+        "warningBorder": "Warning (#F59E0B)",
+        "infoBackground": "Info-50",
+        "infoBorder": "Info (#3B82F6)",
+        "borderRadius": "sm (8px)",
+        "borderWidth": "4px (left only)",
+        "padding": "md (16px)",
+        "iconSize": "24px"
+      }
+    }
+  ],
+  "metadata": {
+    "totalComponents": 6,
+    "frameworks": ["Flutter"],
+    "categories": [
+      "Authentication",
+      "Form",
+      "Button",
+      "Feedback"
+    ]
+  }
+}

@@ -36,11 +36,147 @@ Phase 2B: Implementation Specification
    ↓
 [User implements]
    ↓
-Phase 3: Verification & Quality Check
+Phase 3: Verification, Revision & Finalization
+   ↓ Step 1: Verify → Step 2: Revise (if needed) → Step 3: Confirm → Step 4: Organize
    ↓
-[Pass: Complete] [Fail: Fix and re-verify]
+[Complete: Assets organized] [Revise: Fix and re-verify]
    ↓
 [Repeat 2A→2B→3 for next screen/feature]
+```
+
+## Document Naming Convention
+
+All documents created by this skill follow a strict naming convention:
+
+### Format
+```
+{YYYYMMDD}-{document-type}-v{version}.md
+```
+
+### Document Types
+- **proposal**: Improvement Proposal (Phase 2A output)
+- **implementation**: Implementation Specification (Phase 2B output)
+- **verification**: Verification Report (Phase 3 output)
+
+### Examples
+```
+20251122-proposal-v1.md          (First proposal, created Nov 22, 2025)
+20251122-proposal-v2.md          (Revised proposal, same day)
+20251122-implementation-v1.md    (Implementation spec)
+20251123-verification-v1.md      (First verification)
+20251123-verification-v2.md      (Re-verification after fixes)
+```
+
+### Version Incrementing
+- Same day, same document type → increment version (v1, v2, v3...)
+- Different day → reset to v1 with new date
+- Different document type → always start at v1
+
+### Where Applied
+- **Phase 2A**: Saves proposal as `{date}-proposal-v{n}.md` in `projects/{screen-name}/`
+- **Phase 2B**: Saves implementation as `{date}-implementation-v{n}.md` in `projects/{screen-name}/`
+- **Phase 3**: Saves verification as `{date}-verification-v{n}.md` in `projects/{screen-name}/`
+
+## Directory Structure
+
+### Root Structure
+```
+ui-renewal/
+├── design-systems/              # Design System documents (Phase 1)
+│   ├── [product]-design-system.md
+│   └── design-tokens.*          # Exported tokens (optional)
+│
+├── projects/                    # Screen-specific work (Phase 2A/2B/3)
+│   ├── INDEX.md                 # Master project index
+│   │
+│   ├── login-screen/            # Example project directory
+│   │   ├── metadata.json        # Project metadata
+│   │   ├── 20251122-proposal-v1.md
+│   │   ├── 20251122-implementation-v1.md
+│   │   ├── 20251123-verification-v1.md
+│   │   └── screenshots/         # Optional visual references
+│   │
+│   ├── dashboard/
+│   │   ├── metadata.json
+│   │   ├── 20251123-proposal-v1.md
+│   │   └── ...
+│   │
+│   └── profile-screen/
+│       └── ...
+│
+├── component-library/           # Reusable components (Phase 2B)
+│   ├── COMPONENTS.md            # Component documentation
+│   ├── registry.json            # Component registry
+│   │
+│   ├── react/
+│   │   ├── Button.tsx
+│   │   ├── Input.tsx
+│   │   └── ...
+│   │
+│   └── flutter/
+│       ├── custom_button.dart
+│       └── ...
+│
+├── references/                  # Phase-specific guides (read-only)
+│   ├── phase1-design-system.md
+│   ├── phase2a-analysis.md
+│   ├── phase2b-implementation.md
+│   └── phase3-verification.md
+│
+└── scripts/                     # Automation tools
+    ├── export_design_tokens.py
+    └── manage_components.py
+```
+
+### Project Directory Structure
+
+Each screen/feature gets its own subdirectory in `projects/`:
+
+```
+projects/{screen-name}/
+├── metadata.json                # Project metadata
+├── {date}-proposal-v{n}.md      # Improvement proposals (Phase 2A)
+├── {date}-implementation-v{n}.md # Implementation specs (Phase 2B)
+├── {date}-verification-v{n}.md  # Verification reports (Phase 3)
+└── screenshots/                 # Optional visual references
+```
+
+### metadata.json Format
+```json
+{
+  "project_name": "login-screen",
+  "status": "completed",
+  "created_date": "2025-11-22",
+  "last_updated": "2025-11-23",
+  "phase": "completed",
+  "framework": "React",
+  "design_system_version": "v1.0",
+  "versions": {
+    "proposal": "v1",
+    "implementation": "v1",
+    "verification": "v2"
+  },
+  "dependencies": [],
+  "components_created": [
+    "PrimaryButton",
+    "EmailInput"
+  ]
+}
+```
+
+### projects/INDEX.md Format
+```markdown
+# UI Renewal Projects Index
+
+## Active Projects
+- **login-screen** (Phase 3 - Verification) - Last updated: 2025-11-23
+- **dashboard** (Phase 2B - Implementation) - Last updated: 2025-11-22
+
+## Completed Projects
+- **profile-screen** (Completed) - Finished: 2025-11-21
+
+## Pending Projects
+- **settings-screen** (Planned)
 ```
 
 ## Phase Determination
@@ -55,7 +191,7 @@ Phase 3: Verification & Quality Check
 
 **Ask:**
 ```
-To create the best improvements, I'll first establish a Design System 
+To create the best improvements, I'll first establish a Design System
 that ensures consistency across your product.
 
 I'll need:
@@ -73,9 +209,9 @@ Do you have these ready?
 
 **Ask:**
 ```
-I can help improve [screen/feature]. 
+I can help improve [screen/feature].
 
-Do you have a Design System document I should reference? 
+Do you have a Design System document I should reference?
 If not, I can create one first to ensure consistency.
 ```
 
@@ -88,7 +224,7 @@ If not, I can create one first to ensure consistency.
 1. **Invoke Phase 1 Sub-Agent:**
    ```
    [Internal]: Read references/phase1-design-system.md for detailed instructions.
-   
+
    [To user]: I'll analyze your brand and create a comprehensive Design System.
    ```
 
@@ -124,7 +260,7 @@ If not, I can create one first to ensure consistency.
 1. **Verify Design System Availability:**
    ```
    [Check]: Is Design System artifact in context?
-   
+
    If NO → Request it or return to Phase 1
    If YES → Proceed
    ```
@@ -139,7 +275,7 @@ If not, I can create one first to ensure consistency.
 3. **Invoke Phase 2A Sub-Agent:**
    ```
    [Internal]: Read references/phase2a-analysis.md for detailed instructions.
-   
+
    [To user]: I'll analyze the current design and determine improvement direction.
    ```
 
@@ -147,23 +283,27 @@ If not, I can create one first to ensure consistency.
    The Phase 2A sub-agent will:
    - Load Design System from context
    - Analyze dependencies (what must be done first, what else is affected)
-   - Check Component Registry for reusable elements
+   - **Check Component Registry for reusable elements**
    - Analyze current UI (brand, visual, UX)
    - Determine improvement direction (WHAT to change, not HOW)
    - Map every change to Design System tokens
    - Create **Improvement Proposal artifact** (structured, complete)
+   - **Save proposal to: `projects/{screen-name}/{date}-proposal-v{n}.md`**
+   - **Create/update `projects/{screen-name}/metadata.json`**
    - Present proposal to user
 
 5. **Completion Criteria:**
    - Improvement Proposal artifact created
    - All changes mapped to Design System tokens
    - Dependencies documented
+   - **Proposal saved to projects directory with proper naming**
    - User approves the direction
 
 **Orchestrator's Role:**
 - Route to Phase 2A guide
 - Ensure sub-agent reads `references/phase2a-analysis.md`
 - Ensure Design System artifact stays in context
+- **Ensure Component Registry is checked for reusable components**
 - Verify Improvement Proposal artifact is created
 - On approval, proceed to Phase 2B
 
@@ -177,7 +317,7 @@ If not, I can create one first to ensure consistency.
    ```
    [Check]: Is Improvement Proposal artifact in context?
    [Check]: Has user approved the proposal?
-   
+
    If NO → Return to Phase 2A
    If YES → Proceed
    ```
@@ -185,7 +325,7 @@ If not, I can create one first to ensure consistency.
 2. **Invoke Phase 2B Sub-Agent:**
    ```
    [Internal]: Read references/phase2b-implementation.md for detailed instructions.
-   
+
    [To user]: I'll create detailed implementation specifications based on the approved proposal.
    ```
 
@@ -195,7 +335,7 @@ If not, I can create one first to ensure consistency.
    1. Improvement Proposal artifact (complete)
    2. Design System tokens listed in Proposal's "Design System Token Reference" table
    3. Platform/framework info from Proposal
-   
+
    DO NOT provide:
    - Full Design System document
    - Original UI screenshots/code
@@ -211,14 +351,16 @@ If not, I can create one first to ensure consistency.
    - Specify all interactive states
    - Provide framework-specific implementation code
    - **Save component code to library: `./component-library/[framework]/[Component].[ext]`**
-   - Update Component Registry in Design System artifact
+   - **Update Component Registry (3 locations - see Component Registry Management)**
    - Create Implementation Guide artifact
+   - **Save implementation to: `projects/{screen-name}/{date}-implementation-v{n}.md`**
+   - **Update `projects/{screen-name}/metadata.json`**
 
 5. **After Completion:**
    ```
-   [To user]: 
+   [To user]:
    Implementation guide complete!
-   
+
    Would you like to:
    - Improve another screen/feature? (→ Return to Phase 2A)
    - Export design tokens for development?
@@ -230,54 +372,132 @@ If not, I can create one first to ensure consistency.
 - Ensure sub-agent reads `references/phase2b-implementation.md`
 - **Provide ONLY Improvement Proposal + Token Reference** to sub-agent
 - Ensure Component Registry is updated in Design System artifact
+- **Ensure implementation is saved to projects directory with proper naming**
 - After implementation guide is complete, inform user about Phase 3
 
-## Phase 3: Verification & Quality Check
+## Component Registry Management
 
-**Objective:** Verify implemented code matches design intent and specifications, check for lint/build errors.
+The Component Registry must be maintained in **THREE locations**:
 
-### Execution
+### 1. Design System Artifact (Section 7)
+```markdown
+## 7. Component Registry
 
-1. **User Implements:**
+### Button Components
+- **PrimaryButton**: Main CTA actions (Login, Submit, etc.)
+  - Variants: Default, Hover, Pressed, Disabled
+  - Used in: Login, Registration, Checkout
+  - File: `component-library/react/Button.tsx`
+```
+
+### 2. component-library/registry.json
+```json
+{
+  "components": [
+    {
+      "name": "PrimaryButton",
+      "category": "button",
+      "framework": "react",
+      "file_path": "component-library/react/Button.tsx",
+      "used_in": ["login", "registration", "checkout"],
+      "created_date": "2025-11-22",
+      "design_tokens": ["color.primary", "spacing.md"]
+    }
+  ]
+}
+```
+
+### 3. component-library/COMPONENTS.md
+```markdown
+# Component Library
+
+## Button Components
+
+### PrimaryButton
+- **Purpose**: Main CTA actions
+- **Framework**: React
+- **File**: `react/Button.tsx`
+- **Used in**: Login, Registration, Checkout
+- **Tokens**: color.primary, spacing.md
+```
+
+### Update Responsibility
+
+**Phase 2A (Check Registry):**
+- Read all 3 locations to find reusable components
+- Recommend reuse in Improvement Proposal
+
+**Phase 2B (Update Registry):**
+- When creating new components, update all 3 locations:
+  1. Design System artifact (Section 7)
+  2. `component-library/registry.json`
+  3. `component-library/COMPONENTS.md`
+- Can be done automatically via script or manually
+
+**Phase 3 Step 4 (Final Update):**
+- Verify all 3 locations are synchronized
+- Add any missing components
+- Update "used_in" fields
+
+### Automation (Optional)
+```bash
+# Update all 3 registries from component files
+python scripts/manage_components.py --sync
+
+# Add new component to all registries
+python scripts/manage_components.py --add PrimaryButton \
+  --framework react \
+  --file component-library/react/Button.tsx
+```
+
+## Phase 3: Verification, Revision & Finalization
+
+**Objective:** Verify implementation, handle revisions, and organize final assets.
+
+### Four-Step Process
+
+```
+Step 1: Initial Verification
+   ↓
+Step 2: Revision Loop (if issues found)
+   ↓
+Step 3: Final Confirmation
+   ↓
+Step 4: Asset Organization (when complete)
+```
+
+### Step 1: Initial Verification
+
+**When:** User completes implementation and shares code/screenshots
+
+**Process:**
+1. **User Signals Readiness:**
    ```
-   [To user]: 
-   구현 가이드를 받으셨습니다.
-   
-   구현 완료 후:
-   - 구현한 코드 또는 스크린샷을 공유해주세요
-   - Phase 3 검증을 요청해주세요
+   [User says]: "구현 완료했습니다" or shares code/screenshots
    ```
 
-2. **User Requests Verification:**
-   ```
-   [Check]: Does user have implemented code ready?
-   
-   If NO → Wait for user to implement
-   If YES → Proceed to Phase 3
-   ```
-
-3. **Invoke Phase 3 Sub-Agent:**
+2. **Invoke Phase 3 Sub-Agent:**
    ```
    [Internal]: Read references/phase3-verification.md for detailed instructions.
-   
+
    [To user]: 구현하신 코드를 검증하겠습니다.
    ```
 
-4. **Provide Minimal Context to Sub-Agent:**
+3. **Provide Minimal Context to Sub-Agent:**
    ```
    CRITICAL: Only provide:
    1. Improvement Proposal artifact (design intent)
    2. Implementation Guide artifact (specifications)
    3. User's implemented code
    4. Design System tokens referenced in Implementation Guide (not full Design System)
-   
+
    DO NOT provide:
    - Full Design System document
    - Original UI from Phase 2A
    - Analysis notes
    ```
 
-5. **Delegate to Sub-Agent:**
+4. **Sub-Agent Verification:**
    The Phase 3 sub-agent will:
    - Load Proposal (design intent) and Implementation Guide (spec)
    - Verify design intent is met
@@ -286,47 +506,204 @@ If not, I can create one first to ensure consistency.
    - Verify accessibility requirements
    - Categorize issues by severity (Critical/Major/Minor)
    - Create Verification Report (in Korean)
+   - **Save verification to: `projects/{screen-name}/{date}-verification-v{n}.md`**
+   - **Update `projects/{screen-name}/metadata.json`**
    - Provide specific fix guidance
 
-6. **Handle Verification Results:**
+5. **Report Results:**
 
    **If PASS (✅):**
    ```
    [To user]:
    ✅ 검증 완료! 문제가 없습니다.
-   
-   다음 단계:
-   - 다른 화면/기능 개선? (→ Phase 2A로)
-   - 디자인 토큰 내보내기?
-   - 구현 완료?
+
+   구현이 완료되었습니까? 수정할 부분이 있습니까?
+   (이제 Step 3: Final Confirmation으로 진행합니다)
    ```
 
    **If FAIL (❌ or ⚠️):**
    ```
    [To user]:
    검증 완료. 수정이 필요한 부분이 있습니다.
-   
+
    [검증 보고서 제공 - 한글]
-   
-   다음 단계:
-   1. 보고서의 수정 사항 적용
-   2. 재검증 요청 (Phase 3 다시)
-   3. 또는 특정 부분만 재검증 요청
+
+   수정 후 다시 검증을 요청해주세요.
+   (Step 2: Revision Loop으로 진행합니다)
    ```
 
-7. **Re-verification (if needed):**
-   - User fixes issues
-   - Requests re-verification
-   - Phase 3 runs again (focused on fixed items)
-   - Pass → Complete, Fail → Iterate
+### Step 2: Revision Loop (If Issues Found)
+
+**When:** Verification found issues that need fixing
+
+**Process:**
+1. **User Fixes Issues:**
+   - User applies fixes based on verification report
+   - User may ask clarifying questions
+
+2. **User Requests Re-verification:**
+   ```
+   [User says]: "수정했습니다" or "다시 검증해주세요"
+   ```
+
+3. **Run Verification Again:**
+   - Return to Step 1: Initial Verification
+   - Focus on previously failed items
+   - Create new verification report with incremented version
+   - Save as `{date}-verification-v{n+1}.md`
+
+4. **Iterate Until Pass:**
+   - Repeat Step 2 until verification passes
+   - Each iteration creates new versioned report
+
+### Step 3: Final Confirmation
+
+**When:** Verification has passed (✅)
+
+**Process:**
+1. **Agent Asks User:**
+   ```
+   [To user]:
+   ✅ 검증을 통과했습니다!
+
+   구현이 완료되었습니까? 수정할 부분이 있습니까?
+
+   - "완료" → 프로젝트를 마무리하고 에셋을 정리하겠습니다
+   - "수정 필요" → 어떤 부분을 수정하실지 알려주세요
+   ```
+
+2. **User Responses:**
+
+   **If "완료" or confirms completion:**
+   → Proceed to Step 4: Asset Organization
+
+   **If requests changes:**
+   → Ask what to change
+   → Determine if Phase 2A, 2B, or just re-implementation needed
+   → Return to appropriate phase
+
+### Step 4: Asset Organization (When User Confirms Completion)
+
+**When:** User confirms "완료" in Step 3
+
+**Process:**
+1. **Update Component Registry (All 3 Locations):**
+   ```
+   [Agent updates]:
+   1. Design System artifact (Section 7)
+   2. component-library/registry.json
+   3. component-library/COMPONENTS.md
+
+   Adds/updates:
+   - Components created in this project
+   - "used_in" field with this screen name
+   - File paths and design tokens
+   ```
+
+2. **Generate/Update metadata.json:**
+   ```json
+   {
+     "project_name": "login-screen",
+     "status": "completed",
+     "created_date": "2025-11-22",
+     "last_updated": "2025-11-23",
+     "phase": "completed",
+     "framework": "React",
+     "design_system_version": "v1.0",
+     "versions": {
+       "proposal": "v1",
+       "implementation": "v1",
+       "verification": "v2"
+     },
+     "dependencies": [],
+     "components_created": [
+       "PrimaryButton",
+       "EmailInput"
+     ]
+   }
+   ```
+
+3. **Update projects/INDEX.md:**
+   ```markdown
+   ## Completed Projects
+   - **login-screen** (Completed) - Finished: 2025-11-23
+   ```
+
+4. **Create Final Summary:**
+   ```
+   [To user in Korean]:
+   🎉 login-screen 프로젝트가 완료되었습니다!
+
+   생성된 파일:
+   - projects/login-screen/20251122-proposal-v1.md
+   - projects/login-screen/20251122-implementation-v1.md
+   - projects/login-screen/20251123-verification-v2.md
+   - projects/login-screen/metadata.json
+
+   생성된 컴포넌트:
+   - PrimaryButton (component-library/react/Button.tsx)
+   - EmailInput (component-library/react/Input.tsx)
+
+   다음 단계:
+   - 다른 화면/기능 개선? (→ Phase 2A로)
+   - 디자인 토큰 내보내기?
+   - 세션 종료?
+   ```
+
+5. **Mark Project as COMPLETED:**
+   - Set `metadata.json` status to "completed"
+   - Move project from "Active" to "Completed" in INDEX.md
+   - Ensure all assets are preserved
 
 **Orchestrator's Role:**
-- Route to Phase 3 guide
-- Ensure sub-agent reads `references/phase3-verification.md`
-- Provide ONLY: Proposal + Implementation Guide + User's code
-- Ensure Verification Report is in Korean
-- Handle pass/fail routing
-- Support re-verification loops
+- Verify all 3 Component Registry locations are updated
+- Verify metadata.json is created/updated
+- Verify projects/INDEX.md is updated
+- Provide clear completion summary
+- Ask user about next steps
+
+## Session Completion
+
+When user wants to end the session:
+
+### Completion Checklist
+```
+[To user]:
+세션을 종료하기 전 확인:
+
+✅ 모든 프로젝트가 Phase 3 Step 4를 완료했습니까?
+✅ Component Registry가 업데이트되었습니까?
+✅ projects/INDEX.md가 최신 상태입니까?
+✅ metadata.json이 모든 프로젝트에 생성되었습니까?
+
+미완료 프로젝트:
+- [list any projects not in "completed" status]
+
+이대로 세션을 종료하시겠습니까?
+```
+
+### Asset Preservation
+- All documents saved in `projects/` directories
+- Component Registry synchronized (3 locations)
+- Design System saved in `design-systems/`
+- Components saved in `component-library/`
+- INDEX.md reflects current status
+
+### Next Session Resumption
+```
+[To user]:
+다음 세션에서 재개하려면:
+
+1. Design System 위치 알려주기:
+   design-systems/[product]-design-system.md
+
+2. 이어서 작업할 프로젝트 알려주기:
+   projects/[screen-name]/
+
+3. 또는 projects/INDEX.md를 보고 선택
+
+모든 진행 상황이 저장되어 있습니다!
+```
 
 ## Context Management
 
@@ -368,7 +745,7 @@ CRITICAL - Load ONLY these contexts:
 
 DO NOT LOAD:
 - Full Design System document
-- Original UI screenshots/code  
+- Original UI screenshots/code
 - Phase 2A analysis notes
 
 Follow those instructions completely.
@@ -410,36 +787,63 @@ Only load the specific reference guide needed for each phase.
    - **Saved to file: `./design-systems/[product]-design-system.md`**
    - Referenced in Phase 2A for analysis
    - Specific tokens referenced in Phase 2B (via Proposal)
-   - Updated when new components are added (in Phase 2B)
+   - Updated when new components are added (in Phase 2B & Phase 3 Step 4)
    - Never recreate, only update
 
 2. **Improvement Proposal Artifact:**
    - Created in Phase 2A
+   - **Saved to: `projects/{screen-name}/{date}-proposal-v{n}.md`**
    - Used as Single Source of Truth in Phase 2B
    - Contains all context Phase 2B needs
 
-3. **Component Registry:**
+3. **Implementation Guide Artifact:**
+   - Created in Phase 2B
+   - **Saved to: `projects/{screen-name}/{date}-implementation-v{n}.md`**
+   - Used in Phase 3 for verification
+
+4. **Verification Reports:**
+   - Created in Phase 3 Step 1
+   - **Saved to: `projects/{screen-name}/{date}-verification-v{n}.md`**
+   - Versioned for each re-verification
+
+5. **Component Registry (3 Locations):**
    - Initialized in Phase 1 (empty)
    - Checked in Phase 2A for reuse
    - Updated in Phase 2B when components are implemented
-   - Lives in section 7 of Design System artifact
+   - **Final update in Phase 3 Step 4**
+   - Lives in:
+     - Design System artifact (Section 7)
+     - `component-library/registry.json`
+     - `component-library/COMPONENTS.md`
 
-4. **Component Library Files:**
+6. **Component Library Files:**
    - **Location: `./component-library/[framework]/[Component].[ext]`**
    - Created in Phase 2B when new components are implemented
    - Searched in Phase 2A for reusability
    - Managed by `scripts/manage_components.py`
-   - **Documentation: `./component-library/COMPONENTS.md`**
-   - **Registry: `./component-library/registry.json`**
 
-5. **Session Flow:**
+7. **Project Metadata:**
+   - **Location: `projects/{screen-name}/metadata.json`**
+   - Created/updated in Phase 2A
+   - Updated throughout Phase 2B and Phase 3
+   - Final update in Phase 3 Step 4
+
+8. **Project Index:**
+   - **Location: `projects/INDEX.md`**
+   - Updated when projects are created (Phase 2A)
+   - Updated when projects are completed (Phase 3 Step 4)
+   - Shows status of all projects
+
+9. **Session Flow:**
    ```
-   Phase 1 → [Approval + Save Design System File] → 
-   Phase 2A (Screen A) → [Check Component Library] → [Approval] → 
-   Phase 2B (Screen A) → [Save Components to Library] → [Implementation] →
-   Phase 3 (Screen A) → [Pass: Complete / Fail: Fix & Re-verify] →
-   Phase 2A (Screen B) → [Reuse Components from Library] → [Approval] → 
-   Phase 2B (Screen B) → ...
+   Phase 1 → [Approval + Save Design System File] →
+   Phase 2A (Screen A) → [Check Component Library] → [Approval] → [Save Proposal] →
+   Phase 2B (Screen A) → [Save Components to Library] → [Save Implementation] → [User implements] →
+   Phase 3 Step 1 (Screen A) → [Verify + Save Report] →
+   Phase 3 Step 2 (if issues) → [Fix + Re-verify + Save v2 Report] →
+   Phase 3 Step 3 (Screen A) → [User confirms "완료"] →
+   Phase 3 Step 4 (Screen A) → [Update Registry + metadata + INDEX] → [COMPLETED] →
+   Phase 2A (Screen B) → [Reuse Components from Library] → ...
    ```
 
 **Never:**
@@ -448,7 +852,9 @@ Only load the specific reference guide needed for each phase.
 - Skip Phase 2A and go directly to Phase 2B
 - Load full Design System in Phase 2B or Phase 3 (use Proposal/Guide references)
 - Skip Phase 3 verification (quality assurance)
-- **Forget to save components to library (loses reusability)**
+- **Skip Phase 3 Step 4 asset organization (loses Component Registry updates)**
+- **Forget to save documents with proper naming convention**
+- **Mark project complete before user confirms in Step 3**
 
 ## Design Token Export (Optional)
 
@@ -470,7 +876,7 @@ python /home/claude/ui-renewal/scripts/export_design_tokens.py \
   [path-to-design-system.md] --format [json|css|tailwind|flutter]
 ```
 
-Output will be `design-tokens.[ext]` in the same directory.
+Output will be `design-tokens.[ext]` in `design-systems/` directory.
 
 ## Quality Gates
 
@@ -480,6 +886,7 @@ Output will be `design-tokens.[ext]` in the same directory.
 - ✅ Component Registry section exists
 - ✅ User has approved
 - ✅ Artifact can be referenced in Phase 2A
+- ✅ **Design System saved to `design-systems/` directory**
 - ✅ All user-facing communication in Korean
 
 **Do not proceed to Phase 2A until these are met.**
@@ -492,6 +899,8 @@ Output will be `design-tokens.[ext]` in the same directory.
 - ✅ Improvement direction determined
 - ✅ All changes mapped to Design System tokens
 - ✅ Improvement Proposal artifact created
+- ✅ **Proposal saved to `projects/{screen-name}/{date}-proposal-v{n}.md`**
+- ✅ **metadata.json created/updated**
 - ✅ User has approved the direction
 - ✅ All user-facing communication in Korean
 
@@ -504,13 +913,18 @@ Output will be `design-tokens.[ext]` in the same directory.
 - ✅ Framework-specific code examples included
 - ✅ Accessibility requirements met
 - ✅ Component Registry updated in Design System
+- ✅ **Components saved to `component-library/[framework]/`**
 - ✅ Implementation Guide artifact created
+- ✅ **Implementation saved to `projects/{screen-name}/{date}-implementation-v{n}.md`**
+- ✅ **metadata.json updated**
 - ✅ User confirms guide is complete
 - ✅ All user-facing communication in Korean
 
 **Do not proceed to Phase 3 until implementation is complete.**
 
 ### Phase 3 Quality Gate (per screen):
+
+**Step 1: Initial Verification**
 - ✅ User has implemented code ready
 - ✅ Improvement Proposal and Implementation Guide loaded
 - ✅ Design intent verification completed
@@ -519,28 +933,47 @@ Output will be `design-tokens.[ext]` in the same directory.
 - ✅ Accessibility requirements checked
 - ✅ Issues categorized by severity
 - ✅ Verification Report created (in Korean)
+- ✅ **Verification saved to `projects/{screen-name}/{date}-verification-v{n}.md`**
 - ✅ Specific fix guidance provided (in Korean)
 - ✅ Pass/Fail determination clear
 
-**If PASS:** Mark screen complete, proceed to next.  
-**If FAIL:** User fixes issues, re-run Phase 3.
+**Step 2: Revision Loop**
+- ✅ Each re-verification creates new versioned report
+- ✅ Focused on previously failed items
+- ✅ Clear progress tracking
+
+**Step 3: Final Confirmation**
+- ✅ User explicitly confirms "완료" or completion
+- ✅ All requested changes addressed
+- ✅ No outstanding issues
+
+**Step 4: Asset Organization**
+- ✅ Component Registry updated in all 3 locations
+- ✅ metadata.json updated with "completed" status
+- ✅ projects/INDEX.md updated (moved to "Completed")
+- ✅ Final summary provided to user
+- ✅ All assets preserved and organized
+
+**If PASS Step 3:** Proceed to Step 4 Asset Organization.
+**If FAIL Step 1/2:** User fixes issues, re-run verification (Step 2).
+**If changes requested in Step 3:** Return to appropriate phase.
 
 ## Handling Edge Cases
 
 ### User wants to skip Phase 1:
 ```
-I understand you want to jump straight to improvements. However, without 
+I understand you want to jump straight to improvements. However, without
 a Design System, we risk inconsistency and multiple rounds of revisions.
 
-Would you like me to create a lightweight Design System first? 
+Would you like me to create a lightweight Design System first?
 It will take ~10 minutes but ensure all improvements work together.
 ```
 
 ### User provides external design system:
 ```
-Great! Please share your design system document. 
+Great! Please share your design system document.
 
-I'll convert it to our artifact format so I can reference it 
+I'll convert it to our artifact format so I can reference it
 consistently during improvements.
 ```
 
@@ -557,7 +990,7 @@ Which would you prefer?
 
 ### User wants to change approved Design System:
 ```
-I can update the Design System. Note that this may affect 
+I can update the Design System. Note that this may affect
 previously improved screens:
 
 Impacted: [List screens that used the changing element]
@@ -617,7 +1050,7 @@ Phase 3 검증은 선택이 아닌 필수 단계입니다.
 [검증 보고서 제공 - 한글]
 
 옵션:
-1. 보고서의 수정 사항 적용 후 재검증 (권장)
+1. 보고서의 수정 사항 적용 후 재검증 (권장) → Step 2
 2. Phase 2A로 돌아가서 개선 방향 재검토
 3. Phase 2B로 돌아가서 구현 가이드 수정
 
@@ -638,11 +1071,41 @@ Phase 3 검증은 선택이 아닌 필수 단계입니다.
 
 ### Code only partially matches framework:
 ```
-구현 코드가 Implementation Guide의 프레임워크([Framework A])와 
+구현 코드가 Implementation Guide의 프레임워크([Framework A])와
 다른 프레임워크([Framework B])로 작성되었습니다.
 
 현재 코드 기준으로 검증하되,
 필요하시면 [Framework B]용 가이드를 새로 제공할 수 있습니다.
+```
+
+### User says "완료" but verification hasn't passed:
+```
+아직 검증을 통과하지 못했습니다.
+
+수정이 필요한 부분:
+[List issues from last verification]
+
+옵션:
+1. 이슈를 수정하고 재검증 받기 (권장)
+2. 이슈를 알고 있지만 일단 완료 처리
+3. Phase 2A로 돌아가서 방향 수정
+
+어떻게 하시겠어요?
+```
+
+### User wants to skip Phase 3 Step 4:
+```
+Phase 3 Step 4 (Asset Organization)는 필수입니다.
+
+이 단계에서:
+- Component Registry 최종 업데이트 (3곳)
+- metadata.json 완료 표시
+- projects/INDEX.md 업데이트
+- 재사용 가능한 에셋 정리
+
+이 단계를 건너뛰면 다음 프로젝트에서 컴포넌트를 재사용할 수 없습니다.
+
+잠시만 기다려주시면 빠르게 완료하겠습니다.
 ```
 
 ## Success Criteria
@@ -651,6 +1114,7 @@ Phase 3 검증은 선택이 아닌 필수 단계입니다.
 - Complete, usable Design System artifact exists
 - User is satisfied with design direction
 - Foundation is ready for Phase 2A
+- **Design System saved to file**
 - All communication in Korean
 
 **Phase 2A Success:**
@@ -658,6 +1122,8 @@ Phase 3 검증은 선택이 아닌 필수 단계입니다.
 - User approves the direction
 - All changes mapped to Design System tokens
 - Dependencies clear
+- **Proposal saved with proper naming convention**
+- **metadata.json created/updated**
 - Ready for Phase 2B
 - All communication in Korean
 
@@ -666,16 +1132,20 @@ Phase 3 검증은 선택이 아닌 필수 단계입니다.
 - Specifications are precise and developer-ready
 - Only used tokens from Proposal (minimal context)
 - Component Registry updated
+- **Implementation saved with proper naming convention**
+- **Components saved to component-library/**
+- **metadata.json updated**
 - User confirms guide is complete
 - All communication in Korean
 
 **Phase 3 Success:**
-- Verification Report created (in Korean)
-- Design intent verified
-- Specification compliance checked
-- Code quality verified
+- **Step 1:** Verification Report created (in Korean), design intent verified, specification compliance checked, code quality verified
+- **Step 2:** All issues resolved through revision loop (if needed)
+- **Step 3:** User explicitly confirms completion
+- **Step 4:** Component Registry synchronized (3 locations), metadata.json marked "completed", INDEX.md updated, final summary provided
 - Clear pass/fail determination
 - Actionable fix guidance provided (in Korean)
+- **All documents saved with proper naming convention**
 
 **Overall Success:**
 - User has consistent, improved UI across product
@@ -683,6 +1153,8 @@ Phase 3 검증은 선택이 아닌 필수 단계입니다.
 - Clear implementation path for developers
 - Efficient context usage throughout process
 - Quality assurance through verification
+- **All assets organized and preserved for future sessions**
+- **Component Registry enables component reuse**
 - **All user communication in Korean**
 
 ## Language Rules
@@ -717,6 +1189,8 @@ Phase 3 검증은 선택이 아닌 필수 단계입니다.
 - ✅ Issue descriptions
 - ✅ Fix guidance
 - ✅ Evaluation comments
+- ✅ Step 3 confirmation questions
+- ✅ Step 4 completion summary
 
 ### English OK (Internal):
 
@@ -726,6 +1200,7 @@ Phase 3 검증은 선택이 아닌 필수 단계입니다.
 - ✅ CSS/styling code
 - ✅ Framework-specific terminology
 - ✅ Internal processing notes
+- ✅ File names and paths
 
 ### Example Transformations:
 

@@ -1,0 +1,33 @@
+{
+  "screenName": "email-signup-screen",
+  "framework": "Flutter",
+  "createdDate": "2025-11-22",
+  "lastUpdated": "2025-11-22",
+  "designSystem": "Gabium Design System v1.0",
+  "documents": [
+    {
+      "type": "proposal",
+      "version": 1,
+      "date": "2025-11-22",
+      "file": "20251122-proposal-v1.md",
+      "approved": true
+    },
+    {
+      "type": "implementation",
+      "version": 1,
+      "date": "2025-11-22",
+      "file": "20251122-implementation-v1.md"
+    }
+  ],
+  "components": [
+    "AuthHeroSection",
+    "GabiumTextField",
+    "GabiumButton",
+    "PasswordStrengthIndicator",
+    "ConsentCheckbox",
+    "GabiumToast"
+  ],
+  "status": "completed",
+  "completedDate": "2025-11-22",
+  "iterations": 1
+}

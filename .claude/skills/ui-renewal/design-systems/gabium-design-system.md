@@ -563,9 +563,18 @@ This section tracks all designed components for reuse and consistency.
 
 | Component | Created Date | Used In | Notes |
 |-----------|--------------|---------|-------|
-| *Components will be added during Phase 2 implementation* | - | - | - |
+| AuthHeroSection | 2025-11-22 | Email Signup, Email Signin | Welcoming hero with title, subtitle, optional icon. Reusable for all auth screens. |
+| GabiumTextField | 2025-11-22 | Email Signup, Email Signin | Branded text input with label, validation, focus/error states. Height 48px. |
+| GabiumButton | 2025-11-22 | Email Signup, Email Signin | Button with Primary/Ghost variants. Small/Medium/Large sizes. Loading state support. |
+| PasswordStrengthIndicator | 2025-11-22 | Email Signup | Visual password strength indicator with semantic colors (Weak/Medium/Strong). |
+| ConsentCheckbox | 2025-11-22 | Email Signup | Styled checkbox with required/optional badge. 44x44px touch area. |
+| GabiumToast | 2025-11-22 | Email Signup, Email Signin | Toast notification with Error/Success/Warning/Info variants. Replaces SnackBar. |
 
-**Add new components here as they are created in Phase 2.**
+**Component Files:**
+- Design System: `.claude/skills/ui-renewal/design-systems/gabium-design-system.md`
+- Component Library Docs: `.claude/skills/ui-renewal/component-library/COMPONENTS.md`
+- Flutter Implementation: `lib/features/authentication/presentation/widgets/`
+- Component Backup: `.claude/skills/ui-renewal/component-library/flutter/`
 
 ---
 
