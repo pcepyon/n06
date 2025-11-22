@@ -454,20 +454,89 @@ Add to Design System Section 7:
 - Did not make design decisions
 - Stayed within Proposal scope
 
-### Step 6: Update Component Registry
+### Step 6: Save Components & Update Registry
+
+#### 6.1 Save Component Code to Library
+
+For each new component created, save to component library:
+
+```bash
+# Create temporary component file first
+cat > /tmp/[ComponentName].[ext] << 'EOF'
+[component code from Implementation Guide]
+EOF
+
+# Add to component library
+python scripts/manage_components.py add \
+  "[ComponentName]" \
+  "[framework]" \
+  "/tmp/[ComponentName].[ext]" \
+  "[used-in: feature/screen name]" \
+  "[notes: special considerations]"
+```
+
+**Example:**
+```bash
+# Save PrimaryButton React component
+cat > /tmp/PrimaryButton.jsx << 'EOF'
+export default function PrimaryButton({ children, onClick, disabled, loading }) {
+  return (
+    <button
+      className="primary-button"
+      onClick={onClick}
+      disabled={disabled || loading}
+    >
+      {loading ? <Spinner /> : children}
+    </button>
+  );
+}
+EOF
+
+python scripts/manage_components.py add \
+  "PrimaryButton" \
+  "react" \
+  "/tmp/PrimaryButton.jsx" \
+  "Login Screen" \
+  "Large variant with loading state"
+```
+
+**This creates:**
+- `./component-library/react/PrimaryButton.jsx` (actual code file)
+- Entry in `./component-library/registry.json` (metadata)
+- Documentation in `./component-library/COMPONENTS.md` (auto-generated)
+
+#### 6.2 Update Design System Component Registry
 
 **In the Design System artifact (Section 7), add new components:**
 
 ```markdown
-| Component | Created Date | Used In | Notes |
-|-----------|--------------|---------|-------|
-| [Component Name] | 2024-11-22 | [Feature name] | [Brief description, any variants] |
+| Component | Created Date | Used In | Frameworks | Notes |
+|-----------|--------------|---------|------------|-------|
+| [ComponentName] | 2024-11-22 | [Feature] | React, Flutter | [Description, variants] |
 ```
 
 **Include component summary:**
-- Token reference
+- Key specifications (size, colors, states)
+- Token references used
 - Variants (if any)
-- Special considerations
+- File location: `./component-library/[framework]/[ComponentName].[ext]`
+
+#### 6.3 Korean Message to User
+
+```
+✅ 컴포넌트가 라이브러리에 저장되었습니다!
+
+저장된 컴포넌트:
+- [ComponentName1] ([framework])
+  위치: ./component-library/[framework]/[ComponentName1].[ext]
+  
+- [ComponentName2] ([framework])
+  위치: ./component-library/[framework]/[ComponentName2].[ext]
+
+📚 전체 컴포넌트 목록: ./component-library/COMPONENTS.md
+
+다음 Phase 2A 작업 시 이 컴포넌트들을 재사용할 수 있습니다.
+```
 
 ### Step 7: Present to User
 

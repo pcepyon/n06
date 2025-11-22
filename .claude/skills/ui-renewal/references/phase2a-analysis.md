@@ -45,11 +45,40 @@ What else will need updating?
 - [Screen 2]: [What needs updating]
 ```
 
-### Step 3: Component Registry Check
+### Step 3: Component Registry & Library Check
 
-Check Design System Section 7 - Component Registry:
-- Can we reuse existing components?
-- Are there similar patterns to match?
+**Check both Component Registry AND component library files:**
+
+#### Registry Check
+Check Design System Section 7 - Component Registry for documented components.
+
+#### Library Search
+```bash
+# List all available components
+python scripts/manage_components.py list [framework]
+
+# Get specific component
+python scripts/manage_components.py get [ComponentName] [framework]
+```
+
+**If reusable component found:**
+```
+✅ 재사용 가능한 컴포넌트 발견!
+
+컴포넌트: [ComponentName]
+프레임워크: [framework]
+위치: ./component-library/[framework]/[ComponentName].[ext]
+
+재사용 옵션:
+- 그대로 사용
+- 변형 버전 생성
+- 새로 제작
+```
+
+**In Improvement Proposal, note:**
+- Existing component to reuse (if any)
+- Adaptations needed
+- Or mark as new component
 
 ### Step 4: Current UI Analysis
 

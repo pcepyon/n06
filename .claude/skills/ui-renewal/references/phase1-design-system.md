@@ -185,7 +185,7 @@ After creating the Design System artifact, provide a **concise proposal** to the
 ### Step 5: Handle Feedback
 
 User may:
-- **Approve:** Proceed to export tokens (optional)
+- **Approve:** Proceed to export tokens (optional) and save Design System file
 - **Request changes:** Update specific sections
 - **Reject direction:** Rethink approach with new guidance
 
@@ -198,6 +198,35 @@ User may:
 - Understand what didn't work
 - Ask for specific direction preferences
 - Create revised version
+
+### Step 6: Save Design System File
+
+**After user approval, ALWAYS save Design System to file:**
+
+```bash
+# Save Design System artifact to markdown file
+# File location: ./design-systems/[product-name]-design-system.md
+
+mkdir -p ./design-systems
+cp [artifact-content] ./design-systems/[product-name]-design-system.md
+```
+
+**Korean message to user:**
+```
+✅ 디자인 시스템이 승인되었습니다!
+
+저장 위치: ./design-systems/[product-name]-design-system.md
+
+다음 단계:
+1. 디자인 토큰 내보내기 (선택)
+2. Phase 2A로 진행하여 화면 개선 시작
+```
+
+**This file will be:**
+- Referenced in all Phase 2A iterations
+- Updated when new components are added
+- Version controlled by user
+- Source of truth for the project
 
 ## Quality Standards
 
@@ -226,11 +255,13 @@ Before presenting the Design System, verify:
 
 ## Export Design Tokens (Optional)
 
-After approval, offer to export design tokens:
+After Design System file is saved, offer to export design tokens:
 
 ```
-Would you like me to export the design tokens in a specific format?
-- JSON (universal)
+디자인 토큰을 개발용 형식으로 내보낼까요?
+
+지원 형식:
+- JSON (범용)
 - CSS Variables
 - Tailwind Config
 - Flutter Theme
@@ -238,7 +269,17 @@ Would you like me to export the design tokens in a specific format?
 
 If user agrees, run:
 ```bash
-python scripts/export_design_tokens.py [design-system-artifact.md] --format [chosen-format]
+python scripts/export_design_tokens.py ./design-systems/[product-name]-design-system.md --format [chosen-format]
+```
+
+Output location: `./design-systems/design-tokens.[ext]`
+
+**Korean message:**
+```
+✅ 디자인 토큰을 [format]으로 내보냈습니다.
+파일: ./design-systems/design-tokens.[ext]
+
+이제 개발에 바로 사용할 수 있습니다.
 ```
 
 ## Common Pitfalls to Avoid

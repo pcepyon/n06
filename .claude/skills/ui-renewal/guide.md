@@ -1,18 +1,17 @@
-# UI Renewal Skill v3.0 - 사용 가이드
+# UI Renewal Skill v3.1 - 사용 가이드
 
-## 주요 업데이트 (v3.0)
+## 주요 업데이트 (v3.1)
 
-✅ **Phase 3: 검증 및 품질 체크 추가**
-- 기획 의도 충족도 검증
-- 명세 준수도 확인
-- 린트/빌드 오류 검사
-- 접근성 요구사항 검증
-- 검증 보고서 자동 생성 (한글)
+✅ **파일 관리 시스템 추가**
+- Design System을 실제 .md 파일로 자동 저장
+- 컴포넌트 코드를 라이브러리에 저장 및 관리
+- 재사용 가능한 컴포넌트 검색 및 활용
 
-✅ **한글 출력 규칙 적용**
-- 모든 사용자 대면 출력은 한글로
-- 코드 예시와 기술 문서는 영어 허용
-- 일관된 사용자 경험 제공
+✅ **컴포넌트 라이브러리**
+- 생성된 모든 컴포넌트 자동 저장
+- 프레임워크별 분류 (React/Flutter/Vue)
+- 컴포넌트 검색 및 재사용
+- 자동 문서화 (COMPONENTS.md)
 
 ## 전체 워크플로우
 
@@ -59,8 +58,9 @@ Phase 3: 검증 및 품질 체크
 
 **출력:**
 - Design System artifact
+- **Design System 파일 저장: `./design-systems/[제품명]-design-system.md`**
 - Component Registry 초기화
-- 디자인 토큰 내보내기 가능
+- **디자인 토큰 내보내기 (선택): `./design-systems/design-tokens.*`**
 
 **예시:**
 ```
@@ -76,6 +76,12 @@ AI: 디자인 시스템을 생성하겠습니다.
 - Border Radius: 중간 크기(8px) - 부드러운 느낌
 
 [전체 Design System artifact 제공]
+
+✅ 디자인 시스템이 승인되었습니다!
+
+저장 위치: ./design-systems/healthcare-app-design-system.md
+
+디자인 토큰을 내보낼까요? (JSON/CSS/Tailwind/Flutter)
 ```
 
 ---
@@ -93,13 +99,16 @@ AI: 디자인 시스템을 생성하겠습니다.
 1. 의존성 분석
    - 선행 작업 필요성 체크
    - 영향받는 화면 파악
-2. Component Registry 체크
-3. 현재 UI 분석
+2. **컴포넌트 라이브러리 검색**
+   - 재사용 가능한 컴포넌트 확인
+   - `python scripts/manage_components.py list`
+3. Component Registry 체크
+4. 현재 UI 분석
    - 브랜드 일관성
    - 시각적 품질
    - UX 품질
-4. 개선 방향 도출
-5. Design System 토큰 매핑
+5. 개선 방향 도출
+6. Design System 토큰 매핑
 
 **출력:**
 - **Improvement Proposal artifact**
@@ -164,7 +173,10 @@ AI: 로그인 화면을 분석하겠습니다.
 3. 레이아웃 구조 정의
 4. 인터랙션 동작 명세
 5. 프레임워크별 코드 예시
-6. Component Registry 업데이트
+6. **컴포넌트를 라이브러리에 저장**
+   - `./component-library/[framework]/[Component].[ext]`
+   - `python scripts/manage_components.py add`
+7. Component Registry 업데이트
 
 **출력:**
 - **Implementation Guide artifact**
@@ -173,6 +185,12 @@ AI: 로그인 화면을 분석하겠습니다.
   - 모든 인터랙션 상태
   - React/Flutter/Vue 코드
   - 접근성 체크리스트
+- **컴포넌트 파일 저장**
+  - `./component-library/react/[Component].jsx`
+  - `./component-library/flutter/[Component].dart`
+  - `./component-library/vue/[Component].vue`
+- **컴포넌트 문서**
+  - `./component-library/COMPONENTS.md` (자동 생성)
 
 **예시:**
 ```
@@ -404,23 +422,38 @@ Phase 3: VERIFY (제대로 되었는지)
 1. "헬스케어 앱 디자인 시스템 만들어줘"
    → Phase 1 실행
    → Design System artifact 생성
+   → 파일 저장: ./design-systems/healthcare-app-design-system.md
+   → 토큰 내보내기: ./design-systems/design-tokens.json
    → 승인
 
 2. "로그인 화면 만들어줘"
    → Phase 2A: 분석 및 제안
-   → Phase 2B: 구현 가이드
+   → Phase 2B: 구현 가이드 + 컴포넌트 저장
+     - ./component-library/react/PrimaryButton.jsx
+     - ./component-library/react/LoginForm.jsx
    → 사용자 구현
    → Phase 3: 검증
    → ✅ 통과
 
 3. "대시보드 화면 만들어줘"
-   → Phase 2A: 기존 컴포넌트 재사용 확인
-   → Phase 2B: 구현 가이드
+   → Phase 2A: 
+     ✅ 재사용 가능 컴포넌트 발견!
+     - PrimaryButton (로그인 화면에서 사용)
+     - 그대로 재사용 가능
+   → Phase 2B: 
+     - PrimaryButton 재사용
+     - DashboardCard (새 컴포넌트) 생성 및 저장
    → 사용자 구현
    → Phase 3: 검증
-   → ⚠️ 수정 필요
-   → 수정 후 재검증
    → ✅ 통과
+
+4. "설정 화면 만들어줘"
+   → Phase 2A:
+     ✅ 재사용 가능 컴포넌트:
+     - PrimaryButton
+     - LoginForm의 Input 컴포넌트
+   → Phase 2B: 대부분 재사용, 일부만 새로 생성
+   → 개발 시간 50% 단축!
 ```
 
 ### 시나리오 2: 기존 UI 개선
@@ -441,13 +474,82 @@ Phase 3: VERIFY (제대로 되었는지)
 Phase 1 완료 후 언제든지:
 
 ```bash
-python scripts/export_design_tokens.py design-system.md --format json
-python scripts/export_design_tokens.py design-system.md --format css
-python scripts/export_design_tokens.py design-system.md --format tailwind
-python scripts/export_design_tokens.py design-system.md --format flutter
+python scripts/export_design_tokens.py ./design-systems/[제품명]-design-system.md --format json
+python scripts/export_design_tokens.py ./design-systems/[제품명]-design-system.md --format css
+python scripts/export_design_tokens.py ./design-systems/[제품명]-design-system.md --format tailwind
+python scripts/export_design_tokens.py ./design-systems/[제품명]-design-system.md --format flutter
 ```
 
-출력: `design-tokens.[확장자]`
+출력: `./design-systems/design-tokens.[확장자]`
+
+## 컴포넌트 라이브러리 관리
+
+### 컴포넌트 목록 보기
+
+```bash
+# 전체 컴포넌트 목록
+python scripts/manage_components.py list
+
+# 특정 프레임워크만
+python scripts/manage_components.py list react
+python scripts/manage_components.py list flutter
+python scripts/manage_components.py list vue
+```
+
+### 특정 컴포넌트 조회
+
+```bash
+# 컴포넌트 정보만
+python scripts/manage_components.py get PrimaryButton
+
+# 특정 프레임워크 코드 포함
+python scripts/manage_components.py get PrimaryButton react
+python scripts/manage_components.py get LoginForm flutter
+```
+
+### 수동으로 컴포넌트 추가
+
+```bash
+python scripts/manage_components.py add \
+  "ComponentName" \
+  "react" \
+  "./path/to/component.jsx" \
+  "Used in Login Screen" \
+  "Large variant with icon"
+```
+
+### 컴포넌트 문서 내보내기
+
+```bash
+python scripts/manage_components.py export
+```
+
+출력: `./component-library/COMPONENTS.md`
+
+### 디렉토리 구조
+
+```
+project/
+├── design-systems/
+│   ├── [제품명]-design-system.md      # Design System 파일
+│   ├── design-tokens.json              # 내보낸 토큰
+│   ├── design-tokens.css
+│   ├── design-tokens.tailwind.config.js
+│   └── design-tokens.app_theme.dart
+│
+└── component-library/
+    ├── registry.json                   # 컴포넌트 메타데이터
+    ├── COMPONENTS.md                   # 컴포넌트 문서
+    ├── react/
+    │   ├── PrimaryButton.jsx
+    │   ├── LoginForm.jsx
+    │   └── DashboardCard.jsx
+    ├── flutter/
+    │   ├── PrimaryButton.dart
+    │   └── LoginForm.dart
+    └── vue/
+        └── PrimaryButton.vue
+```
 
 ## 품질 게이트
 
@@ -483,6 +585,17 @@ python scripts/export_design_tokens.py design-system.md --format flutter
 - 표준화된 검증 절차
 - 재사용 가능한 디자인 시스템
 
+✅ **파일 기반 관리** ⭐
+- Design System 파일로 저장 및 버전 관리
+- 컴포넌트 라이브러리 체계적 관리
+- 팀 간 공유 및 협업 용이
+
+✅ **재사용성 극대화** ⭐
+- 생성된 모든 컴포넌트 자동 저장
+- 프레임워크별 분류 및 검색
+- 다음 작업 시 즉시 재사용
+- **개발 시간 30-50% 단축 가능**
+
 ## 설치 및 사용
 
 1. `ui-renewal.skill` 파일을 Claude Code에 업로드
@@ -491,7 +604,17 @@ python scripts/export_design_tokens.py design-system.md --format flutter
 
 ## 버전 히스토리
 
-**v3.0 (현재)**
+**v3.1 (현재)**
+- 파일 관리 시스템 추가
+  - Design System 자동 파일 저장
+  - 디자인 토큰 자동 내보내기
+- 컴포넌트 라이브러리 관리
+  - 생성된 컴포넌트 자동 저장
+  - 프레임워크별 분류 (React/Flutter/Vue)
+  - 컴포넌트 검색 및 재사용 (`manage_components.py`)
+  - 자동 문서화 (COMPONENTS.md)
+
+**v3.0**
 - Phase 3: 검증 및 품질 체크 추가
 - 한글 출력 규칙 적용
 - 린트/빌드 검사 기능

@@ -105,7 +105,9 @@ If not, I can create one first to ensure consistency.
    - Design System artifact created and approved
    - All sections filled with specific values (no placeholders)
    - Component Registry initialized
-   - Ready for Phase 2 reference
+   - **Design System saved to file: `./design-systems/[product]-design-system.md`**
+   - **Design tokens exported (optional): `./design-systems/design-tokens.*`**
+   - Ready for Phase 2A reference
 
 **Orchestrator's Role:**
 - Route to Phase 1 guide
@@ -208,6 +210,7 @@ If not, I can create one first to ensure consistency.
    - Define layout structure precisely
    - Specify all interactive states
    - Provide framework-specific implementation code
+   - **Save component code to library: `./component-library/[framework]/[Component].[ext]`**
    - Update Component Registry in Design System artifact
    - Create Implementation Guide artifact
 
@@ -402,8 +405,9 @@ Only load the specific reference guide needed for each phase.
 
 **Maintain state across phases:**
 
-1. **Design System Artifact:**
-   - Created in Phase 1
+1. **Design System Artifact & File:**
+   - Created in Phase 1 as artifact
+   - **Saved to file: `./design-systems/[product]-design-system.md`**
    - Referenced in Phase 2A for analysis
    - Specific tokens referenced in Phase 2B (via Proposal)
    - Updated when new components are added (in Phase 2B)
@@ -420,13 +424,22 @@ Only load the specific reference guide needed for each phase.
    - Updated in Phase 2B when components are implemented
    - Lives in section 7 of Design System artifact
 
-4. **Session Flow:**
+4. **Component Library Files:**
+   - **Location: `./component-library/[framework]/[Component].[ext]`**
+   - Created in Phase 2B when new components are implemented
+   - Searched in Phase 2A for reusability
+   - Managed by `scripts/manage_components.py`
+   - **Documentation: `./component-library/COMPONENTS.md`**
+   - **Registry: `./component-library/registry.json`**
+
+5. **Session Flow:**
    ```
-   Phase 1 → [Approval] → 
-   Phase 2A (Screen A) → [Approval] → Phase 2B (Screen A) → [Implementation] →
+   Phase 1 → [Approval + Save Design System File] → 
+   Phase 2A (Screen A) → [Check Component Library] → [Approval] → 
+   Phase 2B (Screen A) → [Save Components to Library] → [Implementation] →
    Phase 3 (Screen A) → [Pass: Complete / Fail: Fix & Re-verify] →
-   Phase 2A (Screen B) → [Approval] → Phase 2B (Screen B) → [Implementation] →
-   Phase 3 (Screen B) → ...
+   Phase 2A (Screen B) → [Reuse Components from Library] → [Approval] → 
+   Phase 2B (Screen B) → ...
    ```
 
 **Never:**
@@ -435,6 +448,7 @@ Only load the specific reference guide needed for each phase.
 - Skip Phase 2A and go directly to Phase 2B
 - Load full Design System in Phase 2B or Phase 3 (use Proposal/Guide references)
 - Skip Phase 3 verification (quality assurance)
+- **Forget to save components to library (loses reusability)**
 
 ## Design Token Export (Optional)
 
