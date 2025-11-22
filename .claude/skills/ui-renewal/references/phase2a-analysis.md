@@ -268,13 +268,29 @@ Example:
 
 **Save the Improvement Proposal to the project directory:**
 
-**Path:** `projects/{screen-name}/{YYYYMMDD}-proposal-v1.md`
+**CRITICAL - Use exact path below:**
+
+`.claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-proposal-v1.md`
 
 **Examples:**
-- `projects/email-signup-screen/20251122-proposal-v1.md`
-- `projects/password-reset-screen/20251123-proposal-v1.md`
+- ✅ `.claude/skills/ui-renewal/projects/email-signup-screen/20251122-proposal-v1.md`
+- ✅ `.claude/skills/ui-renewal/projects/password-reset-screen/20251123-proposal-v1.md`
+- ❌ `projects/email-signup-screen/...` (WRONG - saves to root/projects/)
 
-**If screen directory doesn't exist, create it first.**
+**Before saving:**
+```bash
+mkdir -p .claude/skills/ui-renewal/projects/{screen-name}
+```
+
+**After saving, verify:**
+```bash
+ls .claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-proposal-v1.md
+```
+
+If file not found, search for it:
+```bash
+find . -name "{YYYYMMDD}-proposal-v1.md" -type f
+```
 
 ### Step 8: Present Proposal to User
 
@@ -298,7 +314,7 @@ Provide concise summary:
 - Impact: [List or "Isolated"]
 
 ## 문서 저장 위치
-- 제안서: `projects/{screen-name}/{YYYYMMDD}-proposal-v1.md`
+- 제안서: `.claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-proposal-v1.md`
 
 ## Next Step
 Review full Improvement Proposal (artifact) and approve to proceed to implementation phase.

@@ -273,7 +273,14 @@ python scripts/update_component_registry.py \
 
 ### 4.2 Create/Update metadata.json
 
-Create `projects/{screen-name}/metadata.json`:
+**CRITICAL - Use exact path below:**
+
+`.claude/skills/ui-renewal/projects/{screen-name}/metadata.json`
+
+**Example:**
+- ✅ `.claude/skills/ui-renewal/projects/email-signup-screen/metadata.json`
+
+Create the metadata file:
 
 ```json
 {
@@ -334,7 +341,24 @@ python scripts/generate_project_index.py
 
 If user wants to keep verification history:
 
-Save to `projects/{screen-name}/{YYYYMMDD}-verification-v1.md`
+**CRITICAL - Use exact path below:**
+
+`.claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-verification-v1.md`
+
+**Examples:**
+- ✅ `.claude/skills/ui-renewal/projects/email-signup-screen/20251122-verification-v1.md`
+- ✅ `.claude/skills/ui-renewal/projects/email-signup-screen/20251122-verification-v2.md` (re-verification)
+- ❌ `projects/email-signup-screen/...` (WRONG - saves to root/projects/)
+
+**Before saving:**
+```bash
+mkdir -p .claude/skills/ui-renewal/projects/{screen-name}
+```
+
+**After saving, verify:**
+```bash
+ls .claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-verification-v1.md
+```
 
 ### 4.5 Create Final Summary (Korean)
 
@@ -351,10 +375,10 @@ Save to `projects/{screen-name}/{YYYYMMDD}-verification-v1.md`
 
 ## 생성된 문서
 
-- 📄 개선 제안서: `projects/{screen-name}/{YYYYMMDD}-proposal-v1.md`
-- 📄 구현 가이드: `projects/{screen-name}/{YYYYMMDD}-implementation-v1.md`
-- 📄 검증 보고서: `projects/{screen-name}/{YYYYMMDD}-verification-v1.md` (선택)
-- 📄 프로젝트 메타데이터: `projects/{screen-name}/metadata.json`
+- 📄 개선 제안서: `.claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-proposal-v1.md`
+- 📄 구현 가이드: `.claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-implementation-v1.md`
+- 📄 검증 보고서: `.claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-verification-v1.md` (선택)
+- 📄 프로젝트 메타데이터: `.claude/skills/ui-renewal/projects/{screen-name}/metadata.json`
 
 ## 생성/재사용된 컴포넌트
 

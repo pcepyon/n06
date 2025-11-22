@@ -7,6 +7,32 @@ description: Framework-agnostic UI renewal skill that maintains brand consistenc
 
 Orchestrate professional UI renewal through systematic design system creation and incremental improvements.
 
+## ⚠️ File Path Rule (CRITICAL)
+
+**ALL file operations MUST use full path starting with `.claude/skills/ui-renewal/`**
+
+**Correct Path Examples:**
+- ✅ `.claude/skills/ui-renewal/projects/login-screen/20251122-proposal-v1.md`
+- ✅ `.claude/skills/ui-renewal/design-systems/gabium-design-system.md`
+- ✅ `.claude/skills/ui-renewal/component-library/flutter/GabiumButton.dart`
+
+**Wrong Paths (NEVER use these):**
+- ❌ `projects/login-screen/...` (WRONG - creates in root/projects/)
+- ❌ `./projects/login-screen/...` (WRONG - relative path)
+- ❌ `../projects/login-screen/...` (WRONG - unpredictable location)
+
+**Always verify after saving:**
+```bash
+ls .claude/skills/ui-renewal/projects/{screen-name}/{filename}
+```
+
+If file not found, search for it:
+```bash
+find . -name "{filename}" -type f
+```
+
+---
+
 ## When to Use This Skill
 
 Trigger this skill when users request:

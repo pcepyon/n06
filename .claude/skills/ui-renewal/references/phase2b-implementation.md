@@ -190,18 +190,31 @@ Parent Container
 ### Step 4: Create Complete Implementation Guide
 
 **Document Storage:**
-Save to: `projects/{screen-name}/{YYYYMMDD}-implementation-v1.md`
+
+**CRITICAL - Use exact path below:**
+
+`.claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-implementation-v1.md`
 
 **Naming Convention:**
 - Format: `{YYYYMMDD}-{document-type}-v{version}.md`
 - Example: `20251122-implementation-v1.md`
 - Version increments if revisions needed
 
+**Examples:**
+- ✅ `.claude/skills/ui-renewal/projects/email-signup-screen/20251122-implementation-v1.md`
+- ✅ `.claude/skills/ui-renewal/projects/password-reset-screen/20251123-implementation-v1.md`
+- ❌ `projects/email-signup-screen/...` (WRONG - saves to root/projects/)
+
 **Directory Structure:**
-All documents for a screen/feature go in `projects/{screen-name}/`:
+All documents for a screen/feature go in `.claude/skills/ui-renewal/projects/{screen-name}/`:
 - `{YYYYMMDD}-proposal-v1.md` (Phase 2A)
 - `{YYYYMMDD}-implementation-v1.md` (Phase 2B)
 - `metadata.json` (auto-generated in Phase 3)
+
+**Before saving:**
+```bash
+mkdir -p .claude/skills/ui-renewal/projects/{screen-name}
+```
 
 **Structure the full guide as follows:**
 
@@ -472,13 +485,21 @@ Add to Design System Section 7:
 
 **Save the Implementation Guide to the project directory:**
 
-**Path:** `projects/{screen-name}/{YYYYMMDD}-implementation-v1.md`
+**CRITICAL - Use exact path below:**
+
+`.claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-implementation-v1.md`
 
 **Examples:**
-- `projects/email-signup-screen/20251122-implementation-v1.md`
-- `projects/password-reset-screen/20251123-implementation-v1.md`
+- ✅ `.claude/skills/ui-renewal/projects/email-signup-screen/20251122-implementation-v1.md`
+- ✅ `.claude/skills/ui-renewal/projects/password-reset-screen/20251123-implementation-v1.md`
+- ❌ `projects/email-signup-screen/...` (WRONG - saves to root/projects/)
 
 **The screen directory should already exist from Phase 2A.**
+
+**After saving, verify:**
+```bash
+ls .claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-implementation-v1.md
+```
 
 ### Step 7: Save Components & Update Registry
 
@@ -486,12 +507,32 @@ Add to Design System Section 7:
 
 For each new component created, save to component library:
 
+**CRITICAL - Component library path:**
+
+`.claude/skills/ui-renewal/component-library/{framework}/{ComponentName}.{ext}`
+
+**Examples:**
+- ✅ `.claude/skills/ui-renewal/component-library/flutter/GabiumButton.dart`
+- ✅ `.claude/skills/ui-renewal/component-library/react/Button.tsx`
+- ❌ `component-library/flutter/...` (WRONG - saves to root/)
+
+**Before saving:**
 ```bash
-# Component files go to project directory
+mkdir -p .claude/skills/ui-renewal/component-library/{framework}
+```
+
+**Process:**
+```bash
+# 1. Component files go to project directory first
 # Example: lib/features/authentication/presentation/widgets/
 
-# For backup/documentation, also copy to component-library:
-cp [project-component-file] .claude/skills/ui-renewal/component-library/[framework]/
+# 2. For backup/documentation, also copy to component-library:
+cp [project-component-file] .claude/skills/ui-renewal/component-library/{framework}/
+```
+
+**After saving, verify:**
+```bash
+ls .claude/skills/ui-renewal/component-library/{framework}/{ComponentName}.{ext}
 ```
 
 #### 7.2 Update Component Registry (Automated)
@@ -565,7 +606,7 @@ python .claude/skills/ui-renewal/scripts/update_component_registry.py \
 - [Framework] 코드 제공
 
 ## 문서 저장 위치
-- 구현 가이드: `projects/{screen-name}/{YYYYMMDD}-implementation-v1.md`
+- 구현 가이드: `.claude/skills/ui-renewal/projects/{screen-name}/{YYYYMMDD}-implementation-v1.md`
 
 ## 다음 단계
 1. 구현 가이드 검토
