@@ -29,14 +29,8 @@ class CopingGuideCard extends StatelessWidget {
     final showWarning = state?.showSeverityWarning ?? false;
 
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: const BorderSide(color: Color(0xFF4ADE80), width: 3),
-          bottom: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
-          left: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
-          right: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
-        ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -51,9 +45,20 @@ class CopingGuideCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(color: Color(0xFF4ADE80), width: 3),
+              bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+              left: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+              right: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+            ),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showWarning && onCheckSymptom != null) ...[
@@ -84,14 +89,12 @@ class CopingGuideCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Divider(
-              color: const Color(0xFFE2E8F0),
-              height: 1,
-              thickness: 1,
-            ),
+          const Divider(
+            color: Color(0xFFE2E8F0),
+            height: 1,
+            thickness: 1,
           ),
+          const SizedBox(height: 16),
           GabiumButton(
             text: '더 자세한 가이드 보기',
             onPressed: onDetailTap,
@@ -101,6 +104,8 @@ class CopingGuideCard extends StatelessWidget {
           const SizedBox(height: 16),
           if (onFeedback != null) FeedbackWidget(onFeedback: onFeedback!),
         ],
+          ),
+        ),
       ),
     );
   }
