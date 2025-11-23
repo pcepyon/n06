@@ -110,45 +110,51 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
             const SizedBox(height: 16), // md
 
             // Start Date Picker
-            Container(
-              height: 48,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: const Color(0xFFCBD5E1), // Neutral-300
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                color: const Color(0xFFFFFFFF),
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                title: const Text(
-                  '시작일',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF334155),
+            GestureDetector(
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: _startDate ?? DateTime.now(),
+                  firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (date != null) {
+                  setState(() {
+                    _startDate = date;
+                  });
+                }
+              },
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: const Color(0xFFCBD5E1), // Neutral-300
+                    width: 2,
                   ),
+                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFFFFFFFF),
                 ),
-                subtitle: Text(
-                  _startDate != null
-                      ? '${_startDate!.year}-${_startDate!.month.toString().padLeft(2, '0')}-${_startDate!.day.toString().padLeft(2, '0')}'
-                      : '',
-                  style: const TextStyle(fontSize: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '시작일',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                    Text(
+                      _startDate != null
+                          ? '${_startDate!.year}-${_startDate!.month.toString().padLeft(2, '0')}-${_startDate!.day.toString().padLeft(2, '0')}'
+                          : '',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ],
                 ),
-                onTap: () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: _startDate ?? DateTime.now(),
-                    firstDate: DateTime.now().subtract(const Duration(days: 30)),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
-                  );
-                  if (date != null) {
-                    setState(() {
-                      _startDate = date;
-                    });
-                  }
-                },
               ),
             ),
             const SizedBox(height: 16), // md
