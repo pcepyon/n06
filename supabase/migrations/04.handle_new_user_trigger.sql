@@ -32,10 +32,12 @@ BEGIN
     last_login_at
   ) VALUES (
     NEW.id::TEXT,  -- auth.users.id (UUID)를 TEXT로 변환
-    'kakao',       -- 기본값: Kakao OAuth (Supabase Auth 사용)
+    -- 동적 provider 감지: Supabase Auth의 raw_app_meta_data에서 provider 추출
+    -- 카카오: 'kakao', 이메일: 'email', 네이버: 앱 코드에서 직접 처리
+    COALESCE(NEW.raw_app_meta_data->>'provider', 'email'),
     NEW.id::TEXT,  -- oauth_user_id도 동일한 id 사용
-    COALESCE(NEW.raw_user_meta_data->>'name', 'Unknown'),  -- 카카오에서 받은 이름
-    NEW.email,     -- 카카오에서 받은 이메일
+    COALESCE(NEW.raw_user_meta_data->>'name', 'Unknown'),  -- OAuth에서 받은 이름
+    NEW.email,     -- OAuth에서 받은 이메일
     NEW.raw_user_meta_data->>'avatar_url',  -- 프로필 이미지 URL (선택)
     NOW(),
     NOW()

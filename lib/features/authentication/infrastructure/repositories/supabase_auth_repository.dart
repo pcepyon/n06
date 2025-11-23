@@ -499,7 +499,11 @@ class SupabaseAuthRepository implements AuthRepository {
       }
 
       // 2. Create user profile record
-      await _supabase.from('users').insert({
+      // BUG-2025-1123-001 FIX: Use UPSERT to avoid PK conflict with Database Trigger
+      // Database Trigger (handle_new_user) automatically creates public.users record
+      // when auth.users is inserted. UPSERT ensures safe operation regardless of
+      // whether Trigger runs first or app code runs first.
+      await _supabase.from('users').upsert({
         'id': authUser.id,
         'email': email,
         'name': email.split('@')[0], // Use email prefix as default name
