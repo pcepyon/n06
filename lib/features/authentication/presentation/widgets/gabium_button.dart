@@ -88,6 +88,36 @@ class GabiumButton extends StatelessWidget {
           ),
         );
 
+      case GabiumButtonVariant.secondary:
+        return ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: const Color(0xFF4ADE80), // Primary
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          side: const BorderSide(
+            color: Color(0xFF4ADE80),
+            width: 2,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: size == GabiumButtonSize.large ? 32 : 16,
+          ),
+        ).copyWith(
+          overlayColor: WidgetStateProperty.resolveWith<Color?>(
+            (Set<WidgetState> states) {
+              if (states.contains(WidgetState.hovered)) {
+                return const Color(0xFF4ADE80).withValues(alpha: 0.08);
+              }
+              if (states.contains(WidgetState.pressed)) {
+                return const Color(0xFF4ADE80).withValues(alpha: 0.12);
+              }
+              return null;
+            },
+          ),
+        );
+
       case GabiumButtonVariant.ghost:
         return ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,

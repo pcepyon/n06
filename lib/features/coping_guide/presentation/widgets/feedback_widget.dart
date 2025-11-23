@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../features/authentication/presentation/widgets/gabium_button.dart';
+import 'coping_guide_feedback_result.dart';
+
 /// 피드백 위젯 (도움이 되었나요?)
 class FeedbackWidget extends StatefulWidget {
   final Function(bool) onFeedback;
@@ -16,52 +19,59 @@ class _FeedbackWidgetState extends State<FeedbackWidget> {
   @override
   Widget build(BuildContext context) {
     if (_feedbackGiven != null) {
-      return Padding(
-        padding: EdgeInsets.all(16),
-        child: Center(
-          child: Text(
-            _feedbackGiven! ? '도움이 되어 기쁩니다!' : '더 자세한 가이드 보기',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-        ),
+      return CopingGuideFeedbackResult(
+        onRetry: () {
+          setState(() {
+            _feedbackGiven = null;
+          });
+        },
       );
     }
 
-    return Padding(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Text(
-            '도움이 되었나요?',
-            style: Theme.of(context).textTheme.titleMedium,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '도움이 되었나요?',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFF475569),
           ),
-          SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: GabiumButton(
+                text: '네',
                 onPressed: () {
                   widget.onFeedback(true);
                   setState(() {
                     _feedbackGiven = true;
                   });
                 },
-                child: Text('예'),
+                variant: GabiumButtonVariant.secondary,
+                size: GabiumButtonSize.small,
               ),
-              SizedBox(width: 12),
-              ElevatedButton(
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: GabiumButton(
+                text: '아니오',
                 onPressed: () {
                   widget.onFeedback(false);
                   setState(() {
                     _feedbackGiven = false;
                   });
                 },
-                child: Text('아니오'),
+                variant: GabiumButtonVariant.secondary,
+                size: GabiumButtonSize.small,
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -29,18 +29,60 @@ class _CopingGuideScreenState extends ConsumerState<CopingGuideScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('부작용 대처 가이드'),
+        title: const Text(
+          '부작용 대처 가이드',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(4),
+          child: Column(
+            children: [
+              const Divider(
+                color: Color(0xFFE2E8F0),
+                height: 1,
+                thickness: 1,
+              ),
+              Container(
+                height: 3,
+                color: const Color(0xFF4ADE80),
+              ),
+            ],
+          ),
+        ),
+        iconTheme: const IconThemeData(
+          color: Color(0xFF475569),
+          size: 24,
+        ),
       ),
       body: guideList.when(
-        loading: () => Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('오류가 발생했습니다')),
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4ADE80)),
+          ),
+        ),
+        error: (err, stack) => const Center(child: Text('오류가 발생했습니다')),
         data: (guides) {
           if (guides.isEmpty) {
-            return Center(child: Text('가이드가 없습니다'));
+            return const Center(child: Text('가이드가 없습니다'));
           }
 
-          return ListView.builder(
+          return ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 16),
             itemCount: guides.length,
+            separatorBuilder: (context, index) => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Divider(
+                color: Color(0xFFE2E8F0),
+                height: 1,
+                thickness: 1,
+              ),
+            ),
             itemBuilder: (context, index) {
               final guide = guides[index];
               return CopingGuideCard(

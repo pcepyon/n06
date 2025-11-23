@@ -1,0 +1,46 @@
+{
+  "project_name": "detailed-guide-screen",
+  "status": "completed",
+  "current_phase": "completed",
+  "created_date": "2025-11-23",
+  "last_updated": "2025-11-23T13:30:00Z",
+  "completed_date": "2025-11-23",
+  "framework": "Flutter",
+  "design_system_version": "v1.0",
+  "versions": {
+    "proposal": "v1",
+    "implementation": "v1",
+    "implementation_log": "v1"
+  },
+  "screen_path": "lib/features/coping_guide/presentation/screens/detailed_guide_screen.dart",
+  "feature": "coping_guide",
+  "dependencies": [],
+  "components_created": [],
+  "components_reused": [],
+  "retry_count": 0,
+  "last_error": null,
+  "analysis": {
+    "current_state_issues_count": 7,
+    "improvement_changes_count": 7,
+    "tokens_required_count": 18,
+    "new_components_required": 0,
+    "reusable_components_available": 0
+  },
+  "success_criteria_count": 6,
+  "phase2b_completion": {
+    "design_tokens_verified": 18,
+    "changes_specified": 7,
+    "implementation_examples_provided": true,
+    "accessibility_checklist_completed": true,
+    "testing_checklist_prepared": true
+  },
+  "phase2c_completion": {
+    "files_modified": 1,
+    "files_created": 0,
+    "flutter_analyze_passed": true,
+    "presentation_layer_only": true,
+    "implementation_log_created": true,
+    "design_tokens_applied": 18,
+    "deprecated_apis_fixed": true
+  }
+}
