@@ -113,6 +113,9 @@ builder: (context, state) => const SomeScreen(), // WRONG: userId 미전달
 
 // Notifier에서 null 체크 없이 state 접근
 return state.asData!.value; // WRONG: asData가 null일 수 있음
+
+// Fixed height for dynamic content
+Container(height: 44.0, child: ...) // WRONG: causes overflow
 ```
 
 ### ✅ ALWAYS
@@ -149,6 +152,12 @@ if (userId != null) {
 // Notifier에서 state 백업 후 접근
 final prev = state.asData?.value ?? defaultState;
 return prev; // Safe
+
+// Use minHeight for touch targets, not fixed height
+Container(
+  constraints: BoxConstraints(minHeight: 44.0),
+  child: ...
+) // Flexible height that respects content
 ```
 
 **Details**: See `docs/code_structure.md` (DO/DON'T sections)

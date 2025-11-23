@@ -69,7 +69,7 @@ class _SettingsMenuItemImprovedState extends State<SettingsMenuItemImproved>
       child: MouseRegion(
         cursor: widget.enabled ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
         child: Container(
-          height: 44.0, // Touch area height
+          constraints: const BoxConstraints(minHeight: 44.0), // Minimum touch target
           padding: const EdgeInsets.symmetric(
             horizontal: 16.0, // md
             vertical: 8.0, // sm
