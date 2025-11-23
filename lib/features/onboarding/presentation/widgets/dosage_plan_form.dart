@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_text_field.dart';
+import 'package:n06/features/onboarding/presentation/widgets/validation_alert.dart';
 import 'package:n06/features/tracking/domain/entities/medication_template.dart';
 
 /// 투여 계획 입력 폼
@@ -43,19 +46,53 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 32.0), // xl
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('투여 계획 설정', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16), // md
+            const Text(
+              '투여 계획 설정',
+              style: TextStyle(
+                fontSize: 20, // xl
+                fontWeight: FontWeight.w600, // Semibold
+                color: Color(0xFF1E293B), // Neutral-800
+              ),
+            ),
+            const SizedBox(height: 16), // md
+
+            // Medication Dropdown
             DropdownButtonFormField<MedicationTemplate>(
               key: ValueKey(_selectedTemplate),
               value: _selectedTemplate, // ignore: deprecated_member_use
               decoration: InputDecoration(
                 labelText: '약물명',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                labelStyle: const TextStyle(
+                  fontSize: 14, // sm
+                  fontWeight: FontWeight.w600, // Semibold
+                  color: Color(0xFF334155), // Neutral-700
+                ),
+                filled: true,
+                fillColor: const Color(0xFFFFFFFF),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFCBD5E1), // Neutral-300
+                    width: 2,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF4ADE80), // Primary
+                    width: 2,
+                  ),
+                ),
               ),
               items: MedicationTemplate.all.map((template) {
                 return DropdownMenuItem(
@@ -66,47 +103,105 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
               onChanged: (template) {
                 setState(() {
                   _selectedTemplate = template;
-                  // Auto-fill with recommended start dose
                   _selectedDose = template?.recommendedStartDose;
                 });
               },
             ),
-            const SizedBox(height: 16),
-            ListTile(
-              title: const Text('시작일'),
-              subtitle: Text(_startDate?.toString() ?? ''),
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: _startDate ?? DateTime.now(),
-                  firstDate: DateTime.now().subtract(const Duration(days: 30)),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                );
-                if (date != null) {
-                  setState(() {
-                    _startDate = date;
-                  });
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              initialValue: _selectedTemplate?.standardCycleDays.toString() ?? '7',
-              enabled: false,
-              decoration: InputDecoration(
-                labelText: '투여 주기 (일)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                filled: true,
-                fillColor: Colors.grey.shade100,
+            const SizedBox(height: 16), // md
+
+            // Start Date Picker
+            Container(
+              height: 48,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: const Color(0xFFCBD5E1), // Neutral-300
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(8),
+                color: const Color(0xFFFFFFFF),
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                title: const Text(
+                  '시작일',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF334155),
+                  ),
+                ),
+                subtitle: Text(
+                  _startDate != null
+                      ? '${_startDate!.year}-${_startDate!.month.toString().padLeft(2, '0')}-${_startDate!.day.toString().padLeft(2, '0')}'
+                      : '',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: _startDate ?? DateTime.now(),
+                    firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (date != null) {
+                    setState(() {
+                      _startDate = date;
+                    });
+                  }
+                },
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 16), // md
+
+            // Cycle Field (Read-only)
+            GabiumTextField(
+              controller: TextEditingController(
+                text: _selectedTemplate?.standardCycleDays.toString() ?? '7',
+              ),
+              label: '투여 주기 (일)',
+              hint: '투여 주기',
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16), // md
+
+            // Initial Dose Dropdown
             DropdownButtonFormField<double>(
               key: ValueKey(_selectedDose),
               value: _selectedDose, // ignore: deprecated_member_use
               decoration: InputDecoration(
                 labelText: '초기 용량 (mg)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                labelStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF334155),
+                ),
+                filled: true,
+                fillColor: const Color(0xFFFFFFFF),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFCBD5E1),
+                    width: 2,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF4ADE80),
+                    width: 2,
+                  ),
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFCBD5E1),
+                    width: 2,
+                  ),
+                ),
               ),
               items: _selectedTemplate?.availableDoses.map((dose) {
                 return DropdownMenuItem(
@@ -122,35 +217,33 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
                       });
                     },
             ),
-            const SizedBox(height: 24),
-            if (_errorMessage != null)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  border: Border.all(color: Colors.red),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(_errorMessage!, style: TextStyle(color: Colors.red.shade700)),
+            const SizedBox(height: 24), // lg
+
+            // Error Alert
+            if (_errorMessage != null) ...[
+              ValidationAlert(
+                type: ValidationAlertType.error,
+                message: _errorMessage!,
               ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _canProceed()
-                    ? () {
-                        // 데이터를 부모 위젯에 전달
-                        widget.onDataChanged(
-                          _selectedTemplate!.displayName,
-                          _startDate ?? DateTime.now(),
-                          _selectedTemplate!.standardCycleDays,
-                          _selectedDose!,
-                        );
-                        widget.onNext();
-                      }
-                    : null,
-                child: const Text('다음'),
-              ),
+              const SizedBox(height: 16), // md
+            ],
+
+            // Next Button
+            GabiumButton(
+              text: '다음',
+              onPressed: _canProceed()
+                  ? () {
+                      widget.onDataChanged(
+                        _selectedTemplate!.displayName,
+                        _startDate ?? DateTime.now(),
+                        _selectedTemplate!.standardCycleDays,
+                        _selectedDose!,
+                      );
+                      widget.onNext();
+                    }
+                  : null,
+              variant: GabiumButtonVariant.primary,
+              size: GabiumButtonSize.medium,
             ),
           ],
         ),

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:n06/features/authentication/presentation/widgets/auth_hero_section.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_text_field.dart';
 
 /// 기본 프로필(이름) 입력 폼
 class BasicProfileForm extends StatefulWidget {
@@ -37,36 +40,41 @@ class _BasicProfileFormState extends State<BasicProfileForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('이름을 입력해주세요', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 32),
-          TextField(
-            controller: _nameController,
-            decoration: InputDecoration(
-              hintText: '성명',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              errorText: _nameController.text.isEmpty && _nameController.text.isNotEmpty
-                  ? '이름을 입력해주세요'
-                  : null,
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0), // xl
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Hero Section
+            const AuthHeroSection(
+              title: '가비움 온보딩을 시작하세요',
+              subtitle: '당신의 건강 관리 여정을 함께합니다',
+              icon: Icons.health_and_safety,
             ),
-            onChanged: (value) {
-              widget.onNameChanged(value);
-              setState(() {});
-            },
-          ),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
+            const SizedBox(height: 24), // lg
+
+            // Name Input
+            GabiumTextField(
+              controller: _nameController,
+              label: '성명',
+              hint: '성명',
+              keyboardType: TextInputType.text,
+              onChanged: (value) {
+                widget.onNameChanged(value);
+              },
+            ),
+            const SizedBox(height: 24), // lg
+
+            // Next Button
+            GabiumButton(
+              text: '다음',
               onPressed: _isNameValid ? widget.onNext : null,
-              child: const Text('다음'),
+              variant: GabiumButtonVariant.primary,
+              size: GabiumButtonSize.medium,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
