@@ -83,13 +83,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: Column(
         children: [
           // 진행 표시기
-          LinearProgressIndicator(value: (_currentStep + 1) / 4, minHeight: 4),
+          LinearProgressIndicator(
+            value: (_currentStep + 1) / 4,
+            minHeight: 8,
+            backgroundColor: const Color(0xFFE2E8F0), // Neutral-200
+            color: const Color(0xFF4ADE80), // Primary
+          ),
           const SizedBox(height: 8),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 32), // xl
             child: Text(
               '${_currentStep + 1}/4단계',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              style: const TextStyle(
+                fontSize: 14, // sm
+                fontWeight: FontWeight.w400, // Regular
+                color: Color(0xFF64748B), // Neutral-500
+              ),
             ),
           ),
           const SizedBox(height: 16),

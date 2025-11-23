@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_text_field.dart';
+import 'package:n06/features/onboarding/presentation/widgets/validation_alert.dart';
 
 /// 체중 및 목표 입력 폼
 class WeightGoalForm extends StatefulWidget {
@@ -88,84 +91,84 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 32.0), // xl
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('체중 및 목표 설정', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 32),
-            TextField(
+            const SizedBox(height: 16), // md
+            const Text(
+              '체중 및 목표 설정',
+              style: TextStyle(
+                fontSize: 20, // xl
+                fontWeight: FontWeight.w600, // Semibold
+                color: Color(0xFF1E293B), // Neutral-800
+              ),
+            ),
+            const SizedBox(height: 16), // md
+
+            // Current Weight Input
+            GabiumTextField(
               controller: _currentWeightController,
+              label: '현재 체중 (kg)',
+              hint: '현재 체중',
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: '현재 체중 (kg)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
             ),
-            const SizedBox(height: 16),
-            TextField(
+            const SizedBox(height: 16), // md
+
+            // Target Weight Input
+            GabiumTextField(
               controller: _targetWeightController,
+              label: '목표 체중 (kg)',
+              hint: '목표 체중',
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: '목표 체중 (kg)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
             ),
-            const SizedBox(height: 16),
-            TextField(
+            const SizedBox(height: 16), // md
+
+            // Target Period Input
+            GabiumTextField(
               controller: _targetPeriodController,
+              label: '목표 기간 (주, 선택)',
+              hint: '목표 기간',
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: '목표 기간 (주, 선택)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
             ),
-            const SizedBox(height: 24),
-            if (_errorMessage != null)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  border: Border.all(color: Colors.red),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(_errorMessage!, style: TextStyle(color: Colors.red.shade700)),
+            const SizedBox(height: 24), // lg
+
+            // Error Alert
+            if (_errorMessage != null) ...[
+              ValidationAlert(
+                type: ValidationAlertType.error,
+                message: _errorMessage!,
               ),
-            if (_weeklyGoal != null)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  border: Border.all(color: Colors.blue),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '주간 목표: ${_weeklyGoal!.toStringAsFixed(2)}kg/주',
-                  style: TextStyle(color: Colors.blue.shade700),
-                ),
+              const SizedBox(height: 8), // sm
+            ],
+
+            // Weekly Goal Info Alert
+            if (_weeklyGoal != null && _errorMessage == null) ...[
+              ValidationAlert(
+                type: ValidationAlertType.info,
+                message: '주간 목표: ${_weeklyGoal!.toStringAsFixed(2)}kg/주',
               ),
-            if (_hasWarning)
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  border: Border.all(color: Colors.orange),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '⚠ 주간 목표가 1kg을 초과합니다. 안전한 목표를 권장합니다.',
-                  style: TextStyle(color: Colors.orange.shade700),
-                ),
+              const SizedBox(height: 8), // sm
+            ],
+
+            // Warning Alert
+            if (_hasWarning && _errorMessage == null) ...[
+              ValidationAlert(
+                type: ValidationAlertType.warning,
+                message: '⚠ 주간 목표가 1kg을 초과합니다. 안전한 목표를 권장합니다.',
               ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _canProceed() ? widget.onNext : null,
-                child: const Text('다음'),
-              ),
+              const SizedBox(height: 8), // sm
+            ],
+
+            const SizedBox(height: 16), // md
+
+            // Next Button
+            GabiumButton(
+              text: '다음',
+              onPressed: _canProceed() ? widget.onNext : null,
+              variant: GabiumButtonVariant.primary,
+              size: GabiumButtonSize.medium,
             ),
           ],
         ),

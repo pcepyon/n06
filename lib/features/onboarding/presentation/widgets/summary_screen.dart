@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/features/onboarding/application/notifiers/onboarding_notifier.dart';
+import 'package:n06/features/onboarding/presentation/widgets/summary_card.dart';
+import 'package:n06/features/onboarding/presentation/widgets/validation_alert.dart';
 
 /// 온보딩 정보 요약 및 최종 확인 화면
 class SummaryScreen extends ConsumerWidget {
@@ -35,14 +38,24 @@ class SummaryScreen extends ConsumerWidget {
     final onboardingState = ref.watch(onboardingNotifierProvider);
 
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 32.0), // xl
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('정보 확인', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 32),
-            _SummarySection(
+            const SizedBox(height: 16), // md
+            const Text(
+              '정보 확인',
+              style: TextStyle(
+                fontSize: 20, // xl
+                fontWeight: FontWeight.w600, // Semibold
+                color: Color(0xFF1E293B), // Neutral-800
+              ),
+            ),
+            const SizedBox(height: 24), // lg
+
+            // Basic Info Summary Card
+            SummaryCard(
               title: '기본 정보',
               items: [
                 ('이름', name),
@@ -51,8 +64,10 @@ class SummaryScreen extends ConsumerWidget {
                 ('감량 목표', '${(currentWeight - targetWeight).toStringAsFixed(1)} kg'),
               ],
             ),
-            const SizedBox(height: 24),
-            _SummarySection(
+            const SizedBox(height: 24), // lg
+
+            // Dosage Plan Summary Card
+            SummaryCard(
               title: '투여 계획',
               items: [
                 ('약물명', medicationName),
@@ -64,126 +79,78 @@ class SummaryScreen extends ConsumerWidget {
                 ('초기 용량', '$initialDose mg'),
               ],
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24), // lg
+
+            // Loading/Error/Success States
             if (onboardingState.isLoading)
-              const Center(child: CircularProgressIndicator())
+              const Center(
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF4ADE80), // Primary
+                    strokeWidth: 4,
+                  ),
+                ),
+              )
             else if (onboardingState.hasError)
               Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      border: Border.all(color: Colors.red),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '저장 실패: ${onboardingState.error}',
-                      style: TextStyle(color: Colors.red.shade700),
-                    ),
+                  ValidationAlert(
+                    type: ValidationAlertType.error,
+                    message: '저장 실패: ${onboardingState.error}',
                   ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        ref
-                            .read(onboardingNotifierProvider.notifier)
-                            .retrySave(
-                              userId: userId,
-                              name: name,
-                              currentWeight: currentWeight,
-                              targetWeight: targetWeight,
-                              targetPeriodWeeks: targetPeriodWeeks,
-                              medicationName: medicationName,
-                              startDate: startDate,
-                              cycleDays: cycleDays,
-                              initialDose: initialDose,
-                            );
-                      },
-                      child: const Text('재시도'),
-                    ),
+                  const SizedBox(height: 16), // md
+                  GabiumButton(
+                    text: '재시도',
+                    onPressed: () {
+                      ref.read(onboardingNotifierProvider.notifier).retrySave(
+                            userId: userId,
+                            name: name,
+                            currentWeight: currentWeight,
+                            targetWeight: targetWeight,
+                            targetPeriodWeeks: targetPeriodWeeks,
+                            medicationName: medicationName,
+                            startDate: startDate,
+                            cycleDays: cycleDays,
+                            initialDose: initialDose,
+                          );
+                    },
+                    variant: GabiumButtonVariant.primary,
+                    size: GabiumButtonSize.medium,
                   ),
                 ],
               )
             else
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    await ref
-                        .read(onboardingNotifierProvider.notifier)
-                        .saveOnboardingData(
-                          userId: userId,
-                          name: name,
-                          currentWeight: currentWeight,
-                          targetWeight: targetWeight,
-                          targetPeriodWeeks: targetPeriodWeeks,
-                          medicationName: medicationName,
-                          startDate: startDate,
-                          cycleDays: cycleDays,
-                          initialDose: initialDose,
-                        );
+              GabiumButton(
+                text: '확인',
+                onPressed: () async {
+                  await ref.read(onboardingNotifierProvider.notifier).saveOnboardingData(
+                        userId: userId,
+                        name: name,
+                        currentWeight: currentWeight,
+                        targetWeight: targetWeight,
+                        targetPeriodWeeks: targetPeriodWeeks,
+                        medicationName: medicationName,
+                        startDate: startDate,
+                        cycleDays: cycleDays,
+                        initialDose: initialDose,
+                      );
 
-                    if (context.mounted) {
-                      if (onComplete != null) {
-                        onComplete!();
-                      } else {
-                        context.go('/home');
-                      }
+                  if (context.mounted) {
+                    if (onComplete != null) {
+                      onComplete!();
+                    } else {
+                      context.go('/home');
                     }
-                  },
-                  child: const Text('확인'),
-                ),
+                  }
+                },
+                variant: GabiumButtonVariant.primary,
+                size: GabiumButtonSize.medium,
               ),
           ],
         ),
       ),
-    );
-  }
-}
-
-/// 요약 섹션 위젯
-class _SummarySection extends StatelessWidget {
-  final String title;
-  final List<(String, String)> items;
-
-  const _SummarySection({required this.title, required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: items.length,
-            separatorBuilder: (context, index) => const Divider(),
-            itemBuilder: (context, index) {
-              final (label, value) = items[index];
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-                    Text(value),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 }

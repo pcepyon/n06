@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "designSystem": "Gabium Design System v1.0",
-  "lastUpdated": "2025-11-22",
+  "lastUpdated": "2025-11-23",
   "components": [
     {
       "name": "GabiumBottomNavigation",
@@ -206,17 +206,115 @@
         "padding": "md (16px)",
         "iconSize": "24px"
       }
+    },
+    {
+      "name": "ValidationAlert",
+      "createdDate": "2025-11-23",
+      "framework": "Flutter",
+      "file": "flutter/validation_alert.dart",
+      "projectFile": "lib/features/onboarding/presentation/widgets/validation_alert.dart",
+      "usedIn": [
+        "Weight Goal Form",
+        "Dosage Plan Form",
+        "Summary Screen"
+      ],
+      "category": "Feedback",
+      "description": "Semantic validation feedback banner with Error/Warning/Info/Success variants using semantic colors and icons",
+      "props": {
+        "type": "ValidationAlertType (error, warning, info, success)",
+        "message": "String (required)",
+        "icon": "IconData (optional)"
+      },
+      "designTokens": {
+        "errorBackground": "Error-50 (#FEF2F2)",
+        "errorBorder": "Error (#EF4444)",
+        "errorText": "Dark Error (#991B1B)",
+        "warningBackground": "Warning-50 (#FFFBEB)",
+        "warningBorder": "Warning (#F59E0B)",
+        "warningText": "Dark Warning (#92400E)",
+        "infoBackground": "Info-50 (#EFF6FF)",
+        "infoBorder": "Info (#3B82F6)",
+        "infoText": "Dark Info (#1E40AF)",
+        "successBackground": "Success-50 (#ECFDF5)",
+        "successBorder": "Success (#10B981)",
+        "successText": "Dark Success (#065F46)",
+        "padding": "md (16px)",
+        "borderRadius": "sm (8px)",
+        "borderLeft": "4px",
+        "iconSize": "24px",
+        "fontSize": "base (14px)"
+      }
+    },
+    {
+      "name": "SummaryCard",
+      "createdDate": "2025-11-23",
+      "framework": "Flutter",
+      "file": "flutter/summary_card.dart",
+      "projectFile": "lib/features/onboarding/presentation/widgets/summary_card.dart",
+      "usedIn": [
+        "Summary Screen"
+      ],
+      "category": "Display",
+      "description": "Card component for displaying grouped data with title and key-value pairs",
+      "props": {
+        "title": "String (required)",
+        "items": "List<(String, String)> (required)"
+      },
+      "designTokens": {
+        "background": "#FFFFFF (White)",
+        "border": "Neutral-200 (#E2E8F0), 1px",
+        "shadow": "Neutral-900 at 6% (0 2px 4px 0)",
+        "borderRadius": "md (12px)",
+        "padding": "md (16px)",
+        "titleColor": "Neutral-800 (#1E293B)",
+        "titleSize": "lg (18px Semibold)",
+        "labelColor": "Neutral-700 (#334155)",
+        "labelSize": "sm (14px Medium)",
+        "valueColor": "Neutral-600 (#475569)",
+        "valueSize": "base (16px Regular)",
+        "itemSpacing": "sm (12px)"
+      }
+    },
+    {
+      "name": "CopingGuideFeedbackResult",
+      "createdDate": "2025-11-23",
+      "framework": "Flutter",
+      "file": "flutter/coping_guide_feedback_result.dart",
+      "projectFile": "lib/features/coping_guide/presentation/widgets/coping_guide_feedback_result.dart",
+      "usedIn": [
+        "Coping Guide Screen"
+      ],
+      "category": "Feedback",
+      "description": "Animated success feedback widget with fade-in and scale-up animation. Shows thank you message after feedback submission with optional retry button. Auto-dismisses after 3 seconds.",
+      "props": {
+        "onRetry": "VoidCallback (optional)"
+      },
+      "designTokens": {
+        "background": "Success-50 (#ECFDF5)",
+        "borderLeft": "Success (#10B981), 4px",
+        "borderRadius": "sm (8px)",
+        "padding": "md (16px)",
+        "titleColor": "Success Dark (#065F46)",
+        "titleSize": "base (16px Semibold)",
+        "iconColor": "Success (#10B981)",
+        "iconSize": "24px",
+        "buttonColor": "Success (#10B981)",
+        "buttonSize": "sm (14px Medium)",
+        "animationDuration": "200ms (fade and scale)",
+        "autoDismissDuration": "3000ms"
+      }
     }
   ],
   "metadata": {
-    "totalComponents": 8,
+    "totalComponents": 11,
     "frameworks": ["Flutter"],
     "categories": [
       "Authentication",
       "Form",
       "Button",
       "Feedback",
-      "Navigation"
+      "Navigation",
+      "Display"
     ]
   }
 }

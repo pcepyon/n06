@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../../features/authentication/presentation/widgets/gabium_button.dart';
+import '../../../../features/onboarding/presentation/widgets/validation_alert.dart';
 import '../../domain/entities/coping_guide.dart';
 import '../../domain/entities/coping_guide_state.dart';
 import 'feedback_widget.dart';
-import 'severity_warning_banner.dart';
 
 /// 부작용 대처 가이드 카드
 class CopingGuideCard extends StatelessWidget {
@@ -27,40 +28,79 @@ class CopingGuideCard extends StatelessWidget {
     final currentGuide = state?.guide ?? guide!;
     final showWarning = state?.showSeverityWarning ?? false;
 
-    return Card(
-      margin: EdgeInsets.all(16),
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (showWarning && onCheckSymptom != null) ...[
-              SeverityWarningBanner(onCheckSymptom: onCheckSymptom!),
-              SizedBox(height: 16),
-            ],
-            Text(
-              '${currentGuide.symptomName} 대처 가이드',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            SizedBox(height: 12),
-            Text(
-              currentGuide.shortGuide,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            SizedBox(height: 16),
-            Row(
-              children: [
-                ElevatedButton(
-                  onPressed: onDetailTap,
-                  child: Text('더 자세한 가이드 보기'),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            if (onFeedback != null)
-              FeedbackWidget(onFeedback: onFeedback!),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: const BorderSide(color: Color(0xFF4ADE80), width: 3),
+          bottom: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+          left: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+          right: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
         ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (showWarning && onCheckSymptom != null) ...[
+            ValidationAlert(
+              type: ValidationAlertType.error,
+              message: '증상이 심각하거나 지속됩니다. 증상을 체크해주세요.',
+              icon: Icons.warning_rounded,
+            ),
+            const SizedBox(height: 16),
+          ],
+          Text(
+            '${currentGuide.symptomName} 대처 가이드',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1E293B),
+              height: 1.44,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            currentGuide.shortGuide,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFF475569),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Divider(
+              color: const Color(0xFFE2E8F0),
+              height: 1,
+              thickness: 1,
+            ),
+          ),
+          GabiumButton(
+            text: '더 자세한 가이드 보기',
+            onPressed: onDetailTap,
+            variant: GabiumButtonVariant.primary,
+            size: GabiumButtonSize.medium,
+          ),
+          const SizedBox(height: 16),
+          if (onFeedback != null) FeedbackWidget(onFeedback: onFeedback!),
+        ],
       ),
     );
   }
