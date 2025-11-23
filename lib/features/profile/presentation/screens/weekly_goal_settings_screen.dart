@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
 import 'package:n06/features/profile/presentation/widgets/weekly_goal_input_widget.dart';
 
-/// Screen for adjusting weekly recording goals
+/// Screen for adjusting weekly recording goals with Gabium Design System styling
 ///
 /// Allows users to set target number of weight logs and symptom logs per week (0-7).
+/// Updated to use Design System tokens for colors, typography, spacing, and shadows.
 class WeeklyGoalSettingsScreen extends ConsumerStatefulWidget {
   const WeeklyGoalSettingsScreen({super.key});
 
@@ -55,15 +56,29 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
       await ref.read(profileNotifierProvider.notifier).updateWeeklyGoals(_weightGoal, _symptomGoal);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('주간 목표가 저장되었습니다')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('주간 목표가 저장되었습니다'),
+            backgroundColor: Color(0xFF10B981), // Success color
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.all(16.0),
+            duration: Duration(seconds: 3),
+          ),
+        );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('저장 중 오류가 발생했습니다: $e'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('저장 중 오류가 발생했습니다: $e'),
+            backgroundColor: const Color(0xFFEF4444), // Error color
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16.0),
+            duration: const Duration(seconds: 5),
+          ),
+        );
       }
     }
   }
@@ -94,86 +109,179 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Information section
+            // Information box with Info color accent
             Container(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue[200]!),
+                color: const Color(0xFFF1F5F9), // Neutral-100
+                borderRadius: BorderRadius.circular(12.0), // md
+                border: Border.all(
+                  color: const Color(0xFFCBD5E1), // Neutral-300
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 4.0,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              child: const Text(
-                '주간 목표를 설정하여 기록 달성을 추적하세요.\n투여 목표는 계획된 스케줄로부터 자동 계산됩니다.',
-                style: TextStyle(fontSize: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 4.0,
+                    height: 60.0,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3B82F6), // Info color
+                      borderRadius: BorderRadius.circular(2.0),
+                    ),
+                  ),
+                  const SizedBox(width: 12.0),
+                  const Expanded(
+                    child: Text(
+                      '주간 목표를 설정하여 기록 달성을 추적하세요.\n투여 목표는 계획된 스케줄로부터 자동 계산됩니다.',
+                      style: TextStyle(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF334155), // Neutral-700
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 24.0),
 
-            // Weight record goal
-            Text('주간 체중 기록 목표', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
+            // Weight record goal section
+            Text(
+              '주간 체중 기록 목표',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontSize: 20.0,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF334155), // Neutral-700
+                  ),
+            ),
+            const SizedBox(height: 8.0),
             WeeklyGoalInputWidget(
               label: '주간 체중 기록 횟수 (0~7회)',
               initialValue: _weightGoal,
               onChanged: (value) => setState(() => _weightGoal = value),
             ),
-            const SizedBox(height: 20),
-
+            const SizedBox(height: 20.0),
             Text(
               '$_weightGoal회 / 주',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: const Color(0xFF64748B), // Neutral-500
+                  ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 32.0),
 
-            // Symptom record goal
-            Text('주간 부작용 기록 목표', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
+            // Symptom record goal section
+            Text(
+              '주간 부작용 기록 목표',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontSize: 20.0,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF334155), // Neutral-700
+                  ),
+            ),
+            const SizedBox(height: 8.0),
             WeeklyGoalInputWidget(
               label: '주간 부작용 기록 횟수 (0~7회)',
               initialValue: _symptomGoal,
               onChanged: (value) => setState(() => _symptomGoal = value),
             ),
-            const SizedBox(height: 20),
-
+            const SizedBox(height: 20.0),
             Text(
               '$_symptomGoal회 / 주',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: const Color(0xFF64748B), // Neutral-500
+                  ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 40.0),
 
-            // Dose plan info (read-only)
+            // Read-only dose plan info box
             Container(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
+                color: const Color(0xFFF8FAFC), // Neutral-50
+                borderRadius: BorderRadius.circular(12.0), // md
+                border: Border.all(
+                  color: const Color(0xFFE2E8F0), // Neutral-200
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 2.0,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('투여 목표 (읽기 전용)', style: Theme.of(context).textTheme.bodySmall),
-                  const SizedBox(height: 8),
+                  Text(
+                    '투여 목표 (읽기 전용)',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF334155), // Neutral-700
+                        ),
+                  ),
+                  const SizedBox(height: 8.0),
                   Text(
                     '투여 목표는 현재 투여 스케줄에 따라 자동으로 계산됩니다.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF64748B), // Neutral-500
+                        ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 40.0),
 
             // Save button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _onSave,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4ADE80), // Primary
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFF4ADE80)
+                      .withValues(alpha: 0.4), // Primary at 40% opacity
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 16.0,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0), // sm
+                  ),
+                  elevation: 2.0,
+                  shadowColor: Colors.black.withValues(alpha: 0.06),
+                ),
                 child: _isLoading
                     ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        height: 20.0,
+                        width: 20.0,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.0,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
                       )
-                    : const Text('저장'),
+                    : const Text(
+                        '저장',
+                        style: TextStyle(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
             ),
           ],

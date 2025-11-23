@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 
-/// 시간 선택 버튼 위젯
+/// 시간 선택 버튼 위젯 (Secondary 버튼 스타일)
 class TimePickerButton extends StatelessWidget {
   final TimeOfDay currentTime;
   final Function(TimeOfDay) onTimeSelected;
 
-  const TimePickerButton({super.key, required this.currentTime, required this.onTimeSelected});
+  const TimePickerButton({
+    super.key,
+    required this.currentTime,
+    required this.onTimeSelected,
+  });
 
   String _formatTime(TimeOfDay time) {
     final hour = time.hour.toString().padLeft(2, '0');
@@ -20,14 +24,31 @@ class TimePickerButton extends StatelessWidget {
       child: OutlinedButton.icon(
         key: const Key('notification_time_button'),
         onPressed: () async {
-          final selectedTime = await showTimePicker(context: context, initialTime: currentTime);
+          final selectedTime = await showTimePicker(
+            context: context,
+            initialTime: currentTime,
+          );
           if (selectedTime != null) {
             onTimeSelected(selectedTime);
           }
         },
         icon: const Icon(Icons.access_time),
         label: Text(_formatTime(currentTime)),
-        style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFF4ADE80), // Primary
+          side: const BorderSide(
+            color: Color(0xFF4ADE80), // Primary
+            width: 2,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8), // sm
+          ),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600, // Semibold (base)
+          ),
+        ),
       ),
     );
   }

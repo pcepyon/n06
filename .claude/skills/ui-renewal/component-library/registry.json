@@ -303,10 +303,108 @@
         "animationDuration": "200ms (fade and scale)",
         "autoDismissDuration": "3000ms"
       }
+    },
+    {
+      "name": "UserInfoCard",
+      "createdDate": "2025-11-23",
+      "framework": "Flutter",
+      "file": "flutter/user_info_card.dart",
+      "projectFile": "lib/features/settings/presentation/widgets/user_info_card.dart",
+      "usedIn": [
+        "Settings Main Screen"
+      ],
+      "category": "Display",
+      "description": "사용자 정보 표시 카드 - 사용자 이름과 목표 체중을 표시하는 카드형 컴포넌트",
+      "props": {
+        "userName": "String (required)",
+        "targetWeight": "String (required)",
+        "unit": "String (optional, default: 'kg')"
+      },
+      "designTokens": {
+        "background": "White (#FFFFFF)",
+        "border": "Neutral-200 (#E2E8F0), 1px",
+        "borderRadius": "md (12px)",
+        "padding": "md (16px)",
+        "shadow": "sm (0 2px 4px rgba(15, 23, 42, 0.06))",
+        "titleColor": "Neutral-800 (#1E293B)",
+        "titleSize": "xl (20px Semibold)",
+        "labelColor": "Neutral-700 (#334155)",
+        "labelSize": "sm (14px Medium)",
+        "valueColor": "Neutral-600 (#475569)",
+        "valueSize": "base (16px Regular)",
+        "itemSpacing": "sm (8px)"
+      }
+    },
+    {
+      "name": "SettingsMenuItemImproved",
+      "createdDate": "2025-11-23",
+      "framework": "Flutter",
+      "file": "flutter/settings_menu_item_improved.dart",
+      "projectFile": "lib/features/settings/presentation/widgets/settings_menu_item_improved.dart",
+      "usedIn": [
+        "Settings Main Screen"
+      ],
+      "category": "Navigation",
+      "description": "개선된 설정 메뉴 항목 - 44px 터치 영역, 호버 상태, 구분선이 포함된 메뉴 항목",
+      "props": {
+        "title": "String (required)",
+        "subtitle": "String (optional)",
+        "icon": "IconData (optional)",
+        "onTap": "VoidCallback (required)",
+        "trailing": "Widget (optional)",
+        "enabled": "bool (default: true)"
+      },
+      "designTokens": {
+        "height": "44px (touch area)",
+        "hoverBackground": "Neutral-100 (#F1F5F9)",
+        "dividerColor": "Neutral-200 (#E2E8F0)",
+        "titleColor": "Neutral-800 (#1E293B)",
+        "titleSize": "base (16px Semibold)",
+        "subtitleColor": "Neutral-500 (#64748B)",
+        "subtitleSize": "sm (14px Regular)",
+        "iconColor": "Neutral-400 (#94A3B8)",
+        "iconSize": "20px",
+        "paddingHorizontal": "md (16px)",
+        "paddingVertical": "sm (8px)",
+        "transitionDuration": "150ms"
+      }
+    },
+    {
+      "name": "DangerButton",
+      "createdDate": "2025-11-23",
+      "framework": "Flutter",
+      "file": "flutter/danger_button.dart",
+      "projectFile": "lib/features/settings/presentation/widgets/danger_button.dart",
+      "usedIn": [
+        "Settings Main Screen"
+      ],
+      "category": "Button",
+      "description": "위험한 작업을 위한 Danger 스타일 버튼 - 로그아웃, 삭제 등 중요한 작업에 사용",
+      "props": {
+        "onPressed": "VoidCallback (required)",
+        "label": "String (required)",
+        "isLoading": "bool (default: false)",
+        "enabled": "bool (default: true)",
+        "fullWidth": "bool (default: true)"
+      },
+      "designTokens": {
+        "backgroundDefault": "Error (#EF4444)",
+        "backgroundHover": "Error darker (#DC2626)",
+        "backgroundActive": "Error darkest (#B91C1C)",
+        "textColor": "White (#FFFFFF)",
+        "textSize": "base (16px Semibold)",
+        "height": "44px (touch area)",
+        "borderRadius": "sm (8px)",
+        "shadowDefault": "sm (2.0 elevation)",
+        "shadowHover": "md (4.0 elevation)",
+        "shadowActive": "xs (1.0 elevation)",
+        "transitionHover": "150ms",
+        "transitionActive": "100ms"
+      }
     }
   ],
   "metadata": {
-    "totalComponents": 11,
+    "totalComponents": 14,
     "frameworks": ["Flutter"],
     "categories": [
       "Authentication",
