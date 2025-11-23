@@ -27,10 +27,9 @@ Automatically implement UI code in the project based on the approved Implementat
 5. [Critical Guidelines](#critical-guidelines)
 6. [Implementation Scope](#implementation-scope-critical)
 7. [Handling Errors](#handling-errors)
-8. [When Re-invoked (Phase 3 Step 2 Fixes)](#when-re-invoked-phase-3-step-2-fixes)
-9. [Quality Checklist](#quality-checklist)
-10. [Success Criteria](#success-criteria)
-11. [Output Language](#output-language)
+8. [Quality Checklist](#quality-checklist)
+9. [Success Criteria](#success-criteria)
+10. [Output Language](#output-language)
 
 ---
 
@@ -64,12 +63,12 @@ git commit -m "Before UI renewal: {screen-name}"
 ```
 
 **Benefits:**
-- ✅ Easy rollback if verification fails
+- ✅ Easy rollback if needed
 - ✅ Clean separation of changes
 - ✅ Can review all changes with `git diff main`
 - ✅ Safe experimentation
 
-**After Phase 3 verification passes:**
+**After Phase 3 completes:**
 ```bash
 # Merge changes to main
 git checkout main
@@ -77,7 +76,7 @@ git merge ui-renewal/{screen-name}
 git branch -d ui-renewal/{screen-name}
 ```
 
-**If Phase 3 verification fails and you want to rollback:**
+**If you want to rollback:**
 ```bash
 # Discard all changes and return to main
 git checkout main
@@ -609,7 +608,7 @@ No issues found!
 다음 컴포넌트는 다른 화면에서 재사용 가능:
 - GabiumButton (lib/core/presentation/widgets/gabium_button.dart)
 
-Phase 3 Step 4에서 Component Library로 복사 예정.
+Phase 3에서 Component Registry 업데이트 예정.
 
 ## 구현 가정
 
@@ -621,7 +620,7 @@ Phase 3 Step 4에서 Component Library로 복사 예정.
 
 ## 다음 단계
 
-Phase 3 Step 1 (검증)으로 자동 진행.
+Phase 3 (에셋 정리)으로 자동 진행.
 ```
 
 ---
@@ -647,9 +646,7 @@ Phase 3 Step 1 (검증)으로 자동 진행.
   "dependencies": [],
   "components_created": [
     "GabiumButton"
-  ],
-  "retry_count": 0,
-  "last_error": null
+  ]
 }
 ```
 
@@ -677,7 +674,7 @@ Phase 3 Step 1 (검증)으로 자동 진행.
 ## 문서
 - 구현 로그: projects/{screen-name}/{date}-implementation-log-v1.md
 
-Phase 3 (검증)으로 진행합니다.
+Phase 3 (에셋 정리)으로 진행합니다.
 ```
 
 ---
@@ -702,10 +699,9 @@ Phase 3 (검증)으로 진행합니다.
 ❌ Change business logic
 ❌ Modify data models
 ❌ Change routing logic (only add routes)
-❌ Save to component library (done in Phase 3 Step 4)
-❌ Update Component Registry (done in Phase 3 Step 4)
+❌ Update Component Registry (done in Phase 3)
 
-**Note:** Component Registry is NOT updated in Phase 2C. This is done in Phase 3 Step 4 after verification and user confirmation.
+**Note:** Component Registry is NOT updated in Phase 2C. This is done in Phase 3 after implementation is complete.
 
 ---
 
@@ -749,7 +745,7 @@ UI Renewal 범위를 벗어나므로 유저의 승인이 필요합니다."
    - Document in implementation log
    - Mark status as "Partial (with errors)"
    - Include error details
-   - Let Phase 3 verification catch and report
+   - Report to user for manual review
 
 3. **Architectural violations detected:**
    - STOP immediately
@@ -760,27 +756,6 @@ UI Renewal 범위를 벗어나므로 유저의 승인이 필요합니다."
 - ❌ Try to fix errors by modifying Application/Domain/Infrastructure
 - ❌ Create new providers to avoid errors
 - ❌ Skip error reporting
-
----
-
-## When Re-invoked (Phase 3 Step 2 Fixes)
-
-**If Phase 2C is re-invoked during Phase 3 Step 2 revision loop:**
-
-1. **Load additional context:**
-   - Implementation Guide (original)
-   - Verification Report (what failed)
-   - Current code files
-
-2. **Focus on fixing reported issues:**
-   - Only fix items listed in Verification Report
-   - Do not make unnecessary changes
-   - Preserve working parts
-
-3. **Update implementation log:**
-   - Save as `implementation-log-v{n+1}.md`
-   - Document what was fixed
-   - Reference verification report issues
 
 ---
 
@@ -819,7 +794,7 @@ Phase 2C succeeds when:
 - ✅ Flutter analyze passes
 - ✅ Implementation log saved
 - ✅ metadata.json updated
-- ✅ Ready for Phase 3 verification
+- ✅ Ready for Phase 3 asset organization
 
 ---
 
@@ -852,7 +827,7 @@ Phase 2C succeeds when:
 ✅ Flutter analyze 통과
 ✅ Presentation Layer만 수정
 
-Phase 3 (검증)으로 진행합니다.
+Phase 3 (에셋 정리)로 진행합니다.
 ```
 
 **Code can be in English:**
