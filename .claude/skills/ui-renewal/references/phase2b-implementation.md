@@ -1,6 +1,6 @@
 # Phase 2B: Implementation Specification Guide
 
-This guide is for the Implementation sub-agent. Use this when the orchestrator routes a Phase 2B task.
+This guide is for agents executing Phase 2B of the UI Renewal workflow.
 
 ## Objective
 

@@ -1,6 +1,6 @@
 # Phase 2A: Analysis & Direction Guide
 
-This guide is for the Analysis sub-agent. Use this when the orchestrator routes a Phase 2A task.
+This guide is for agents executing Phase 2A of the UI Renewal workflow.
 
 ## Objective
 

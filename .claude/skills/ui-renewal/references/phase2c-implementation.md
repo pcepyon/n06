@@ -1,6 +1,6 @@
 # Phase 2C: Automated Implementation Guide
 
-This guide is for the Automated Implementation sub-agent. Use this when the orchestrator routes a Phase 2C task.
+This guide is for agents executing Phase 2C of the UI Renewal workflow.
 
 ## Objective
 

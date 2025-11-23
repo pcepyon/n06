@@ -1,6 +1,6 @@
 # Phase 1: Design System Creation Guide
 
-This guide is for the Design System Creation sub-agent. Use this when the orchestrator routes a Phase 1 task.
+This guide is for agents executing Phase 1 of the UI Renewal workflow.
 
 ## Objective
 

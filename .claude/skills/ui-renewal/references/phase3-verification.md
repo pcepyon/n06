@@ -1,6 +1,6 @@
 # Phase 3: Verification, Revision & Finalization Guide
 
-This guide is for the Verification & Finalization sub-agent. Use this when the orchestrator routes a Phase 3 task.
+This guide is for agents executing Phase 3 of the UI Renewal workflow.
 
 ## Objective
 
