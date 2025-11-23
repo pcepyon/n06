@@ -1,11 +1,11 @@
 ---
 name: ui-renewal
-description: Orchestrates 5-phase UI renewal workflow with automated implementation. Creates Design System, analyzes UI, generates implementation specs, auto-implements in Presentation layer only, and verifies quality. User approves/rejects, agent executes. Maintains Clean Architecture. All communication in Korean.
+description: Orchestrates 5-phase UI renewal workflow with automated implementation. Creates Design System, analyzes UI, generates implementation specs, auto-implements in Presentation layer only, and organizes reusable assets. User approves/rejects, agent executes. Maintains Clean Architecture. All communication in Korean.
 ---
 
 # UI Renewal Skill
 
-Fully automated professional UI renewal with systematic design system creation, automatic code implementation, and quality verification.
+Fully automated professional UI renewal with systematic design system creation, automatic code implementation, and asset organization.
 
 ## When to Use This Skill
 
@@ -36,9 +36,9 @@ Phase 2C: Automated Implementation
    ↓
 [Agent implements code automatically]
    ↓
-Phase 3: Verification & Finalization
+Phase 3: Asset Organization & Completion
    ↓
-[Complete] or [Revise]
+[Complete]
    ↓
 [Repeat 2A→2B→2C→3 for next screen/feature]
 ```
@@ -99,32 +99,21 @@ Phase 3: Verification & Finalization
 
 **Next:** Auto-transition to Phase 3
 
-## Phase 3: Verification & Finalization
+## Phase 3: Asset Organization & Completion
 
-**Trigger:** Phase 2C completes (automatic)
+**Trigger:** Phase 2C completes (automatic) OR user confirms completion
 
-### Step 1: Initial Verification
 **Execute:** Task tool with general-purpose agent (model: haiku)
-- Read: `.claude/skills/ui-renewal/references/phase3-verification.md`
-- Input: Implementation Guide, Implementation Log, modified files
-- Output: Verification Report → `projects/{screen_name}/{date}-verification-v{n}.md` (IN KOREAN)
-- Return: PASS/FAIL status, issues list
+- Read: `.claude/skills/ui-renewal/references/phase3-asset-organization.md`
+- Input: Implementation Log, modified files
+- Output: Updated component registry, metadata, project index
 
-### Step 2: Revision Loop (if FAIL)
-- Auto re-invoke Phase 2C with fix guidance
-- Re-verify until PASS (max 3 retries)
-
-### Step 3: Final Confirmation
-- User confirms "완료" or requests changes
-- If changes needed, return to appropriate phase
-
-### Step 4: Asset Organization (when user confirms)
-**Execute:** Task tool with general-purpose agent (model: haiku)
-- Copy reusable components to `component-library/flutter/`
-- Update `component-library/registry.json`
-- Run: `python scripts/generate_components_docs.py --output-components-md --output-design-system-section`
-- Update metadata (status: "completed")
-- Update `projects/INDEX.md`
+**Tasks:**
+1. Update Component Registry (`registry.json`)
+2. Generate documentation (COMPONENTS.md, Design System Section 7)
+3. Create/Update metadata.json
+4. Update projects/INDEX.md
+5. Present completion summary to user
 
 **Next:** Project complete OR next screen/feature
 
@@ -143,10 +132,9 @@ ui-renewal/
 │       ├── metadata.json        # Project metadata
 │       ├── {date}-proposal-v{n}.md
 │       ├── {date}-implementation-v{n}.md
-│       ├── {date}-implementation-log-v{n}.md
-│       └── {date}-verification-v{n}.md
+│       └── {date}-implementation-log-v{n}.md
 │
-├── component-library/           # Reusable components (Phase 3 Step 4)
+├── component-library/           # Reusable components (Phase 3)
 │   ├── registry.json            # Component registry (SSOT)
 │   ├── COMPONENTS.md            # Generated documentation
 │   └── flutter/                 # Framework-specific components
@@ -156,7 +144,7 @@ ui-renewal/
 │   ├── phase2a-analysis.md
 │   ├── phase2b-implementation.md
 │   ├── phase2c-implementation.md
-│   └── phase3-verification.md
+│   └── phase3-asset-organization.md
 │
 └── scripts/                     # Automation tools
     ├── validate_presentation_layer.sh
@@ -177,7 +165,7 @@ Never use relative paths (`projects/...`) - they create files in the wrong locat
 
 Required: `project_name`, `status`, `current_phase`, `created_date`, `last_updated`, `framework`, `design_system_version`
 
-Optional: `versions`, `dependencies`, `components_created`, `retry_count`, `last_error`
+Optional: `versions`, `dependencies`, `components_created`
 
 See references/phase2a-analysis.md for full schema.
 
@@ -185,7 +173,7 @@ See references/phase2a-analysis.md for full schema.
 
 Format: `{YYYYMMDD}-{type}-v{version}.md`
 
-Types: `proposal`, `implementation`, `implementation-log`, `verification`
+Types: `proposal`, `implementation`, `implementation-log`
 
 ## Component Registry Management
 
@@ -209,5 +197,5 @@ Types: `proposal`, `implementation`, `implementation-log`, `verification`
 - **Phase 2A:** Improvement Proposal created, approved, saved
 - **Phase 2B:** Implementation Guide created, approved, saved
 - **Phase 2C:** Code implemented in Presentation layer only, validated, log saved
-- **Phase 3:** Verification passed, user confirms, assets organized, registry updated
+- **Phase 3:** Assets organized, registry updated, metadata created, completion summary provided
 - **Overall:** Consistent improved UI, reusable design system, Clean Architecture maintained, all communication in Korean
