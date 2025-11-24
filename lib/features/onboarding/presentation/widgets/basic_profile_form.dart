@@ -50,7 +50,6 @@ class _BasicProfileFormState extends State<BasicProfileForm> {
             const AuthHeroSection(
               title: '가비움 온보딩을 시작하세요',
               subtitle: '당신의 건강 관리 여정을 함께합니다',
-              icon: Icons.health_and_safety,
             ),
             const SizedBox(height: 24), // lg
 

@@ -279,7 +279,6 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
                 const AuthHeroSection(
                   title: '이메일로 로그인',
                   subtitle: '가비움 계정으로 로그인해주세요',
-                  icon: Icons.lock_outline,
                 ),
                 const SizedBox(height: 24), // lg
 
