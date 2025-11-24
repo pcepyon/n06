@@ -4,6 +4,10 @@ import 'package:n06/features/tracking/application/notifiers/medication_notifier.
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:n06/features/tracking/presentation/widgets/injection_site_select_widget.dart';
+import 'package:n06/features/tracking/presentation/widgets/dose_schedule_card.dart';
+import 'package:n06/core/presentation/widgets/empty_state_widget.dart';
+import 'package:n06/core/presentation/widgets/status_badge.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 
 class DoseScheduleScreen extends ConsumerWidget {
   const DoseScheduleScreen({super.key});
@@ -19,21 +23,10 @@ class DoseScheduleScreen extends ConsumerWidget {
       body: medicationState.when(
         data: (data) {
           if (data.activePlan == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.assignment_outlined, size: 48, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  const Text('투여 계획이 없습니다'),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '온보딩을 완료하여 투여 계획을 설정하세요',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
+            return const EmptyStateWidget(
+              icon: Icons.assignment_outlined,
+              title: '투여 계획이 없습니다',
+              description: '온보딩을 완료하여 투여 일정을 등록해주세요',
             );
           }
 
@@ -41,21 +34,10 @@ class DoseScheduleScreen extends ConsumerWidget {
           final records = data.records;
 
           if (schedules.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.calendar_today_outlined, size: 48, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  const Text('스케줄이 없습니다'),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '투여 계획에 따라 스케줄이 자동으로 생성됩니다',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
+            return const EmptyStateWidget(
+              icon: Icons.calendar_today_outlined,
+              title: '투여 계획이 없습니다',
+              description: '온보딩을 완료하여 투여 일정을 등록해주세요',
             );
           }
 
@@ -64,7 +46,7 @@ class DoseScheduleScreen extends ConsumerWidget {
             ..sort((a, b) => a.scheduledDate.compareTo(b.scheduledDate));
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16), // md spacing
             itemCount: sortedSchedules.length,
             itemBuilder: (context, index) {
               final schedule = sortedSchedules[index];
@@ -74,17 +56,55 @@ class DoseScheduleScreen extends ConsumerWidget {
                     record.administeredAt.day == schedule.scheduledDate.day,
               );
 
-              return _buildScheduleCard(
-                context,
-                ref,
-                schedule,
-                isCompleted,
+              // 상태 결정
+              final isOverdue = schedule.isOverdue();
+              final isToday = schedule.isToday();
+
+              StatusBadgeType statusType;
+              String statusText;
+              IconData statusIcon;
+
+              if (isCompleted) {
+                statusType = StatusBadgeType.success;
+                statusText = '완료됨';
+                statusIcon = Icons.check_circle;
+              } else if (isOverdue) {
+                statusType = StatusBadgeType.error;
+                statusText = '연체됨';
+                statusIcon = Icons.warning;
+              } else if (isToday) {
+                statusType = StatusBadgeType.warning;
+                statusText = '오늘';
+                statusIcon = Icons.flag;
+              } else {
+                statusType = StatusBadgeType.info;
+                statusText = '예정';
+                statusIcon = Icons.schedule;
+              }
+
+              return DoseScheduleCard(
+                doseAmount: '${schedule.scheduledDoseMg} mg',
+                scheduledDate: _formatDate(schedule.scheduledDate),
+                statusType: statusType,
+                statusText: statusText,
+                statusIcon: statusIcon,
+                onActionPressed: () => _showRecordDialog(context, ref, schedule),
+                isLoading: false,
               );
             },
           );
         },
         loading: () => const Center(
-          child: CircularProgressIndicator(),
+          child: SizedBox(
+            width: 48, // Large spinner
+            height: 48,
+            child: CircularProgressIndicator(
+              strokeWidth: 4,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Color(0xFF4ADE80), // Primary color
+              ),
+            ),
+          ),
         ),
         error: (error, stack) => Center(
           child: Column(
@@ -96,105 +116,6 @@ class DoseScheduleScreen extends ConsumerWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildScheduleCard(
-    BuildContext context,
-    WidgetRef ref,
-    DoseSchedule schedule,
-    bool isCompleted,
-  ) {
-    final isOverdue = schedule.isOverdue();
-    final isToday = schedule.isToday();
-    final isUpcoming = schedule.isUpcoming();
-
-    Color backgroundColor = Colors.white;
-    Color borderColor = Colors.grey.shade300;
-    Color textColor = Colors.black;
-
-    if (isCompleted) {
-      backgroundColor = Colors.green.shade50;
-      borderColor = Colors.green.shade300;
-      textColor = Colors.green.shade700;
-    } else if (isOverdue) {
-      backgroundColor = Colors.red.shade50;
-      borderColor = Colors.red.shade300;
-      textColor = Colors.red.shade700;
-    } else if (isToday) {
-      backgroundColor = Colors.blue.shade50;
-      borderColor = Colors.blue.shade300;
-      textColor = Colors.blue.shade700;
-    } else if (isUpcoming) {
-      backgroundColor = Colors.amber.shade50;
-      borderColor = Colors.amber.shade300;
-      textColor = Colors.amber.shade700;
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        border: Border.all(color: borderColor),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        title: Text(
-          '${schedule.scheduledDoseMg} mg',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: textColor,
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            Text(
-              _formatDate(schedule.scheduledDate),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: textColor),
-            ),
-            if (isToday)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '오늘',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.blue.shade700,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ),
-            if (isCompleted)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '완료됨',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.green.shade700,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ),
-          ],
-        ),
-        trailing: isCompleted
-            ? Icon(Icons.check_circle, color: Colors.green.shade700)
-            : isOverdue
-                ? Icon(Icons.warning, color: Colors.red.shade700)
-                : isToday || isUpcoming
-                    ? ElevatedButton(
-                        onPressed: () => _showRecordDialog(context, ref, schedule),
-                        child: const Text('기록'),
-                      )
-                    : null,
-        onTap: isCompleted || isOverdue
-            ? null
-            : isToday || isUpcoming
-                ? () => _showRecordDialog(context, ref, schedule)
-                : null,
       ),
     );
   }
@@ -245,7 +166,18 @@ class _DoseRecordDialogState extends ConsumerState<DoseRecordDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('투여 기록'),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16), // lg radius
+      ),
+      title: const Text(
+        '투여 기록',
+        style: TextStyle(
+          fontSize: 24, // 2xl
+          fontWeight: FontWeight.w700, // Bold
+          color: Color(0xFF1E293B), // Neutral-800
+        ),
+      ),
+      contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 0), // lg padding
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -253,12 +185,20 @@ class _DoseRecordDialogState extends ConsumerState<DoseRecordDialog> {
           children: [
             Text(
               '${widget.schedule.scheduledDoseMg} mg를 투여했습니다.',
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: const TextStyle(
+                fontSize: 16, // base
+                fontWeight: FontWeight.w400, // Regular
+                color: Color(0xFF334155), // Neutral-700
+              ),
             ),
-            const SizedBox(height: 24),
-            Text(
+            const SizedBox(height: 16), // md spacing
+            const Text(
               '주사 부위',
-              style: Theme.of(context).textTheme.labelLarge,
+              style: TextStyle(
+                fontSize: 14, // sm
+                fontWeight: FontWeight.w600, // Semibold
+                color: Color(0xFF334155), // Neutral-700
+              ),
             ),
             const SizedBox(height: 12),
             InjectionSiteSelectWidget(
@@ -268,18 +208,47 @@ class _DoseRecordDialogState extends ConsumerState<DoseRecordDialog> {
                 });
               },
             ),
-            const SizedBox(height: 24),
-            Text(
+            const SizedBox(height: 16), // md spacing
+            const Text(
               '메모 (선택사항)',
-              style: Theme.of(context).textTheme.labelLarge,
+              style: TextStyle(
+                fontSize: 14, // sm
+                fontWeight: FontWeight.w600, // Semibold
+                color: Color(0xFF334155), // Neutral-700
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 8), // sm spacing
             TextField(
               controller: noteController,
+              style: const TextStyle(
+                fontSize: 16, // base
+                fontWeight: FontWeight.w400, // Regular
+                color: Color(0xFF1E293B), // Neutral-800
+              ),
               decoration: InputDecoration(
                 hintText: '메모를 입력하세요',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                hintStyle: const TextStyle(
+                  color: Color(0xFF94A3B8), // Neutral-400
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 12, // md
+                  horizontal: 16, // md
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8), // sm radius
+                  borderSide: const BorderSide(
+                    color: Color(0xFFCBD5E1), // Neutral-300
+                    width: 2,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8), // sm radius
+                  borderSide: const BorderSide(
+                    color: Color(0xFF4ADE80), // Primary
+                    width: 2,
+                  ),
                 ),
               ),
               maxLines: 3,
@@ -288,22 +257,27 @@ class _DoseRecordDialogState extends ConsumerState<DoseRecordDialog> {
           ],
         ),
       ),
+      actionsPadding: const EdgeInsets.all(24), // lg padding
       actions: [
-        TextButton(
-          onPressed: isLoading ? null : () => Navigator.of(context).pop(),
-          child: const Text('취소'),
+        Expanded(
+          child: GabiumButton(
+            text: '취소',
+            onPressed: isLoading ? null : () => Navigator.of(context).pop(),
+            variant: GabiumButtonVariant.secondary,
+            size: GabiumButtonSize.medium,
+          ),
         ),
-        ElevatedButton(
-          onPressed: isLoading || selectedSite == null
-              ? null
-              : () => _saveDoseRecord(),
-          child: isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('저장'),
+        const SizedBox(width: 16), // md spacing
+        Expanded(
+          child: GabiumButton(
+            text: '저장',
+            onPressed: isLoading || selectedSite == null
+                ? null
+                : () => _saveDoseRecord(),
+            variant: GabiumButtonVariant.primary,
+            size: GabiumButtonSize.medium,
+            isLoading: isLoading,
+          ),
         ),
       ],
     );

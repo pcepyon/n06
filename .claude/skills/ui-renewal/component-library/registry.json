@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "designSystem": "Gabium Design System v1.0",
-  "lastUpdated": "2025-11-23",
+  "lastUpdated": "2025-11-24",
   "components": [
     {
       "name": "GabiumBottomNavigation",
@@ -102,14 +102,15 @@
       "projectFile": "lib/features/authentication/presentation/widgets/gabium_button.dart",
       "usedIn": [
         "Email Signup Screen",
-        "Email Signin Screen"
+        "Email Signin Screen",
+        "RecordListScreen"
       ],
       "category": "Button",
-      "description": "Branded button with Primary and Ghost variants. Supports Small, Medium, and Large sizes. Includes loading state with spinner.",
+      "description": "Branded button with Primary, Ghost, and Danger variants. Supports Small, Medium, and Large sizes. Includes loading state with spinner.",
       "props": {
         "onPressed": "VoidCallback (required)",
         "label": "String (required)",
-        "variant": "ButtonVariant (Primary or Ghost)",
+        "variant": "ButtonVariant (Primary, Ghost, or Danger)",
         "size": "ButtonSize (Small, Medium, or Large)",
         "isLoading": "bool (default: false)",
         "fullWidth": "bool (default: false)"
@@ -119,6 +120,10 @@
         "primaryText": "#FFFFFF",
         "ghostBackground": "transparent",
         "ghostText": "Primary (#4ADE80)",
+        "dangerBackground": "Error (#EF4444)",
+        "dangerBackgroundHover": "Error darker (#DC2626)",
+        "dangerBackgroundActive": "Error darkest (#B91C1C)",
+        "dangerText": "#FFFFFF",
         "heightLarge": "52px",
         "heightMedium": "44px",
         "heightSmall": "36px",
@@ -401,18 +406,312 @@
         "transitionHover": "150ms",
         "transitionActive": "100ms"
       }
+    },
+    {
+      "name": "AppealScoreChip",
+      "createdDate": "2025-11-24",
+      "framework": "Flutter",
+      "file": "flutter/appeal_score_chip.dart",
+      "projectFile": "lib/features/tracking/presentation/widgets/appeal_score_chip.dart",
+      "usedIn": [
+        "Daily Tracking Screen"
+      ],
+      "category": "Form Elements",
+      "description": "식욕 조절 점수 선택 칩 - 0-10 범위의 점수를 선택하는 인터랙티브 칩 위젯",
+      "props": {
+        "score": "int (required, 0-10)",
+        "isSelected": "bool (required)",
+        "onSelected": "void Function(int) (required)"
+      },
+      "designTokens": {
+        "selectedBackground": "Primary (#4ADE80)",
+        "unselectedBackground": "Neutral-100 (#F1F5F9)",
+        "selectedText": "White (#FFFFFF)",
+        "unselectedText": "Neutral-800 (#1E293B)",
+        "textSize": "base (16px Medium)",
+        "borderRadius": "sm (8px)",
+        "padding": "symmetric(horizontal: 12px, vertical: 8px)",
+        "shadowUnselected": "xs",
+        "shadowSelected": "sm",
+        "height": "44px (min touch area)"
+      }
+    },
+    {
+      "name": "SeverityLevelIndicator",
+      "createdDate": "2025-11-24",
+      "framework": "Flutter",
+      "file": "flutter/severity_level_indicator.dart",
+      "projectFile": "lib/features/tracking/presentation/widgets/severity_level_indicator.dart",
+      "usedIn": [
+        "Daily Tracking Screen"
+      ],
+      "category": "Form Elements",
+      "description": "심각도 레벨 슬라이더 - 1-10점 범위의 심각도를 선택하며, 점수에 따라 색상이 동적으로 변경됨",
+      "props": {
+        "value": "int (required, 1-10)",
+        "onChanged": "void Function(int) (required)",
+        "label": "String (optional)"
+      },
+      "designTokens": {
+        "mildSeverityColor": "Info (#3B82F6)",
+        "severeColor": "Warning (#F59E0B)",
+        "textSize": "base (16px Semibold)",
+        "labelSize": "sm (14px Regular)",
+        "sliderHeight": "6px",
+        "thumbRadius": "12px",
+        "trackHeight": "6px",
+        "borderRadius": "full (999px)"
+      }
+    },
+    {
+      "name": "ConditionalSection",
+      "createdDate": "2025-11-24",
+      "framework": "Flutter",
+      "file": "flutter/conditional_section.dart",
+      "projectFile": "lib/features/tracking/presentation/widgets/conditional_section.dart",
+      "usedIn": [
+        "Daily Tracking Screen"
+      ],
+      "category": "Layout",
+      "description": "조건부 UI 섹션 컨테이너 - 심각도 레벨에 따라 배경 색상과 테두리 스타일이 동적으로 변경되는 섹션",
+      "props": {
+        "isSevere": "bool (required)",
+        "title": "String (required)",
+        "icon": "IconData (optional)",
+        "child": "Widget (required)"
+      },
+      "designTokens": {
+        "severeBackgroundColor": "Warning at 8% (#F59E0B)",
+        "mildBackgroundColor": "Info at 8% (#3B82F6)",
+        "borderColor": "dynamic (Warning or Info)",
+        "borderWidth": "4px solid left only",
+        "borderRadius": "sm (8px)",
+        "padding": "md (16px)",
+        "titleSize": "lg (18px Semibold)",
+        "titleColor": "Neutral-800 (#1E293B)",
+        "backgroundColor": "Neutral-50 to theme color"
+      }
+    },
+    {
+      "name": "StatusBadge",
+      "createdDate": "2025-11-24",
+      "framework": "Flutter",
+      "file": "flutter/status_badge.dart",
+      "projectFile": "lib/core/presentation/widgets/status_badge.dart",
+      "usedIn": [
+        "Dose Schedule Screen"
+      ],
+      "category": "Feedback Components",
+      "description": "상태별 배지 컴포넌트 - Success, Error, Warning, Info 4가지 상태를 시각화하는 재사용 가능한 배지",
+      "props": {
+        "type": "StatusBadgeType (required, success/error/warning/info)",
+        "text": "String (required)",
+        "icon": "IconData (required)"
+      },
+      "designTokens": {
+        "successBackground": "Success-50 (#ECFDF5)",
+        "successBorder": "Success (#10B981)",
+        "successText": "Success Dark (#065F46)",
+        "errorBackground": "Error-50 (#FEF2F2)",
+        "errorBorder": "Error (#EF4444)",
+        "errorText": "Error Dark (#991B1B)",
+        "warningBackground": "Warning-50 (#FFFBEB)",
+        "warningBorder": "Warning (#F59E0B)",
+        "warningText": "Warning Dark (#92400E)",
+        "infoBackground": "Info-50 (#EFF6FF)",
+        "infoBorder": "Info (#3B82F6)",
+        "infoText": "Info Dark (#1E40AF)",
+        "typography": "sm (14px, Regular)",
+        "padding": "sm (8px)",
+        "borderRadius": "sm (8px)",
+        "touchArea": "44x44px minimum"
+      }
+    },
+    {
+      "name": "EmptyStateWidget",
+      "createdDate": "2025-11-24",
+      "framework": "Flutter",
+      "file": "flutter/empty_state_widget.dart",
+      "projectFile": "lib/core/presentation/widgets/empty_state_widget.dart",
+      "usedIn": [
+        "Dose Schedule Screen"
+      ],
+      "category": "Feedback Components",
+      "description": "Empty State 패턴 위젯 - 데이터가 없는 상태를 시각적으로 표현하는 재사용 가능한 컴포넌트",
+      "props": {
+        "icon": "IconData (required)",
+        "title": "String (required)",
+        "description": "String (optional)",
+        "actionButtonText": "String (optional)",
+        "onActionPressed": "VoidCallback (optional)"
+      },
+      "designTokens": {
+        "iconSize": "120x120px",
+        "iconColor": "Neutral-300 (#CBD5E1)",
+        "titleColor": "Neutral-700 (#334155)",
+        "titleSize": "lg (18px, Semibold)",
+        "descriptionColor": "Neutral-500 (#64748B)",
+        "descriptionSize": "base (16px, Regular)",
+        "spacingLarge": "lg (24px)",
+        "spacingMedium": "md (16px)",
+        "spacingXL": "xl (32px)",
+        "buttonColor": "Primary (#4ADE80)",
+        "buttonHeight": "44px"
+      }
+    },
+    {
+      "name": "DoseScheduleCard",
+      "createdDate": "2025-11-24",
+      "framework": "Flutter",
+      "file": "flutter/dose_schedule_card.dart",
+      "projectFile": "lib/features/tracking/presentation/widgets/dose_schedule_card.dart",
+      "usedIn": [
+        "Dose Schedule Screen"
+      ],
+      "category": "Cards",
+      "description": "투여 스케줄 카드 컴포넌트 - 투여량, 날짜, 상태 정보를 표시하는 인터랙티브 카드",
+      "props": {
+        "doseAmount": "String (required)",
+        "scheduledDate": "String (required)",
+        "statusType": "StatusBadgeType (required)",
+        "statusText": "String (required)",
+        "statusIcon": "IconData (required)",
+        "onActionPressed": "VoidCallback (required)",
+        "isLoading": "bool (optional)"
+      },
+      "designTokens": {
+        "backgroundColor": "White (#FFFFFF)",
+        "borderColor": "Neutral-200 (#E2E8F0)",
+        "borderRadius": "md (12px)",
+        "shadowDefault": "sm",
+        "shadowHover": "md",
+        "shadowTransition": "200ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "titleSize": "xl (20px, Semibold)",
+        "contentSize": "base (16px, Regular)",
+        "spacingSmall": "sm (8px)",
+        "spacingMedium": "md (16px)",
+        "buttonColor": "Primary (#4ADE80)",
+        "buttonHeight": "44px",
+        "hoverTransform": "2px translateY + shadow upgrade"
+      }
+    },
+    {
+      "name": "RecordTypeIcon",
+      "createdDate": "2025-11-24",
+      "framework": "Flutter",
+      "file": "flutter/record_type_icon.dart",
+      "projectFile": "lib/core/presentation/widgets/record_type_icon.dart",
+      "usedIn": [
+        "RecordListScreen"
+      ],
+      "category": "Icons",
+      "description": "기록 타입별 아이콘 + 색상 선택 - RecordType enum (weight, symptom, dose)에 따라 적절한 아이콘과 컬러바 색상을 반환하는 유틸리티 컴포넌트",
+      "props": {
+        "recordType": "RecordType (required, enum: weight/symptom/dose)"
+      },
+      "designTokens": {
+        "weight": {
+          "icon": "monitor_weight_outlined",
+          "colorBar": "Emerald (#10B981)"
+        },
+        "symptom": {
+          "icon": "warning_amber_outlined",
+          "colorBar": "Amber (#F59E0B)"
+        },
+        "dose": {
+          "icon": "medical_services_outlined",
+          "colorBar": "Primary (#4ADE80)"
+        }
+      }
+    },
+    {
+      "name": "RecordListCard",
+      "createdDate": "2025-11-24",
+      "framework": "Flutter",
+      "file": "flutter/record_list_card.dart",
+      "projectFile": "lib/features/tracking/presentation/widgets/record_list_card.dart",
+      "usedIn": [
+        "RecordListScreen"
+      ],
+      "category": "Cards",
+      "description": "기록 항목 카드 컨테이너 - 좌측 4px 컬러바 포함, 호버 애니메이션, 롱프레스 피드백, 삭제 버튼 포함",
+      "props": {
+        "recordType": "RecordType (required)",
+        "primaryInfo": "String (required)",
+        "secondaryInfo": "String (required)",
+        "metadata": "String (required)",
+        "onDelete": "VoidCallback (required)"
+      },
+      "designTokens": {
+        "backgroundColor": "White (#FFFFFF)",
+        "borderColor": "Neutral-200 (#E2E8F0)",
+        "colorBarWidth": "4px",
+        "borderRadius": "md (12px)",
+        "padding": "md (16px)",
+        "shadowDefault": "sm",
+        "shadowHover": "md",
+        "shadowTransition": "200ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "hoverTransform": "translateY(-2px)",
+        "pressBackground": "Neutral-100 (#F1F5F9)",
+        "deleteButtonColor": "Error (#EF4444)",
+        "deleteButtonTouchArea": "44x44px",
+        "primaryTextSize": "lg (18px, Semibold)",
+        "primaryTextColor": "Neutral-800 (#1E293B)",
+        "secondaryTextSize": "base (16px, Regular)",
+        "secondaryTextColor": "Neutral-600 (#475569)",
+        "metadataTextSize": "sm (14px, Regular)",
+        "metadataTextColor": "Neutral-500 (#64748B)"
+      }
+    },
+    {
+      "name": "EmergencyChecklistItem",
+      "createdDate": "2025-11-24",
+      "framework": "Flutter",
+      "file": "flutter/emergency_checklist_item.dart",
+      "projectFile": "lib/features/tracking/presentation/widgets/emergency_checklist_item.dart",
+      "usedIn": [
+        "Emergency Check Screen"
+      ],
+      "category": "Form Elements",
+      "description": "긴급 증상 체크리스트 항목 - 개별 증상에 대한 커스텀 체크박스와 텍스트를 표시. WCAG 기준의 44x44px 터치 영역 제공.",
+      "props": {
+        "symptom": "String (required, 증상 텍스트)",
+        "isChecked": "bool (required, 체크 상태)",
+        "onChanged": "ValueChanged<bool?> (required, 상태 변경 콜백)"
+      },
+      "designTokens": {
+        "touchArea": "44x44px (WCAG standard)",
+        "checkboxSize": "24x24px (visual)",
+        "checkedBackground": "Primary (#4ADE80)",
+        "uncheckedBorder": "Neutral-400 (#94A3B8), 2px",
+        "checkedBorder": "Primary (#4ADE80), 2px",
+        "checkboxBorderRadius": "sm (4px)",
+        "textColor": "Neutral-600 (#475569)",
+        "textSize": "base (16px Regular)",
+        "textLineHeight": "1.5 (for Korean)",
+        "padding": "vertical: 8px, minimal horizontal",
+        "iconColor": "White (#FFFFFF)",
+        "iconSize": "16px"
+      },
+      "reusability": "High - Similar checkbox lists, form selections",
+      "dependencies": ["Material Design Icons"]
     }
   ],
   "metadata": {
-    "totalComponents": 14,
+    "totalComponents": 23,
     "frameworks": ["Flutter"],
     "categories": [
       "Authentication",
       "Form",
       "Button",
       "Feedback",
+      "Feedback Components",
       "Navigation",
-      "Display"
+      "Display",
+      "Form Elements",
+      "Layout",
+      "Cards",
+      "Icons"
     ]
   }
 }

@@ -2,18 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_toast.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart';
 import 'package:n06/features/tracking/presentation/widgets/date_selection_widget.dart';
 import 'package:n06/features/tracking/presentation/widgets/input_validation_widget.dart';
+import 'package:n06/features/tracking/presentation/widgets/appeal_score_chip.dart';
+import 'package:n06/features/tracking/presentation/widgets/severity_level_indicator.dart';
+import 'package:n06/features/tracking/presentation/widgets/conditional_section.dart';
 
-/// 통합 데일리 기록 화면
+/// 통합 데일리 기록 화면 (UI Renewed)
 ///
 /// 하나의 화면에서 체중, 식욕 조절, 부작용 증상을 모두 기록할 수 있습니다.
 /// - 체중 기록
 /// - 식욕 조절 점수 (필수)
 /// - 부작용 기록 (선택, 증상별 개별 심각도)
+///
+/// Design System: Gabium v1.0 적용
 class DailyTrackingScreen extends ConsumerStatefulWidget {
   const DailyTrackingScreen({super.key});
 
@@ -106,20 +113,23 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
     });
   }
 
-  void _handleSeverityChanged(String symptom, double value) {
+  void _handleSeverityChanged(String symptom, int value) {
     setState(() {
-      _symptomSeverities[symptom] = value.round();
+      _symptomSeverities[symptom] = value;
 
       // 심각도 변경 시 옵션 초기화
-      final severity = value.round();
-      if (severity >= 7) {
+      if (value >= 7) {
         // 7-10점: 태그 제거, persistent 옵션 표시
         _symptomTags[symptom] = [];
-        _symptomPersistent[symptom] ??= null;
+        if (!_symptomPersistent.containsKey(symptom)) {
+          _symptomPersistent[symptom] = null;
+        }
       } else {
         // 1-6점: persistent 제거, 태그 옵션 표시
         _symptomPersistent[symptom] = null;
-        _symptomTags[symptom] ??= [];
+        if (!_symptomTags.containsKey(symptom)) {
+          _symptomTags[symptom] = [];
+        }
       }
     });
   }
@@ -145,19 +155,22 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
   Future<void> _handleSave() async {
     // 1. 체중 검증
     if (_weightInput.isEmpty) {
-      _showErrorDialog('체중을 입력해주세요');
+      if (!mounted) return;
+      GabiumToast.showError(context, '체중을 입력해주세요');
       return;
     }
 
     final weight = double.tryParse(_weightInput);
     if (weight == null || weight < 20 || weight > 300) {
-      _showErrorDialog('유효한 체중을 입력해주세요 (20-300kg)');
+      if (!mounted) return;
+      GabiumToast.showError(context, '유효한 체중을 입력해주세요 (20-300kg)');
       return;
     }
 
     // 2. 식욕 점수 검증 (필수)
     if (_appetiteScore == null) {
-      _showErrorDialog('식욕 조절을 선택해주세요');
+      if (!mounted) return;
+      GabiumToast.showError(context, '식욕 조절을 선택해주세요');
       return;
     }
 
@@ -165,7 +178,8 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
     for (final symptom in _selectedSymptoms) {
       final severity = _symptomSeverities[symptom] ?? 5;
       if (severity >= 7 && _symptomPersistent[symptom] == null) {
-        _showErrorDialog('$symptom: 24시간 이상 지속 여부를 선택해주세요');
+        if (!mounted) return;
+        GabiumToast.showError(context, '$symptom: 24시간 이상 지속 여부를 선택해주세요');
         return;
       }
     }
@@ -175,7 +189,8 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
     try {
       final userId = _getCurrentUserId();
       if (userId == null) {
-        _showErrorDialog('로그인이 필요합니다');
+        if (!mounted) return;
+        GabiumToast.showError(context, '로그인이 필요합니다');
         setState(() => _isLoading = false);
         return;
       }
@@ -219,37 +234,43 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        _showErrorDialog('저장 중 오류가 발생했습니다: $e');
+        GabiumToast.showError(context, '저장 중 오류가 발생했습니다: $e');
       }
     }
-  }
-
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('입력 확인'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Change 1: AppBar 스타일 Design System 적용
       appBar: AppBar(
-        title: const Text('데일리 기록'),
+        backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
+        elevation: 0,
+        title: const Text(
+          '데일리 기록',
+          style: TextStyle(
+            fontSize: 20.0, // xl
+            fontWeight: FontWeight.w600, // Semibold
+            color: Color(0xFF1E293B), // Neutral-800
+          ),
+        ),
+        centerTitle: false,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(
+            color: const Color(0xFFE2E8F0), // Neutral-200
+            height: 1.0,
+          ),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              // Change 11: 전체 간격 시스템 8px 배수로 정렬
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0, // md
+                vertical: 24.0, // lg
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -258,30 +279,24 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
                     initialDate: _selectedDate,
                     onDateSelected: _handleDateSelected,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 24.0), // lg
 
                   // 2. 신체 기록 섹션
                   _buildBodySection(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 24.0), // lg
 
-                  // 3. 부작용 기록 섹션 (접힌 상태)
+                  // 3. 부작용 기록 섹션 (초기 확장 상태)
                   _buildSideEffectsSection(),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24.0), // lg
 
-                  // 4. 저장 버튼
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleSave,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: const Text(
-                        '저장',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
+                  // 4. 저장 버튼 (Change 9: 로딩 상태 시각화 강화)
+                  GabiumButton(
+                    text: '저장',
+                    onPressed: _isLoading ? null : _handleSave,
+                    size: GabiumButtonSize.large, // 52px
+                    isLoading: _isLoading,
                   ),
+                  const SizedBox(height: 32.0), // xl
                 ],
               ),
             ),
@@ -289,36 +304,65 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
   }
 
   Widget _buildBodySection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '신체 기록',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return Container(
+      // Change 3: 카드 스타일 개선
+      decoration: BoxDecoration(
+        color: Colors.white, // White
+        borderRadius: BorderRadius.circular(12.0), // md
+        border: Border.all(
+          color: const Color(0xFFE2E8F0), // Neutral-200
+          width: 1.0,
         ),
-        const SizedBox(height: 16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 4.0,
+            offset: const Offset(0, 2),
+          ), // sm shadow
+        ],
+      ),
+      padding: const EdgeInsets.all(16.0), // md
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Change 10: 섹션 제목 타이포그래피 계층 개선
+          const Text(
+            '신체 기록',
+            style: TextStyle(
+              fontSize: 20.0, // xl
+              fontWeight: FontWeight.w600, // Semibold
+              color: Color(0xFF1E293B), // Neutral-800
+            ),
+          ),
+          const SizedBox(height: 12.0), // sm + xs
 
-        // 체중 입력
-        InputValidationWidget(
-          fieldName: '체중',
-          label: '체중 (kg)',
-          hint: '예: 75.5',
-          onChanged: _handleWeightChanged,
-        ),
-        const SizedBox(height: 24),
+          // 체중 입력
+          InputValidationWidget(
+            fieldName: '체중',
+            label: '체중 (kg)',
+            hint: '예: 75.5',
+            onChanged: _handleWeightChanged,
+          ),
+          const SizedBox(height: 16.0), // md
 
-        // 식욕 조절 점수 (필수)
-        const Text(
-          '식욕 조절 *',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 12),
-        _buildAppetiteButtons(),
-      ],
+          // 식욕 조절 점수 (필수)
+          const Text(
+            '식욕 조절 *',
+            style: TextStyle(
+              fontSize: 18.0, // lg
+              fontWeight: FontWeight.w600, // Semibold
+              color: Color(0xFF334155), // Neutral-700
+            ),
+          ),
+          const SizedBox(height: 12.0), // sm + xs
+          _buildAppetiteButtons(),
+        ],
+      ),
     );
   }
 
   Widget _buildAppetiteButtons() {
+    // Change 2: 식욕 조절 칩 스타일 개선 (AppealScoreChip 사용)
     const appetiteLabels = {
       5: '폭발',
       4: '보통',
@@ -328,81 +372,157 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
     };
 
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 8.0, // sm
+      runSpacing: 8.0, // sm
       children: appetiteLabels.entries.map((entry) {
         final score = entry.key;
         final label = entry.value;
         final isSelected = _appetiteScore == score;
 
-        return ChoiceChip(
-          label: Text(label),
-          selected: isSelected,
-          onSelected: (_) => _handleAppetiteScoreSelected(score),
+        return AppealScoreChip(
+          label: label,
+          isSelected: isSelected,
+          onTap: () => _handleAppetiteScoreSelected(score),
         );
       }).toList(),
     );
   }
 
   Widget _buildSideEffectsSection() {
-    return ExpansionTile(
-      title: const Text(
-        '부작용 기록 (선택)',
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      ),
-      initiallyExpanded: false,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 증상 선택 칩
-              const Text(
-                '증상 선택',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _symptoms.map((symptom) {
-                  return FilterChip(
-                    label: Text(symptom),
-                    selected: _selectedSymptoms.contains(symptom),
-                    onSelected: (_) => _handleSymptomToggle(symptom),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24),
-
-              // 선택된 증상별 개별 설정
-              if (_selectedSymptoms.isNotEmpty) ...[
-                const Text(
-                  '선택된 증상',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 12),
-                ..._selectedSymptoms.map((symptom) {
-                  return _buildSymptomDetail(symptom);
-                }).toList(),
-              ],
-
-              // 공통 메모
-              const SizedBox(height: 24),
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: '메모 (선택)',
-                  hintText: '추가 메모를 입력하세요',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-                onChanged: (value) => setState(() => _note = value),
-              ),
-            ],
-          ),
+    return Container(
+      // Change 3: 카드 스타일 개선, 초기 확장 상태
+      decoration: BoxDecoration(
+        color: Colors.white, // White
+        borderRadius: BorderRadius.circular(12.0), // md
+        border: Border.all(
+          color: const Color(0xFFE2E8F0), // Neutral-200
+          width: 1.0,
         ),
-      ],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 4.0,
+            offset: const Offset(0, 2),
+          ), // sm shadow
+        ],
+      ),
+      padding: const EdgeInsets.all(16.0), // md
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 섹션 제목
+          const Text(
+            '부작용 기록 (선택)',
+            style: TextStyle(
+              fontSize: 20.0, // xl
+              fontWeight: FontWeight.w600, // Semibold
+              color: Color(0xFF1E293B), // Neutral-800
+            ),
+          ),
+          const SizedBox(height: 12.0), // sm + xs
+
+          // 증상 선택 칩
+          const Text(
+            '증상 선택',
+            style: TextStyle(
+              fontSize: 18.0, // lg
+              fontWeight: FontWeight.w600, // Semibold
+              color: Color(0xFF334155), // Neutral-700
+            ),
+          ),
+          const SizedBox(height: 12.0), // sm + xs
+
+          // Change 6: FilterChip Design System 적용
+          Wrap(
+            spacing: 4.0, // xs
+            runSpacing: 8.0, // sm
+            children: _symptoms.map((symptom) {
+              final isSelected = _selectedSymptoms.contains(symptom);
+              return FilterChip(
+                label: Text(symptom),
+                selected: isSelected,
+                onSelected: (_) => _handleSymptomToggle(symptom),
+                backgroundColor: const Color(0xFFF1F5F9), // Neutral-100
+                selectedColor: const Color(0xFF4ADE80), // Primary
+                side: BorderSide.none,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999.0), // full
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8.0), // sm
+                labelStyle: TextStyle(
+                  fontSize: 14.0, // sm
+                  color: isSelected
+                      ? Colors.white
+                      : const Color(0xFF334155), // Neutral-700
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 24.0), // lg
+
+          // 선택된 증상별 개별 설정
+          if (_selectedSymptoms.isNotEmpty) ...[
+            const Text(
+              '선택된 증상',
+              style: TextStyle(
+                fontSize: 18.0, // lg
+                fontWeight: FontWeight.w600, // Semibold
+                color: Color(0xFF334155), // Neutral-700
+              ),
+            ),
+            const SizedBox(height: 12.0), // sm + xs
+            ..._selectedSymptoms.map((symptom) {
+              return _buildSymptomDetail(symptom);
+            }),
+          ],
+
+          // 공통 메모
+          const SizedBox(height: 16.0), // md
+          // Change 7: 입력 필드 높이 & 스타일 통일
+          const Text(
+            '메모 (선택)',
+            style: TextStyle(
+              fontSize: 14.0, // sm
+              fontWeight: FontWeight.w600, // Semibold
+              color: Color(0xFF334155), // Neutral-700
+            ),
+          ),
+          const SizedBox(height: 8.0), // sm
+          TextField(
+            decoration: InputDecoration(
+              hintText: '추가 메모를 입력하세요',
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 12.0,
+                horizontal: 16.0,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0), // sm
+                borderSide: const BorderSide(
+                  color: Color(0xFFCBD5E1), // Neutral-300
+                  width: 2.0,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0), // sm
+                borderSide: const BorderSide(
+                  color: Color(0xFF4ADE80), // Primary
+                  width: 2.0,
+                ),
+              ),
+            ),
+            maxLines: 4,
+            minLines: 4,
+            style: const TextStyle(
+              fontSize: 16.0, // base
+              fontWeight: FontWeight.w400, // Regular
+              color: Color(0xFF0F172A), // Neutral-900
+            ),
+            onChanged: (value) => setState(() => _note = value),
+          ),
+        ],
+      ),
     );
   }
 
@@ -411,102 +531,142 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
     final isPersistent = _symptomPersistent[symptom];
     final tags = _symptomTags[symptom] ?? [];
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 증상명
-            Text(
-              symptom,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    return Container(
+      // 증상 상세 카드
+      margin: const EdgeInsets.only(bottom: 16.0), // md
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.0), // md
+        border: Border.all(
+          color: const Color(0xFFE2E8F0), // Neutral-200
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 4.0,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16.0), // md
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 증상명
+          Text(
+            symptom,
+            style: const TextStyle(
+              fontSize: 18.0, // lg
+              fontWeight: FontWeight.w600, // Semibold
+              color: Color(0xFF1E293B), // Neutral-800
             ),
-            const SizedBox(height: 16),
+          ),
+          const SizedBox(height: 16.0), // md
 
-            // 심각도 슬라이더
-            Row(
-              children: [
-                const Text('심각도:'),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Slider(
-                    value: severity.toDouble(),
-                    min: 1,
-                    max: 10,
-                    divisions: 9,
-                    label: '$severity점',
-                    onChanged: (value) => _handleSeverityChanged(symptom, value),
-                  ),
-                ),
-                SizedBox(
-                  width: 40,
-                  child: Text(
-                    '$severity점',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
+          // Change 4: 심각도 슬라이더 의미 시각화 (SeverityLevelIndicator 사용)
+          const Text(
+            '심각도',
+            style: TextStyle(
+              fontSize: 14.0, // sm
+              fontWeight: FontWeight.w600, // Semibold
+              color: Color(0xFF334155), // Neutral-700
             ),
-            const SizedBox(height: 12),
+          ),
+          const SizedBox(height: 8.0), // sm
+          SeverityLevelIndicator(
+            severity: severity,
+            onChanged: (value) => _handleSeverityChanged(symptom, value),
+          ),
+          const SizedBox(height: 16.0), // md
 
-            // 심각도 7-10점: 24시간 지속 여부
-            if (severity >= 7) ...[
-              const Text(
-                '24시간 이상 지속 여부',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              Row(
+          // Change 5: 조건부 UI 섹션 시각적 구분 강화 (ConditionalSection 사용)
+          // 심각도 7-10점: 24시간 지속 여부
+          if (severity >= 7) ...[
+            ConditionalSection(
+              isHighSeverity: true,
+              child: Column(
                 children: [
-                  Expanded(
-                    child: RadioListTile<bool>(
-                      title: const Text('예'),
-                      value: true,
-                      groupValue: isPersistent,
-                      onChanged: (value) =>
-                          _handlePersistentChanged(symptom, value),
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                    ),
-                  ),
-                  Expanded(
-                    child: RadioListTile<bool>(
-                      title: const Text('아니오'),
-                      value: false,
-                      groupValue: isPersistent,
-                      onChanged: (value) =>
-                          _handlePersistentChanged(symptom, value),
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                    ),
+                  // Change 6: 라디오 버튼 Design System 적용
+                  Row(
+                    children: [
+                      Expanded(
+                        child: RadioListTile<bool>(
+                          title: const Text(
+                            '예',
+                            style: TextStyle(
+                              fontSize: 16.0, // base
+                              fontWeight: FontWeight.w400, // Regular
+                              color: Color(0xFF334155), // Neutral-700
+                            ),
+                          ),
+                          value: true,
+                          groupValue: isPersistent,
+                          onChanged: (value) =>
+                              _handlePersistentChanged(symptom, value),
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          activeColor: const Color(0xFF4ADE80), // Primary
+                        ),
+                      ),
+                      Expanded(
+                        child: RadioListTile<bool>(
+                          title: const Text(
+                            '아니오',
+                            style: TextStyle(
+                              fontSize: 16.0, // base
+                              fontWeight: FontWeight.w400, // Regular
+                              color: Color(0xFF334155), // Neutral-700
+                            ),
+                          ),
+                          value: false,
+                          groupValue: isPersistent,
+                          onChanged: (value) =>
+                              _handlePersistentChanged(symptom, value),
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          activeColor: const Color(0xFF4ADE80), // Primary
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
+          ],
 
-            // 심각도 1-6점: 컨텍스트 태그
-            if (severity < 7) ...[
-              const Text(
-                '관련 상황 (선택)',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+          // 심각도 1-6점: 컨텍스트 태그
+          if (severity < 7) ...[
+            ConditionalSection(
+              isHighSeverity: false,
+              child: Wrap(
+                spacing: 4.0, // xs
+                runSpacing: 8.0, // sm
                 children: _contextTags.map((tag) {
+                  final isSelected = tags.contains(tag);
                   return FilterChip(
                     label: Text(tag),
-                    selected: tags.contains(tag),
+                    selected: isSelected,
                     onSelected: (_) => _handleTagToggle(symptom, tag),
+                    backgroundColor: const Color(0xFFF1F5F9), // Neutral-100
+                    selectedColor: const Color(0xFF4ADE80), // Primary
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999.0), // full
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0), // sm
+                    labelStyle: TextStyle(
+                      fontSize: 14.0, // sm
+                      color: isSelected
+                          ? Colors.white
+                          : const Color(0xFF334155), // Neutral-700
+                    ),
                   );
                 }).toList(),
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

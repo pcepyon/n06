@@ -5,6 +5,7 @@ enum GabiumButtonVariant {
   secondary,
   tertiary,
   ghost,
+  danger,
 }
 
 enum GabiumButtonSize {
@@ -46,13 +47,23 @@ class GabiumButton extends StatelessWidget {
         onPressed: isLoading ? null : onPressed,
         style: buttonStyle,
         child: isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(
+                    width: 16.0,
+                    height: 16.0,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 8.0), // 스피너-텍스트 간격
+                  Text(
+                    '저장 중...',
+                    style: textStyle,
+                  ),
+                ],
               )
             : Text(text, style: textStyle),
       ),
@@ -136,6 +147,33 @@ class GabiumButton extends StatelessWidget {
               }
               if (states.contains(WidgetState.pressed)) {
                 return const Color(0xFF4ADE80).withValues(alpha: 0.12);
+              }
+              return null;
+            },
+          ),
+        );
+
+      case GabiumButtonVariant.danger:
+        return ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFEF4444), // Error
+          foregroundColor: const Color(0xFFFFFFFF),
+          disabledBackgroundColor: const Color(0xFFEF4444).withValues(alpha: 0.4),
+          elevation: 0,
+          shadowColor: const Color(0x0F0F172A).withValues(alpha: 0.06),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8), // sm
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: size == GabiumButtonSize.large ? 32 : 24,
+          ),
+        ).copyWith(
+          overlayColor: WidgetStateProperty.resolveWith<Color?>(
+            (Set<WidgetState> states) {
+              if (states.contains(WidgetState.hovered)) {
+                return const Color(0xFFDC2626); // Error darker (Red-600)
+              }
+              if (states.contains(WidgetState.pressed)) {
+                return const Color(0xFFB91C1C); // Error darkest (Red-700)
               }
               return null;
             },

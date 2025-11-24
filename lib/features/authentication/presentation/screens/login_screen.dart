@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/authentication/domain/exceptions/auth_exceptions.dart';
+import 'package:n06/features/authentication/presentation/widgets/auth_hero_section.dart';
+import 'package:n06/features/authentication/presentation/widgets/consent_checkbox.dart';
+import 'package:n06/features/authentication/presentation/widgets/social_login_button.dart';
 
 /// Login screen with social authentication options
 ///
@@ -363,199 +366,224 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Logo or Title
-              const Icon(
-                Icons.medication,
-                size: 80,
-                color: Colors.blue,
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'GLP-1 치료 관리',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 32,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Hero Section with Gabium branding
+                const AuthHeroSection(
+                  title: 'GLP-1 치료 관리',
+                  subtitle: '체계적으로 관리하세요',
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                '안전하고 효과적인 치료를 위해',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 48),
+                const SizedBox(height: 24),
 
-              // Terms checkboxes
-              CheckboxListTile(
-                key: const Key('terms_checkbox'),
-                title: const Text('이용약관 동의 (필수)'),
-                value: _agreedToTerms,
-                onChanged: _isLoading
-                    ? null
-                    : (value) {
-                        setState(() => _agreedToTerms = value ?? false);
-                      },
-                controlAffinity: ListTileControlAffinity.leading,
-              ),
-              CheckboxListTile(
-                key: const Key('privacy_checkbox'),
-                title: const Text('개인정보처리방침 동의 (필수)'),
-                value: _agreedToPrivacy,
-                onChanged: _isLoading
-                    ? null
-                    : (value) {
-                        setState(() => _agreedToPrivacy = value ?? false);
-                      },
-                controlAffinity: ListTileControlAffinity.leading,
-              ),
-
-              const SizedBox(height: 32),
-
-              // Kakao Login Button
-              ElevatedButton.icon(
-                key: const Key('kakao_login_button'),
-                onPressed: _canLogin ? _handleKakaoLogin : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFEE500),
-                  foregroundColor: Colors.black87,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.black87,
-                        ),
-                      )
-                    : const Icon(Icons.chat_bubble),
-                label: const Text(
-                  '카카오 로그인',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Naver Login Button
-              ElevatedButton.icon(
-                key: const Key('naver_login_button'),
-                onPressed: _canLogin ? _handleNaverLogin : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF03C75A),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.language),
-                label: const Text(
-                  '네이버 로그인',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Divider
-              Row(
-                children: [
-                  Expanded(child: Divider(color: Colors.grey.shade300)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      '또는',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
+                // 2. Consent Section (Card-like background)
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9), // Neutral-100
+                    border: Border.all(
+                      color: const Color(0xFFE2E8F0), // Neutral-200
+                      width: 1,
+                    ),
+                    borderRadius: BorderRadius.circular(12), // Border radius md
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0x0F172A).withOpacity(0.05),
+                        blurRadius: 2,
+                        offset: const Offset(0, 1),
                       ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      ConsentCheckbox(
+                        key: const Key('terms_checkbox'),
+                        label: '이용약관에 동의합니다',
+                        isRequired: true,
+                        value: _agreedToTerms,
+                        onChanged: _isLoading
+                            ? (val) {}
+                            : (val) {
+                                setState(() => _agreedToTerms = val);
+                              },
+                      ),
+                      const SizedBox(height: 16),
+                      ConsentCheckbox(
+                        key: const Key('privacy_checkbox'),
+                        label: '개인정보처리방침에 동의합니다',
+                        isRequired: true,
+                        value: _agreedToPrivacy,
+                        onChanged: _isLoading
+                            ? (val) {}
+                            : (val) {
+                                setState(() => _agreedToPrivacy = val);
+                              },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // 3. Helper Text Alert (if agreements not complete)
+                if (!_canLogin && !_isLoading)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withOpacity(0.08), // Warning-50
+                      border: Border.all(
+                        color: const Color(0xFFF59E0B).withOpacity(0.2),
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(8), // Border radius sm
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline,
+                          color: Color(0xFFF59E0B), // Warning
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            '소셜 로그인하려면 약관에 모두 동의해주세요',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFFF59E0B),
+                              height: 24 / 16,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Expanded(child: Divider(color: Colors.grey.shade300)),
-                ],
-              ),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 24),
-
-              // Email Login Button
-              OutlinedButton.icon(
-                key: const Key('email_login_button'),
-                onPressed: () => context.go('/email-signin'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  side: BorderSide(color: Colors.grey.shade400),
+                // 4. Social Login Buttons
+                SocialLoginButton(
+                  key: const Key('kakao_login_button'),
+                  label: '카카오 로그인',
+                  icon: Icons.chat_bubble,
+                  backgroundColor: const Color(0xFFFEE500),
+                  foregroundColor: Colors.black87,
+                  isLoading: _isLoading,
+                  onPressed: _canLogin ? _handleKakaoLogin : null,
                 ),
-                icon: const Icon(Icons.email_outlined),
-                label: const Text(
-                  '이메일로 로그인',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                const SizedBox(height: 8),
+                SocialLoginButton(
+                  key: const Key('naver_login_button'),
+                  label: '네이버 로그인',
+                  icon: Icons.language,
+                  backgroundColor: const Color(0xFF03C75A),
+                  foregroundColor: Colors.white,
+                  isLoading: _isLoading,
+                  onPressed: _canLogin ? _handleNaverLogin : null,
                 ),
-              ),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 24),
 
-              // Email Signup Link
-              TextButton(
-                key: const Key('email_signup_link'),
-                onPressed: () => context.go('/email-signup'),
-                child: const Text(
-                  '이메일로 회원가입',
-                  style: TextStyle(
-                    fontSize: 14,
-                    decoration: TextDecoration.underline,
-                  ),
+                // 5. Email Section Divider
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        height: 1,
+                        color: const Color(0xFFE2E8F0), // Neutral-200
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        '또는',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF64748B), // Neutral-500
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        height: 1,
+                        color: const Color(0xFFE2E8F0), // Neutral-200
+                      ),
+                    ),
+                  ],
                 ),
-              ),
+                const SizedBox(height: 20),
 
-              const SizedBox(height: 24),
-
-              // Helper text
-              if (!_canLogin && !_isLoading)
+                // 6. Email Section Label
                 const Text(
-                  '소셜 로그인하려면 약관에 동의해주세요',
-                  textAlign: TextAlign.center,
+                  '다른 계정으로 계속하기',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF334155), // Neutral-700
                   ),
                 ),
-            ],
+                const SizedBox(height: 12),
+
+                // Email Login Button
+                ElevatedButton.icon(
+                  key: const Key('email_login_button'),
+                  onPressed: () => context.go('/email-signin'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF4ADE80), // Primary
+                    elevation: 0,
+                    side: const BorderSide(
+                      color: Color(0xFF4ADE80),
+                      width: 2,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.email_outlined),
+                  label: const Text(
+                    '이메일로 로그인',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Email Signup Button (consistent with login)
+                ElevatedButton.icon(
+                  key: const Key('email_signup_link'),
+                  onPressed: () => context.go('/email-signup'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF4ADE80),
+                    elevation: 0,
+                    side: const BorderSide(
+                      color: Color(0xFF4ADE80),
+                      width: 2,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.person_add_outlined),
+                  label: const Text(
+                    '이메일로 회원가입',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

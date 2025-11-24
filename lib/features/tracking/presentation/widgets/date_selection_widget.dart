@@ -89,7 +89,7 @@ class _DateSelectionWidgetState extends State<DateSelectionWidget> {
       children: [
         // 빠른 선택 버튼
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 8.0), // sm
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -111,13 +111,24 @@ class _DateSelectionWidgetState extends State<DateSelectionWidget> {
 
         // 캘린더 선택 버튼
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.only(top: 8.0), // sm
           child: ElevatedButton.icon(
             onPressed: _openCalendar,
-            icon: const Icon(Icons.calendar_today),
-            label: Text(_formatDate(selectedDate)),
+            icon: const Icon(Icons.calendar_today, size: 20.0),
+            label: Text(
+              _formatDate(selectedDate),
+              style: const TextStyle(
+                fontSize: 16.0, // base
+                fontWeight: FontWeight.w500, // Medium
+              ),
+            ),
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 48),
+              backgroundColor: const Color(0xFF4ADE80), // Primary
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0), // sm
+              ),
             ),
           ),
         ),
@@ -142,9 +153,23 @@ class _QuickDateButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0), // sm
+          side: const BorderSide(
+            color: Color(0xFF4ADE80), // Primary
+            width: 2.0,
+          ),
+          foregroundColor: const Color(0xFF4ADE80), // Primary
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0), // sm
+          ),
         ),
-        child: Text(label),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14.0, // sm
+            fontWeight: FontWeight.w500, // Medium
+          ),
+        ),
       ),
     );
   }

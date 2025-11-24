@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_toast.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
 import 'package:n06/features/tracking/presentation/widgets/consultation_recommendation_dialog.dart';
+import 'package:n06/features/tracking/presentation/widgets/emergency_checklist_item.dart';
 
 /// F005: 증상 체크 화면
 ///
@@ -91,15 +94,11 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
       await ref.read(emergencyCheckNotifierProvider.notifier).saveEmergencyCheck(userId, check);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('증상이 기록되었습니다.'), duration: Duration(seconds: 2)),
-        );
+        GabiumToast.showSuccess(context, '증상이 기록되었습니다.');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('기록 실패: $e'), backgroundColor: Colors.red));
+        GabiumToast.showError(context, '기록 실패: $e');
       }
     }
   }
@@ -114,44 +113,79 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
     // Provider를 구독하여 화면이 활성화된 동안 유지
     ref.watch(emergencyCheckNotifierProvider);
 
+    // Gabium Design System Colors
+    const neutral50 = Color(0xFFF8FAFC); // Page background
+    const neutral100 = Color(0xFFF1F5F9); // Header background
+    const neutral800 = Color(0xFF1E293B); // Text - strong
+    const neutral600 = Color(0xFF475569); // Text - secondary
+    const errorColor = Color(0xFFEF4444); // Error accent
+
     return Scaffold(
-      appBar: AppBar(title: const Text('증상 체크'), elevation: 0),
+      backgroundColor: neutral50,
+      appBar: AppBar(
+        title: const Text(
+          '증상 체크',
+          style: TextStyle(
+            fontSize: 20, // xl
+            fontWeight: FontWeight.w600, // Semibold
+            color: neutral800,
+          ),
+        ),
+        backgroundColor: neutral50,
+        elevation: 0,
+        foregroundColor: neutral800,
+        centerTitle: false,
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 헤더
+            // Header Section with Warning Accent
             Container(
-              padding: const EdgeInsets.all(16),
-              color: Colors.blue.shade50,
+              padding: const EdgeInsets.all(24), // lg
+              color: neutral100,
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: errorColor, width: 4),
+                ),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     '다음 증상 중 해당하는 것이 있나요?',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 20, // xl
+                      fontWeight: FontWeight.w600, // Semibold
+                      color: neutral800,
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  Text('해당하는 증상을 선택해주세요.', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                  Text(
+                    '해당하는 증상을 선택해주세요.',
+                    style: TextStyle(
+                      fontSize: 16, // base
+                      fontWeight: FontWeight.w400, // Regular
+                      color: neutral600,
+                    ),
+                  ),
                 ],
               ),
             ),
 
-            // 증상 체크리스트
+            // Symptom Checklist
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(24), // lg
               child: Column(
                 children: List.generate(
                   emergencySymptoms.length,
-                  (index) => CheckboxListTile(
-                    value: selectedStates[index],
+                  (index) => EmergencyChecklistItem(
+                    symptom: emergencySymptoms[index],
+                    isChecked: selectedStates[index],
                     onChanged: (value) {
                       setState(() {
                         selectedStates[index] = value ?? false;
                       });
                     },
-                    title: Text(emergencySymptoms[index], style: const TextStyle(fontSize: 14)),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 0),
                   ),
                 ),
               ),
@@ -160,18 +194,27 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
         ),
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16), // md
+        color: neutral50,
         child: Row(
           children: [
+            // Secondary Button: No Symptoms
             Expanded(
-              child: OutlinedButton(onPressed: _handleNoSymptoms, child: const Text('해당 없음')),
+              child: GabiumButton(
+                text: '해당 없음',
+                onPressed: _handleNoSymptoms,
+                variant: GabiumButtonVariant.secondary,
+                size: GabiumButtonSize.medium,
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 12), // spacing between buttons
+            // Primary Button: Confirm (disabled if no symptoms selected)
             Expanded(
-              child: ElevatedButton(
-                // 증상이 선택되지 않으면 비활성화
+              child: GabiumButton(
+                text: '확인',
                 onPressed: selectedStates.any((state) => state) ? _handleConfirm : null,
-                child: const Text('확인'),
+                variant: GabiumButtonVariant.primary,
+                size: GabiumButtonSize.medium,
               ),
             ),
           ],

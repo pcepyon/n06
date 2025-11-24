@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_toast.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
 import 'package:n06/features/profile/presentation/widgets/profile_edit_form.dart';
@@ -14,34 +15,102 @@ class ProfileEditScreen extends ConsumerStatefulWidget {
 
 class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   UserProfile? _editedProfile;
-  String? _validationError;
 
   @override
   Widget build(BuildContext context) {
     final profileState = ref.watch(profileNotifierProvider);
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
       appBar: AppBar(
         title: const Text('프로필 및 목표 수정'),
+        backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
+        toolbarHeight: 56,
+        titleTextStyle: const TextStyle(
+          color: Color(0xFF1E293B), // Neutral-800
+          fontSize: 20,
+          fontWeight: FontWeight.w600, // Semibold
+          fontFamily: 'Pretendard',
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            color: const Color(0xFFE2E8F0), // Neutral-200
+            height: 1,
+          ),
+        ),
       ),
       body: profileState.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(
+              Color(0xFF4ADE80), // Primary
+            ),
+          ),
         ),
         error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('오류가 발생했습니다: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  ref.invalidate(profileNotifierProvider);
-                },
-                child: const Text('다시 시도'),
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Error icon
+                const Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: Color(0xFFEF4444), // Error
+                ),
+                const SizedBox(height: 16),
+                // Error title
+                const Text(
+                  '오류 발생',
+                  style: TextStyle(
+                    color: Color(0xFF1E293B), // Neutral-800
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600, // Semibold
+                    fontFamily: 'Pretendard',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Error message
+                Text(
+                  '프로필을 불러오는 중에 오류가 발생했습니다. 다시 시도해주세요.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF64748B), // Neutral-500
+                    fontSize: 14,
+                    fontFamily: 'Pretendard',
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Retry button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4ADE80), // Primary
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () {
+                      ref.invalidate(profileNotifierProvider);
+                    },
+                    child: const Text(
+                      '다시 시도',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         data: (profile) {
@@ -51,59 +120,32 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             );
           }
 
-          return Stack(
-            children: [
-              ProfileEditForm(
-                profile: profile,
-                onProfileChanged: (newProfile) {
-                  setState(() {
-                    _editedProfile = newProfile;
-                    _validationError = null;
-                  });
-                },
-              ),
-              // Validation error message
-              if (_validationError != null)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    color: Colors.red.withValues(alpha: 0.8),
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      _validationError!,
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-            ],
+          return ProfileEditForm(
+            profile: profile,
+            onProfileChanged: (newProfile) {
+              setState(() {
+                _editedProfile = newProfile;
+              });
+            },
+            onSave: _editedProfile != null ? _handleSave : null,
           );
         },
       ),
-      floatingActionButton: _editedProfile != null
-          ? FloatingActionButton(
-              onPressed: _handleSave,
-              child: const Icon(Icons.check),
-            )
-          : null,
     );
   }
 
   void _handleSave() async {
     if (_editedProfile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('변경사항이 없습니다.')),
-      );
-      Navigator.pop(context);
+      GabiumToast.showInfo(context, '변경사항이 없습니다.');
+      if (mounted) {
+        Navigator.pop(context);
+      }
       return;
     }
 
     // Validate
     if (_editedProfile!.targetWeight.value >= _editedProfile!.currentWeight.value) {
-      setState(() {
-        _validationError = '목표 체중은 현재 체중보다 작아야 합니다.';
-      });
+      GabiumToast.showError(context, '목표 체중은 현재 체중보다 작아야 합니다.');
       return;
     }
 
@@ -112,15 +154,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       await ref.read(profileNotifierProvider.notifier).updateProfile(_editedProfile!);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('프로필이 저장되었습니다.')),
-        );
+        GabiumToast.showSuccess(context, '프로필이 저장되었습니다.');
         Navigator.pop(context);
       }
     } catch (e) {
-      setState(() {
-        _validationError = '저장 실패: $e';
-      });
+      GabiumToast.showError(context, '저장 실패: $e');
     }
   }
 }

@@ -1,0 +1,187 @@
+{
+  "project": {
+    "name": "LoginScreen UI Renewal",
+    "feature": "authentication",
+    "screen": "LoginScreen",
+    "path": "lib/features/authentication/presentation/screens/login_screen.dart",
+    "createdDate": "2025-11-24",
+    "priority": "high"
+  },
+  "design": {
+    "designSystem": "gabium-design-system-v1.0",
+    "framework": "Flutter (Dart)",
+    "layer": "Presentation only"
+  },
+  "phases": {
+    "phase_2a": {
+      "status": "completed",
+      "name": "분석 및 제안",
+      "completedAt": "2025-11-24",
+      "outputs": [
+        {
+          "name": "proposal",
+          "file": "20251124-proposal-v1.md",
+          "description": "현재 상태 분석 및 7가지 개선 사항 제안"
+        }
+      ]
+    },
+    "phase_2b": {
+      "status": "completed",
+      "name": "구현 명세",
+      "startedAt": "2025-11-24",
+      "completedAt": "2025-11-24",
+      "outputs": [
+        {
+          "name": "implementation",
+          "file": "20251124-implementation-v1.md",
+          "description": "상세 구현 가이드 (토큰, 레이아웃, 코드 예제)"
+        }
+      ]
+    },
+    "phase_2c": {
+      "status": "completed",
+      "name": "자동 구현",
+      "startedAt": "2025-11-24",
+      "completedAt": "2025-11-24",
+      "outputs": [
+        {
+          "name": "implementation_log",
+          "file": "20251124-implementation-log-v1.md",
+          "description": "구현 결과 기록 및 변경사항 로그"
+        }
+      ]
+    },
+    "phase_3": {
+      "status": "completed",
+      "name": "최종 검증 및 완료",
+      "startedAt": "2025-11-24",
+      "completedAt": "2025-11-24",
+      "outputs": [
+        {
+          "name": "completion_summary",
+          "file": "20251124-completion-summary-v1.md",
+          "description": "최종 검증 결과 및 컴포넌트 레지스트리 업데이트"
+        }
+      ]
+    }
+  },
+  "components": {
+    "new_components": [
+      {
+        "name": "AuthHeroSection",
+        "file": "lib/features/authentication/presentation/widgets/auth_hero_section.dart",
+        "description": "로고, 제목, 부제목을 포함한 인증 화면 헤로 섹션",
+        "reusableFor": ["LoginScreen", "EmailSigninScreen", "EmailSignupScreen"],
+        "tokens": ["logo-192", "typography-3xl", "typography-lg", "color-primary", "color-neutral-50"]
+      },
+      {
+        "name": "SocialLoginButton",
+        "file": "lib/features/authentication/presentation/widgets/social_login_button.dart",
+        "description": "카카오/네이버 소셜 로그인 버튼 (브랜드 색상 유지)",
+        "variants": ["kakao", "naver"],
+        "tokens": ["color-kakao", "color-naver", "typography-base", "spacing-md"]
+      },
+      {
+        "name": "ConsentCheckbox",
+        "file": "lib/features/authentication/presentation/widgets/consent_checkbox.dart",
+        "description": "필수/선택 동의 체크박스 (44x44px 터치 영역)",
+        "variants": ["required", "optional"],
+        "tokens": ["checkbox-size", "checkbox-touch-area", "typography-base", "color-neutral-700"]
+      }
+    ],
+    "reused_components": [
+      {
+        "name": "GabiumButton",
+        "source": "EmailSignup/EmailSignin",
+        "usage": "Primary/Secondary 로그인 버튼"
+      },
+      {
+        "name": "GabiumToast",
+        "source": "EmailSignup/EmailSignin",
+        "usage": "에러/성공 피드백"
+      }
+    ]
+  },
+  "changes": [
+    {
+      "number": 1,
+      "title": "브랜드 헤로 섹션 추가",
+      "type": "visual",
+      "components": ["AuthHeroSection"],
+      "tokens": ["logo-192", "typography-3xl", "typography-lg", "color-primary", "spacing-xl"],
+      "impact": "첫인상 강화, 브랜드 정체성 확립"
+    },
+    {
+      "number": 2,
+      "title": "동의 섹션 강화",
+      "type": "interaction",
+      "components": ["ConsentCheckbox"],
+      "tokens": ["color-neutral-100", "spacing-md", "border-radius-md"],
+      "impact": "사용자 주의 집중, 터치 용이성 증가"
+    },
+    {
+      "number": 3,
+      "title": "소셜 로그인 버튼 정교화",
+      "type": "visual",
+      "components": ["SocialLoginButton"],
+      "tokens": ["color-kakao", "color-naver", "spacing-md", "shadow-sm"],
+      "impact": "일관성 강화, 명확한 상태 표시"
+    },
+    {
+      "number": 4,
+      "title": "비활성 상태 헬퍼 텍스트 강화",
+      "type": "ux",
+      "tokens": ["color-warning", "spacing-md", "border-radius-sm"],
+      "impact": "사용자 가이드 명확화"
+    },
+    {
+      "number": 5,
+      "title": "이메일 로그인 섹션 개선",
+      "type": "layout",
+      "tokens": ["color-neutral-200", "color-neutral-500", "spacing-lg", "typography-sm"],
+      "impact": "섹션 계층 구분, 선택지 명확화"
+    },
+    {
+      "number": 6,
+      "title": "에러/피드백 컴포넌트 현대화",
+      "type": "interaction",
+      "components": ["GabiumToast"],
+      "tokens": ["color-error", "color-warning", "color-info", "shadow-lg"],
+      "impact": "일관된 피드백 시스템"
+    },
+    {
+      "number": 7,
+      "title": "로딩 상태 및 접근성 강화",
+      "type": "interaction",
+      "tokens": ["color-primary", "spacing-md", "opacity-0.6"],
+      "impact": "명확한 진행 상황, UI 조작 방지"
+    }
+  ],
+  "accessibility": {
+    "wcag_level": "AA",
+    "color_contrast": "4.5:1",
+    "touch_target_minimum": "44x44px",
+    "keyboard_navigation": "supported",
+    "screen_reader": "supported"
+  },
+  "testing": {
+    "unit_tests": true,
+    "widget_tests": true,
+    "integration_tests": false,
+    "manual_testing": true
+  },
+  "estimatedEffort": {
+    "phase_2a_hours": 1.5,
+    "phase_2b_hours": 1.5,
+    "phase_2c_hours": 2.5,
+    "phase_3_hours": 1,
+    "total_hours": 6.5
+  },
+  "notes": [
+    "LoginScreen은 첫 인상이 매우 중요한 화면입니다.",
+    "Gabium 로고 asset이 필요합니다 (192x192px).",
+    "기존 로직(OAuth, 라우팅)은 변경하지 않습니다.",
+    "이것이 마지막 UI 갱신 화면입니다 (8/8).",
+    "모든 컴포넌트는 Presentation 레이어만 변경합니다."
+  ]
+}

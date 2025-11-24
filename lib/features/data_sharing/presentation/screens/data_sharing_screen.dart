@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/data_sharing/application/notifiers/data_sharing_notifier.dart';
 import 'package:n06/features/data_sharing/domain/repositories/date_range.dart';
+import 'package:n06/features/data_sharing/presentation/widgets/data_sharing_period_selector.dart';
+import 'package:n06/features/data_sharing/presentation/widgets/exit_confirmation_dialog.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 
 class DataSharingScreen extends ConsumerStatefulWidget {
   final String? userId;
@@ -44,16 +47,46 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
         _showExitDialog(context);
       },
       child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
         appBar: AppBar(
-          title: const Text('기록 보여주기'),
-          leading: IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => _showExitDialog(context),
+          backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
+          foregroundColor: const Color(0xFF1E293B), // Neutral-800
+          elevation: 0,
+          title: const Text(
+            '기록 보여주기',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700, // Bold
+              color: Color(0xFF1E293B),
+            ),
           ),
-          automaticallyImplyLeading: false,
+          leading: IconButton(
+            icon: const Icon(Icons.close, size: 24),
+            color: const Color(0xFF475569), // Neutral-600
+            onPressed: () => _showExitDialog(context),
+            tooltip: '공유 종료',
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(
+              color: const Color(0xFFE2E8F0), // Neutral-200
+              height: 1,
+            ),
+          ),
         ),
         body: state.isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? Center(
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: CircularProgressIndicator(
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFF4ADE80), // Primary
+                    ),
+                    strokeWidth: 2,
+                  ),
+                ),
+              )
             : state.error != null
             ? _buildErrorState(state.error!)
             : _buildReportContent(state, context),
@@ -63,25 +96,52 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
 
   Widget _buildErrorState(String error) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
-          const SizedBox(height: 16),
-          Text('오류가 발생했습니다: $error'),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              final userId = ref.read(authNotifierProvider).value?.id;
-              if (userId != null) {
-                ref
-                    .read(dataSharingNotifierProvider.notifier)
-                    .enterSharingMode(userId, _selectedPeriod);
-              }
-            },
-            child: const Text('다시 시도'),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(32), // xl
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 32, // lg
+              color: const Color(0xFFEF4444), // Error
+            ),
+            const SizedBox(height: 24), // lg
+            const Text(
+              '오류가 발생했습니다',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600, // Semibold
+                color: Color(0xFF1E293B), // Neutral-800
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF475569), // Neutral-600
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24), // lg
+            GabiumButton(
+              text: '다시 시도',
+              onPressed: () {
+                final userId = ref.read(authNotifierProvider).value?.id;
+                if (userId != null) {
+                  ref
+                      .read(dataSharingNotifierProvider.notifier)
+                      .enterSharingMode(userId, _selectedPeriod);
+                }
+              },
+              variant: GabiumButtonVariant.primary,
+              size: GabiumButtonSize.medium,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -94,13 +154,39 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
 
     if (!report.hasData()) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.inbox_outlined, size: 48, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text('선택된 기간에 기록이 없습니다.'),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(32), // xl
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.inbox_outlined,
+                size: 32, // lg
+                color: const Color(0xFFCBD5E1), // Neutral-300
+              ),
+              const SizedBox(height: 24), // lg
+              const Text(
+                '선택된 기간에 기록이 없습니다',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600, // Semibold
+                  color: Color(0xFF334155), // Neutral-700
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '다른 기간을 선택하거나 기록을 추가해보세요',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF64748B), // Neutral-500
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -150,18 +236,11 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
             // Exit Sharing Mode Button
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  ref.read(dataSharingNotifierProvider.notifier).exitSharingMode();
-                  Navigator.of(context).pop();
-                },
-                icon: const Icon(Icons.exit_to_app),
-                label: const Text('공유 종료'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
+              child: GabiumButton(
+                text: '공유 종료',
+                onPressed: () => _showExitDialog(context),
+                variant: GabiumButtonVariant.secondary,
+                size: GabiumButtonSize.medium,
               ),
             ),
           ],
@@ -171,43 +250,32 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
   }
 
   Widget _buildPeriodSelector(DataSharingState state) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('표시 기간', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        const SizedBox(height: 12),
-        Row(
-          children: DateRange.values.map<Widget>((period) {
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: ChoiceChip(
-                  label: Text(period.label, textAlign: TextAlign.center),
-                  selected: _selectedPeriod == period,
-                  onSelected: (selected) {
-                    setState(() => _selectedPeriod = period);
-                    if (selected) {
-                      final userId = ref.read(authNotifierProvider).value?.id;
-                      if (userId != null) {
-                        ref
-                            .read(dataSharingNotifierProvider.notifier)
-                            .changePeriod(userId, period);
-                      }
-                    }
-                  },
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
+    return DataSharingPeriodSelector(
+      selectedPeriod: _selectedPeriod,
+      onPeriodChanged: (period) {
+        setState(() => _selectedPeriod = period);
+        final userId = ref.read(authNotifierProvider).value?.id;
+        if (userId != null) {
+          ref
+              .read(dataSharingNotifierProvider.notifier)
+              .changePeriod(userId, period);
+        }
+      },
+      label: '표시 기간',
     );
   }
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+      padding: const EdgeInsets.only(top: 24, bottom: 16), // lg spacing
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600, // Semibold
+          color: Color(0xFF1E293B), // Neutral-800
+        ),
+      ),
     );
   }
 
@@ -216,11 +284,56 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     return Column(
       children: records.map<Widget>((record) {
         return Card(
-          child: ListTile(
-            leading: const Icon(Icons.medical_services),
-            title: Text('${record.actualDoseMg} mg'),
-            subtitle: Text(
-              '${record.administeredAt.toLocal().toString().split('.')[0]} | ${record.injectionSite ?? '부위 미지정'}',
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12), // md
+            side: const BorderSide(
+              color: Color(0xFFE2E8F0), // Neutral-200
+              width: 1,
+            ),
+          ),
+          elevation: 2, // sm shadow
+          margin: const EdgeInsets.only(bottom: 12), // md
+          child: Padding(
+            padding: const EdgeInsets.all(16), // md
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4ADE80), // Primary
+                    borderRadius: BorderRadius.circular(8), // sm
+                  ),
+                  child: const Icon(Icons.medical_services, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 16), // md
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${record.actualDoseMg} mg',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500, // Medium
+                          color: Color(0xFF1E293B), // Neutral-800
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${record.administeredAt.toLocal().toString().split('.')[0]} | '
+                        '${record.injectionSite ?? '부위 미지정'}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400, // Regular
+                          color: Color(0xFF475569), // Neutral-600
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -231,24 +344,51 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
   Widget _buildAdherenceRateSection(dynamic report) {
     final rate = report.calculateAdherenceRate();
     return Card(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12), // md
+        side: const BorderSide(
+          color: Color(0xFFE2E8F0), // Neutral-200
+          width: 1,
+        ),
+      ),
+      elevation: 2, // sm shadow
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16), // md
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('투여 순응도', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 12),
+            const Text(
+              '투여 순응도',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600, // Semibold
+                color: Color(0xFF1E293B), // Neutral-800
+              ),
+            ),
+            const SizedBox(height: 16), // md
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   '${rate.toStringAsFixed(1)}%',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700, // Bold
+                    color: Color(0xFF1E293B),
+                  ),
                 ),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 16),
-                    child: LinearProgressIndicator(value: rate / 100, minHeight: 8),
+                    child: LinearProgressIndicator(
+                      value: rate / 100,
+                      minHeight: 8,
+                      backgroundColor: const Color(0xFFE2E8F0), // Neutral-200
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Color(0xFF4ADE80), // Primary
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -275,10 +415,58 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     final logs = report.getWeightLogsSorted();
     return Column(
       children: logs.map<Widget>((log) {
-        return ListTile(
-          leading: const Icon(Icons.scale),
-          title: Text('${log.weightKg} kg'),
-          subtitle: Text(log.logDate.toString().split(' ')[0]),
+        return Card(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12), // md
+            side: const BorderSide(
+              color: Color(0xFFE2E8F0), // Neutral-200
+              width: 1,
+            ),
+          ),
+          elevation: 2, // sm shadow
+          margin: const EdgeInsets.only(bottom: 12), // md
+          child: Padding(
+            padding: const EdgeInsets.all(16), // md
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981), // Emerald (Weight)
+                    borderRadius: BorderRadius.circular(8), // sm
+                  ),
+                  child: const Icon(Icons.scale, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 16), // md
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${log.weightKg} kg',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500, // Medium
+                          color: Color(0xFF1E293B), // Neutral-800
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        log.logDate.toString().split(' ')[0],
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400, // Regular
+                          color: Color(0xFF475569), // Neutral-600
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       }).toList(),
     );
@@ -289,11 +477,64 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     return Column(
       children: logs.map<Widget>((log) {
         return Card(
-          child: ListTile(
-            leading: const Icon(Icons.warning),
-            title: Text(log.symptomName),
-            subtitle: Text('심각도: ${log.severity}/10'),
-            trailing: Text(log.logDate.toString().split(' ')[0]),
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12), // md
+            side: const BorderSide(
+              color: Color(0xFFE2E8F0), // Neutral-200
+              width: 1,
+            ),
+          ),
+          elevation: 2, // sm shadow
+          margin: const EdgeInsets.only(bottom: 12), // md
+          child: Padding(
+            padding: const EdgeInsets.all(16), // md
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B), // Amber (Symptom)
+                    borderRadius: BorderRadius.circular(8), // sm
+                  ),
+                  child: const Icon(Icons.warning, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 16), // md
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        log.symptomName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500, // Medium
+                          color: Color(0xFF1E293B), // Neutral-800
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '심각도: ${log.severity}/10',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400, // Regular
+                          color: Color(0xFF475569), // Neutral-600
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  log.logDate.toString().split(' ')[0],
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF64748B), // Neutral-500
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       }).toList(),
@@ -303,20 +544,13 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
   void _showExitDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('공유 종료'),
-        content: const Text('공유를 종료하시겠습니까?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('취소')),
-          TextButton(
-            onPressed: () {
-              ref.read(dataSharingNotifierProvider.notifier).exitSharingMode();
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
-            },
-            child: const Text('종료'),
-          ),
-        ],
+      builder: (context) => ExitConfirmationDialog(
+        onCancel: () => Navigator.of(context).pop(),
+        onConfirm: () {
+          ref.read(dataSharingNotifierProvider.notifier).exitSharingMode();
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
+        },
       ),
     );
   }
