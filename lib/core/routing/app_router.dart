@@ -12,8 +12,7 @@ import 'package:n06/features/tracking/presentation/screens/edit_dosage_plan_scre
 import 'package:n06/features/tracking/presentation/screens/dose_schedule_screen.dart';
 import 'package:n06/features/notification/presentation/screens/notification_settings_screen.dart';
 import 'package:n06/features/tracking/presentation/screens/emergency_check_screen.dart';
-import 'package:n06/features/tracking/presentation/screens/weight_record_screen.dart';
-import 'package:n06/features/tracking/presentation/screens/symptom_record_screen.dart';
+import 'package:n06/features/tracking/presentation/screens/daily_tracking_screen.dart';
 import 'package:n06/features/coping_guide/presentation/screens/coping_guide_screen.dart';
 import 'package:n06/features/data_sharing/presentation/screens/data_sharing_screen.dart';
 import 'package:n06/features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -139,18 +138,11 @@ final appRouter = GoRouter(
           builder: (context, state) => const HomeDashboardScreen(),
         ),
 
-        /// Tracking - Weight Record (F002)
+        /// Tracking - Daily Log (F002) - 통합 데일리 기록 화면
         GoRoute(
-          path: '/tracking/weight',
-          name: 'weight_record',
-          builder: (context, state) => const WeightRecordScreen(),
-        ),
-
-        /// Tracking - Symptom Record (F002)
-        GoRoute(
-          path: '/tracking/symptom',
-          name: 'symptom_record',
-          builder: (context, state) => const SymptomRecordScreen(),
+          path: '/tracking/daily',
+          name: 'daily_tracking',
+          builder: (context, state) => const DailyTrackingScreen(),
         ),
 
         /// Dose Schedule Management (003)

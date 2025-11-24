@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/core/providers.dart';
-import 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/weight_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/symptom_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/dose_record_edit_notifier.dart';
@@ -27,6 +26,10 @@ import 'package:n06/features/tracking/infrastructure/repositories/supabase_audit
 
 // Re-export emergency check notifier providers
 export 'package:n06/features/tracking/application/notifiers/emergency_check_notifier.dart' show emergencyCheckProvider, emergencyCheckNotifierProvider;
+
+// Re-export tracking notifier provider (Code Generated)
+// NOTE: trackingProvider is the new Code Generated provider name
+export 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart' show trackingProvider;
 
 part 'providers.g.dart';
 
@@ -115,15 +118,7 @@ NotificationService notificationService(Ref ref) {
 }
 
 // MedicationNotifier Provider는 medication_notifier.dart에서 @riverpod으로 자동 생성됨
-
-// Tracking Notifier Provider
-final trackingNotifierProvider = AsyncNotifierProvider.autoDispose<TrackingNotifier, TrackingState>(
-  () {
-    final notifier = TrackingNotifier();
-    return notifier;
-  },
-);
-
+// TrackingNotifier Provider는 tracking_notifier.dart에서 @riverpod으로 자동 생성됨
 // Emergency Check Notifier Provider는 emergency_check_notifier.dart에서 @riverpod으로 자동 생성됨
 
 // UF-011: Weight Record Edit Notifier Provider

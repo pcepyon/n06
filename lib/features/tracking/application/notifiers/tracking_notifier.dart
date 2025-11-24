@@ -1,9 +1,11 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
-import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
+import 'package:n06/core/providers.dart';
+
+part 'tracking_notifier.g.dart';
 
 class TrackingState {
   final List<WeightLog> weights;
@@ -25,18 +27,16 @@ class TrackingState {
   }
 }
 
-class TrackingNotifier extends AsyncNotifier<TrackingState> {
-  late final TrackingRepository _repository;
-  late final String? _userId;
-
+@riverpod
+class TrackingNotifier extends _$TrackingNotifier {
   @override
   Future<TrackingState> build() async {
-    // Provider에서 의존성 주입
-    _repository = ref.watch(trackingRepositoryProvider);
-    _userId = ref.watch(authNotifierProvider).value?.id;
+    // ref.read 사용 (Riverpod 3.0 권장)
+    final repository = ref.read(trackingRepositoryProvider);
+    final userId = ref.read(authNotifierProvider).value?.id;
 
     // userId가 없으면 빈 상태 반환
-    if (_userId == null) {
+    if (userId == null) {
       return const TrackingState(
         weights: [],
         symptoms: [],
@@ -44,13 +44,50 @@ class TrackingNotifier extends AsyncNotifier<TrackingState> {
     }
 
     // userId가 있으면 데이터 로드
-    final weights = await _repository.getWeightLogs(_userId);
-    final symptoms = await _repository.getSymptomLogs(_userId);
+    final weights = await repository.getWeightLogs(userId);
+    final symptoms = await repository.getSymptomLogs(userId);
 
     return TrackingState(
       weights: weights,
       symptoms: symptoms,
     );
+  }
+
+  // 데일리 로그 통합 저장 메서드 (신규)
+  Future<void> saveDailyLog({
+    required WeightLog weightLog,
+    required List<SymptomLog> symptomLogs,
+  }) async {
+    // 로딩 상태로 전환
+    state = const AsyncValue.loading();
+
+    // AsyncValue.guard로 에러 처리 자동화
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(trackingRepositoryProvider);
+      final userId = ref.read(authNotifierProvider).value?.id;
+
+      // 1. 체중 기록 저장 (appetiteScore 포함)
+      await repository.saveWeightLog(weightLog);
+
+      // 2. 증상 기록 저장 (여러 개 가능, 각각 별도 레코드 + 개별 심각도)
+      for (final symptomLog in symptomLogs) {
+        await repository.saveSymptomLog(symptomLog);
+      }
+
+      // 3. 저장 성공 시 대시보드로 이동 (Context 없이 Navigation)
+      ref.read(goRouterProvider).go('/dashboard');
+
+      // 4. 최신 데이터 다시 로드
+      if (userId != null) {
+        final weights = await repository.getWeightLogs(userId);
+        final symptoms = await repository.getSymptomLogs(userId);
+
+        return TrackingState(weights: weights, symptoms: symptoms);
+      }
+
+      // userId가 없으면 빈 상태 반환
+      return const TrackingState(weights: [], symptoms: []);
+    });
   }
 
   // 체중 기록 저장
@@ -63,10 +100,13 @@ class TrackingNotifier extends AsyncNotifier<TrackingState> {
 
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await _repository.saveWeightLog(log);
+      final repository = ref.read(trackingRepositoryProvider);
+      final userId = ref.read(authNotifierProvider).value?.id;
 
-      if (_userId != null) {
-        final weights = await _repository.getWeightLogs(_userId);
+      await repository.saveWeightLog(log);
+
+      if (userId != null) {
+        final weights = await repository.getWeightLogs(userId);
         return previousState.copyWith(weights: weights);
       }
 
@@ -85,10 +125,13 @@ class TrackingNotifier extends AsyncNotifier<TrackingState> {
 
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await _repository.saveSymptomLog(log);
+      final repository = ref.read(trackingRepositoryProvider);
+      final userId = ref.read(authNotifierProvider).value?.id;
 
-      if (_userId != null) {
-        final symptoms = await _repository.getSymptomLogs(_userId);
+      await repository.saveSymptomLog(log);
+
+      if (userId != null) {
+        final symptoms = await repository.getSymptomLogs(userId);
         return previousState.copyWith(symptoms: symptoms);
       }
 
@@ -106,10 +149,13 @@ class TrackingNotifier extends AsyncNotifier<TrackingState> {
 
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await _repository.deleteWeightLog(id);
+      final repository = ref.read(trackingRepositoryProvider);
+      final userId = ref.read(authNotifierProvider).value?.id;
 
-      if (_userId != null) {
-        final weights = await _repository.getWeightLogs(_userId);
+      await repository.deleteWeightLog(id);
+
+      if (userId != null) {
+        final weights = await repository.getWeightLogs(userId);
         return previousState.copyWith(weights: weights);
       }
 
@@ -126,10 +172,13 @@ class TrackingNotifier extends AsyncNotifier<TrackingState> {
 
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await _repository.deleteSymptomLog(id);
+      final repository = ref.read(trackingRepositoryProvider);
+      final userId = ref.read(authNotifierProvider).value?.id;
 
-      if (_userId != null) {
-        final symptoms = await _repository.getSymptomLogs(_userId);
+      await repository.deleteSymptomLog(id);
+
+      if (userId != null) {
+        final symptoms = await repository.getSymptomLogs(userId);
         return previousState.copyWith(symptoms: symptoms);
       }
 
@@ -146,10 +195,13 @@ class TrackingNotifier extends AsyncNotifier<TrackingState> {
 
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await _repository.updateWeightLog(id, newWeight);
+      final repository = ref.read(trackingRepositoryProvider);
+      final userId = ref.read(authNotifierProvider).value?.id;
 
-      if (_userId != null) {
-        final weights = await _repository.getWeightLogs(_userId);
+      await repository.updateWeightLog(id, newWeight);
+
+      if (userId != null) {
+        final weights = await repository.getWeightLogs(userId);
         return previousState.copyWith(weights: weights);
       }
 
@@ -166,10 +218,13 @@ class TrackingNotifier extends AsyncNotifier<TrackingState> {
 
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await _repository.updateSymptomLog(id, updatedLog);
+      final repository = ref.read(trackingRepositoryProvider);
+      final userId = ref.read(authNotifierProvider).value?.id;
 
-      if (_userId != null) {
-        final symptoms = await _repository.getSymptomLogs(_userId);
+      await repository.updateSymptomLog(id, updatedLog);
+
+      if (userId != null) {
+        final symptoms = await repository.getSymptomLogs(userId);
         return previousState.copyWith(symptoms: symptoms);
       }
 
@@ -179,17 +234,20 @@ class TrackingNotifier extends AsyncNotifier<TrackingState> {
 
   // 특정 날짜의 체중 기록 확인
   Future<bool> hasWeightLogOnDate(String userId, DateTime date) async {
-    final existing = await _repository.getWeightLog(userId, date);
+    final repository = ref.read(trackingRepositoryProvider);
+    final existing = await repository.getWeightLog(userId, date);
     return existing != null;
   }
 
   // 특정 날짜의 체중 기록 조회
   Future<WeightLog?> getWeightLog(String userId, DateTime date) async {
-    return await _repository.getWeightLog(userId, date);
+    final repository = ref.read(trackingRepositoryProvider);
+    return await repository.getWeightLog(userId, date);
   }
 
   // 최근 증량일 조회
   Future<DateTime?> getLatestDoseEscalationDate(String userId) async {
-    return await _repository.getLatestDoseEscalationDate(userId);
+    final repository = ref.read(trackingRepositoryProvider);
+    return await repository.getLatestDoseEscalationDate(userId);
   }
 }

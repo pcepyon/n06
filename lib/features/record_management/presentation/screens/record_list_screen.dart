@@ -47,7 +47,7 @@ class _WeightRecordsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
-    final trackingState = ref.watch(trackingNotifierProvider);
+    final trackingState = ref.watch(trackingProvider);
 
     return authState.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -126,7 +126,7 @@ class _WeightRecordTile extends ConsumerWidget {
 
   Future<void> _deleteWeight(BuildContext context, WidgetRef ref) async {
     try {
-      await ref.read(trackingNotifierProvider.notifier).deleteWeightLog(record.id);
+      await ref.read(trackingProvider.notifier).deleteWeightLog(record.id);
 
       if (context.mounted) {
         Navigator.pop(context); // 다이얼로그 닫기
@@ -180,7 +180,7 @@ class _SymptomRecordsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
-    final trackingState = ref.watch(trackingNotifierProvider);
+    final trackingState = ref.watch(trackingProvider);
 
     return authState.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -259,7 +259,7 @@ class _SymptomRecordTile extends ConsumerWidget {
 
   Future<void> _deleteSymptom(BuildContext context, WidgetRef ref) async {
     try {
-      await ref.read(trackingNotifierProvider.notifier).deleteSymptomLog(record.id);
+      await ref.read(trackingProvider.notifier).deleteSymptomLog(record.id);
 
       if (context.mounted) {
         Navigator.pop(context);

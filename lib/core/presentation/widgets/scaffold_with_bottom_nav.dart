@@ -38,7 +38,7 @@ class ScaffoldWithBottomNav extends StatelessWidget {
       label: '기록',
       icon: Icons.edit_note_outlined,
       activeIcon: Icons.edit_note,
-      route: '/tracking/weight',
+      route: '/tracking/daily',
     ),
     GabiumBottomNavItem(
       label: '일정',

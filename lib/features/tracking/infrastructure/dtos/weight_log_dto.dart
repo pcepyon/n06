@@ -8,6 +8,7 @@ class WeightLogDto {
   final String userId;
   final DateTime logDate;
   final double weightKg;
+  final int? appetiteScore;
   final DateTime createdAt;
 
   const WeightLogDto({
@@ -15,6 +16,7 @@ class WeightLogDto {
     required this.userId,
     required this.logDate,
     required this.weightKg,
+    this.appetiteScore,
     required this.createdAt,
   });
 
@@ -25,6 +27,7 @@ class WeightLogDto {
       userId: json['user_id'] as String,
       logDate: DateTime.parse(json['log_date'] as String),
       weightKg: (json['weight_kg'] as num).toDouble(),
+      appetiteScore: json['appetite_score'] as int?,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -36,6 +39,7 @@ class WeightLogDto {
       'user_id': userId,
       'log_date': logDate.toIso8601String().split('T')[0],
       'weight_kg': weightKg,
+      'appetite_score': appetiteScore,
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -47,6 +51,7 @@ class WeightLogDto {
       userId: userId,
       logDate: logDate,
       weightKg: weightKg,
+      appetiteScore: appetiteScore,
       createdAt: createdAt,
     );
   }
@@ -58,11 +63,12 @@ class WeightLogDto {
       userId: entity.userId,
       logDate: entity.logDate,
       weightKg: entity.weightKg,
+      appetiteScore: entity.appetiteScore,
       createdAt: entity.createdAt,
     );
   }
 
   @override
   String toString() =>
-      'WeightLogDto(id: $id, userId: $userId, logDate: $logDate, weightKg: $weightKg, createdAt: $createdAt)';
+      'WeightLogDto(id: $id, userId: $userId, logDate: $logDate, weightKg: $weightKg, appetiteScore: $appetiteScore, createdAt: $createdAt)';
 }
