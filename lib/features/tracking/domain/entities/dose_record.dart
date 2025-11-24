@@ -1,6 +1,30 @@
 import 'package:equatable/equatable.dart';
 
-const List<String> validInjectionSites = ['abdomen', 'thigh', 'arm'];
+const List<String> validInjectionSites = [
+  'abdomen_upper_left',   // 복부 좌측상단
+  'abdomen_upper_right',  // 복부 우측상단
+  'abdomen_lower_left',   // 복부 좌측하단
+  'abdomen_lower_right',  // 복부 우측하단
+  'thigh_left',           // 허벅지 좌
+  'thigh_right',          // 허벅지 우
+  'arm_left',             // 상완 좌
+  'arm_right',            // 상완 우
+];
+
+/// Helper function for display labels
+String getInjectionSiteLabel(String siteCode) {
+  const labels = {
+    'abdomen_upper_left': '복부 좌측상단',
+    'abdomen_upper_right': '복부 우측상단',
+    'abdomen_lower_left': '복부 좌측하단',
+    'abdomen_lower_right': '복부 우측하단',
+    'thigh_left': '허벅지 좌측',
+    'thigh_right': '허벅지 우측',
+    'arm_left': '상완 좌측',
+    'arm_right': '상완 우측',
+  };
+  return labels[siteCode] ?? siteCode;
+}
 
 class DoseRecord extends Equatable {
   final String id;

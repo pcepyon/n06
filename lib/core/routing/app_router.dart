@@ -9,7 +9,7 @@ import 'package:n06/features/settings/presentation/screens/settings_screen.dart'
 import 'package:n06/features/profile/presentation/screens/profile_edit_screen.dart';
 import 'package:n06/features/profile/presentation/screens/weekly_goal_settings_screen.dart';
 import 'package:n06/features/tracking/presentation/screens/edit_dosage_plan_screen.dart';
-import 'package:n06/features/tracking/presentation/screens/dose_schedule_screen.dart';
+import 'package:n06/features/tracking/presentation/screens/dose_calendar_screen.dart';
 import 'package:n06/features/notification/presentation/screens/notification_settings_screen.dart';
 import 'package:n06/features/tracking/presentation/screens/emergency_check_screen.dart';
 import 'package:n06/features/tracking/presentation/screens/daily_tracking_screen.dart';
@@ -149,7 +149,7 @@ final appRouter = GoRouter(
         GoRoute(
           path: '/dose-schedule',
           name: 'dose_schedule',
-          builder: (context, state) => const DoseScheduleScreen(),
+          builder: (context, state) => const DoseCalendarScreen(),
         ),
 
         /// Coping Guide (F004)

@@ -8,8 +8,8 @@ import 'package:flutter/material.dart';
 /// 사용 예시:
 /// ```dart
 /// AuthHeroSection(
-///   title: 'GLP-1 치료 관리',
-///   subtitle: '체계적으로 관리하세요',
+///   title: '가비움',
+///   subtitle: 'GLP-1 치료를 체계적으로 관리하세요',
 /// )
 /// ```
 class AuthHeroSection extends StatelessWidget {
@@ -27,7 +27,7 @@ class AuthHeroSection extends StatelessWidget {
 
   const AuthHeroSection({
     Key? key,
-    this.title = 'GLP-1 치료 관리',
+    this.title = '가비움',
     this.subtitle = '체계적으로 관리하세요',
     this.logoAssetPath = 'assets/logos/gabium-logo-192.png',
     this.logoSize = 192,

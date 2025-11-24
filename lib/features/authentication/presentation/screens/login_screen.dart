@@ -377,8 +377,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 // 1. Hero Section with Gabium branding
                 const AuthHeroSection(
-                  title: 'GLP-1 치료 관리',
-                  subtitle: '체계적으로 관리하세요',
+                  title: '가비움',
+                  subtitle: 'GLP-1 치료를 체계적으로 관리하세요',
                 ),
                 const SizedBox(height: 24),
 

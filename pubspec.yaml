@@ -63,6 +63,7 @@ dependencies:
 
   # UI Components
   fl_chart: ^1.1.1
+  table_calendar: ^3.1.0
 
   # Navigation
   go_router: ^17.0.0
@@ -111,6 +112,7 @@ flutter:
   # Environment variables
   assets:
     - .env
+    - assets/logos/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

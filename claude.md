@@ -18,6 +18,29 @@ Presentation → Application → Domain ← Infrastructure
 
 **Violation = Immediate rejection**
 
+### Layer Responsibility (BUG-20251124-001)
+```
+Presentation Layer ONLY:
+  - UI 렌더링
+  - 사용자 인터랙션 처리
+  - 네비게이션 (context.go, context.push)
+  - 로컬 UI 상태 (TextField, Checkbox 등)
+
+Application Layer ONLY:
+  - 비즈니스 로직
+  - 상태 관리 (Riverpod Notifier)
+  - UseCase 오케스트레이션
+  - 데이터 변환
+
+❌ NEVER in Application Layer:
+  - context.go() / context.push()
+  - ref.read(goRouterProvider).go()
+  - showDialog() / showModalBottomSheet()
+  - ScaffoldMessenger
+```
+
+**Why**: AsyncValue.guard 내부에서 네비게이션 시 provider dispose 충돌
+
 ### Repository Pattern
 ```
 Application/Presentation → Repository Interface (Domain)
@@ -96,6 +119,17 @@ import 'package:flutter/material.dart'; // in domain/ folder
 // Writing code before test
 // (Violates TDD - see docs/tdd.md)
 
+// ⚠️ Application Layer에서 네비게이션 (BUG-20251124-001)
+@riverpod
+class MyNotifier extends _$MyNotifier {
+  Future<void> saveData() async {
+    state = await AsyncValue.guard(() async {
+      await repository.save();
+      ref.read(goRouterProvider).go('/home'); // WRONG: Provider dispose 충돌
+    });
+  }
+}
+
 // autoDispose Provider + async 저장 후 즉시 모달 표시
 await notifier.save(data);
 await showDialog(...); // WRONG: Provider 조기 해제 가능
@@ -131,6 +165,30 @@ class IsarMedicationRepository implements MedicationRepository { }
 
 // Test first
 test('should...', () { }); // Then write code
+
+// ✅ 네비게이션은 Presentation Layer에서만 (BUG-20251124-001)
+// Application Layer: 데이터 저장만
+@riverpod
+class MyNotifier extends _$MyNotifier {
+  Future<void> saveData() async {
+    state = await AsyncValue.guard(() async {
+      await repository.save();
+      // ✅ 네비게이션 없음 - Presentation이 state.hasValue로 판단
+      return newState;
+    });
+  }
+}
+
+// Presentation Layer: state 확인 후 네비게이션
+Future<void> _handleSave() async {
+  await ref.read(myNotifierProvider.notifier).saveData();
+  if (!mounted) return;
+
+  final state = ref.read(myNotifierProvider);
+  if (state.hasValue) {
+    context.go('/home'); // ✅ Safe: Presentation Layer 책임
+  }
+}
 
 // 저장 완료 후 mounted 체크하고 모달 표시
 await notifier.save(data);
@@ -223,6 +281,7 @@ MedicationRepository medicationRepository(ref) =>
 [ ] TDD cycle completed (docs/tdd.md)
 [ ] Repository pattern maintained (docs/code_structure.md)
 [ ] No layer violations (check imports)
+[ ] No navigation in Application Layer (BUG-20251124-001)
 [ ] Performance constraints met (docs/requirements.md)
 ```
 
