@@ -8,8 +8,8 @@
 
 | 영역 | 기술 | 역할 |
 |------|------|------|
-| **Platform** | Flutter | 3.x | 크로스플랫폼 UI |
-| **Language** | Dart | 3.x | |
+| **Platform** | Flutter | 3.38.1 | 크로스플랫폼 UI |
+| **Language** | Dart | 3.10.0 (SDK ^3.9.2) | |
 | **State** | Riverpod | 3.0.3 | 상태 관리 (Code Generation) |
 | **Backend** | Supabase Flutter | 2.10.3 | BaaS (Backend as a Service) |
 | **Database** | PostgreSQL | 클라우드 DB (Supabase 내장) |
