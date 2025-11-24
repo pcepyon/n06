@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:n06/features/settings/presentation/widgets/settings_menu_item.dart';
+import 'package:n06/features/settings/presentation/widgets/settings_menu_item_improved.dart';
 
 void main() {
   group('SettingsScreen Widget Tests', () {
-    testWidgets('SettingsMenuItem should display title and subtitle',
+    testWidgets('SettingsMenuItemImproved should display title and subtitle',
         (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SettingsMenuItem(
+            body: SettingsMenuItemImproved(
               title: 'Test Title',
               subtitle: 'Test Subtitle',
               onTap: () {},
@@ -25,13 +25,13 @@ void main() {
       expect(find.byIcon(Icons.chevron_right), findsOneWidget);
     });
 
-    testWidgets('SettingsMenuItem should be tappable', (WidgetTester tester) async {
+    testWidgets('SettingsMenuItemImproved should be tappable', (WidgetTester tester) async {
       // Arrange
       bool tapped = false;
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SettingsMenuItem(
+            body: SettingsMenuItemImproved(
               title: 'Test Title',
               subtitle: 'Test Subtitle',
               onTap: () => tapped = true,
@@ -41,7 +41,7 @@ void main() {
       );
 
       // Act
-      await tester.tap(find.byType(ListTile));
+      await tester.tap(find.byType(InkWell));
 
       // Assert
       expect(tapped, isTrue);

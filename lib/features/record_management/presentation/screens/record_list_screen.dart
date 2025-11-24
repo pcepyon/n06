@@ -6,9 +6,14 @@ import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
+import 'package:n06/features/record_management/presentation/widgets/record_list_card.dart';
+import 'package:n06/core/presentation/widgets/record_type_icon.dart';
+import 'package:n06/core/presentation/widgets/empty_state_widget.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_toast.dart';
 import 'package:intl/intl.dart';
 
 /// 과거 기록 목록 화면 (체중/증상/투여)
+/// Gabium Design System 기반 UI 개선 완료
 class RecordListScreen extends ConsumerWidget {
   const RecordListScreen({super.key});
 
@@ -17,23 +22,70 @@ class RecordListScreen extends ConsumerWidget {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
+        // Change 1: AppBar 색상 및 스타일 적용
         appBar: AppBar(
-          title: const Text('기록 관리'),
           elevation: 0,
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: '체중'),
-              Tab(text: '증상'),
-              Tab(text: '투여'),
-            ],
+          backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
+          title: const Text(
+            '기록 관리',
+            style: TextStyle(
+              fontSize: 20, // Typography - xl
+              fontWeight: FontWeight.bold, // 700
+              color: Color(0xFF1E293B), // Neutral-800
+            ),
+          ),
+          centerTitle: false,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(49),
+            child: Column(
+              children: [
+                // Change 1: TabBar 색상 및 스타일 적용
+                Container(
+                  color: Colors.transparent,
+                  child: const TabBar(
+                    labelColor: Color(0xFF4ADE80), // Primary
+                    unselectedLabelColor: Color(0xFF64748B), // Neutral-500
+                    labelStyle: TextStyle(
+                      fontSize: 16, // Typography - base
+                      fontWeight: FontWeight.w500, // Medium (500)
+                    ),
+                    unselectedLabelStyle: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    indicator: UnderlineTabIndicator(
+                      borderSide: BorderSide(
+                        color: Color(0xFF4ADE80), // Primary
+                        width: 2, // 2px
+                      ),
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    tabs: [
+                      Tab(text: '체중'),
+                      Tab(text: '증상'),
+                      Tab(text: '투여'),
+                    ],
+                  ),
+                ),
+                // 하단 테두리
+                Container(
+                  height: 1,
+                  color: const Color(0xFFE2E8F0), // Neutral-200
+                ),
+              ],
+            ),
           ),
         ),
-        body: TabBarView(
-          children: [
-            const _WeightRecordsTab(),
-            const _SymptomRecordsTab(),
-            const _DoseRecordsTab(),
-          ],
+        // TabBarView 배경색
+        body: Container(
+          color: const Color(0xFFF8FAFC), // Neutral-50
+          child: const TabBarView(
+            children: [
+              _WeightRecordsTab(),
+              _SymptomRecordsTab(),
+              _DoseRecordsTab(),
+            ],
+          ),
         ),
       ),
     );
@@ -50,21 +102,51 @@ class _WeightRecordsTab extends ConsumerWidget {
     final trackingState = ref.watch(trackingProvider);
 
     return authState.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text('오류: $err')),
+      // Change 7: 로딩 상태
+      loading: () => _buildLoadingState(),
+      error: (err, stack) => Center(
+        child: Text(
+          '오류: $err',
+          style: const TextStyle(
+            fontSize: 16,
+            color: Color(0xFFEF4444), // Error
+          ),
+        ),
+      ),
       data: (user) {
         if (user == null) {
-          return const Center(child: Text('로그인이 필요합니다'));
+          return const Center(
+            child: Text(
+              '로그인이 필요합니다',
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF64748B), // Neutral-500
+              ),
+            ),
+          );
         }
 
         return trackingState.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('오류: $err')),
+          loading: () => _buildLoadingState(),
+          error: (err, stack) => Center(
+            child: Text(
+              '오류: $err',
+              style: const TextStyle(
+                fontSize: 16,
+                color: Color(0xFFEF4444), // Error
+              ),
+            ),
+          ),
           data: (state) {
             final weights = state.weights;
 
+            // Change 5: 빈 상태
             if (weights.isEmpty) {
-              return const Center(child: Text('기록이 없습니다'));
+              return const EmptyStateWidget(
+                icon: Icons.monitor_weight_outlined,
+                title: '체중 기록이 없습니다',
+                description: '아직 체중 기록이 없습니다.\n첫 번째 기록을 추가해보세요.',
+              );
             }
 
             // 최신순으로 정렬
@@ -72,6 +154,7 @@ class _WeightRecordsTab extends ConsumerWidget {
               ..sort((a, b) => b.logDate.compareTo(a.logDate));
 
             return ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 16), // md
               itemCount: sortedWeights.length,
               itemBuilder: (context, index) {
                 final record = sortedWeights[index];
@@ -100,26 +183,40 @@ class _WeightRecordTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dateStr = DateFormat('yyyy-MM-dd').format(record.logDate);
+    final dateStr = DateFormat('yyyy년 MM월 dd일').format(record.logDate);
     final timeStr = DateFormat('HH:mm').format(record.createdAt);
 
-    return ListTile(
-      title: Text('${record.weightKg} kg'),
-      subtitle: Text('$dateStr $timeStr'),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete, color: Colors.red),
-        onPressed: () => _showDeleteDialog(
-          context,
-          ref,
-          '${record.weightKg} kg',
-          () => _deleteWeight(context, ref),
-        ),
-      ),
-      onLongPress: () => _showDeleteDialog(
+    // Change 2: RecordListCard 사용
+    return RecordListCard(
+      recordType: RecordType.weight,
+      onDelete: () => _showDeleteDialog(
         context,
         ref,
         '${record.weightKg} kg',
-        () => _deleteWeight(context, ref),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Change 3: 기본 정보 (lg, Semibold)
+          Text(
+            '${record.weightKg} kg',
+            style: const TextStyle(
+              fontSize: 18, // Typography - lg
+              fontWeight: FontWeight.w600, // Semibold (600)
+              color: Color(0xFF1E293B), // Neutral-800
+            ),
+          ),
+          const SizedBox(height: 4), // xs
+          // Change 3: 메타데이터 (sm, Regular)
+          Text(
+            '$dateStr $timeStr',
+            style: const TextStyle(
+              fontSize: 14, // Typography - sm
+              fontWeight: FontWeight.normal, // Regular (400)
+              color: Color(0xFF64748B), // Neutral-500
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -130,42 +227,92 @@ class _WeightRecordTile extends ConsumerWidget {
 
       if (context.mounted) {
         Navigator.pop(context); // 다이얼로그 닫기
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('기록이 삭제되었습니다')),
-        );
+        // Change 6: GabiumToast 사용
+        GabiumToast.showSuccess(context, '기록이 삭제되었습니다');
       }
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('삭제 실패: $e')),
-        );
+        GabiumToast.showError(
+            context, '기록 삭제 중 오류가 발생했습니다. 다시 시도해주세요.');
       }
     }
   }
 
+  // Change 6: 개선된 삭제 확인 다이얼로그
   void _showDeleteDialog(
     BuildContext context,
     WidgetRef ref,
     String info,
-    VoidCallback onDelete,
   ) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('기록 삭제'),
-        content: Text('$info 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.'),
+        backgroundColor: const Color(0xFFFFFFFF), // White
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16), // lg
+        ),
+        elevation: 4, // xl shadow approximation
+        title: const Text(
+          '기록을 삭제하시겠습니까?',
+          style: TextStyle(
+            fontSize: 24, // 2xl
+            fontWeight: FontWeight.bold, // 700
+            color: Color(0xFF1E293B), // Neutral-800
+          ),
+        ),
+        content: const Text(
+          '삭제된 기록은 복구할 수 없습니다.',
+          style: TextStyle(
+            fontSize: 16, // base
+            fontWeight: FontWeight.normal, // 400
+            color: Color(0xFF64748B), // Neutral-500
+            height: 1.5, // 24px line height
+          ),
+        ),
         actions: [
+          // 취소 버튼 (Secondary 스타일)
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('취소'),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF4ADE80), // Primary
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8), // sm
+                side: const BorderSide(
+                  color: Color(0xFF4ADE80), // Primary
+                  width: 2,
+                ),
+              ),
+            ),
+            child: const Text(
+              '취소',
+              style: TextStyle(
+                fontSize: 16, // base
+                fontWeight: FontWeight.w600, // Semibold
+              ),
+            ),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              onDelete();
-            },
-            child: const Text('삭제', style: TextStyle(color: Colors.red)),
+          const SizedBox(width: 8),
+          // 삭제 버튼 (Danger 스타일)
+          ElevatedButton(
+            onPressed: () => _deleteWeight(context, ref),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444), // Error
+              foregroundColor: const Color(0xFFFFFFFF),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8), // sm
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              '삭제',
+              style: TextStyle(
+                fontSize: 16, // base
+                fontWeight: FontWeight.w600, // Semibold
+              ),
+            ),
           ),
         ],
       ),
@@ -183,28 +330,56 @@ class _SymptomRecordsTab extends ConsumerWidget {
     final trackingState = ref.watch(trackingProvider);
 
     return authState.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text('오류: $err')),
+      loading: () => _buildLoadingState(),
+      error: (err, stack) => Center(
+        child: Text(
+          '오류: $err',
+          style: const TextStyle(
+            fontSize: 16,
+            color: Color(0xFFEF4444),
+          ),
+        ),
+      ),
       data: (user) {
         if (user == null) {
-          return const Center(child: Text('로그인이 필요합니다'));
+          return const Center(
+            child: Text(
+              '로그인이 필요합니다',
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          );
         }
 
         return trackingState.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('오류: $err')),
+          loading: () => _buildLoadingState(),
+          error: (err, stack) => Center(
+            child: Text(
+              '오류: $err',
+              style: const TextStyle(
+                fontSize: 16,
+                color: Color(0xFFEF4444),
+              ),
+            ),
+          ),
           data: (state) {
             final symptoms = state.symptoms;
 
             if (symptoms.isEmpty) {
-              return const Center(child: Text('기록이 없습니다'));
+              return const EmptyStateWidget(
+                icon: Icons.warning_amber_outlined,
+                title: '증상 기록이 없습니다',
+                description: '아직 증상 기록이 없습니다.\n첫 번째 기록을 추가해보세요.',
+              );
             }
 
-            // 최신순으로 정렬
             final sortedSymptoms = List<SymptomLog>.from(symptoms)
               ..sort((a, b) => b.logDate.compareTo(a.logDate));
 
             return ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 16),
               itemCount: sortedSymptoms.length,
               itemBuilder: (context, index) {
                 final record = sortedSymptoms[index];
@@ -233,26 +408,50 @@ class _SymptomRecordTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dateStr = DateFormat('yyyy-MM-dd').format(record.logDate);
-    final timeStr = DateFormat('HH:mm').format(record.createdAt ?? DateTime.now());
+    final dateStr = DateFormat('yyyy년 MM월 dd일').format(record.logDate);
+    final timeStr =
+        DateFormat('HH:mm').format(record.createdAt ?? DateTime.now());
 
-    return ListTile(
-      title: Text('${record.symptomName} (심각도: ${record.severity}/10)'),
-      subtitle: Text('$dateStr $timeStr'),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete, color: Colors.red),
-        onPressed: () => _showDeleteDialog(
-          context,
-          ref,
-          '${record.symptomName} (심각도: ${record.severity})',
-          () => _deleteSymptom(context, ref),
-        ),
-      ),
-      onLongPress: () => _showDeleteDialog(
+    return RecordListCard(
+      recordType: RecordType.symptom,
+      onDelete: () => _showDeleteDialog(
         context,
         ref,
         '${record.symptomName} (심각도: ${record.severity})',
-        () => _deleteSymptom(context, ref),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 기본 정보
+          Text(
+            record.symptomName,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 4),
+          // 보조 정보
+          Text(
+            '심각도: ${record.severity}/10',
+            style: const TextStyle(
+              fontSize: 16, // Typography - base
+              fontWeight: FontWeight.normal, // Regular (400)
+              color: Color(0xFF475569), // Neutral-600
+            ),
+          ),
+          const SizedBox(height: 4),
+          // 메타데이터
+          Text(
+            '$dateStr $timeStr',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+              color: Color(0xFF64748B),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -263,16 +462,13 @@ class _SymptomRecordTile extends ConsumerWidget {
 
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('기록이 삭제되었습니다')),
-        );
+        GabiumToast.showSuccess(context, '기록이 삭제되었습니다');
       }
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('삭제 실패: $e')),
-        );
+        GabiumToast.showError(
+            context, '기록 삭제 중 오류가 발생했습니다. 다시 시도해주세요.');
       }
     }
   }
@@ -281,24 +477,73 @@ class _SymptomRecordTile extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     String info,
-    VoidCallback onDelete,
   ) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('기록 삭제'),
-        content: Text('$info 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.'),
+        backgroundColor: const Color(0xFFFFFFFF),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        elevation: 4,
+        title: const Text(
+          '기록을 삭제하시겠습니까?',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+        content: const Text(
+          '삭제된 기록은 복구할 수 없습니다.',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.normal,
+            color: Color(0xFF64748B),
+            height: 1.5,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('취소'),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF4ADE80),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: const BorderSide(
+                  color: Color(0xFF4ADE80),
+                  width: 2,
+                ),
+              ),
+            ),
+            child: const Text(
+              '취소',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              onDelete();
-            },
-            child: const Text('삭제', style: TextStyle(color: Colors.red)),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () => _deleteSymptom(context, ref),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: const Color(0xFFFFFFFF),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              '삭제',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -316,28 +561,56 @@ class _DoseRecordsTab extends ConsumerWidget {
     final medicationState = ref.watch(medicationNotifierProvider);
 
     return authState.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text('오류: $err')),
+      loading: () => _buildLoadingState(),
+      error: (err, stack) => Center(
+        child: Text(
+          '오류: $err',
+          style: const TextStyle(
+            fontSize: 16,
+            color: Color(0xFFEF4444),
+          ),
+        ),
+      ),
       data: (user) {
         if (user == null) {
-          return const Center(child: Text('로그인이 필요합니다'));
+          return const Center(
+            child: Text(
+              '로그인이 필요합니다',
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          );
         }
 
         return medicationState.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('오류: $err')),
+          loading: () => _buildLoadingState(),
+          error: (err, stack) => Center(
+            child: Text(
+              '오류: $err',
+              style: const TextStyle(
+                fontSize: 16,
+                color: Color(0xFFEF4444),
+              ),
+            ),
+          ),
           data: (state) {
             final records = state.records;
 
             if (records.isEmpty) {
-              return const Center(child: Text('기록이 없습니다'));
+              return const EmptyStateWidget(
+                icon: Icons.medical_services_outlined,
+                title: '투여 기록이 없습니다',
+                description: '아직 투여 기록이 없습니다.\n첫 번째 기록을 추가해보세요.',
+              );
             }
 
-            // 최신순으로 정렬
             final sortedRecords = List<DoseRecord>.from(records)
               ..sort((a, b) => b.administeredAt.compareTo(a.administeredAt));
 
             return ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 16),
               itemCount: sortedRecords.length,
               itemBuilder: (context, index) {
                 final record = sortedRecords[index];
@@ -366,26 +639,50 @@ class _DoseRecordTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dateStr = DateFormat('yyyy-MM-dd HH:mm').format(record.administeredAt);
+    final dateStr =
+        DateFormat('yyyy년 MM월 dd일 HH:mm').format(record.administeredAt);
     final siteDisplay = record.injectionSite ?? '미지정';
 
-    return ListTile(
-      title: Text('${record.actualDoseMg} mg (부위: $siteDisplay)'),
-      subtitle: Text(dateStr),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete, color: Colors.red),
-        onPressed: () => _showDeleteDialog(
-          context,
-          ref,
-          '${record.actualDoseMg} mg ($siteDisplay)',
-          () => _deleteDose(context, ref),
-        ),
-      ),
-      onLongPress: () => _showDeleteDialog(
+    return RecordListCard(
+      recordType: RecordType.dose,
+      onDelete: () => _showDeleteDialog(
         context,
         ref,
         '${record.actualDoseMg} mg ($siteDisplay)',
-        () => _deleteDose(context, ref),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 기본 정보
+          Text(
+            '${record.actualDoseMg} mg',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 4),
+          // 보조 정보
+          Text(
+            '부위: $siteDisplay',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.normal,
+              color: Color(0xFF475569),
+            ),
+          ),
+          const SizedBox(height: 4),
+          // 메타데이터
+          Text(
+            dateStr,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+              color: Color(0xFF64748B),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -399,16 +696,13 @@ class _DoseRecordTile extends ConsumerWidget {
 
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('기록이 삭제되었습니다')),
-        );
+        GabiumToast.showSuccess(context, '기록이 삭제되었습니다');
       }
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('삭제 실패: $e')),
-        );
+        GabiumToast.showError(
+            context, '기록 삭제 중 오류가 발생했습니다. 다시 시도해주세요.');
       }
     }
   }
@@ -417,27 +711,102 @@ class _DoseRecordTile extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     String info,
-    VoidCallback onDelete,
   ) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('기록 삭제'),
-        content: Text('$info 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.'),
+        backgroundColor: const Color(0xFFFFFFFF),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        elevation: 4,
+        title: const Text(
+          '기록을 삭제하시겠습니까?',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+        content: const Text(
+          '삭제된 기록은 복구할 수 없습니다.',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.normal,
+            color: Color(0xFF64748B),
+            height: 1.5,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('취소'),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF4ADE80),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: const BorderSide(
+                  color: Color(0xFF4ADE80),
+                  width: 2,
+                ),
+              ),
+            ),
+            child: const Text(
+              '취소',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              onDelete();
-            },
-            child: const Text('삭제', style: TextStyle(color: Colors.red)),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () => _deleteDose(context, ref),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: const Color(0xFFFFFFFF),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              '삭제',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+/// Change 7: 로딩 상태 위젯
+Widget _buildLoadingState() {
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        CircularProgressIndicator(
+          valueColor: const AlwaysStoppedAnimation<Color>(
+            Color(0xFF4ADE80), // Colors - Primary
+          ),
+          strokeWidth: 3,
+        ),
+        const SizedBox(height: 16), // md
+        const Text(
+          '기록을 불러오는 중...',
+          style: TextStyle(
+            fontSize: 16, // base
+            fontWeight: FontWeight.normal,
+            color: Color(0xFF64748B), // Neutral-500
+          ),
+        ),
+      ],
+    ),
+  );
 }
