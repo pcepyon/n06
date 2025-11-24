@@ -59,12 +59,6 @@
 
 ```dart
 // core/providers.dart
-
-// Phase 0 (과거)
-@Riverpod(keepAlive: true)
-Isar isar(IsarRef ref);  // 글로벌 DB 인스턴스
-
-// Phase 1 (현재) ✅
 @Riverpod(keepAlive: true)
 SupabaseClient supabase(SupabaseRef ref);  // 글로벌 Supabase 클라이언트
 
@@ -346,14 +340,6 @@ class EmergencySymptomCheck {
 
 ```dart
 // core/providers.dart
-
-// Phase 0 (과거)
-@Riverpod(keepAlive: true)
-Isar isar(IsarRef ref) {
-  throw UnimplementedError('Override in main.dart');
-}
-
-// Phase 1 (현재) ✅
 @Riverpod(keepAlive: true)
 SupabaseClient supabase(SupabaseRef ref) {
   throw UnimplementedError('Override in main.dart');
@@ -901,29 +887,29 @@ abstract class TrackingRepository {
 }
 ```
 
-**Phase 전환 완료 ✅:**
+**Repository Pattern 구현:**
 - Repository Interface만 의존 (Domain Layer는 변경 없음)
-- Infrastructure Layer에서 ~~`IsarXxxRepository`~~ → `SupabaseXxxRepository` 구현 완료
-- Provider DI 변경만으로 전환 완료
+- Infrastructure Layer에서 `SupabaseXxxRepository` 구현
+- Provider DI로 의존성 주입
 
 ---
 
 ## 9. 핵심 원칙
 
 ### DO ✅
-- **Repository Interface만 의존**, 구현 분리 (Phase 1 전환 대비)
-- **DTO는 Infrastructure, Entity는 Domain** (Layer 분리)
+- **Repository Interface만 의존**, 구현 분리
+- **Entity는 Domain, JSON 직렬화 지원** (Layer 분리)
 - **비즈니스 로직은 Domain Layer에만** (UseCase 활용)
 - **모든 Repository 호출은 Application Layer**에서만
 - **비동기 상태는 `AsyncValue<T>` 사용** (loading/error/data 자동 처리)
-- **글로벌 상태는 `keepAlive: true` 설정** (~~isarProvider~~ supabaseProvider, authNotifierProvider)
+- **글로벌 상태는 `keepAlive: true` 설정** (supabaseProvider, authNotifierProvider)
 - **userId는 authNotifier에서 추출** (하드코딩 금지)
 - **Notifier에서 state 접근 시 null 체크** (`asData?.value ?? defaultState`)
 
 ### DON'T ❌
-- **Application에서 ~~Isar~~ Supabase 직접 사용** (Repository를 통해서만)
+- **Application에서 Supabase 직접 사용** (Repository를 통해서만)
 - **Presentation에서 Repository 직접 호출** (Notifier를 통해서만)
-- **Domain Layer에 Flutter/~~Isar~~/Supabase 의존성** (순수 Dart만)
+- **Domain Layer에 Flutter/Supabase 의존성** (순수 Dart만)
 - **Provider 의존성 순환** (단방향 의존성 유지)
 - **userId 하드코딩** (항상 authNotifier에서 가져오기)
 - **autoDispose Provider + async 저장 후 즉시 모달 표시** (Provider 조기 해제 가능)

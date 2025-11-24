@@ -1,8 +1,7 @@
 # Code Structure
 
 > **현재 상태**: Phase 1 완료 - Supabase PostgreSQL 기반 Infrastructure Layer
->
-> Phase 0에서는 Isar 기반 Repository 구현을 사용했으나, Phase 1 전환으로 모든 Repository가 Supabase 기반으로 교체되었습니다.
+
 
 ## Feature → Requirements 매핑
 
@@ -99,7 +98,7 @@ features/tracking/
 | **Presentation** | Flutter Widgets | UI 렌더링, 사용자 입력 |
 | **Application** | Riverpod Notifier | 상태 관리, UseCase 호출 |
 | **Domain** | Pure Dart | 비즈니스 로직, Entity |
-| **Infrastructure** | ~~Isar~~ → **Supabase** ✅ | Repository 구현, DB 접근 |
+| **Infrastructure** | **Supabase** | Repository 구현, DB 접근 |
 
 ---
 
@@ -107,7 +106,7 @@ features/tracking/
 
 ### 1. Repository Pattern
 
-**Interface (Domain Layer) - 변경 없음 ✅**
+**Interface (Domain Layer)**
 ```dart
 // domain/repositories/medication_repository.dart
 abstract class MedicationRepository {
@@ -116,28 +115,7 @@ abstract class MedicationRepository {
 }
 ```
 
-**Phase 0 구현체 (과거):**
-```dart
-// infrastructure/repositories/isar_medication_repository.dart
-class IsarMedicationRepository implements MedicationRepository {
-  final Isar isar;
-
-  @override
-  Stream<List<Dose>> watchDoses() {
-    return isar.doseRecordDtos
-      .watchLazy()
-      .map((_) => _loadDoses());
-  }
-
-  @override
-  Future<void> saveDose(Dose dose) async {
-    final dto = DoseRecordDto.fromEntity(dose);
-    await isar.writeTxn(() => isar.doseRecordDtos.put(dto));
-  }
-}
-```
-
-**Phase 1 구현체 (현재) ✅:**
+**구현체 (Infrastructure Layer)**
 ```dart
 // infrastructure/repositories/supabase_medication_repository.dart
 class SupabaseMedicationRepository implements MedicationRepository {
@@ -163,14 +141,6 @@ class SupabaseMedicationRepository implements MedicationRepository {
 **DI (Application Layer)**
 ```dart
 // application/providers.dart
-
-// Phase 0 (과거)
-@riverpod
-MedicationRepository medicationRepository(ref) {
-  return IsarMedicationRepository(ref.watch(isarProvider));
-}
-
-// Phase 1 (현재) ✅
 @riverpod
 MedicationRepository medicationRepository(ref) {
   return SupabaseMedicationRepository(ref.watch(supabaseProvider));
@@ -179,28 +149,12 @@ MedicationRepository medicationRepository(ref) {
 
 ### 2. DTO ↔ Entity
 
-**Phase 0 DTO (Isar - 과거):**
-```dart
-@collection
-class DoseRecordDto {
-  Id id = Isar.autoIncrement;
-  late double doseMg;
-  late DateTime administeredAt;
-
-  Dose toEntity() => Dose(
-    id: id,
-    doseMg: doseMg,
-    administeredAt: administeredAt,
-  );
-}
-```
-
-**Phase 1 DTO (Supabase - 현재) ✅:**
+**Supabase와 JSON 직렬화**
 
 Supabase는 JSON 직렬화를 사용하므로 별도 DTO 클래스 불필요. Entity에 직접 JSON 변환 메서드 추가:
 
 ```dart
-// Entity가 JSON 직렬화 지원
+// domain/entities/dose.dart
 class Dose {
   final String id;
   final double doseMg;
@@ -212,7 +166,7 @@ class Dose {
     required this.administeredAt,
   });
 
-  // JSON 직렬화 (Supabase용)
+  // JSON 직렬화
   Map<String, dynamic> toJson() => {
     'id': id,
     'dose_mg': doseMg,
@@ -224,21 +178,6 @@ class Dose {
     doseMg: (json['dose_mg'] as num).toDouble(),
     administeredAt: DateTime.parse(json['administered_at'] as String),
   );
-}
-```
-
-**Entity (Domain) - 변경 없음 ✅**
-```dart
-class Dose {
-  final String id;  // Phase 1: int → String (UUID)
-  final double doseMg;
-  final DateTime administeredAt;
-
-  Dose({
-    required this.id,
-    required this.doseMg,
-    required this.administeredAt,
-  });
 }
 ```
 
@@ -260,57 +199,18 @@ class RecalculateDoseScheduleUseCase {
 
 ---
 
-## Phase 전환 완료 ✅
-
-### Phase 0 (과거)
-```
-infrastructure/repositories/
-├── medication_repository.dart      # Interface
-└── isar_medication_repository.dart # 구현체
-infrastructure/dtos/
-└── dose_record_dto.dart            # Isar DTO
-```
-
-### Phase 1 (현재) ✅
-```
-infrastructure/repositories/
-├── medication_repository.dart          # Interface (동일)
-├── isar_medication_repository.dart     # 구현체 (제거됨)
-└── supabase_medication_repository.dart # 구현체 (추가됨)
-infrastructure/dtos/
-└── dose_record_dto.dart                # (제거됨 - JSON 직렬화 사용)
-```
-
-**변경 완료**: Provider DI 1줄만 수정
-
-```dart
-// Phase 0 (과거)
-return IsarMedicationRepository(ref.watch(isarProvider));
-     ↓
-// Phase 1 (현재) ✅
-return SupabaseMedicationRepository(ref.watch(supabaseProvider));
-```
-
-**주요 변경사항:**
-- Isar DTO 제거, Entity에 JSON 직렬화 메서드 추가
-- ID 타입 변경: `int` (Isar auto-increment) → `String` (UUID)
-- Stream 구현: Isar watchLazy → Supabase stream
-- 트랜잭션: Isar writeTxn → Supabase RPC/transactions
-
----
-
 ## 규칙
 
 ### DO ✅
 - Repository Interface를 통한 데이터 접근
-- ~~DTO는 Infrastructure, Entity는 Domain~~ (Phase 1: Entity에 JSON 직렬화 추가)
+- Entity에 JSON 직렬화 추가
 - 비즈니스 로직은 Domain Layer에만
 - 여러 Repository 조합은 Application Layer
 
 ### DON'T ❌
-- Application에서 ~~Isar~~ Supabase 직접 접근
+- Application에서 Supabase 직접 접근
 - Presentation에서 Repository 직접 호출
-- Domain Layer에 Flutter/~~Isar~~/Supabase 의존성
+- Domain Layer에 Flutter/Supabase 의존성
 
 ---
 
@@ -329,8 +229,7 @@ features/tracking/
 │   ├── entities/weight_log.dart
 │   └── repositories/tracking_repository.dart (interface)
 └── infrastructure/
-    ├── dtos/weight_log_dto.dart
-    └── repositories/isar_tracking_repository.dart (implementation)
+    └── repositories/supabase_tracking_repository.dart (implementation)
 ```
 
 **사용 기능:**
@@ -350,7 +249,6 @@ final weights = await repo.getWeightLogs(userId);
 
 **중복 정의 금지:**
 - ❌ `features/onboarding/domain/entities/weight_log.dart`
-- ❌ `features/onboarding/infrastructure/dtos/weight_log_dto.dart`
 - ❌ `features/dashboard/domain/entities/weight_log.dart`
 
 ### symptom_logs (부작용 기록)
@@ -370,8 +268,7 @@ features/onboarding/
 │   ├── entities/user_profile.dart
 │   └── repositories/profile_repository.dart
 └── infrastructure/
-    ├── dtos/user_profile_dto.dart
-    └── repositories/isar_profile_repository.dart
+    └── repositories/supabase_profile_repository.dart
 ```
 
 **사용 기능**: onboarding (프로필 생성), dashboard (목표 체중 조회), profile (프로필 수정)
@@ -514,10 +411,10 @@ grep -r "abstract class YourRepository" lib/features/
 # 중복이 발견되면 즉시 제거하고 단일 구현 사용
 ```
 
-### 4. Phase 1 전환 고려
+### 4. 확장성 고려
 
 - Repository Pattern으로 구현되었는가?
-- Infrastructure Layer만 변경하면 Supabase 전환 가능한가?
+- Infrastructure Layer만 변경하면 다른 데이터 소스로 전환 가능한가?
 - Domain/Application Layer는 데이터 소스에 독립적인가?
 
 ---
@@ -537,8 +434,7 @@ features/tracking/
 │   ├── entities/medication_history.dart (생성)
 │   └── repositories/medication_repository.dart (메서드 추가)
 └── infrastructure/
-    ├── dtos/medication_history_dto.dart (생성)
-    └── repositories/isar_medication_repository.dart (구현 추가)
+    └── repositories/supabase_medication_repository.dart (구현 추가)
 ```
 
 ### Step 3: 문서 업데이트
@@ -578,10 +474,7 @@ abstract class TrackingRepository {
   Future<void> saveWeightLog(WeightLog log);
 }
 
-// Phase 0
-class IsarTrackingRepository implements TrackingRepository { }
-
-// Phase 1 (교체)
+// 구현체
 class SupabaseTrackingRepository implements TrackingRepository { }
 
 // Application Layer에서 여러 Repository 조합
@@ -603,12 +496,6 @@ class WeightLog { }  // ❌
 class WeightLog { }  // ❌
 // 하나만 있어야 함!
 
-// 같은 DTO를 여러 곳에 정의 (Isar schema 충돌 발생!)
-@collection
-class WeightLogDto { }  // features/onboarding/  ❌
-@collection
-class WeightLogDto { }  // features/tracking/    ❌
-
 // 순환 의존성
 // features/tracking/some_file.dart
 import 'package:n06/features/onboarding/.../profile_repository.dart';  // ❌
@@ -617,7 +504,7 @@ import 'package:n06/features/tracking/.../tracking_repository.dart';   // ❌
 
 // Domain Layer에서 구체 구현 참조
 // features/dashboard/domain/usecases/some_usecase.dart
-import 'package:n06/features/tracking/infrastructure/repositories/isar_tracking_repository.dart';  // ❌
+import 'package:n06/features/tracking/infrastructure/repositories/supabase_tracking_repository.dart';  // ❌
 // 인터페이스를 사용해야 함:
 import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';  // ✅
 ```
