@@ -3,7 +3,6 @@ import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
-import 'package:n06/core/providers.dart';
 
 part 'tracking_notifier.g.dart';
 
@@ -53,7 +52,12 @@ class TrackingNotifier extends _$TrackingNotifier {
     );
   }
 
-  // 데일리 로그 통합 저장 메서드 (신규)
+  /// 데일리 로그 통합 저장 메서드
+  ///
+  /// 체중 기록과 증상 기록을 한 번에 저장합니다.
+  /// 저장 후 네비게이션은 Presentation Layer에서 처리해야 합니다.
+  ///
+  /// Clean Architecture: Application Layer는 비즈니스 로직만 처리
   Future<void> saveDailyLog({
     required WeightLog weightLog,
     required List<SymptomLog> symptomLogs,
@@ -74,10 +78,7 @@ class TrackingNotifier extends _$TrackingNotifier {
         await repository.saveSymptomLog(symptomLog);
       }
 
-      // 3. 저장 성공 시 대시보드로 이동 (Context 없이 Navigation)
-      ref.read(goRouterProvider).go('/dashboard');
-
-      // 4. 최신 데이터 다시 로드
+      // 3. 최신 데이터 다시 로드
       if (userId != null) {
         final weights = await repository.getWeightLogs(userId);
         final symptoms = await repository.getSymptomLogs(userId);

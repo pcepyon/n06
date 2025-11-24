@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
@@ -224,13 +225,15 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
         );
       }).toList();
 
-      // 6. 저장 (saveDailyLog가 자동으로 /dashboard로 이동)
+      // 6. 저장
       await ref.read(trackingProvider.notifier).saveDailyLog(
             weightLog: weightLog,
             symptomLogs: symptomLogs,
           );
 
-      // 저장 성공 (자동으로 대시보드 이동됨)
+      // 7. 저장 성공 시 대시보드로 이동 (Presentation Layer 책임)
+      if (!mounted) return;
+      context.go('/dashboard');
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
