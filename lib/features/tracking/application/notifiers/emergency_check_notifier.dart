@@ -55,43 +55,58 @@ class EmergencyCheckNotifier extends _$EmergencyCheckNotifier {
   /// 예외 처리:
   /// - 부작용 기록 생성 실패 시, 증상 체크도 롤백하려고 시도
   /// - 상태는 error 상태로 전환
+  ///
+  /// **FIX (BUG-20251125-223741)**: keepAlive 패턴 적용
   Future<void> saveEmergencyCheck(
       String userId, EmergencySymptomCheck check) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final emergencyCheckRepo =
-          ref.read(_emergencyCheckRepositoryProvider);
-      final trackingRepo = ref.read(_trackingRepositoryProvider);
 
-      try {
-        // 1. 증상 체크 저장
-        await emergencyCheckRepo.saveEmergencyCheck(check);
+    try {
+      state = await AsyncValue.guard(() async {
+        final emergencyCheckRepo =
+            ref.read(_emergencyCheckRepositoryProvider);
+        final trackingRepo = ref.read(_trackingRepositoryProvider);
 
-        // 2. 각 증상마다 부작용 기록 자동 생성 (BR2)
-        for (final symptom in check.checkedSymptoms) {
-          final symptomLog = SymptomLog(
-            id: const Uuid().v4(),
-            userId: userId,
-            logDate: check.checkedAt,
-            symptomName: symptom,
-            severity: 10, // 고정값 (BR2)
-            daysSinceEscalation: null, // 계산 없음
-            isPersistent24h: true, // 응급 증상이므로 24시간 이상 가정
-            note: 'Emergency symptom check',
-            tags: const [],
-            createdAt: DateTime.now(),
-          );
-          await trackingRepo.saveSymptomLog(symptomLog);
+        try {
+          // 1. 증상 체크 저장
+          await emergencyCheckRepo.saveEmergencyCheck(check);
+
+          // 2. 각 증상마다 부작용 기록 자동 생성 (BR2)
+          for (final symptom in check.checkedSymptoms) {
+            final symptomLog = SymptomLog(
+              id: const Uuid().v4(),
+              userId: userId,
+              logDate: check.checkedAt,
+              symptomName: symptom,
+              severity: 10, // 고정값 (BR2)
+              daysSinceEscalation: null, // 계산 없음
+              isPersistent24h: true, // 응급 증상이므로 24시간 이상 가정
+              note: 'Emergency symptom check',
+              tags: const [],
+              createdAt: DateTime.now(),
+            );
+            await trackingRepo.saveSymptomLog(symptomLog);
+          }
+
+          // ✅ async gap 후 mounted 체크
+          if (!ref.mounted) {
+            return state.value ?? [];
+          }
+
+          // 3. 상태 재조회
+          final checks = await emergencyCheckRepo.getEmergencyChecks(userId);
+          return checks;
+        } catch (e) {
+          // 실패 시 에러 상태로 전환
+          rethrow;
         }
-
-        // 3. 상태 재조회
-        final checks = await emergencyCheckRepo.getEmergencyChecks(userId);
-        return checks;
-      } catch (e) {
-        // 실패 시 에러 상태로 전환
-        rethrow;
-      }
-    });
+      });
+    } finally {
+      link.close();
+    }
   }
 
   /// 사용자의 증상 체크 이력 조회
@@ -105,29 +120,47 @@ class EmergencyCheckNotifier extends _$EmergencyCheckNotifier {
 
   /// 증상 체크 기록 삭제
   Future<void> deleteEmergencyCheck(String id) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final repo = ref.read(_emergencyCheckRepositoryProvider);
-      await repo.deleteEmergencyCheck(id);
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
 
-      // 상태는 빈 리스트로 재설정 (실제로는 모든 기록을 다시 조회해야 함)
-      return state.value ?? [];
-    });
+    state = const AsyncLoading();
+
+    try {
+      state = await AsyncValue.guard(() async {
+        final repo = ref.read(_emergencyCheckRepositoryProvider);
+        await repo.deleteEmergencyCheck(id);
+
+        // 상태는 빈 리스트로 재설정 (실제로는 모든 기록을 다시 조회해야 함)
+        return state.value ?? [];
+      });
+    } finally {
+      link.close();
+    }
   }
 
   /// 증상 체크 기록 수정
   Future<void> updateEmergencyCheck(EmergencySymptomCheck check) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final repo = ref.read(_emergencyCheckRepositoryProvider);
-      await repo.updateEmergencyCheck(check);
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
 
-      // 상태는 현재 상태에서 수정된 항목으로 업데이트
-      final updatedChecks = state.value ?? [];
-      return updatedChecks
-          .map((c) => c.id == check.id ? check : c)
-          .toList();
-    });
+    // 이전 상태 백업
+    final previousChecks = state.value ?? [];
+
+    state = const AsyncLoading();
+
+    try {
+      state = await AsyncValue.guard(() async {
+        final repo = ref.read(_emergencyCheckRepositoryProvider);
+        await repo.updateEmergencyCheck(check);
+
+        // 상태는 현재 상태에서 수정된 항목으로 업데이트
+        return previousChecks
+            .map((c) => c.id == check.id ? check : c)
+            .toList();
+      });
+    } finally {
+      link.close();
+    }
   }
 }
 

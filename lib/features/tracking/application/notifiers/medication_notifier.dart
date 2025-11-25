@@ -70,45 +70,60 @@ class MedicationNotifier extends _$MedicationNotifier {
 
   /// Record dose with injection site rotation check
   Future<RotationCheckResult?> recordDose(DoseRecord record) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     // Get current userId
     final userId = ref.read(authNotifierProvider).value?.id;
     if (userId == null) throw Exception('User not authenticated');
 
-    // Check if duplicate
-    if (await _repository.isDuplicateDoseRecord(
-      record.dosagePlanId,
-      record.administeredAt,
-    )) {
-      throw Exception('이미 같은 날짜의 투여 기록이 존재합니다.');
-    }
-
-    // Check injection site rotation if site is specified
-    RotationCheckResult? rotationResult;
-    if (record.injectionSite != null) {
-      final recentRecords = await _repository.getRecentDoseRecords(
+    try {
+      // Check if duplicate
+      if (await _repository.isDuplicateDoseRecord(
         record.dosagePlanId,
-        30,
-      );
-      rotationResult = _injectionSiteRotationUseCase.checkRotation(
-        record.injectionSite!,
-        recentRecords,
-      );
+        record.administeredAt,
+      )) {
+        throw Exception('이미 같은 날짜의 투여 기록이 존재합니다.');
+      }
+
+      // Check injection site rotation if site is specified
+      RotationCheckResult? rotationResult;
+      if (record.injectionSite != null) {
+        final recentRecords = await _repository.getRecentDoseRecords(
+          record.dosagePlanId,
+          30,
+        );
+        rotationResult = _injectionSiteRotationUseCase.checkRotation(
+          record.injectionSite!,
+          recentRecords,
+        );
+      }
+
+      // Save record
+      await _repository.saveDoseRecord(record);
+
+      // ✅ async gap 후 mounted 체크
+      if (!ref.mounted) {
+        return rotationResult;
+      }
+
+      // Reload state
+      state = const AsyncValue.loading();
+      state = await AsyncValue.guard(() async {
+        return await _loadMedicationData(userId);
+      });
+
+      return rotationResult;
+    } finally {
+      link.close();
     }
-
-    // Save record
-    await _repository.saveDoseRecord(record);
-
-    // Reload state
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      return await _loadMedicationData(userId);
-    });
-
-    return rotationResult;
   }
 
   /// Update dosage plan and recalculate schedules
   Future<void> updateDosagePlan(DosagePlan newPlan) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     final userId = ref.read(authNotifierProvider).value?.id;
     if (userId == null) throw Exception('User not authenticated');
 
@@ -120,34 +135,43 @@ class MedicationNotifier extends _$MedicationNotifier {
       throw Exception('활성 투여 계획이 없습니다.');
     }
 
-    // Save plan change history
-    await _repository.savePlanChangeHistory(
-      newPlan.id,
-      _planToMap(currentPlan),
-      _planToMap(newPlan),
-    );
+    try {
+      // Save plan change history
+      await _repository.savePlanChangeHistory(
+        newPlan.id,
+        _planToMap(currentPlan),
+        _planToMap(newPlan),
+      );
 
-    // Update plan
-    await _repository.updateDosagePlan(newPlan);
+      // Update plan
+      await _repository.updateDosagePlan(newPlan);
 
-    // Recalculate schedules from change date
-    final existingSchedules = currentState.schedules;
-    final newSchedules = _scheduleGeneratorUseCase.recalculateSchedulesFrom(
-      newPlan,
-      DateTime.now(),
-      DateTime.now().add(Duration(days: 365)),
-      existingSchedules,
-    );
+      // Recalculate schedules from change date
+      final existingSchedules = currentState.schedules;
+      final newSchedules = _scheduleGeneratorUseCase.recalculateSchedulesFrom(
+        newPlan,
+        DateTime.now(),
+        DateTime.now().add(Duration(days: 365)),
+        existingSchedules,
+      );
 
-    // Delete old schedules from change date and save new ones
-    await _repository.deleteDoseSchedulesFrom(newPlan.id, DateTime.now());
-    await _repository.saveDoseSchedules(newSchedules);
+      // Delete old schedules from change date and save new ones
+      await _repository.deleteDoseSchedulesFrom(newPlan.id, DateTime.now());
+      await _repository.saveDoseSchedules(newSchedules);
 
-    // Reload data
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      return await _loadMedicationData(userId);
-    });
+      // ✅ async gap 후 mounted 체크
+      if (!ref.mounted) {
+        return;
+      }
+
+      // Reload data
+      state = const AsyncValue.loading();
+      state = await AsyncValue.guard(() async {
+        return await _loadMedicationData(userId);
+      });
+    } finally {
+      link.close();
+    }
   }
 
   /// Get missed dose analysis
@@ -163,16 +187,28 @@ class MedicationNotifier extends _$MedicationNotifier {
 
   /// Delete dose record
   Future<void> deleteDoseRecord(String recordId) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     final userId = ref.read(authNotifierProvider).value?.id;
     if (userId == null) throw Exception('User not authenticated');
 
-    await _repository.deleteDoseRecord(recordId);
+    try {
+      await _repository.deleteDoseRecord(recordId);
 
-    // Reload state
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      return await _loadMedicationData(userId);
-    });
+      // ✅ async gap 후 mounted 체크
+      if (!ref.mounted) {
+        return;
+      }
+
+      // Reload state
+      state = const AsyncValue.loading();
+      state = await AsyncValue.guard(() async {
+        return await _loadMedicationData(userId);
+      });
+    } finally {
+      link.close();
+    }
   }
 
   /// Get plan change history

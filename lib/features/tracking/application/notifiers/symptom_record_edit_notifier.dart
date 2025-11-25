@@ -23,92 +23,118 @@ class SymptomRecordEditNotifier extends AsyncNotifier<void> {
     required String recordId,
     required SymptomLog updatedLog,
   }) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final trackingRepo = ref.read(trackingRepositoryProvider);
 
-      // Validate symptom
-      final validation = _validateUseCase.execute(
-        severity: updatedLog.severity,
-        symptomName: updatedLog.symptomName,
-      );
-      if (validation.isFailure) {
-        throw Exception(validation.error ?? 'Invalid symptom');
-      }
+    try {
+      state = await AsyncValue.guard(() async {
+        final trackingRepo = ref.read(trackingRepositoryProvider);
 
-      // Get original log for audit
-      final originalLog = await trackingRepo.getSymptomLogById(recordId);
-      if (originalLog == null) {
-        throw Exception('Record not found');
-      }
+        // Validate symptom
+        final validation = _validateUseCase.execute(
+          severity: updatedLog.severity,
+          symptomName: updatedLog.symptomName,
+        );
+        if (validation.isFailure) {
+          throw Exception(validation.error ?? 'Invalid symptom');
+        }
 
-      // Update
-      await trackingRepo.updateSymptomLog(recordId, updatedLog);
+        // Get original log for audit
+        final originalLog = await trackingRepo.getSymptomLogById(recordId);
+        if (originalLog == null) {
+          throw Exception('Record not found');
+        }
 
-      // Log change
-      await _logUseCase.execute(AuditLog(
-        id: const Uuid().v4(),
-        userId: updatedLog.userId,
-        recordId: recordId,
-        recordType: 'symptom',
-        changeType: 'update',
-        oldValue: {
-          'symptomName': originalLog.symptomName,
-          'severity': originalLog.severity,
-          'tags': originalLog.tags,
-          'note': originalLog.note,
-        },
-        newValue: {
-          'symptomName': updatedLog.symptomName,
-          'severity': updatedLog.severity,
-          'tags': updatedLog.tags,
-          'note': updatedLog.note,
-        },
-        timestamp: DateTime.now(),
-      ));
+        // Update
+        await trackingRepo.updateSymptomLog(recordId, updatedLog);
 
-      // Invalidate dashboard to trigger statistics recalculation
-      ref.invalidate(dashboardNotifierProvider);
-    });
+        // Log change
+        await _logUseCase.execute(AuditLog(
+          id: const Uuid().v4(),
+          userId: updatedLog.userId,
+          recordId: recordId,
+          recordType: 'symptom',
+          changeType: 'update',
+          oldValue: {
+            'symptomName': originalLog.symptomName,
+            'severity': originalLog.severity,
+            'tags': originalLog.tags,
+            'note': originalLog.note,
+          },
+          newValue: {
+            'symptomName': updatedLog.symptomName,
+            'severity': updatedLog.severity,
+            'tags': updatedLog.tags,
+            'note': updatedLog.note,
+          },
+          timestamp: DateTime.now(),
+        ));
+
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return;
+        }
+
+        // Invalidate dashboard to trigger statistics recalculation
+        ref.invalidate(dashboardNotifierProvider);
+      });
+    } finally {
+      link.close();
+    }
   }
 
   Future<void> deleteSymptom({
     required String recordId,
     required String userId,
   }) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final trackingRepo = ref.read(trackingRepositoryProvider);
 
-      // Get original log for audit
-      final originalLog = await trackingRepo.getSymptomLogById(recordId);
-      if (originalLog == null) {
-        throw Exception('Record not found');
-      }
+    try {
+      state = await AsyncValue.guard(() async {
+        final trackingRepo = ref.read(trackingRepositoryProvider);
 
-      // Delete (cascade: true means related tags and feedback are also deleted)
-      await trackingRepo.deleteSymptomLog(recordId, cascade: true);
+        // Get original log for audit
+        final originalLog = await trackingRepo.getSymptomLogById(recordId);
+        if (originalLog == null) {
+          throw Exception('Record not found');
+        }
 
-      // Log deletion
-      await _logUseCase.execute(AuditLog(
-        id: const Uuid().v4(),
-        userId: userId,
-        recordId: recordId,
-        recordType: 'symptom',
-        changeType: 'delete',
-        oldValue: {
-          'symptomName': originalLog.symptomName,
-          'severity': originalLog.severity,
-          'tags': originalLog.tags,
-          'note': originalLog.note,
-          'logDate': originalLog.logDate.toIso8601String(),
-        },
-        newValue: null,
-        timestamp: DateTime.now(),
-      ));
+        // Delete (cascade: true means related tags and feedback are also deleted)
+        await trackingRepo.deleteSymptomLog(recordId, cascade: true);
 
-      // Invalidate dashboard to trigger statistics recalculation
-      ref.invalidate(dashboardNotifierProvider);
-    });
+        // Log deletion
+        await _logUseCase.execute(AuditLog(
+          id: const Uuid().v4(),
+          userId: userId,
+          recordId: recordId,
+          recordType: 'symptom',
+          changeType: 'delete',
+          oldValue: {
+            'symptomName': originalLog.symptomName,
+            'severity': originalLog.severity,
+            'tags': originalLog.tags,
+            'note': originalLog.note,
+            'logDate': originalLog.logDate.toIso8601String(),
+          },
+          newValue: null,
+          timestamp: DateTime.now(),
+        ));
+
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return;
+        }
+
+        // Invalidate dashboard to trigger statistics recalculation
+        ref.invalidate(dashboardNotifierProvider);
+      });
+    } finally {
+      link.close();
+    }
   }
 }

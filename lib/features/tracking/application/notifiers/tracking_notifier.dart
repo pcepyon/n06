@@ -59,41 +59,44 @@ class TrackingNotifier extends _$TrackingNotifier {
   ///
   /// Clean Architecture: Application Layer는 비즈니스 로직만 처리
   ///
-  /// **FIX (BUG-20251125-001)**: 저장 후 데이터 재로딩 제거
-  /// - 이유: 저장 후 즉시 화면 전환되므로 재로딩 불필요
-  /// - 대시보드에서 자동으로 최신 데이터 로드
-  /// - async gap 중 네비게이션으로 인한 provider dispose 방지
+  /// **FIX (BUG-20251125-223741)**: keepAlive 패턴 적용
+  /// - ref.keepAlive(): 화면 이탈 시에도 저장 작업 완료 보장
+  /// - finally에서 link.close(): 작업 완료 후 정상 dispose 허용
   Future<void> saveDailyLog({
     required WeightLog weightLog,
     required List<SymptomLog> symptomLogs,
   }) async {
-    // 로딩 상태로 전환
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     state = const AsyncValue.loading();
 
-    // AsyncValue.guard로 에러 처리 자동화
-    state = await AsyncValue.guard(() async {
-      final repository = ref.read(trackingRepositoryProvider);
+    try {
+      state = await AsyncValue.guard(() async {
+        final repository = ref.read(trackingRepositoryProvider);
 
-      // 1. 체중 기록 저장 (appetiteScore 포함)
-      await repository.saveWeightLog(weightLog);
+        // 1. 체중 기록 저장 (appetiteScore 포함)
+        await repository.saveWeightLog(weightLog);
 
-      // 2. 증상 기록 저장 (여러 개 가능, 각각 별도 레코드 + 개별 심각도)
-      for (final symptomLog in symptomLogs) {
-        await repository.saveSymptomLog(symptomLog);
-      }
+        // 2. 증상 기록 저장 (여러 개 가능, 각각 별도 레코드 + 개별 심각도)
+        for (final symptomLog in symptomLogs) {
+          await repository.saveSymptomLog(symptomLog);
+        }
 
-      // ✅ FIX: 데이터 재로딩 제거
-      // - 저장 완료 후 즉시 화면 전환되므로 재로딩 불필요
-      // - 대시보드에서 진입 시 자동으로 최신 데이터 로드
-      // - async gap 제거로 provider dispose 시 에러 방지
-
-      // 현재 상태 유지 (재로딩 없이)
-      return state.value ?? const TrackingState(weights: [], symptoms: []);
-    });
+        // 화면 전환 후 새 화면에서 자동 로드하므로 재로딩 불필요
+        return state.value ?? const TrackingState(weights: [], symptoms: []);
+      });
+    } finally {
+      // ✅ 작업 완료 후 정상 dispose 허용
+      link.close();
+    }
   }
 
   // 체중 기록 저장
   Future<void> saveWeightLog(WeightLog log) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     // 저장 전 현재 상태 백업
     final previousState = state.value ?? const TrackingState(
       weights: [],
@@ -101,24 +104,36 @@ class TrackingNotifier extends _$TrackingNotifier {
     );
 
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final repository = ref.read(trackingRepositoryProvider);
-      final userId = ref.read(authNotifierProvider).value?.id;
 
-      await repository.saveWeightLog(log);
+    try {
+      state = await AsyncValue.guard(() async {
+        final repository = ref.read(trackingRepositoryProvider);
+        final userId = ref.read(authNotifierProvider).value?.id;
 
-      if (userId != null) {
-        final weights = await repository.getWeightLogs(userId);
-        return previousState.copyWith(weights: weights);
-      }
+        await repository.saveWeightLog(log);
 
-      // userId가 없으면 이전 상태 유지
-      return previousState;
-    });
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return previousState;
+        }
+
+        if (userId != null) {
+          final weights = await repository.getWeightLogs(userId);
+          return previousState.copyWith(weights: weights);
+        }
+
+        return previousState;
+      });
+    } finally {
+      link.close();
+    }
   }
 
   // 증상 기록 저장
   Future<void> saveSymptomLog(SymptomLog log) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     // 저장 전 현재 상태 백업
     final previousState = state.value ?? const TrackingState(
       weights: [],
@@ -126,112 +141,173 @@ class TrackingNotifier extends _$TrackingNotifier {
     );
 
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final repository = ref.read(trackingRepositoryProvider);
-      final userId = ref.read(authNotifierProvider).value?.id;
 
-      await repository.saveSymptomLog(log);
+    try {
+      state = await AsyncValue.guard(() async {
+        final repository = ref.read(trackingRepositoryProvider);
+        final userId = ref.read(authNotifierProvider).value?.id;
 
-      if (userId != null) {
-        final symptoms = await repository.getSymptomLogs(userId);
-        return previousState.copyWith(symptoms: symptoms);
-      }
+        await repository.saveSymptomLog(log);
 
-      // userId가 없으면 이전 상태 유지
-      return previousState;
-    });
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return previousState;
+        }
+
+        if (userId != null) {
+          final symptoms = await repository.getSymptomLogs(userId);
+          return previousState.copyWith(symptoms: symptoms);
+        }
+
+        return previousState;
+      });
+    } finally {
+      link.close();
+    }
   }
 
   // 체중 기록 삭제
   Future<void> deleteWeightLog(String id) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     final previousState = state.value ?? const TrackingState(
       weights: [],
       symptoms: [],
     );
 
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final repository = ref.read(trackingRepositoryProvider);
-      final userId = ref.read(authNotifierProvider).value?.id;
 
-      await repository.deleteWeightLog(id);
+    try {
+      state = await AsyncValue.guard(() async {
+        final repository = ref.read(trackingRepositoryProvider);
+        final userId = ref.read(authNotifierProvider).value?.id;
 
-      if (userId != null) {
-        final weights = await repository.getWeightLogs(userId);
-        return previousState.copyWith(weights: weights);
-      }
+        await repository.deleteWeightLog(id);
 
-      return previousState;
-    });
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return previousState;
+        }
+
+        if (userId != null) {
+          final weights = await repository.getWeightLogs(userId);
+          return previousState.copyWith(weights: weights);
+        }
+
+        return previousState;
+      });
+    } finally {
+      link.close();
+    }
   }
 
   // 증상 기록 삭제
   Future<void> deleteSymptomLog(String id) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     final previousState = state.value ?? const TrackingState(
       weights: [],
       symptoms: [],
     );
 
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final repository = ref.read(trackingRepositoryProvider);
-      final userId = ref.read(authNotifierProvider).value?.id;
 
-      await repository.deleteSymptomLog(id);
+    try {
+      state = await AsyncValue.guard(() async {
+        final repository = ref.read(trackingRepositoryProvider);
+        final userId = ref.read(authNotifierProvider).value?.id;
 
-      if (userId != null) {
-        final symptoms = await repository.getSymptomLogs(userId);
-        return previousState.copyWith(symptoms: symptoms);
-      }
+        await repository.deleteSymptomLog(id);
 
-      return previousState;
-    });
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return previousState;
+        }
+
+        if (userId != null) {
+          final symptoms = await repository.getSymptomLogs(userId);
+          return previousState.copyWith(symptoms: symptoms);
+        }
+
+        return previousState;
+      });
+    } finally {
+      link.close();
+    }
   }
 
   // 체중 기록 업데이트
   Future<void> updateWeightLog(String id, double newWeight) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     final previousState = state.value ?? const TrackingState(
       weights: [],
       symptoms: [],
     );
 
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final repository = ref.read(trackingRepositoryProvider);
-      final userId = ref.read(authNotifierProvider).value?.id;
 
-      await repository.updateWeightLog(id, newWeight);
+    try {
+      state = await AsyncValue.guard(() async {
+        final repository = ref.read(trackingRepositoryProvider);
+        final userId = ref.read(authNotifierProvider).value?.id;
 
-      if (userId != null) {
-        final weights = await repository.getWeightLogs(userId);
-        return previousState.copyWith(weights: weights);
-      }
+        await repository.updateWeightLog(id, newWeight);
 
-      return previousState;
-    });
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return previousState;
+        }
+
+        if (userId != null) {
+          final weights = await repository.getWeightLogs(userId);
+          return previousState.copyWith(weights: weights);
+        }
+
+        return previousState;
+      });
+    } finally {
+      link.close();
+    }
   }
 
   // 증상 기록 업데이트
   Future<void> updateSymptomLog(String id, SymptomLog updatedLog) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     final previousState = state.value ?? const TrackingState(
       weights: [],
       symptoms: [],
     );
 
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final repository = ref.read(trackingRepositoryProvider);
-      final userId = ref.read(authNotifierProvider).value?.id;
 
-      await repository.updateSymptomLog(id, updatedLog);
+    try {
+      state = await AsyncValue.guard(() async {
+        final repository = ref.read(trackingRepositoryProvider);
+        final userId = ref.read(authNotifierProvider).value?.id;
 
-      if (userId != null) {
-        final symptoms = await repository.getSymptomLogs(userId);
-        return previousState.copyWith(symptoms: symptoms);
-      }
+        await repository.updateSymptomLog(id, updatedLog);
 
-      return previousState;
-    });
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return previousState;
+        }
+
+        if (userId != null) {
+          final symptoms = await repository.getSymptomLogs(userId);
+          return previousState.copyWith(symptoms: symptoms);
+        }
+
+        return previousState;
+      });
+    } finally {
+      link.close();
+    }
   }
 
   // 특정 날짜의 체중 기록 확인

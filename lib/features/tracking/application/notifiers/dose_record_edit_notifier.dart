@@ -22,90 +22,116 @@ class DoseRecordEditNotifier extends AsyncNotifier<void> {
     String? note,
     required String userId,
   }) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      // Validate dose is positive
-      if (newDoseMg <= 0) {
-        throw Exception('투여량은 0보다 커야 합니다');
-      }
 
-      final medicationRepo = ref.read(medicationRepositoryProvider);
+    try {
+      state = await AsyncValue.guard(() async {
+        // Validate dose is positive
+        if (newDoseMg <= 0) {
+          throw Exception('투여량은 0보다 커야 합니다');
+        }
 
-      // Get original record for audit
-      final originalRecord = await medicationRepo.getDoseRecord(recordId);
-      if (originalRecord == null) {
-        throw Exception('Record not found');
-      }
+        final medicationRepo = ref.read(medicationRepositoryProvider);
 
-      // Update
-      await medicationRepo.updateDoseRecord(
-        recordId,
-        newDoseMg,
-        injectionSite,
-        note,
-      );
+        // Get original record for audit
+        final originalRecord = await medicationRepo.getDoseRecord(recordId);
+        if (originalRecord == null) {
+          throw Exception('Record not found');
+        }
 
-      // Log change
-      await _logUseCase.execute(AuditLog(
-        id: const Uuid().v4(),
-        userId: userId,
-        recordId: recordId,
-        recordType: 'dose',
-        changeType: 'update',
-        oldValue: {
-          'doseMg': originalRecord.actualDoseMg,
-          'injectionSite': originalRecord.injectionSite,
-          'note': originalRecord.note,
-        },
-        newValue: {
-          'doseMg': newDoseMg,
-          'injectionSite': injectionSite,
-          'note': note,
-        },
-        timestamp: DateTime.now(),
-      ));
+        // Update
+        await medicationRepo.updateDoseRecord(
+          recordId,
+          newDoseMg,
+          injectionSite,
+          note,
+        );
 
-      // Invalidate dashboard to trigger statistics recalculation
-      ref.invalidate(dashboardNotifierProvider);
-    });
+        // Log change
+        await _logUseCase.execute(AuditLog(
+          id: const Uuid().v4(),
+          userId: userId,
+          recordId: recordId,
+          recordType: 'dose',
+          changeType: 'update',
+          oldValue: {
+            'doseMg': originalRecord.actualDoseMg,
+            'injectionSite': originalRecord.injectionSite,
+            'note': originalRecord.note,
+          },
+          newValue: {
+            'doseMg': newDoseMg,
+            'injectionSite': injectionSite,
+            'note': note,
+          },
+          timestamp: DateTime.now(),
+        ));
+
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return;
+        }
+
+        // Invalidate dashboard to trigger statistics recalculation
+        ref.invalidate(dashboardNotifierProvider);
+      });
+    } finally {
+      link.close();
+    }
   }
 
   Future<void> deleteDoseRecord({
     required String recordId,
     required String userId,
   }) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final medicationRepo = ref.read(medicationRepositoryProvider);
 
-      // Get original record for audit
-      final originalRecord = await medicationRepo.getDoseRecord(recordId);
-      if (originalRecord == null) {
-        throw Exception('Record not found');
-      }
+    try {
+      state = await AsyncValue.guard(() async {
+        final medicationRepo = ref.read(medicationRepositoryProvider);
 
-      // Delete (note: schedule is NOT affected)
-      await medicationRepo.deleteDoseRecord(recordId);
+        // Get original record for audit
+        final originalRecord = await medicationRepo.getDoseRecord(recordId);
+        if (originalRecord == null) {
+          throw Exception('Record not found');
+        }
 
-      // Log deletion
-      await _logUseCase.execute(AuditLog(
-        id: const Uuid().v4(),
-        userId: userId,
-        recordId: recordId,
-        recordType: 'dose',
-        changeType: 'delete',
-        oldValue: {
-          'doseMg': originalRecord.actualDoseMg,
-          'injectionSite': originalRecord.injectionSite,
-          'note': originalRecord.note,
-          'administeredAt': originalRecord.administeredAt.toIso8601String(),
-        },
-        newValue: null,
-        timestamp: DateTime.now(),
-      ));
+        // Delete (note: schedule is NOT affected)
+        await medicationRepo.deleteDoseRecord(recordId);
 
-      // Invalidate dashboard to trigger statistics recalculation
-      ref.invalidate(dashboardNotifierProvider);
-    });
+        // Log deletion
+        await _logUseCase.execute(AuditLog(
+          id: const Uuid().v4(),
+          userId: userId,
+          recordId: recordId,
+          recordType: 'dose',
+          changeType: 'delete',
+          oldValue: {
+            'doseMg': originalRecord.actualDoseMg,
+            'injectionSite': originalRecord.injectionSite,
+            'note': originalRecord.note,
+            'administeredAt': originalRecord.administeredAt.toIso8601String(),
+          },
+          newValue: null,
+          timestamp: DateTime.now(),
+        ));
+
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return;
+        }
+
+        // Invalidate dashboard to trigger statistics recalculation
+        ref.invalidate(dashboardNotifierProvider);
+      });
+    } finally {
+      link.close();
+    }
   }
 }

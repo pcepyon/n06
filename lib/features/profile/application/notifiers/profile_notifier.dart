@@ -48,22 +48,35 @@ class ProfileNotifier extends _$ProfileNotifier {
   ///
   /// Also invalidates dashboard notifier to refresh dashboard data
   Future<void> updateProfile(UserProfile profile) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final repository = ref.read(onboarding_providers.profileRepositoryProvider);
-      final trackingRepository = ref.read(trackingRepositoryProvider);
-      final useCase = UpdateProfileUseCase(
-        profileRepository: repository,
-        trackingRepository: trackingRepository,
-      );
 
-      await useCase.execute(profile);
+    try {
+      state = await AsyncValue.guard(() async {
+        final repository = ref.read(onboarding_providers.profileRepositoryProvider);
+        final trackingRepository = ref.read(trackingRepositoryProvider);
+        final useCase = UpdateProfileUseCase(
+          profileRepository: repository,
+          trackingRepository: trackingRepository,
+        );
 
-      // Invalidate dashboard to refresh dashboard data
-      ref.invalidate(dashboardNotifierProvider);
+        await useCase.execute(profile);
 
-      return profile;
-    });
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return profile;
+        }
+
+        // Invalidate dashboard to refresh dashboard data
+        ref.invalidate(dashboardNotifierProvider);
+
+        return profile;
+      });
+    } finally {
+      link.close();
+    }
   }
 
   /// Update weekly recording goals
@@ -78,34 +91,48 @@ class ProfileNotifier extends _$ProfileNotifier {
     int weeklyWeightRecordGoal,
     int weeklySymptomRecordGoal,
   ) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     final currentState = state;
 
     // Get current profile to extract userId
     if (!currentState.hasValue || currentState.value == null) {
+      link.close();
       throw Exception('User profile not loaded');
     }
 
     final userId = currentState.value!.userId;
 
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final repository = ref.read(onboarding_providers.profileRepositoryProvider);
 
-      // Update weekly goals in repository
-      await repository.updateWeeklyGoals(
-        userId,
-        weeklyWeightRecordGoal,
-        weeklySymptomRecordGoal,
-      );
+    try {
+      state = await AsyncValue.guard(() async {
+        final repository = ref.read(onboarding_providers.profileRepositoryProvider);
 
-      // Fetch updated profile
-      final updatedProfile = await repository.getUserProfile(userId);
+        // Update weekly goals in repository
+        await repository.updateWeeklyGoals(
+          userId,
+          weeklyWeightRecordGoal,
+          weeklySymptomRecordGoal,
+        );
 
-      // Invalidate dashboard to refresh weekly progress
-      ref.invalidate(dashboardNotifierProvider);
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return currentState.value;
+        }
 
-      return updatedProfile;
-    });
+        // Fetch updated profile
+        final updatedProfile = await repository.getUserProfile(userId);
+
+        // Invalidate dashboard to refresh weekly progress
+        ref.invalidate(dashboardNotifierProvider);
+
+        return updatedProfile;
+      });
+    } finally {
+      link.close();
+    }
   }
 }
 

@@ -30,62 +30,45 @@ class WeightRecordEditNotifier extends AsyncNotifier<void> {
     DateTime? newDate,
     bool allowOverwrite = false,
   }) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final trackingRepo = ref.read(trackingRepositoryProvider);
 
-      // Validate weight
-      final weightValidation = _validateUseCase.execute(newWeight);
-      if (weightValidation.isFailure) {
-        throw Exception(weightValidation.error ?? 'Invalid weight');
-      }
+    try {
+      state = await AsyncValue.guard(() async {
+        final trackingRepo = ref.read(trackingRepositoryProvider);
 
-      // Get original log
-      final originalLog = await trackingRepo.getWeightLogById(recordId);
-      if (originalLog == null) {
-        throw Exception('Record not found');
-      }
-
-      // Validate date if changed
-      if (newDate != null && newDate != originalLog.logDate) {
-        final dateValidation = await _validateDateUseCase.execute(
-          userId: userId,
-          date: newDate,
-          editingRecordId: recordId,
-        );
-
-        if (dateValidation.isConflict && !allowOverwrite) {
-          throw Exception('Date conflict: ${dateValidation.existingRecordId}');
+        // Validate weight
+        final weightValidation = _validateUseCase.execute(newWeight);
+        if (weightValidation.isFailure) {
+          throw Exception(weightValidation.error ?? 'Invalid weight');
         }
 
-        if (dateValidation.isFailure) {
-          throw Exception(dateValidation.error ?? 'Invalid date');
+        // Get original log
+        final originalLog = await trackingRepo.getWeightLogById(recordId);
+        if (originalLog == null) {
+          throw Exception('Record not found');
         }
 
-        // Update with new date
-        await trackingRepo.updateWeightLogWithDate(recordId, newWeight, newDate);
+        // Validate date if changed
+        if (newDate != null && newDate != originalLog.logDate) {
+          final dateValidation = await _validateDateUseCase.execute(
+            userId: userId,
+            date: newDate,
+            editingRecordId: recordId,
+          );
 
-        // Log change
-        await _logUseCase.execute(AuditLog(
-          id: const Uuid().v4(),
-          userId: userId,
-          recordId: recordId,
-          recordType: 'weight',
-          changeType: 'update',
-          oldValue: {
-            'weightKg': originalLog.weightKg,
-            'logDate': originalLog.logDate.toIso8601String(),
-          },
-          newValue: {
-            'weightKg': newWeight,
-            'logDate': newDate.toIso8601String(),
-          },
-          timestamp: DateTime.now(),
-        ));
-      } else {
-        // Update weight only
-        if (originalLog.weightKg != newWeight) {
-          await trackingRepo.updateWeightLog(recordId, newWeight);
+          if (dateValidation.isConflict && !allowOverwrite) {
+            throw Exception('Date conflict: ${dateValidation.existingRecordId}');
+          }
+
+          if (dateValidation.isFailure) {
+            throw Exception(dateValidation.error ?? 'Invalid date');
+          }
+
+          // Update with new date
+          await trackingRepo.updateWeightLogWithDate(recordId, newWeight, newDate);
 
           // Log change
           await _logUseCase.execute(AuditLog(
@@ -94,52 +77,95 @@ class WeightRecordEditNotifier extends AsyncNotifier<void> {
             recordId: recordId,
             recordType: 'weight',
             changeType: 'update',
-            oldValue: {'weightKg': originalLog.weightKg},
-            newValue: {'weightKg': newWeight},
+            oldValue: {
+              'weightKg': originalLog.weightKg,
+              'logDate': originalLog.logDate.toIso8601String(),
+            },
+            newValue: {
+              'weightKg': newWeight,
+              'logDate': newDate.toIso8601String(),
+            },
             timestamp: DateTime.now(),
           ));
-        }
-      }
+        } else {
+          // Update weight only
+          if (originalLog.weightKg != newWeight) {
+            await trackingRepo.updateWeightLog(recordId, newWeight);
 
-      // Invalidate dashboard to trigger statistics recalculation
-      ref.invalidate(dashboardNotifierProvider);
-    });
+            // Log change
+            await _logUseCase.execute(AuditLog(
+              id: const Uuid().v4(),
+              userId: userId,
+              recordId: recordId,
+              recordType: 'weight',
+              changeType: 'update',
+              oldValue: {'weightKg': originalLog.weightKg},
+              newValue: {'weightKg': newWeight},
+              timestamp: DateTime.now(),
+            ));
+          }
+        }
+
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return;
+        }
+
+        // Invalidate dashboard to trigger statistics recalculation
+        ref.invalidate(dashboardNotifierProvider);
+      });
+    } finally {
+      link.close();
+    }
   }
 
   Future<void> deleteWeight({
     required String recordId,
     required String userId,
   }) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final trackingRepo = ref.read(trackingRepositoryProvider);
 
-      // Get original log for audit
-      final originalLog = await trackingRepo.getWeightLogById(recordId);
-      if (originalLog == null) {
-        throw Exception('Record not found');
-      }
+    try {
+      state = await AsyncValue.guard(() async {
+        final trackingRepo = ref.read(trackingRepositoryProvider);
 
-      // Delete
-      await trackingRepo.deleteWeightLog(recordId);
+        // Get original log for audit
+        final originalLog = await trackingRepo.getWeightLogById(recordId);
+        if (originalLog == null) {
+          throw Exception('Record not found');
+        }
 
-      // Log deletion
-      await _logUseCase.execute(AuditLog(
-        id: const Uuid().v4(),
-        userId: userId,
-        recordId: recordId,
-        recordType: 'weight',
-        changeType: 'delete',
-        oldValue: {
-          'weightKg': originalLog.weightKg,
-          'logDate': originalLog.logDate.toIso8601String(),
-        },
-        newValue: null,
-        timestamp: DateTime.now(),
-      ));
+        // Delete
+        await trackingRepo.deleteWeightLog(recordId);
 
-      // Invalidate dashboard to trigger statistics recalculation
-      ref.invalidate(dashboardNotifierProvider);
-    });
+        // Log deletion
+        await _logUseCase.execute(AuditLog(
+          id: const Uuid().v4(),
+          userId: userId,
+          recordId: recordId,
+          recordType: 'weight',
+          changeType: 'delete',
+          oldValue: {
+            'weightKg': originalLog.weightKg,
+            'logDate': originalLog.logDate.toIso8601String(),
+          },
+          newValue: null,
+          timestamp: DateTime.now(),
+        ));
+
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return;
+        }
+
+        // Invalidate dashboard to trigger statistics recalculation
+        ref.invalidate(dashboardNotifierProvider);
+      });
+    } finally {
+      link.close();
+    }
   }
 }

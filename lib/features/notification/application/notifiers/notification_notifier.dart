@@ -30,58 +30,88 @@ class NotificationNotifier extends _$NotificationNotifier {
 
   /// 알림 시간 업데이트
   Future<void> updateNotificationTime(NotificationTime newTime) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
+    // 이전 상태 백업
+    final previousState = state.value;
+
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final currentState = state.value;
-      if (currentState == null) throw Exception('Settings not loaded');
 
-      final updated = currentState.copyWith(notificationTime: newTime);
-      final repository = ref.read(notificationRepositoryProvider);
-      await repository.saveNotificationSettings(updated);
+    try {
+      state = await AsyncValue.guard(() async {
+        if (previousState == null) throw Exception('Settings not loaded');
 
-      // 알림 스케줄 재계산
-      await _rescheduleNotifications(updated);
+        final updated = previousState.copyWith(notificationTime: newTime);
+        final repository = ref.read(notificationRepositoryProvider);
+        await repository.saveNotificationSettings(updated);
 
-      return updated;
-    });
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return updated;
+        }
+
+        // 알림 스케줄 재계산
+        await _rescheduleNotifications(updated);
+
+        return updated;
+      });
+    } finally {
+      link.close();
+    }
   }
 
   /// 알림 활성화/비활성화 토글
   Future<void> toggleNotificationEnabled() async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
+    // 이전 상태 백업
+    final previousState = state.value;
+
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final currentState = state.value;
-      if (currentState == null) throw Exception('Settings not loaded');
 
-      final scheduler = ref.read(notificationSchedulerProvider);
-      final newEnabled = !currentState.notificationEnabled;
+    try {
+      state = await AsyncValue.guard(() async {
+        if (previousState == null) throw Exception('Settings not loaded');
 
-      if (newEnabled) {
-        // 활성화할 때 권한 확인 및 요청
-        final hasPermission = await scheduler.checkPermission();
-        if (!hasPermission) {
-          final granted = await scheduler.requestPermission();
-          if (!granted) {
-            // 권한이 거부되면 변경하지 않음
-            return currentState;
+        final scheduler = ref.read(notificationSchedulerProvider);
+        final newEnabled = !previousState.notificationEnabled;
+
+        if (newEnabled) {
+          // 활성화할 때 권한 확인 및 요청
+          final hasPermission = await scheduler.checkPermission();
+          if (!hasPermission) {
+            final granted = await scheduler.requestPermission();
+            if (!granted) {
+              // 권한이 거부되면 변경하지 않음
+              return previousState;
+            }
           }
         }
-      }
 
-      final updated = currentState.copyWith(notificationEnabled: newEnabled);
-      final repository = ref.read(notificationRepositoryProvider);
-      await repository.saveNotificationSettings(updated);
+        final updated = previousState.copyWith(notificationEnabled: newEnabled);
+        final repository = ref.read(notificationRepositoryProvider);
+        await repository.saveNotificationSettings(updated);
 
-      // 알림 스케줄 업데이트
-      if (newEnabled) {
-        await _rescheduleNotifications(updated);
-      } else {
-        // 비활성화하면 모든 알림 취소
-        await scheduler.cancelAllNotifications();
-      }
+        // ✅ async gap 후 mounted 체크
+        if (!ref.mounted) {
+          return updated;
+        }
 
-      return updated;
-    });
+        // 알림 스케줄 업데이트
+        if (newEnabled) {
+          await _rescheduleNotifications(updated);
+        } else {
+          // 비활성화하면 모든 알림 취소
+          await scheduler.cancelAllNotifications();
+        }
+
+        return updated;
+      });
+    } finally {
+      link.close();
+    }
   }
 
   /// 알림 스케줄 재계산
