@@ -176,7 +176,7 @@ class SupabaseAuthRepository implements AuthRepository {
       name: userProfile['name'] as String,
       email: userProfile['email'] as String? ?? '',
       profileImageUrl: userProfile['profile_image_url'] as String?,
-      lastLoginAt: DateTime.parse(userProfile['last_login_at'] as String),
+      lastLoginAt: DateTime.parse(userProfile['last_login_at'] as String).toLocal(),
     );
   }
 
@@ -470,7 +470,7 @@ class SupabaseAuthRepository implements AuthRepository {
       name: userProfile['name'] as String,
       email: userProfile['email'] as String? ?? '',
       profileImageUrl: userProfile['profile_image_url'] as String?,
-      lastLoginAt: DateTime.parse(userProfile['last_login_at'] as String),
+      lastLoginAt: DateTime.parse(userProfile['last_login_at'] as String).toLocal(),
     );
   }
 
@@ -584,7 +584,7 @@ class SupabaseAuthRepository implements AuthRepository {
         name: userProfile['name'] as String,
         email: userProfile['email'] as String? ?? '',
         profileImageUrl: userProfile['profile_image_url'] as String?,
-        lastLoginAt: DateTime.parse(userProfile['last_login_at'] as String),
+        lastLoginAt: DateTime.parse(userProfile['last_login_at'] as String).toLocal(),
       );
     } on AuthException catch (e) {
       if (e.message.contains('invalid credentials')) {
@@ -672,7 +672,7 @@ class SupabaseAuthRepository implements AuthRepository {
         name: userProfile['name'] as String,
         email: userProfile['email'] as String? ?? '',
         profileImageUrl: userProfile['profile_image_url'] as String?,
-        lastLoginAt: DateTime.parse(userProfile['last_login_at'] as String),
+        lastLoginAt: DateTime.parse(userProfile['last_login_at'] as String).toLocal(),
       );
     } on AuthException catch (e) {
       throw Exception('Update password failed: ${e.message}');

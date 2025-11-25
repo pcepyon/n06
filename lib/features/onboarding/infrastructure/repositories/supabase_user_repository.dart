@@ -35,7 +35,7 @@ class SupabaseUserRepository implements UserRepository {
     return domain.User(
       id: response['id'] as String,
       name: response['name'] as String,
-      createdAt: DateTime.parse(response['created_at'] as String),
+      createdAt: DateTime.parse(response['created_at'] as String).toLocal(),
     );
   }
 

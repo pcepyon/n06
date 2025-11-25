@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import '../../domain/entities/dosage_plan.dart';
 import '../../domain/entities/dose_record.dart';
 import '../../domain/entities/dose_schedule.dart';
@@ -234,7 +235,7 @@ class SupabaseMedicationRepository implements MedicationRepository {
     Map<String, dynamic> newPlan,
   ) async {
     final history = PlanChangeHistory(
-      id: 'history_${DateTime.now().millisecondsSinceEpoch}',
+      id: const Uuid().v4(),
       dosagePlanId: planId,
       changedAt: DateTime.now(),
       oldPlan: oldPlan,

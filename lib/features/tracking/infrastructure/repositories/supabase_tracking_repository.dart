@@ -318,6 +318,6 @@ class SupabaseTrackingRepository implements TrackingRepository {
         .maybeSingle();
 
     if (response == null) return null;
-    return DateTime.parse(response['changed_at'] as String);
+    return DateTime.parse(response['changed_at'] as String).toLocal();
   }
 }
