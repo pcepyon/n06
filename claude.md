@@ -41,6 +41,36 @@ Application Layer ONLY:
 
 **Why**: AsyncValue.guard 내부에서 네비게이션 시 provider dispose 충돌
 
+### Async Mutation 안전 패턴 (BUG-20251125-223741)
+```dart
+// ✅ 모든 mutation 메서드에 적용 (저장/수정/삭제)
+Future<void> anyMutation() async {
+  final link = ref.keepAlive();  // 작업 완료 보장
+
+  try {
+    state = await AsyncValue.guard(() async {
+      // 핵심 작업
+      await repository.save();
+
+      // async gap 후 추가 작업 필요 시
+      if (!ref.mounted) return previousState;
+
+      // 추가 작업
+      return newState;
+    });
+  } finally {
+    link.close();  // 정상 dispose 허용
+  }
+}
+```
+
+**Why**:
+- `ref.keepAlive()`: 화면 이탈 시에도 데이터 무결성 보장 (작업 완료)
+- `ref.mounted`: 불필요한 작업 스킵
+- `finally { link.close() }`: 메모리 누수 방지
+
+**적용 대상**: 모든 AsyncNotifier의 async mutation 메서드
+
 ### Repository Pattern
 ```
 Application/Presentation → Repository Interface (Domain)
@@ -134,6 +164,15 @@ class MyNotifier extends _$MyNotifier {
 await notifier.save(data);
 await showDialog(...); // WRONG: Provider 조기 해제 가능
 
+// ⚠️ Async mutation에서 keepAlive 미적용 (BUG-20251125-223741)
+Future<void> saveData() async {
+  state = await AsyncValue.guard(() async {
+    await repository.save();
+    // WRONG: 사용자가 화면 이탈 시 provider dispose
+    // → 저장 완료 보장 안됨
+  });
+}
+
 // userId 하드코딩 (authNotifier에서 가져와야 함)
 const userId = 'current-user-id'; // WRONG
 
@@ -211,6 +250,20 @@ if (userId != null) {
 final prev = state.asData?.value ?? defaultState;
 return prev; // Safe
 
+// ✅ Async mutation에서 keepAlive 패턴 적용 (BUG-20251125-223741)
+Future<void> saveData() async {
+  final link = ref.keepAlive();  // ✅ 작업 완료 보장
+  try {
+    state = await AsyncValue.guard(() async {
+      await repository.save();
+      if (!ref.mounted) return previousState;  // ✅ 스킵
+      return newState;
+    });
+  } finally {
+    link.close();  // ✅ 메모리 누수 방지
+  }
+}
+
 // Use minHeight for touch targets, not fixed height
 Container(
   constraints: BoxConstraints(minHeight: 44.0),
@@ -282,6 +335,7 @@ MedicationRepository medicationRepository(ref) =>
 [ ] Repository pattern maintained (docs/code_structure.md)
 [ ] No layer violations (check imports)
 [ ] No navigation in Application Layer (BUG-20251124-001)
+[ ] Async mutation에 keepAlive 패턴 적용 (BUG-20251125-223741)
 [ ] Performance constraints met (docs/requirements.md)
 ```
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
@@ -168,7 +169,7 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
       }
 
       final doseRecord = DoseRecord(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: const Uuid().v4(),
         doseScheduleId: widget.schedule.id,
         dosagePlanId: state!.activePlan!.id,
         administeredAt: DateTime.now(),
