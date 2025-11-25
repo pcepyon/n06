@@ -58,6 +58,11 @@ class TrackingNotifier extends _$TrackingNotifier {
   /// 저장 후 네비게이션은 Presentation Layer에서 처리해야 합니다.
   ///
   /// Clean Architecture: Application Layer는 비즈니스 로직만 처리
+  ///
+  /// **FIX (BUG-20251125-001)**: 저장 후 데이터 재로딩 제거
+  /// - 이유: 저장 후 즉시 화면 전환되므로 재로딩 불필요
+  /// - 대시보드에서 자동으로 최신 데이터 로드
+  /// - async gap 중 네비게이션으로 인한 provider dispose 방지
   Future<void> saveDailyLog({
     required WeightLog weightLog,
     required List<SymptomLog> symptomLogs,
@@ -68,7 +73,6 @@ class TrackingNotifier extends _$TrackingNotifier {
     // AsyncValue.guard로 에러 처리 자동화
     state = await AsyncValue.guard(() async {
       final repository = ref.read(trackingRepositoryProvider);
-      final userId = ref.read(authNotifierProvider).value?.id;
 
       // 1. 체중 기록 저장 (appetiteScore 포함)
       await repository.saveWeightLog(weightLog);
@@ -78,16 +82,13 @@ class TrackingNotifier extends _$TrackingNotifier {
         await repository.saveSymptomLog(symptomLog);
       }
 
-      // 3. 최신 데이터 다시 로드
-      if (userId != null) {
-        final weights = await repository.getWeightLogs(userId);
-        final symptoms = await repository.getSymptomLogs(userId);
+      // ✅ FIX: 데이터 재로딩 제거
+      // - 저장 완료 후 즉시 화면 전환되므로 재로딩 불필요
+      // - 대시보드에서 진입 시 자동으로 최신 데이터 로드
+      // - async gap 제거로 provider dispose 시 에러 방지
 
-        return TrackingState(weights: weights, symptoms: symptoms);
-      }
-
-      // userId가 없으면 빈 상태 반환
-      return const TrackingState(weights: [], symptoms: []);
+      // 현재 상태 유지 (재로딩 없이)
+      return state.value ?? const TrackingState(weights: [], symptoms: []);
     });
   }
 
