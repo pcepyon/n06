@@ -34,7 +34,7 @@ class PlanChangeHistoryDto {
     return {
       'id': id,
       'dosage_plan_id': dosagePlanId,
-      'changed_at': changedAt.toIso8601String(),
+      'changed_at': changedAt.toUtc().toIso8601String(),
       'old_plan': oldPlan,
       'new_plan': newPlan,
     };

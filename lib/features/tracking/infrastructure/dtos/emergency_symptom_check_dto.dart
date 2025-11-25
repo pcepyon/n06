@@ -31,7 +31,7 @@ class EmergencySymptomCheckDto {
     return {
       'id': id,
       'user_id': userId,
-      'checked_at': checkedAt.toIso8601String(),
+      'checked_at': checkedAt.toUtc().toIso8601String(),
       'checked_symptoms': checkedSymptoms,
     };
   }

@@ -60,8 +60,8 @@ class DosagePlanDto {
       'initial_dose_mg': initialDoseMg,
       'escalation_plan': escalationPlan?.map((step) => step.toJson()).toList(),
       'is_active': isActive,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
+      'created_at': createdAt.toUtc().toIso8601String(),
+      'updated_at': updatedAt.toUtc().toIso8601String(),
     };
   }
 

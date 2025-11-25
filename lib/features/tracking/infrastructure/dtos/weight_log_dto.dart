@@ -40,7 +40,7 @@ class WeightLogDto {
       'log_date': logDate.toIso8601String().split('T')[0],
       'weight_kg': weightKg,
       'appetite_score': appetiteScore,
-      'created_at': createdAt.toIso8601String(),
+      'created_at': createdAt.toUtc().toIso8601String(),
     };
   }
 

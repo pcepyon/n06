@@ -42,17 +42,18 @@ class DoseRecordDto {
   }
 
   /// Converts DTO to Supabase JSON.
+  /// DateTime fields are converted to UTC for consistent storage.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'dose_schedule_id': doseScheduleId,
       'dosage_plan_id': dosagePlanId,
-      'administered_at': administeredAt.toIso8601String(),
+      'administered_at': administeredAt.toUtc().toIso8601String(),
       'actual_dose_mg': actualDoseMg,
       'injection_site': injectionSite,
       'is_completed': isCompleted,
       'note': note,
-      'created_at': createdAt.toIso8601String(),
+      'created_at': createdAt.toUtc().toIso8601String(),
     };
   }
 

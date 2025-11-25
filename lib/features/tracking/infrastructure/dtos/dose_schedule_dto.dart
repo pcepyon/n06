@@ -57,7 +57,7 @@ class DoseScheduleDto {
       'scheduled_date': scheduledDate.toIso8601String().split('T')[0],
       'scheduled_dose_mg': scheduledDoseMg,
       'notification_time': notificationTimeStr,
-      'created_at': createdAt.toIso8601String(),
+      'created_at': createdAt.toUtc().toIso8601String(),
     };
   }
 

@@ -36,7 +36,7 @@ class GuideFeedbackDto {
       'user_id': userId,
       'symptom_name': symptomName,
       'helpful': helpful,
-      'timestamp': timestamp.toIso8601String(),
+      'timestamp': timestamp.toUtc().toIso8601String(),
     };
   }
 

@@ -54,7 +54,7 @@ class SymptomLogDto {
       'days_since_escalation': daysSinceEscalation,
       'is_persistent_24h': isPersistent24h,
       'note': note,
-      'created_at': createdAt?.toIso8601String(),
+      'created_at': createdAt?.toUtc().toIso8601String(),
     };
   }
 

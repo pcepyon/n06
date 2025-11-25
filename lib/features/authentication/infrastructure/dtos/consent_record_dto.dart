@@ -36,7 +36,7 @@ class ConsentRecordDto {
       'user_id': userId,
       'terms_of_service': termsOfService,
       'privacy_policy': privacyPolicy,
-      'agreed_at': agreedAt.toIso8601String(),
+      'agreed_at': agreedAt.toUtc().toIso8601String(),
     };
   }
 

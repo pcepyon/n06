@@ -48,9 +48,9 @@ class UserBadgeDto {
       'badge_id': badgeId,
       'status': status,
       'progress_percentage': progressPercentage,
-      'achieved_at': achievedAt?.toIso8601String(),
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
+      'achieved_at': achievedAt?.toUtc().toIso8601String(),
+      'created_at': createdAt.toUtc().toIso8601String(),
+      'updated_at': updatedAt.toUtc().toIso8601String(),
     };
   }
 

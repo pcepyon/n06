@@ -44,7 +44,7 @@ class UserDto {
       'name': name,
       'email': email,
       'profile_image_url': profileImageUrl,
-      'last_login_at': lastLoginAt.toIso8601String(),
+      'last_login_at': lastLoginAt.toUtc().toIso8601String(),
     };
   }
 

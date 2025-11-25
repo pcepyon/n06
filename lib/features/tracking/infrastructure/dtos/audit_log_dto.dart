@@ -48,7 +48,7 @@ class AuditLogDto {
       'change_type': changeType,
       'old_value': oldValue,
       'new_value': newValue,
-      'timestamp': timestamp.toIso8601String(),
+      'timestamp': timestamp.toUtc().toIso8601String(),
     };
   }
 
