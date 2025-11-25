@@ -25,7 +25,7 @@ class ConsentRecordDto {
       userId: json['user_id'] as String,
       termsOfService: json['terms_of_service'] as bool,
       privacyPolicy: json['privacy_policy'] as bool,
-      agreedAt: DateTime.parse(json['agreed_at'] as String),
+      agreedAt: DateTime.parse(json['agreed_at'] as String).toLocal(),
     );
   }
 

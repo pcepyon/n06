@@ -33,10 +33,10 @@ class UserBadgeDto {
       status: json['status'] as String,
       progressPercentage: json['progress_percentage'] as int,
       achievedAt: json['achieved_at'] != null
-          ? DateTime.parse(json['achieved_at'] as String)
+          ? DateTime.parse(json['achieved_at'] as String).toLocal()
           : null,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] as String).toLocal(),
     );
   }
 

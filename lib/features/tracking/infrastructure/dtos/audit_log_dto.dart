@@ -34,7 +34,7 @@ class AuditLogDto {
       changeType: json['change_type'] as String,
       oldValue: json['old_value'] as Map<String, dynamic>?,
       newValue: json['new_value'] as Map<String, dynamic>?,
-      timestamp: DateTime.parse(json['timestamp'] as String),
+      timestamp: DateTime.parse(json['timestamp'] as String).toLocal(),
     );
   }
 

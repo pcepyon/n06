@@ -25,7 +25,7 @@ class GuideFeedbackDto {
       userId: json['user_id'] as String,
       symptomName: json['symptom_name'] as String,
       helpful: json['helpful'] as bool,
-      timestamp: DateTime.parse(json['timestamp'] as String),
+      timestamp: DateTime.parse(json['timestamp'] as String).toLocal(),
     );
   }
 

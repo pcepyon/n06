@@ -25,10 +25,10 @@ class WeightLogDto {
     return WeightLogDto(
       id: json['id'] as String,
       userId: json['user_id'] as String,
-      logDate: DateTime.parse(json['log_date'] as String),
+      logDate: DateTime.parse(json['log_date'] as String).toLocal(),
       weightKg: (json['weight_kg'] as num).toDouble(),
       appetiteScore: json['appetite_score'] as int?,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
     );
   }
 

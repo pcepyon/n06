@@ -23,7 +23,7 @@ class PlanChangeHistoryDto {
     return PlanChangeHistoryDto(
       id: json['id'] as String,
       dosagePlanId: json['dosage_plan_id'] as String,
-      changedAt: DateTime.parse(json['changed_at'] as String),
+      changedAt: DateTime.parse(json['changed_at'] as String).toLocal(),
       oldPlan: json['old_plan'] as Map<String, dynamic>,
       newPlan: json['new_plan'] as Map<String, dynamic>,
     );

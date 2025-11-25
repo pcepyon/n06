@@ -35,7 +35,7 @@ class DosagePlanDto {
       id: json['id'] as String,
       userId: json['user_id'] as String,
       medicationName: json['medication_name'] as String,
-      startDate: DateTime.parse(json['start_date'] as String),
+      startDate: DateTime.parse(json['start_date'] as String).toLocal(),
       cycleDays: json['cycle_days'] as int,
       initialDoseMg: (json['initial_dose_mg'] as num).toDouble(),
       escalationPlan: json['escalation_plan'] != null
@@ -44,8 +44,8 @@ class DosagePlanDto {
               .toList()
           : null,
       isActive: json['is_active'] as bool,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] as String).toLocal(),
     );
   }
 

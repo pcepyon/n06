@@ -21,7 +21,7 @@ class EmergencySymptomCheckDto {
     return EmergencySymptomCheckDto(
       id: json['id'] as String,
       userId: json['user_id'] as String,
-      checkedAt: DateTime.parse(json['checked_at'] as String),
+      checkedAt: DateTime.parse(json['checked_at'] as String).toLocal(),
       checkedSymptoms: List<String>.from(json['checked_symptoms'] as List),
     );
   }

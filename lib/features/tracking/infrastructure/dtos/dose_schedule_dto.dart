@@ -36,10 +36,10 @@ class DoseScheduleDto {
     return DoseScheduleDto(
       id: json['id'] as String,
       dosagePlanId: json['dosage_plan_id'] as String,
-      scheduledDate: DateTime.parse(json['scheduled_date'] as String),
+      scheduledDate: DateTime.parse(json['scheduled_date'] as String).toLocal(),
       scheduledDoseMg: (json['scheduled_dose_mg'] as num).toDouble(),
       notificationTime: notificationTime,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
     );
   }
 

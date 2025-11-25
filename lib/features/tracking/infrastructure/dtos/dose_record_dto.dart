@@ -32,12 +32,12 @@ class DoseRecordDto {
       id: json['id'] as String,
       doseScheduleId: json['dose_schedule_id'] as String?,
       dosagePlanId: json['dosage_plan_id'] as String,
-      administeredAt: DateTime.parse(json['administered_at'] as String),
+      administeredAt: DateTime.parse(json['administered_at'] as String).toLocal(),
       actualDoseMg: (json['actual_dose_mg'] as num).toDouble(),
       injectionSite: json['injection_site'] as String?,
       isCompleted: json['is_completed'] as bool,
       note: json['note'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
     );
   }
 

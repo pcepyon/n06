@@ -31,7 +31,7 @@ class UserDto {
       name: json['name'] as String,
       email: json['email'] as String,
       profileImageUrl: json['profile_image_url'] as String?,
-      lastLoginAt: DateTime.parse(json['last_login_at'] as String),
+      lastLoginAt: DateTime.parse(json['last_login_at'] as String).toLocal(),
     );
   }
 
