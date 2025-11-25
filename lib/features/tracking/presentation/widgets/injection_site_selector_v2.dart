@@ -134,14 +134,16 @@ class _InjectionSiteSelectorV2State extends ConsumerState<InjectionSiteSelectorV
       children: [
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 2.5,
-            children: sites.map((site) => _buildSiteButton(site.$1, site.$2)).toList(),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: sites.map((site) {
+              return SizedBox(
+                width: 140,
+                height: 56,
+                child: _buildSiteButton(site.$1, site.$2),
+              );
+            }).toList(),
           ),
         ),
       ],
