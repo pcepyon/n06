@@ -3,7 +3,7 @@ import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 /// Repository interface for DoseSchedule persistence
 ///
 /// Defines the contract for dose schedule data access operations.
-/// Implementations must handle Isar or Supabase storage.
+/// Current: SupabaseDoseScheduleRepository (cloud-first architecture)
 abstract class DoseScheduleRepository {
   /// Get all schedules for a specific dosage plan
   ///

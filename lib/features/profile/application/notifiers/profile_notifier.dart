@@ -138,8 +138,8 @@ class ProfileNotifier extends _$ProfileNotifier {
 
 /// Provider for ProfileRepository
 ///
-/// Phase 0: Returns IsarProfileRepository
-/// Phase 1: Will return SupabaseProfileRepository
+/// Returns ProfileRepository implementation
+/// Current: SupabaseProfileRepository (cloud-first architecture)
 @riverpod
 ProfileRepository profileRepository(Ref ref) {
   throw UnimplementedError(

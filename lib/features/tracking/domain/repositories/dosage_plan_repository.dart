@@ -4,7 +4,7 @@ import 'package:n06/features/tracking/domain/entities/plan_change_history.dart';
 /// Repository interface for DosagePlan persistence
 ///
 /// Defines the contract for dosage plan data access operations.
-/// Implementations must handle Isar or Supabase storage.
+/// Current: SupabaseDosagePlanRepository (cloud-first architecture)
 abstract class DosagePlanRepository {
   /// Get the active dosage plan for a specific user
   ///

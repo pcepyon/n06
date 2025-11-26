@@ -4,8 +4,7 @@ import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.da
 ///
 /// Domain Layer에서 정의하는 Repository Interface는
 /// Infrastructure Layer의 구현체로 대체됩니다 (Repository Pattern).
-/// Phase 1에서 Supabase로 전환될 때도 Interface는 유지되고,
-/// 구현체만 IsarEmergencyCheckRepository → SupabaseEmergencyCheckRepository로 변경됩니다.
+/// Current: SupabaseEmergencyCheckRepository (cloud-first architecture)
 abstract class EmergencyCheckRepository {
   /// 증상 체크 정보 저장 또는 생성
   Future<void> saveEmergencyCheck(EmergencySymptomCheck check);

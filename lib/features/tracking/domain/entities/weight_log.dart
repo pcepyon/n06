@@ -9,8 +9,7 @@ import 'package:equatable/equatable.dart';
 /// - dashboard: 체중 데이터 조회 및 통계 계산
 ///
 /// 구현은 tracking 기능에 위치하지만, 논리적으로는 공통 도메인입니다.
-/// Phase 0에서는 Isar 로컬 DB를 사용하며,
-/// Phase 1에서 Supabase PostgreSQL로 마이그레이션됩니다.
+/// Supabase PostgreSQL 기반 cloud-first architecture를 사용합니다.
 ///
 /// [appetiteScore]는 식욕 조절 점수(1-5)로, GLP-1 약물의 핵심 임상 지표입니다.
 /// - 5: 식욕 폭발 (Severe hunger)

@@ -105,7 +105,7 @@ Is it database access or DTO conversion?
 CRUD operations with async?
   → AsyncNotifierProvider (see state-management.md)
 
-Real-time Isar watch?
+Real-time data watch?
   → StreamProvider (see state-management.md)
 
 Immutable service or repository?
@@ -137,9 +137,6 @@ External parameter (userId param)?
 
 ### ❌ NEVER
 ```dart
-// Application accessing Isar directly
-final isar = ref.watch(isarProvider); // WRONG
-
 // Skipping Repository interface
 class ConcreteRepository { } // WRONG (no interface)
 
@@ -200,7 +197,7 @@ final repo = ref.read(medicationRepositoryProvider);
 abstract class MedicationRepository { }
 
 // Infrastructure implements
-class IsarMedicationRepository implements MedicationRepository { }
+class SupabaseMedicationRepository implements MedicationRepository { }
 
 // Test first
 test('should...', () { }); // Then write code
@@ -284,7 +281,7 @@ features/{feature}/
   application/notifiers/{feature}_notifier.dart
   domain/entities/{entity}.dart
   domain/repositories/{feature}_repository.dart
-  infrastructure/repositories/isar_{feature}_repository.dart
+  infrastructure/repositories/supabase_{feature}_repository.dart
   infrastructure/dtos/{entity}_dto.dart
 ```
 
@@ -293,7 +290,7 @@ features/{feature}/
 Entity: DoseRecord (domain/entities/)
 DTO: DoseRecordDto (infrastructure/dtos/)
 Repository Interface: MedicationRepository (domain/repositories/)
-Repository Impl: IsarMedicationRepository (infrastructure/repositories/)
+Repository Impl: SupabaseMedicationRepository (infrastructure/repositories/)
 Notifier: MedicationNotifier (application/notifiers/)
 Provider: medicationNotifierProvider
 ```
@@ -302,27 +299,21 @@ Provider: medicationNotifierProvider
 
 ---
 
-## Phase 0 → Phase 1 Transition
+## Cloud-First Architecture (Supabase)
 
-**Impact**: Infrastructure Layer ONLY (1-line change per repository)
+현재 모든 Repository는 Supabase 기반으로 구현되어 있습니다.
 
 ```dart
-// Phase 0
-@riverpod
-MedicationRepository medicationRepository(ref) =>
-  IsarMedicationRepository(ref.watch(isarProvider));
-
-// Phase 1
 @riverpod
 MedicationRepository medicationRepository(ref) =>
   SupabaseMedicationRepository(ref.watch(supabaseProvider));
 ```
 
-**Zero changes**: Domain, Application, Presentation
+**Architecture Benefits**:
+- Repository Pattern으로 인프라 교체 용이
+- Domain, Application, Presentation 레이어 변경 없음
 
-**Requirement**: Repository Pattern strictly enforced
-
-**Details**: See `docs/techstack.md` (Phase Transition section)
+**Details**: See `docs/techstack.md`
 
 ---
 

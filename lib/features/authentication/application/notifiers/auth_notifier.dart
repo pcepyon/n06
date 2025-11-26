@@ -5,7 +5,6 @@ import 'package:n06/features/authentication/domain/entities/user.dart';
 import 'package:n06/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:n06/features/authentication/application/providers.dart';
 import 'package:n06/features/authentication/infrastructure/repositories/supabase_auth_repository.dart';
-// import 'package:n06/features/authentication/infrastructure/repositories/isar_auth_repository.dart';  // Phase 1.8에서 제거
 import 'package:n06/core/providers.dart';
 
 part 'auth_notifier.g.dart';
@@ -156,8 +155,6 @@ class AuthNotifier extends _$AuthNotifier {
 
     if (!isValid) {
       // Token expired, need to re-login
-      // In Phase 0, we don't have token refresh
-      // User will need to re-login
       await logout();
       return false;
     }
@@ -368,8 +365,7 @@ class AuthNotifier extends _$AuthNotifier {
 
 /// Provider for AuthRepository
 ///
-/// Phase 0: Returns IsarAuthRepository (deprecated)
-/// Phase 1: Returns SupabaseAuthRepository
+/// Returns SupabaseAuthRepository for cloud-first architecture
 @riverpod
 AuthRepository authRepository(Ref ref) {
   final supabase = ref.watch(supabaseProvider);

@@ -6,7 +6,6 @@ import 'package:n06/features/authentication/domain/repositories/secure_storage_r
 /// Handles the complete logout process:
 /// 1. Clears tokens from secure storage (with retry logic)
 /// 2. Clears session from auth repository
-/// 3. Preserves local Isar data (Phase 0)
 ///
 /// The logout process is designed to be resilient:
 /// - Token deletion will retry up to 3 times

@@ -11,8 +11,7 @@ import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 /// weight_logs는 여러 기능에서 공통으로 사용되는 독립 테이블입니다.
 /// Repository Pattern에 따라 단일 구현체를 통해 데이터 접근을 추상화합니다.
 ///
-/// Phase 0: IsarTrackingRepository (로컬 DB)
-/// Phase 1: SupabaseTrackingRepository (클라우드 DB) - 1줄 변경으로 전환 가능
+/// Current: SupabaseTrackingRepository (cloud-first architecture)
 abstract class TrackingRepository {
   // 체중 기록
   Future<void> saveWeightLog(WeightLog log);
