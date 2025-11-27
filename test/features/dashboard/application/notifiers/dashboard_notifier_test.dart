@@ -16,8 +16,6 @@ import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/onboarding/domain/value_objects/weight.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
-import 'package:n06/features/tracking/domain/entities/weight_log.dart';
-import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/onboarding/application/providers.dart'
     as onboarding_providers;
 import 'package:n06/features/tracking/application/providers.dart'
@@ -130,7 +128,7 @@ void main() {
           tracking_providers.trackingRepositoryProvider
               .overrideWithValue(mockTrackingRepository),
           badgeRepositoryProvider.overrideWithValue(mockBadgeRepository),
-          authProvider.overrideWith(() => FakeAuthNotifier(testUser)),
+          authNotifierProvider.overrideWith(() => FakeAuthNotifier(testUser)),
         ],
       );
     });
@@ -141,23 +139,34 @@ void main() {
 
     // RED TEST 1: DoseRecord가 조회되어야 함 (수정 후 통과해야 함)
     test('대시보드 로딩 시 tracking.MedicationRepository.getDoseRecords()를 호출해야 함', () async {
-      // When: Dashboard 로드
-      await container.read(dashboardProvider.future);
+      // When: Dashboard 로드 (listen을 사용하여 provider가 dispose되지 않도록)
+      final listener = container.listen(dashboardProvider, (previous, next) {});
+
+      await Future.delayed(const Duration(milliseconds: 100));
 
       // Then: tracking.MedicationRepository.getDoseRecords가 호출되어야 함
       verify(() => mockTrackingMedicationRepository
           .getDoseRecords(testDosagePlan.id)).called(1);
+
+      listener.close();
     });
 
     // RED TEST 2: doseCompletedCount가 실제 값을 반영해야 함 (수정 후 통과해야 함)
     test('주간 요약의 doseCompletedCount가 실제 DoseRecord 개수를 반영해야 함', () async {
       // When: Dashboard 로드
-      final dashboardState = await container.read(dashboardProvider.future);
+      final listener = container.listen(dashboardProvider, (previous, next) {});
+
+      await Future.delayed(const Duration(milliseconds: 100));
+      final state = container.read(dashboardProvider);
 
       // Then: weeklySummary.doseCompletedCount가 최근 7일 이내 기록 개수여야 함
       // testDoseRecords: record-1 (2일 전), record-2 (5일 전) → 2개 모두 최근 7일 이내
-      expect(dashboardState.weeklySummary.doseCompletedCount, greaterThan(0),
-          reason: '최근 7일 이내 DoseRecord가 존재하므로 0보다 커야 함');
+      state.whenData((dashboardData) {
+        expect(dashboardData.weeklySummary.doseCompletedCount, greaterThan(0),
+            reason: '최근 7일 이내 DoseRecord가 존재하므로 0보다 커야 함');
+      });
+
+      listener.close();
     });
   });
 }

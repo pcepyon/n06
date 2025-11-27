@@ -14,9 +14,12 @@ import 'package:n06/features/onboarding/domain/repositories/medication_repositor
     as onboarding_medication_repo;
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart'
     as onboarding_dosage_plan;
+import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
+import 'package:n06/features/tracking/domain/repositories/medication_repository.dart'
+    as tracking_medication_repo;
 import 'package:n06/features/onboarding/application/providers.dart'
     as onboarding_providers;
 import 'package:n06/features/tracking/application/providers.dart'
@@ -32,6 +35,7 @@ class DashboardNotifier extends _$DashboardNotifier {
   late ProfileRepository _profileRepository;
   late TrackingRepository _trackingRepository;
   late onboarding_medication_repo.MedicationRepository _medicationRepository;
+  late tracking_medication_repo.MedicationRepository _trackingMedicationRepository;
   late BadgeRepository _badgeRepository;
 
   final _calculateContinuousRecordDays = CalculateContinuousRecordDaysUseCase();
@@ -55,6 +59,8 @@ class DashboardNotifier extends _$DashboardNotifier {
     _trackingRepository = ref.watch(tracking_providers.trackingRepositoryProvider);
     _medicationRepository =
         ref.watch(onboarding_providers.medicationRepositoryProvider);
+    _trackingMedicationRepository =
+        ref.watch(tracking_providers.medicationRepositoryProvider);
     _badgeRepository = ref.watch(badgeRepositoryProvider);
 
     return _loadDashboardData(userId);
@@ -86,9 +92,10 @@ class DashboardNotifier extends _$DashboardNotifier {
       throw Exception('Active dosage plan not found - Please set up your medication plan');
     }
 
-    // 체중 기록, 부작용 기록 조회
+    // 체중 기록, 부작용 기록, 투여 기록 조회
     final weights = await _trackingRepository.getWeightLogs(userId);
     final symptoms = await _trackingRepository.getSymptomLogs(userId);
+    final doseRecords = await _trackingMedicationRepository.getDoseRecords(activePlan.id);
 
     // 연속 기록일 계산
     final symptomLogs = symptoms.whereType<SymptomLog>().toList();
@@ -99,9 +106,9 @@ class DashboardNotifier extends _$DashboardNotifier {
     final currentWeek =
         _calculateCurrentWeek.execute(activePlan.startDate);
 
-    // 주간 목표 진행도 계산 (임시 데이터)
+    // 주간 목표 진행도 계산
     final weeklyProgress = _calculateWeeklyProgress.execute(
-      doseRecords: [],
+      doseRecords: doseRecords,
       weightLogs: weights,
       symptomLogs: symptomLogs,
       doseTargetCount: 1,
@@ -113,7 +120,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     final nextSchedule = _calculateNextSchedule(activePlan, weights, profile);
 
     // 주간 요약
-    final weeklySummary = _calculateWeeklySummary(weights, symptomLogs);
+    final weeklySummary = _calculateWeeklySummary(weights, symptomLogs, doseRecords);
 
     // 뱃지 조회 및 검증
     final userBadges = await _badgeRepository.getUserBadges(userId);
@@ -133,8 +140,8 @@ class DashboardNotifier extends _$DashboardNotifier {
       currentBadges: userBadges,
       continuousRecordDays: continuousRecordDays,
       weightLossPercentage: weightLossPercentage,
-      hasFirstDose: false,
-      allDoseRecords: [],
+      hasFirstDose: doseRecords.isNotEmpty,
+      allDoseRecords: doseRecords,
     );
 
     // 타임라인 생성
@@ -189,6 +196,7 @@ class DashboardNotifier extends _$DashboardNotifier {
   WeeklySummary _calculateWeeklySummary(
     List<WeightLog> weights,
     List<SymptomLog> symptoms,
+    List<DoseRecord> doseRecords,
   ) {
     final now = DateTime.now();
     final sevenDaysAgo = now.subtract(Duration(days: 7));
@@ -203,16 +211,24 @@ class DashboardNotifier extends _$DashboardNotifier {
         ? recentWeights.first.weightKg - recentWeights.last.weightKg
         : 0.0;
 
-    // 지난 7일간 증상 개수 (안전한 필터링)
+    // 지난 7일간 증상 개수
     final symptomCount = symptoms
         .where((s) => s.logDate.isAfter(sevenDaysAgo))
         .length;
 
+    // 지난 7일간 투여 기록 개수
+    final recentDoseRecords = doseRecords
+        .where((d) => d.administeredAt.isAfter(sevenDaysAgo))
+        .toList();
+
+    // 순응도 계산 (임시: 기록이 있으면 85%, 없으면 0%)
+    final adherencePercentage = recentDoseRecords.isNotEmpty ? 85.0 : 0.0;
+
     return WeeklySummary(
-      doseCompletedCount: 0,
+      doseCompletedCount: recentDoseRecords.length,
       weightChangeKg: weightChange,
       symptomRecordCount: symptomCount,
-      adherencePercentage: 85.0,
+      adherencePercentage: adherencePercentage,
     );
   }
 
