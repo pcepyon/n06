@@ -100,11 +100,16 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
-                  child: SelectedDateDetailCard(
-                    selectedDate: _selectedDay,
-                    schedule: _getScheduleForDay(_selectedDay, schedules),
-                    record: _getRecordForDay(_selectedDay, records),
-                    recentRecords: _getRecentRecords(records, 30),
+                  child: Builder(
+                    builder: (context) {
+                      final schedule = _getScheduleForDay(_selectedDay, schedules);
+                      return SelectedDateDetailCard(
+                        selectedDate: _selectedDay,
+                        schedule: schedule,
+                        record: _getRecordForSchedule(schedule, records),
+                        recentRecords: _getRecentRecords(records, 30),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -138,7 +143,7 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
     final schedule = _getScheduleForDay(day, schedules);
     if (schedule == null) return [];
 
-    final isCompleted = _getRecordForDay(day, records) != null;
+    final isCompleted = _getRecordForSchedule(schedule, records) != null;
     final guidance = MissedDoseGuidance.fromSchedule(
       schedule: schedule,
       isCompleted: isCompleted,
@@ -157,12 +162,24 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
     );
   }
 
-  DoseRecord? _getRecordForDay(DateTime day, List<DoseRecord> records) {
+  /// 스케줄에 해당하는 투여 기록을 찾습니다.
+  /// doseScheduleId로 매칭하며, 없으면 administeredAt 날짜로 폴백합니다.
+  DoseRecord? _getRecordForSchedule(DoseSchedule? schedule, List<DoseRecord> records) {
+    if (schedule == null) return null;
+
+    // 1차: doseScheduleId로 매칭 (정확한 매칭)
+    final byScheduleId = records.cast<DoseRecord?>().firstWhere(
+      (r) => r != null && r.doseScheduleId == schedule.id,
+      orElse: () => null,
+    );
+    if (byScheduleId != null) return byScheduleId;
+
+    // 2차: administeredAt 날짜로 폴백 (레거시 데이터 호환)
     return records.cast<DoseRecord?>().firstWhere(
       (r) => r != null &&
-          r.administeredAt.year == day.year &&
-          r.administeredAt.month == day.month &&
-          r.administeredAt.day == day.day,
+          r.administeredAt.year == schedule.scheduledDate.year &&
+          r.administeredAt.month == schedule.scheduledDate.month &&
+          r.administeredAt.day == schedule.scheduledDate.day,
       orElse: () => null,
     );
   }
