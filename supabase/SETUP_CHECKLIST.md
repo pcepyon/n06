@@ -109,7 +109,45 @@ flutter run
   - [ ] 웹 로그인 폴백 동작
   - [ ] users 테이블에 사용자 정보 저장 확인
   - [ ] consent_records 테이블에 동의 기록 저장 확인
-- [ ] Naver 로그인 테스트 (Phase 1.3 이후)
+- [ ] Naver 로그인 테스트
+  - [ ] 네이버 앱 로그인 시도
+  - [ ] Edge Function 정상 호출 확인
+  - [ ] auth.users 테이블에 사용자 생성 확인
+  - [ ] public.users 테이블에 사용자 정보 저장 확인
+  - [ ] RLS 정책 정상 작동 확인 (auth.uid() = user_id)
+
+## Naver OAuth 설정 (Edge Function 방식)
+
+네이버는 OIDC를 지원하지 않아 Edge Function을 통한 인증이 필요합니다.
+
+### Naver Developers Console
+- [ ] 애플리케이션 등록 (https://developers.naver.com)
+- [ ] 사용 API: `네이버 로그인` 선택
+- [ ] 필수 권한 설정: 이메일 주소, 별명, 프로필 사진
+- [ ] iOS Bundle ID 등록
+- [ ] Android 패키지명 + 서명 키 해시 등록
+- [ ] Client ID / Client Secret 획득
+
+### Flutter 앱 설정
+- [ ] Android: `android/app/src/main/res/values/strings.xml`에 설정
+  ```xml
+  <string name="naver_client_id">YOUR_CLIENT_ID</string>
+  <string name="naver_client_secret">YOUR_CLIENT_SECRET</string>
+  <string name="naver_client_name">YOUR_APP_NAME</string>
+  ```
+- [ ] iOS: `Info.plist`에 URL Scheme 등록
+
+### Edge Function 배포
+```bash
+cd supabase
+supabase functions deploy naver-auth
+```
+
+- [ ] Edge Function 배포 확인: `supabase functions list`
+- [ ] 환경 변수 자동 설정 확인:
+  - `SUPABASE_URL`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `SUPABASE_ANON_KEY`
 
 ## 트러블슈팅
 
@@ -143,6 +181,31 @@ flutter run
 - [ ] Redirect URI 정확히 설정되었는지 확인
 - [ ] Supabase Dashboard → Authentication → Logs 확인
 - [ ] `handle_new_user` trigger가 정상 동작하는지 확인
+
+### Naver 로그인 실패
+
+#### "Edge Function error" 메시지
+- [ ] Edge Function 배포 확인: `supabase functions list`
+- [ ] Edge Function 로그 확인: `supabase functions logs naver-auth`
+- [ ] Naver access token이 유효한지 확인
+
+#### "Invalid Naver access token" 에러
+- [ ] Naver 앱에서 로그아웃 후 다시 로그인
+- [ ] Naver Developers Console에서 앱 상태 확인
+- [ ] 네이버 API 권한 설정 확인
+
+#### "Failed to generate magic link" 에러
+- [ ] Supabase Service Role Key 환경 변수 확인
+- [ ] Supabase Dashboard → Functions → naver-auth → Secrets 확인
+
+#### "Failed to set Supabase session" 에러
+- [ ] Edge Function이 올바른 refresh_token을 반환하는지 확인
+- [ ] Supabase Dashboard → Authentication → Logs 확인
+
+#### RLS 정책 미적용 (네이버 로그인 후 데이터 접근 불가)
+- [ ] auth.users 테이블에 사용자가 생성되었는지 확인
+- [ ] public.users 테이블의 id가 auth.users의 id와 동일한지 확인
+- [ ] 이전 방식(naver_xxx ID)으로 생성된 사용자 데이터 마이그레이션 필요
 
 ## 다음 단계
 

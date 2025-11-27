@@ -6,7 +6,6 @@ import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart' as kakao;
 import 'package:flutter_naver_login/flutter_naver_login.dart';
 import 'package:flutter_naver_login/interface/types/naver_login_result.dart';
 import 'package:flutter_naver_login/interface/types/naver_login_status.dart';
-import 'package:flutter_naver_login/interface/types/naver_account_result.dart';
 import '../../domain/entities/user.dart' as domain;
 import '../../domain/repositories/auth_repository.dart';
 
@@ -315,8 +314,20 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   // ============================================
-  // Naver Login (Native SDK + Supabase)
+  // Naver Login (Native SDK + Edge Function + Supabase Auth)
   // ============================================
+  //
+  // 네이버는 OIDC를 지원하지 않아 signInWithIdToken() 사용 불가.
+  // 대신 Edge Function을 통해 Admin API로 세션을 생성하는 패턴 사용:
+  //
+  // 1. Naver SDK로 access_token 획득
+  // 2. Edge Function 호출 → Naver API로 토큰 검증
+  // 3. Edge Function이 Admin API로 사용자 생성/조회
+  // 4. Edge Function이 generateLink + verifyOtp로 세션 생성
+  // 5. Flutter에서 setSession으로 세션 설정
+  // 6. RLS 정책 (auth.uid() = user_id) 정상 작동
+  //
+  // 참고: https://github.com/supabase/supabase/discussions/18682
 
   @override
   Future<domain.User> loginWithNaver({
@@ -331,54 +342,109 @@ class SupabaseAuthRepository implements AuthRepository {
         throw Exception('Naver login was cancelled or failed');
       }
 
-      // 2. Naver 계정 정보 조회
-      final NaverAccountResult naverAccount = await FlutterNaverLogin.getCurrentAccount();
+      // 2. Naver Access Token 획득
+      final naverToken = await FlutterNaverLogin.getCurrentAccessToken();
+      final accessToken = naverToken.accessToken;
 
-      // 3. 사용자 ID 생성 (naver_ 접두사)
-      final userId = 'naver_${naverAccount.id ?? DateTime.now().millisecondsSinceEpoch}';
-
-      // 4. users 테이블에서 사용자 확인 또는 생성
-      final existingUser = await _supabase
-          .from('users')
-          .select('id')
-          .eq('id', userId)
-          .maybeSingle();
-
-      if (existingUser == null) {
-        // 신규 사용자 생성
-        await _supabase.from('users').insert({
-          'id': userId,
-          'oauth_provider': 'naver',
-          'oauth_user_id': naverAccount.id,
-          'name': naverAccount.nickname ?? naverAccount.name ?? 'User',
-          'email': naverAccount.email ?? '',
-          'profile_image_url': naverAccount.profileImage,
-          'last_login_at': DateTime.now().toIso8601String(),
-        });
-
-        // BUG-2025-1119-006 FIX: Wait for INSERT to complete before consent record
-        await _waitForUserRecord(userId);
-      } else {
-        // 기존 사용자 업데이트
-        await _supabase.from('users').update({
-          'last_login_at': DateTime.now().toIso8601String(),
-        }).eq('id', userId);
+      if (accessToken.isEmpty) {
+        throw Exception('Failed to get Naver access token');
       }
 
-      // 5. 동의 기록 저장
-      await _saveConsentRecord(userId, agreedToTerms, agreedToPrivacy);
+      if (kDebugMode) {
+        developer.log(
+          'Naver login successful, calling Edge Function',
+          name: 'SupabaseAuthRepository',
+        );
+      }
 
-      // 6. domain.User 반환
-      return domain.User(
-        id: userId,
-        oauthProvider: 'naver',
-        oauthUserId: naverAccount.id ?? userId,
-        name: naverAccount.nickname ?? naverAccount.name ?? 'User',
-        email: naverAccount.email ?? '',
-        profileImageUrl: naverAccount.profileImage,
-        lastLoginAt: DateTime.now(),
+      // 3. Edge Function 호출 (서버 측에서 토큰 검증 + 세션 생성)
+      final response = await _supabase.functions.invoke(
+        'naver-auth',
+        body: {
+          'access_token': accessToken,
+          'agreed_to_terms': agreedToTerms,
+          'agreed_to_privacy': agreedToPrivacy,
+        },
       );
+
+      // 4. Edge Function 응답 처리
+      if (response.status != 200) {
+        final errorMsg = response.data?['error'] ?? 'Unknown error';
+        throw Exception('Edge Function error: $errorMsg');
+      }
+
+      final data = response.data;
+      if (data == null || data['success'] != true) {
+        throw Exception('Authentication failed: ${data?['error'] ?? 'Unknown error'}');
+      }
+
+      final String refreshToken = data['refresh_token'] as String;
+
+      if (kDebugMode) {
+        developer.log(
+          'Edge Function returned session, setting up Supabase auth',
+          name: 'SupabaseAuthRepository',
+        );
+      }
+
+      // 5. Supabase 세션 설정
+      // Flutter SDK의 setSession은 refresh_token을 받아 새 세션 생성
+      final authResponse = await _supabase.auth.setSession(refreshToken);
+
+      if (authResponse.session == null) {
+        throw Exception('Failed to set Supabase session');
+      }
+
+      // 6. 세션 새로고침으로 최신 상태 확보
+      await _supabase.auth.refreshSession();
+
+      final authUser = authResponse.user;
+      if (authUser == null) {
+        throw Exception('User not found after session setup');
+      }
+
+      if (kDebugMode) {
+        developer.log(
+          'Naver login complete. User ID: ${authUser.id}',
+          name: 'SupabaseAuthRepository',
+        );
+      }
+
+      // 7. public.users에서 사용자 프로필 조회
+      // Edge Function이 이미 생성/업데이트했으므로 조회만 수행
+      final userProfile = await _supabase
+          .from('users')
+          .select()
+          .eq('id', authUser.id)
+          .single();
+
+      // 8. domain.User 반환
+      return domain.User(
+        id: authUser.id,
+        oauthProvider: userProfile['oauth_provider'] as String,
+        oauthUserId: userProfile['oauth_user_id'] as String,
+        name: userProfile['name'] as String,
+        email: userProfile['email'] as String? ?? '',
+        profileImageUrl: userProfile['profile_image_url'] as String?,
+        lastLoginAt: DateTime.parse(userProfile['last_login_at'] as String).toLocal(),
+      );
+    } on AuthException catch (e) {
+      if (kDebugMode) {
+        developer.log(
+          'Naver login AuthException: ${e.message}',
+          name: 'SupabaseAuthRepository',
+          error: e,
+        );
+      }
+      throw Exception('Naver login failed: ${e.message}');
     } catch (e) {
+      if (kDebugMode) {
+        developer.log(
+          'Naver login error: $e',
+          name: 'SupabaseAuthRepository',
+          error: e,
+        );
+      }
       throw Exception('Naver login failed: $e');
     }
   }
