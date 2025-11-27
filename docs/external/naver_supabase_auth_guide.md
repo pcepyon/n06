@@ -2,26 +2,15 @@
 
 ## 개요
 
-네이버는 OIDC(OpenID Connect)를 지원하지 않아 Supabase의 `signInWithIdToken()`을 사용할 수 없습니다. 이 문서는 Edge Function을 통한 **Admin Magic Link 패턴**으로 네이버 로그인을 Supabase Auth와 완전히 통합하는 방법을 설명합니다.
+네이버는 OIDC(OpenID Connect)를 지원하지 않아 Supabase의 `signInWithIdToken()`을 사용할 수 없습니다. 이 문서는 Edge Function을 통한 **Admin Magic Link 패턴**으로 네이버 로그인을 Supabase Auth와 통합하는 방법을 설명합니다.
 
-### 왜 이 방식이 필요한가?
+### 네이버 vs 카카오 인증 방식 비교
 
-| 인증 방식 | Kakao | Naver |
-|----------|-------|-------|
+| 항목 | Kakao | Naver |
+|------|-------|-------|
 | OIDC 지원 | ✅ 지원 | ❌ 미지원 |
-| `signInWithIdToken()` | ✅ 사용 가능 | ❌ 사용 불가 |
-| Supabase Auth 세션 | ✅ 자동 생성 | ❌ 별도 처리 필요 |
-| RLS 정책 (`auth.uid()`) | ✅ 작동 | ❌ 작동 안함 (기존 방식) |
-
-**기존 네이버 구현의 문제점:**
-```dart
-// 기존 방식: public.users에 직접 INSERT
-final userId = 'naver_${naverAccount.id}';  // 커스텀 ID
-await _supabase.from('users').insert({'id': userId, ...});
-
-// 문제: auth.uid()가 null이므로 RLS 정책 미작동
-// USING (auth.uid() = user_id) → 항상 false
-```
+| 인증 방식 | `signInWithIdToken()` | Edge Function + `setSession()` |
+| RLS 정책 | ✅ `auth.uid()` 작동 | ✅ `auth.uid()` 작동 |
 
 ---
 
@@ -254,17 +243,7 @@ Future<domain.User> loginWithNaver({
 
 ## RLS 정책 호환성
 
-### Before (기존 방식)
-
-```
-public.users.id = 'naver_123456789'  (커스텀 문자열)
-auth.uid() = null                    (Supabase Auth 미사용)
-
-RLS 정책: USING (auth.uid() = user_id)
-결과: 항상 false → 데이터 접근 불가
-```
-
-### After (새 방식)
+네이버 로그인 후 Supabase Auth와 완전히 통합되어 RLS 정책이 정상 작동합니다.
 
 ```
 public.users.id = 'a1b2c3d4-...'     (Supabase Auth UUID)
@@ -358,23 +337,6 @@ WHERE pu.oauth_provider = 'naver';
 
 ---
 
-## 기존 사용자 마이그레이션
-
-기존에 `naver_xxx` ID로 생성된 사용자가 있다면 마이그레이션이 필요합니다.
-
-### 기존 사용자 확인
-
-```sql
-SELECT * FROM public.users WHERE id LIKE 'naver_%';
-```
-
-### 마이그레이션 전략
-
-1. **신규 사용자**: Edge Function을 통해 UUID 기반으로 생성
-2. **기존 사용자**: 동일 네이버 계정으로 재로그인 시 새 UUID 발급 (데이터 마이그레이션 필요)
-
----
-
 ## 참고 자료
 
 - [Supabase Admin API - createUser](https://supabase.com/docs/reference/javascript/auth-admin-createuser)
@@ -382,11 +344,3 @@ SELECT * FROM public.users WHERE id LIKE 'naver_%';
 - [Flutter setSession](https://supabase.com/docs/reference/dart/auth-setsession)
 - [Naver Login API](https://developers.naver.com/docs/login/api/api.md)
 - [GitHub Discussion - Custom OAuth Provider](https://github.com/supabase/supabase/discussions/18682)
-
----
-
-## 변경 이력
-
-| 날짜 | 버전 | 변경 내용 |
-|------|------|----------|
-| 2024-11-27 | 1.0 | 최초 작성 - Edge Function 기반 네이버 로그인 구현 |
