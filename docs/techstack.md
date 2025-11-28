@@ -1,3 +1,10 @@
+---
+id: techstack
+keywords: [flutter, dart, riverpod, supabase, postgresql, gorouter, library, package]
+read_when: 기술 스택, 라이브러리, 패키지 버전, 인프라 선택 질문 시
+related: [database, code-structure]
+---
+
 # Tech Stack
 
 ---

@@ -1,3 +1,10 @@
+---
+id: state-management
+keywords: [riverpod, provider, notifier, asyncvalue, state, watch, read, ref]
+read_when: Provider 타입, Notifier 패턴, 상태 관리, AsyncValue 사용 시
+related: [code-structure, tdd]
+---
+
 # State Management Design (Flutter/Riverpod)
 
 > GLP-1 치료 관리 MVP의 상태 관리 설계. Riverpod 3.x Code Generation + 4-Layer Architecture + Repository Pattern.

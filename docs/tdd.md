@@ -1,3 +1,10 @@
+---
+id: tdd
+keywords: [test, red, green, refactor, mock, fake, unit, integration, first]
+read_when: 테스트 작성, TDD 사이클, Mock/Fake 사용, 테스트 전략 질문 시
+related: [state-management, code-structure]
+---
+
 # TDD Process Guidelines - Cursor Rules
 
 ## ⚠️ MANDATORY: Follow these rules for EVERY implementation and modification

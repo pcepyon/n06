@@ -1,75 +1,41 @@
 # GLP-1 MVP - Development Orchestration
 
-## When to Use This Guide
-
-**Before coding**: Read this document first to understand the workflow
-**During development**: Use as navigation map to relevant documentation
-**When stuck**: Check decision trees and critical rules
-
----
-
-
 ## Critical Rules (Non-negotiable)
 
 ### Layer Dependency
 ```
 Presentation → Application → Domain ← Infrastructure
 ```
-
 **Violation = Immediate rejection**
 
 ### Layer Responsibility (BUG-20251124-001)
 ```
 Presentation Layer ONLY:
-  - UI 렌더링
-  - 사용자 인터랙션 처리
-  - 네비게이션 (context.go, context.push)
-  - 로컬 UI 상태 (TextField, Checkbox 등)
+  - UI 렌더링, 네비게이션 (context.go, context.push), 로컬 UI 상태
 
 Application Layer ONLY:
-  - 비즈니스 로직
-  - 상태 관리 (Riverpod Notifier)
-  - UseCase 오케스트레이션
-  - 데이터 변환
+  - 비즈니스 로직, 상태 관리 (Riverpod Notifier), UseCase 오케스트레이션
 
 ❌ NEVER in Application Layer:
-  - context.go() / context.push()
-  - ref.read(goRouterProvider).go()
-  - showDialog() / showModalBottomSheet()
-  - ScaffoldMessenger
+  - context.go() / ref.read(goRouterProvider).go()
+  - showDialog() / showModalBottomSheet() / ScaffoldMessenger
 ```
-
-**Why**: AsyncValue.guard 내부에서 네비게이션 시 provider dispose 충돌
 
 ### Async Mutation 안전 패턴 (BUG-20251125-223741)
 ```dart
-// ✅ 모든 mutation 메서드에 적용 (저장/수정/삭제)
 Future<void> anyMutation() async {
   final link = ref.keepAlive();  // 작업 완료 보장
-
   try {
     state = await AsyncValue.guard(() async {
-      // 핵심 작업
       await repository.save();
-
-      // async gap 후 추가 작업 필요 시
       if (!ref.mounted) return previousState;
-
-      // 추가 작업
       return newState;
     });
   } finally {
-    link.close();  // 정상 dispose 허용
+    link.close();  // 메모리 누수 방지
   }
 }
 ```
-
-**Why**:
-- `ref.keepAlive()`: 화면 이탈 시에도 데이터 무결성 보장 (작업 완료)
-- `ref.mounted`: 불필요한 작업 스킵
-- `finally { link.close() }`: 메모리 누수 방지
-
-**적용 대상**: 모든 AsyncNotifier의 async mutation 메서드
 
 ### Repository Pattern
 ```
@@ -77,204 +43,37 @@ Application/Presentation → Repository Interface (Domain)
                         → Repository Implementation (Infrastructure)
 ```
 
-**Why**: Phase 1 transition depends on this (1-line change)
-
 ---
 
 ## Decision Trees
 
 ### "Where should this code go?"
-
 ```
-Is it UI rendering?
-  → Presentation Layer (features/{feature}/presentation/)
-
-Is it state management or UseCase orchestration?
-  → Application Layer (features/{feature}/application/)
-
-Is it business logic or data model?
-  → Domain Layer (features/{feature}/domain/)
-
-Is it database access or DTO conversion?
-  → Infrastructure Layer (features/{feature}/infrastructure/)
+UI rendering? → Presentation (features/{feature}/presentation/)
+State/UseCase? → Application (features/{feature}/application/)
+Business logic/model? → Domain (features/{feature}/domain/)
+Database/DTO? → Infrastructure (features/{feature}/infrastructure/)
 ```
 
-### "What Provider type should I use?"
-
+### "What Provider type?"
 ```
-CRUD operations with async?
-  → AsyncNotifierProvider (see state-management.md)
-
-Real-time data watch?
-  → StreamProvider (see state-management.md)
-
-Immutable service or repository?
-  → Provider (see state-management.md)
-
-Derived calculation from other providers?
-  → Provider (see state-management.md)
+CRUD async? → AsyncNotifierProvider
+Real-time? → StreamProvider
+Immutable service? → Provider
+Derived calculation? → Provider
 ```
 
-### "How should I get userId in screens?"
-
+### "How to get userId?"
 ```
-New screen needs userId?
-  → Use authNotifierProvider.read/watch (ALWAYS)
-  ✅ final userId = ref.read(authNotifierProvider).value?.id;
-
-External parameter (userId param)?
-  → Only for special cases:
-    - Onboarding flow (first login)
-    - Dialog/Sheet components (caller already has userId)
-  → Ensure caller passes userId + router receives it
-  ⚠️ NEVER leave optional userId parameter without passing it
+Standard: ref.read(authNotifierProvider).value?.id
+Special cases only: Onboarding flow, Dialog/Sheet components
 ```
-
----
-
-
-## Common Mistakes
-
-### ❌ NEVER
-```dart
-// Skipping Repository interface
-class ConcreteRepository { } // WRONG (no interface)
-
-// Domain importing Flutter
-import 'package:flutter/material.dart'; // in domain/ folder
-
-// Writing code before test
-// (Violates TDD - see docs/tdd.md)
-
-// ⚠️ Application Layer에서 네비게이션 (BUG-20251124-001)
-@riverpod
-class MyNotifier extends _$MyNotifier {
-  Future<void> saveData() async {
-    state = await AsyncValue.guard(() async {
-      await repository.save();
-      ref.read(goRouterProvider).go('/home'); // WRONG: Provider dispose 충돌
-    });
-  }
-}
-
-// autoDispose Provider + async 저장 후 즉시 모달 표시
-await notifier.save(data);
-await showDialog(...); // WRONG: Provider 조기 해제 가능
-
-// ⚠️ Async mutation에서 keepAlive 미적용 (BUG-20251125-223741)
-Future<void> saveData() async {
-  state = await AsyncValue.guard(() async {
-    await repository.save();
-    // WRONG: 사용자가 화면 이탈 시 provider dispose
-    // → 저장 완료 보장 안됨
-  });
-}
-
-// userId 하드코딩 (authNotifier에서 가져와야 함)
-const userId = 'current-user-id'; // WRONG
-
-// 외부 userId 파라미터 받지만 전달 안함
-class SomeScreen extends ConsumerWidget {
-  final String? userId; // WRONG: 파라미터만 선언하고 전달 안함
-  const SomeScreen({this.userId});
-}
-// Router
-builder: (context, state) => const SomeScreen(), // WRONG: userId 미전달
-
-// Notifier에서 null 체크 없이 state 접근
-return state.asData!.value; // WRONG: asData가 null일 수 있음
-
-// Fixed height for dynamic content
-Container(height: 44.0, child: ...) // WRONG: causes overflow
-```
-
-### ✅ ALWAYS
-```dart
-// Use Repository interface
-final repo = ref.read(medicationRepositoryProvider);
-
-// Domain defines interface
-abstract class MedicationRepository { }
-
-// Infrastructure implements
-class SupabaseMedicationRepository implements MedicationRepository { }
-
-// Test first
-test('should...', () { }); // Then write code
-
-// ✅ 네비게이션은 Presentation Layer에서만 (BUG-20251124-001)
-// Application Layer: 데이터 저장만
-@riverpod
-class MyNotifier extends _$MyNotifier {
-  Future<void> saveData() async {
-    state = await AsyncValue.guard(() async {
-      await repository.save();
-      // ✅ 네비게이션 없음 - Presentation이 state.hasValue로 판단
-      return newState;
-    });
-  }
-}
-
-// Presentation Layer: state 확인 후 네비게이션
-Future<void> _handleSave() async {
-  await ref.read(myNotifierProvider.notifier).saveData();
-  if (!mounted) return;
-
-  final state = ref.read(myNotifierProvider);
-  if (state.hasValue) {
-    context.go('/home'); // ✅ Safe: Presentation Layer 책임
-  }
-}
-
-// 저장 완료 후 mounted 체크하고 모달 표시
-await notifier.save(data);
-if (!mounted) return;
-await showDialog(...); // Safe
-
-// userId는 authNotifier에서 가져오기 (표준 패턴)
-final userId = ref.read(authNotifierProvider).value?.id;
-if (userId != null) {
-  // 데이터 로딩
-} else {
-  // 명시적 에러 처리
-}
-
-// 외부 파라미터는 특수 케이스만 허용
-// 1. Onboarding: context.go('/onboarding', extra: user.id)
-// 2. Dialog/Sheet: MyDialog(userId: userId) with required parameter
-
-// Notifier에서 state 백업 후 접근
-final prev = state.asData?.value ?? defaultState;
-return prev; // Safe
-
-// ✅ Async mutation에서 keepAlive 패턴 적용 (BUG-20251125-223741)
-Future<void> saveData() async {
-  final link = ref.keepAlive();  // ✅ 작업 완료 보장
-  try {
-    state = await AsyncValue.guard(() async {
-      await repository.save();
-      if (!ref.mounted) return previousState;  // ✅ 스킵
-      return newState;
-    });
-  } finally {
-    link.close();  // ✅ 메모리 누수 방지
-  }
-}
-
-// Use minHeight for touch targets, not fixed height
-Container(
-  constraints: BoxConstraints(minHeight: 44.0),
-  child: ...
-) // Flexible height that respects content
-```
-
-**Details**: See `docs/code_structure.md` (DO/DON'T sections)
 
 ---
 
 ## Quick Reference
 
-### File Location Patterns
+### File Location & Naming
 ```
 features/{feature}/
   presentation/screens/{feature}_screen.dart
@@ -285,120 +84,44 @@ features/{feature}/
   infrastructure/dtos/{entity}_dto.dart
 ```
 
-### Naming Conventions
-```
-Entity: DoseRecord (domain/entities/)
-DTO: DoseRecordDto (infrastructure/dtos/)
-Repository Interface: MedicationRepository (domain/repositories/)
-Repository Impl: SupabaseMedicationRepository (infrastructure/repositories/)
-Notifier: MedicationNotifier (application/notifiers/)
-Provider: medicationNotifierProvider
-```
-
-**Full structure**: See `docs/code_structure.md`
-
----
-
-## Cloud-First Architecture (Supabase)
-
-현재 모든 Repository는 Supabase 기반으로 구현되어 있습니다.
-
-```dart
-@riverpod
-MedicationRepository medicationRepository(ref) =>
-  SupabaseMedicationRepository(ref.watch(supabaseProvider));
-```
-
-**Architecture Benefits**:
-- Repository Pattern으로 인프라 교체 용이
-- Domain, Application, Presentation 레이어 변경 없음
-
-**Details**: See `docs/techstack.md`
-
 ---
 
 ## Before Committing
+```
+[ ] flutter test
+[ ] flutter analyze
+[ ] Repository pattern maintained
+[ ] No navigation in Application Layer
+[ ] Async mutation에 keepAlive 패턴 적용
+```
 
-```
-[ ] Tests pass (flutter test)
-[ ] No warnings (flutter analyze)
-[ ] TDD cycle completed (docs/tdd.md)
-[ ] Repository pattern maintained (docs/code_structure.md)
-[ ] No layer violations (check imports)
-[ ] No navigation in Application Layer (BUG-20251124-001)
-[ ] Async mutation에 keepAlive 패턴 적용 (BUG-20251125-223741)
-[ ] Performance constraints met (docs/requirements.md)
-```
+## After Commit
+- Read first 20 lines of `docs/changelog.md`, follow Writing Rules, add entry below `---`
 
 ---
 
-## When Stuck
+## Docs Navigation
+> 작업 시작 전 `docs/INDEX.md`를 먼저 읽고 필요한 문서만 로드할 것
+> 각 문서 Frontmatter에서 keywords, read_when, related 확인 가능
 
-### Architecture questions
-→ `docs/code_structure.md`
-
-### State management questions
-→ `docs/state-management.md`
-
-### Business logic questions
-→ `docs/requirements.md` or `docs/userflow.md`
-
-### Data model questions
-→ `docs/database.md`
-
-### Testing questions
-→ `docs/tdd.md`
-
-### Technology choice questions
-→ `docs/techstack.md`
+| ID | 문서 | Keywords | 읽을 시점 |
+|----|------|----------|----------|
+| prd | `docs/prd.md` | vision, scope, mvp | 제품 비전, 범위 |
+| requirements | `docs/requirements.md` | feature, scenario, spec | 기능 요구사항 |
+| userflow | `docs/userflow.md` | flow, screen, ux | 화면 흐름, UX |
+| code-structure | `docs/code_structure.md` | layer, folder, import | 레이어, 파일 위치 |
+| state-management | `docs/state-management.md` | provider, notifier | Provider, Notifier |
+| database | `docs/database.md` | schema, table, rls | 테이블, 스키마 |
+| techstack | `docs/techstack.md` | flutter, supabase | 기술 스택 |
+| tdd | `docs/tdd.md` | test, mock, fake | 테스트 작성 |
+| 기능 명세 | `docs/{번호}/spec.md` | - | 기능 구현 시 |
 
 ---
 
-## Core Principles
-
-1. **Separation of Concerns**: Each layer has ONE responsibility (see code_structure.md)
-2. **Dependency Inversion**: Depend on interfaces, not implementations (Repository Pattern)
-3. **Test-Driven**: Test first, code second (see tdd.md)
-4. **Phase Flexibility**: Infrastructure-only changes for Phase 1 (see techstack.md)
-
-## Test Maintenance
-
-테스트 유지보수 관련 문서:
-- `docs/test/test-maintenance.md`: 테스트 유지보수 프로세스 및 원칙
-- `docs/test/test-maintenance-final-report.md`: 최근 테스트 정리 작업 결과 (2025-11-16)
-- `docs/test/integration-test-backlog.md`: Integration 테스트 작성 대기 목록
-- `docs/test/test-audit-report.md`: 테스트 감사 보고서
-- `docs/test/test-cleanup-analysis.md`: 테스트 정리 상세 분석
-- `docs/test/test-cleanup-final-summary.md`: 테스트 정리 실행 계획
-
-### Test Coverage 목표
-- Domain: 95%+
-- Application: 85%+
-- Infrastructure: 70%+
-- Presentation: 60%+
-
-### AI Agent 테스트 규칙
-
-**새 기능 작성 시**:
-1. Test-First (TDD) 원칙 준수
-2. Behavior 테스트, Implementation 테스트 금지
-3. Mock보다 Fake 선호 (복잡한 시나리오)
-
-**테스트 삭제 기준**:
-1. ROI 분석: 가치 vs 유지보수 비용
-2. 삭제 전 문서화 (rationale 기록)
-3. Integration 테스트로 대체 가능 여부 검토
-
-**Mock 사용 지침**:
-- Mocktail 사용 시 `registerFallbackValue()` 필수
-- 복잡한 Provider 의존성은 Fake Repository 사용
-- Platform channel (알림 등)은 Mock 설정 필요
-
-**층별 테스트 전략**:
-- Domain: Entity + UseCase 단위 테스트 (높은 커버리지)
-- Application: 핵심 비즈니스 로직 흐름 테스트
-- Infrastructure: Repository 인터페이스 테스트
-- Presentation: 핵심 사용자 흐름만 테스트 (brittle UI test 지양)
+## Test Rules
+- Test-First (TDD), Behavior 테스트 only
+- Mock보다 Fake 선호
+- Mocktail: `registerFallbackValue()` 필수
 
 ---
 

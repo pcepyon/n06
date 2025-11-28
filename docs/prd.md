@@ -1,3 +1,10 @@
+---
+id: prd
+keywords: [product, vision, stakeholder, scope, mvp, p0, overview]
+read_when: 제품 비전, 범위, 이해관계자, MVP 정의 질문 시
+related: [requirements, userflow]
+---
+
 ## [GLP-1 치료 관리 MVP] Product Requirements Document (PRD)
 
 ---

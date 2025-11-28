@@ -1,3 +1,10 @@
+---
+id: requirements
+keywords: [feature, function, scenario, business, spec, f001, f002, f003, f004, f005, f006]
+read_when: 기능 요구사항, 비즈니스 로직, 시나리오, 기능 스펙 질문 시
+related: [prd, userflow]
+---
+
 # GLP-1 치료 관리 MVP 요구사항 문서
 
 > **구현 상태**: Supabase 기반 Cloud-First Architecture

@@ -1,3 +1,10 @@
+---
+id: code-structure
+keywords: [layer, architecture, clean, presentation, application, domain, infrastructure, folder, import]
+read_when: 레이어 구조, 파일 위치, import 규칙, 폴더 구조 질문 시
+related: [state-management, techstack]
+---
+
 # Code Structure
 
 > **현재 상태**: Phase 1 완료 - Supabase PostgreSQL 기반 Infrastructure Layer

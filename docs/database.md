@@ -1,3 +1,10 @@
+---
+id: database
+keywords: [schema, table, column, relation, supabase, postgresql, rls, migration]
+read_when: 테이블 구조, 컬럼, 관계, RLS 정책, 데이터 모델 질문 시
+related: [techstack, code-structure]
+---
+
 # Database Schema Design (Supabase PostgreSQL)
 
 > **현재 상태**: Supabase PostgreSQL 사용 중

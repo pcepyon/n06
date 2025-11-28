@@ -1,3 +1,10 @@
+---
+id: userflow
+keywords: [flow, screen, navigation, ux, input, output, process, step]
+read_when: 화면 흐름, UX, 입출력, 프로세스 단계 질문 시
+related: [requirements, prd]
+---
+
 # Userflow
 
 ## UF-F-001-A: 소셜 로그인 및 인증
