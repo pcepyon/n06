@@ -138,7 +138,11 @@ Column(
       textStyle: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
     ),
     Text('평균 체중 감량'),
-    Text('72주 임상시험 결과 (NEJM)', style: TextStyle(fontSize: 12)),
+    Text('평균 체중 감량'),
+    GestureDetector(
+      onTap: () => launchUrl(Uri.parse('https://www.nejm.org/doi/full/10.1056/NEJMoa2206038')),
+      child: Text('72주 임상시험 결과 (NEJM) 🔗', style: TextStyle(fontSize: 12, decoration: TextDecoration.underline)),
+    ),
     SizedBox(height: 16),
     Row([
       BenefitChip('🫀 심장 건강 개선'),
@@ -167,7 +171,8 @@ Column(
 class _FoodNoiseScreenState extends State<FoodNoiseScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _lottieController;
-  double _sliderValue = 0.0;
+  double _userLevel = 5.0; // 1-10
+  bool _isSimulating = false;
 
   @override
   void initState() {
@@ -175,47 +180,56 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
     _lottieController = AnimationController(vsync: this);
   }
 
+  void _startSimulation() {
+    setState(() => _isSimulating = true);
+    // 1.5초 동안 현재 레벨에서 1.0(평화)으로 줄어드는 애니메이션
+    _lottieController.animateTo(0.1, duration: Duration(seconds: 2));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         Title('머릿속 음식 생각, 줄어들 거예요'),
-        Subtitle('혹시 이런 경험 있으신가요?'),
-        QuoteCard([
-          '"배고프지도 않은데 자꾸 뭔가 먹고 싶어..."',
-          '"방금 먹었는데 벌써 다음 끼니 생각이..."',
-        ]),
-        Text("이걸 'Food Noise'라고 불러요"),
-        SizedBox(height: 24),
-        // Lottie 애니메이션 (슬라이더와 연동)
+        Subtitle('현재 음식 생각이 얼마나 자주 나나요?'),
+        
+        // Lottie 애니메이션
         Lottie.asset(
           'assets/animations/food_noise.json',
           controller: _lottieController,
           onLoaded: (composition) {
             _lottieController.duration = composition.duration;
+            // 초기값 설정 (사용자 입력에 따라)
+            _lottieController.value = _userLevel / 10.0; 
           },
         ),
-        // Before/After 슬라이더
-        Row(
-          children: [
-            Text('🔊 치료 전'),
-            Expanded(
-              child: Slider(
-                value: _sliderValue,
-                onChanged: (value) {
-                  setState(() {
-                    _sliderValue = value;
-                    _lottieController.value = value;
-                  });
-                  HapticFeedback.selectionClick();
-                },
-              ),
-            ),
-            Text('🔈 치료 후'),
-          ],
-        ),
-        Text('GLP-1 사용자 중 62%가 음식 관련 생각이 크게 줄었다고 해요'),
-        NextButton(),
+
+        if (!_isSimulating) ...[
+          Text('나의 상태: ${_userLevel.toInt()}'),
+          Slider(
+            value: _userLevel,
+            min: 1,
+            max: 10,
+            divisions: 9,
+            onChanged: (value) {
+              setState(() {
+                _userLevel = value;
+                _lottieController.value = value / 10.0;
+              });
+              HapticFeedback.selectionClick();
+            },
+          ),
+          ElevatedButton(
+            onPressed: _startSimulation,
+            child: Text('치료 후 변화 보기'),
+          ),
+        ] else ...[
+          Text('치료 후에는 이렇게 편안해질 거예요 ✨'),
+          NextButton(onPressed: () {
+             // 데이터 저장: initial_food_noise_level = _userLevel
+             widget.onNext();
+          }),
+        ],
       ],
     );
   }
@@ -312,7 +326,7 @@ Column(
         ],
       ),
     ),
-    InfoCard('💡 평균 4-5주 후부터 확실한 변화를 느껴요'),
+    InfoCard('💡 평균 4-5주 후부터 확실한 변화를 느껴요\n체중이 잠시 멈추는 건 몸이 적응하는 건강한 신호예요'),
     NextButton(),
   ],
 )
@@ -357,6 +371,7 @@ Column(
       ],
     ),
     WarningCard('⚠️ 심한 증상은 앱에서 바로 확인하고 대처할 수 있어요'),
+    Text('이 정보는 일반적인 가이드이며, 담당 의사의 처방을 최우선으로 따라주세요.', style: TextStyle(fontSize: 10, color: Colors.grey)),
     NextButton(),
   ],
 )
@@ -377,6 +392,9 @@ Column(
 
 // 서브텍스트 추가
 '앞으로 이 이름으로 응원해 드릴게요'
+
+// 데이터 프라이버시 문구 추가
+'입력하신 건강 데이터는 암호화되어 안전하게 보관됩니다.'
 ```
 
 ### 4.2 WeightGoalForm [9] 수정
@@ -473,6 +491,7 @@ Column(
       '• 주사 전 심호흡 한 번',
       '• 펜의 바늘 가림막으로 안심',
     ]),
+    Text('담당 의사의 주사 지도를 최우선으로 따라주세요.', style: TextStyle(fontSize: 10, color: Colors.grey)),
     NextButton(),
   ],
 )
@@ -603,8 +622,28 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
 
     // 1.5초 후 완료 처리
     Future.delayed(Duration(milliseconds: 1500), () {
-      widget.onComplete();
+      _showNextStepDialog(); // 완료 후 다이얼로그 표시
     });
+  }
+
+  void _showNextStepDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text('여정 시작을 축하해요! 🎉'),
+        content: Text('첫 번째 미션: 현재 체중을 기록해보세요'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              widget.onComplete(); // 실제 완료 처리
+            },
+            child: Text('기록하러 가기'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -678,6 +717,9 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
 ```dart
 // 온보딩 완료 시
 await prefs.setBool('education_completed', true);
+if (initialFoodNoiseLevel != null) {
+  await prefs.setInt('initial_food_noise_level', initialFoodNoiseLevel);
+}
 ```
 
 ### 6.3 Haptic Feedback 적용 위치
