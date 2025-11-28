@@ -9,7 +9,107 @@
 ## 의존성 설치
 
 ```bash
-flutter pub add lottie confetti animated_flip_counter slide_to_confirm smooth_page_indicator
+flutter pub add lottie confetti animated_flip_counter slide_to_confirm smooth_page_indicator url_launcher shared_preferences
+```
+
+---
+
+## 공통 Import 및 커스텀 위젯 정의
+
+### 필수 Import
+```dart
+// 기본
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // HapticFeedback
+
+// 외부 패키지
+import 'package:lottie/lottie.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:animated_flip_counter/animated_flip_counter.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:slide_to_confirm/slide_to_confirm.dart';
+import 'package:confetti/confetti.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// 프로젝트 내부
+import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
+import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
+```
+
+### 커스텀 위젯 매핑
+
+문서에서 사용하는 의사(pseudo) 위젯과 실제 구현 매핑:
+
+| 문서 위젯 | 실제 구현 |
+|----------|----------|
+| `Title(text)` | `Text(text, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)))` |
+| `Subtitle(text)` | `Text(text, style: TextStyle(fontSize: 16, color: Color(0xFF64748B)))` |
+| `BodyText(text)` | `Text(text, style: TextStyle(fontSize: 16, color: Color(0xFF334155)))` |
+| `NextButton()` | `GabiumButton(text: '다음', onPressed: onNext, variant: GabiumButtonVariant.primary, size: GabiumButtonSize.medium)` |
+| `NextButton(enabled: bool)` | `GabiumButton(..., onPressed: enabled ? onNext : null)` |
+| `InfoCard(text)` | 아래 InfoCard 구현 참조 |
+| `BenefitChip(text)` | 아래 BenefitChip 구현 참조 |
+
+### InfoCard 구현
+```dart
+Widget InfoCard(String text) {
+  return Container(
+    padding: EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Color(0xFFEFF6FF), // Info 배경 (Blue-50)
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Color(0xFF3B82F6).withOpacity(0.3)),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('💡', style: TextStyle(fontSize: 16)),
+        SizedBox(width: 8),
+        Expanded(
+          child: Text(text, style: TextStyle(fontSize: 14, color: Color(0xFF1E40AF))),
+        ),
+      ],
+    ),
+  );
+}
+```
+
+### BenefitChip 구현
+```dart
+Widget BenefitChip(String text) {
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      color: Color(0xFFF1F5F9), // Neutral-100
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Text(text, style: TextStyle(fontSize: 12, color: Color(0xFF334155))),
+  );
+}
+```
+
+### QuoteCard 구현
+```dart
+Widget QuoteCard(String text) {
+  return Container(
+    padding: EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Color(0xFFF0FDF4), // Green-50
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Color(0xFF4ADE80).withOpacity(0.3)),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 16,
+        fontStyle: FontStyle.italic,
+        color: Color(0xFF166534), // Green-800
+        height: 1.6,
+      ),
+      textAlign: TextAlign.center,
+    ),
+  );
+}
 ```
 
 ---
@@ -144,14 +244,22 @@ Column(
       child: Text('72주 임상시험 결과 (NEJM) 🔗', style: TextStyle(fontSize: 12, decoration: TextDecoration.underline)),
     ),
     SizedBox(height: 16),
-    Row([
-      BenefitChip('🫀 심장 건강 개선'),
-      BenefitChip('😴 수면 질 향상'),
-    ]),
-    Row([
-      BenefitChip('🩸 혈당 조절 개선'),
-      BenefitChip('⚡ 에너지 레벨 상승'),
-    ]),
+    Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        BenefitChip('🫀 심장 건강 개선'),
+        SizedBox(width: 8),
+        BenefitChip('😴 수면 질 향상'),
+      ],
+    ),
+    Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        BenefitChip('🩸 혈당 조절 개선'),
+        SizedBox(width: 8),
+        BenefitChip('⚡ 에너지 레벨 상승'),
+      ],
+    ),
     BodyText('체중 감량 그 이상의 변화가 당신을 기다리고 있어요'),
     NextButton(),
   ],
@@ -281,11 +389,16 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
           ],
         ),
         Divider(),
-        CheckList([
-          '✓ 억지로 참는 게 아니에요',
-          '✓ 자연스럽게 덜 먹게 돼요',
-          '✓ 선택의 여유가 생겨요',
-        ]),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('✓ 억지로 참는 게 아니에요', style: TextStyle(fontSize: 14, color: Color(0xFF334155))),
+            SizedBox(height: 4),
+            Text('✓ 자연스럽게 덜 먹게 돼요', style: TextStyle(fontSize: 14, color: Color(0xFF334155))),
+            SizedBox(height: 4),
+            Text('✓ 선택의 여유가 생겨요', style: TextStyle(fontSize: 14, color: Color(0xFF334155))),
+          ],
+        ),
         // 모든 항목 탭해야 활성화
         NextButton(enabled: _allExpanded),
       ],
@@ -481,16 +594,36 @@ Column(
       ],
     ),
     SizedBox(height: 24),
-    CheckList([
-      '✓ 바늘이 머리카락보다 가늘어요',
-      '✓ 대부분 거의 못 느껴요',
-      '✓ 버튼 누르면 10초 안에 끝',
-    ]),
-    TipCard([
-      '• 매주 부위를 돌아가며',
-      '• 주사 전 심호흡 한 번',
-      '• 펜의 바늘 가림막으로 안심',
-    ]),
+    // 안심 포인트
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('✓ 바늘이 머리카락보다 가늘어요', style: TextStyle(fontSize: 14, color: Color(0xFF334155))),
+        SizedBox(height: 4),
+        Text('✓ 대부분 거의 못 느껴요', style: TextStyle(fontSize: 14, color: Color(0xFF334155))),
+        SizedBox(height: 4),
+        Text('✓ 버튼 누르면 10초 안에 끝', style: TextStyle(fontSize: 14, color: Color(0xFF334155))),
+      ],
+    ),
+    SizedBox(height: 16),
+    // 꿀팁 카드
+    Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('💡 꿀팁', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          SizedBox(height: 8),
+          Text('• 매주 부위를 돌아가며', style: TextStyle(fontSize: 14)),
+          Text('• 주사 전 심호흡 한 번', style: TextStyle(fontSize: 14)),
+          Text('• 펜의 바늘 가림막으로 안심', style: TextStyle(fontSize: 14)),
+        ],
+      ),
+    ),
     Text('담당 의사의 주사 지도를 최우선으로 따라주세요.', style: TextStyle(fontSize: 10, color: Colors.grey)),
     NextButton(),
   ],
@@ -587,7 +720,8 @@ class _AppFeaturesScreenState extends State<AppFeaturesScreen> {
           effect: WormEffect(
             dotHeight: 8,
             dotWidth: 8,
-            activeDotColor: Color(0xFF4ADE80),
+            activeDotColor: Color(0xFF4ADE80), // Primary
+            dotColor: Color(0xFFE2E8F0), // Neutral-200
           ),
         ),
         SizedBox(height: 16),
