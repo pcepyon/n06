@@ -86,17 +86,13 @@ features/{feature}/
 
 ---
 
-## Before Committing
+## Commit Process
 ```
-[ ] flutter test
-[ ] flutter analyze
-[ ] Repository pattern maintained
-[ ] No navigation in Application Layer
-[ ] Async mutation에 keepAlive 패턴 적용
+[ ] flutter test && flutter analyze
+[ ] git commit
+[ ] changelog: `docs/changelog.md` 읽고 규칙대로 추가, amend
+[ ] git push
 ```
-
-## After Commit
-- Read first 20 lines of `docs/changelog.md`, follow Writing Rules, add entry below `---`
 
 ---
 

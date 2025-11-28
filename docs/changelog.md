@@ -19,3 +19,11 @@
 
 ---
 
+## 2025-11-29
+
+- [docs] CLAUDE.md 간소화 및 문서 메타데이터 시스템 추가
+  - 407줄 → 125줄 (70% 감소)
+  - `docs/INDEX.md` 생성, 핵심 문서 8개에 Frontmatter 추가
+- [docs] 커밋 프로세스에 changelog 단계 통합
+  - `claude.md`
+
