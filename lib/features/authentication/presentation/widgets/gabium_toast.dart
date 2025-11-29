@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/main.dart';
 
 enum GabiumToastVariant {
   error,
@@ -43,7 +44,10 @@ class GabiumToast extends StatelessWidget {
     String message,
     GabiumToastVariant variant,
   ) {
-    final messenger = ScaffoldMessenger.of(context);
+    // Use global ScaffoldMessengerKey to show SnackBars above Dialogs/BottomSheets
+    // Fallback to context's ScaffoldMessenger if global key is not available
+    final messenger = rootScaffoldMessengerKey.currentState ??
+                      ScaffoldMessenger.of(context);
     final width = MediaQuery.of(context).size.width * 0.9;
     final maxWidth = width > 360 ? 360.0 : width;
 

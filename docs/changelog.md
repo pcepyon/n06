@@ -21,6 +21,15 @@
 
 ## 2025-11-29
 
+- [fix] 스낵바가 Dialog/BottomSheet에 가려지는 z-index 문제 해결
+  - 전역 ScaffoldMessengerKey를 MaterialApp 레벨에 등록
+  - GabiumToast에서 전역 키 우선 사용 (fallback 포함)
+  - `lib/main.dart`
+  - `lib/features/authentication/presentation/widgets/gabium_toast.dart`
+
+- [test] GabiumToast 전역 ScaffoldMessengerKey 테스트 추가
+  - `test/features/authentication/presentation/widgets/gabium_toast_test.dart`
+
 - [fix] 온보딩 투여 계획 설정 - 약물 선택 시 에러 메시지 미초기화 버그 수정
   - 약물 선택 후 초기 용량이 자동 설정되어도 "약물을 선택해주세요" 에러 메시지가 남아있던 문제 해결
   - `features/onboarding/presentation/widgets/dosage_plan_form.dart`

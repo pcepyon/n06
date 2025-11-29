@@ -10,6 +10,10 @@ import 'package:n06/core/routing/app_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+/// Global ScaffoldMessengerKey for displaying SnackBars above Dialogs/BottomSheets
+/// This solves the z-index issue where SnackBars were hidden behind overlays
+final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 void main() async {
   // Run app in error zone to catch all errors
   runZonedGuarded(
@@ -242,6 +246,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       theme: AppTheme.lightTheme.copyWith(
         extensions: [AppThemeExtension.light],
       ),
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       routerConfig: appRouter,
     );
   }
