@@ -21,6 +21,12 @@
 
 ## 2025-11-30
 
+- [fix] GabiumButton secondary/ghost variant 텍스트 색상 수정
+  - secondary, tertiary, ghost 버튼의 텍스트가 흰색으로 표시되어 보이지 않던 문제 해결
+  - variant별 텍스트 색상 분기 로직 추가 (primary/danger → 흰색, 나머지 → primary 색상)
+  - `lib/features/authentication/presentation/widgets/gabium_button.dart`
+  - `.claude/skills/ui-renewal/component-library/flutter/GabiumButton.dart`
+
 - [fix] 투여 기록 다이얼로그 ParentDataWidget 오류 수정
   - AlertDialog.actions에서 Expanded 사용 시 OverflowBar와 타입 충돌 발생
   - AlertDialog → Dialog + Row + Expanded 패턴으로 전환

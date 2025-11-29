@@ -191,13 +191,26 @@ class GabiumButton extends StatelessWidget {
   }
 
   TextStyle _getTextStyle() {
+    final color = _getTextColor();
     switch (size) {
       case GabiumButtonSize.large:
-        return AppTypography.heading3.copyWith(color: Colors.white);
+        return AppTypography.heading3.copyWith(color: color);
       case GabiumButtonSize.medium:
-        return AppTypography.labelLarge.copyWith(color: Colors.white);
+        return AppTypography.labelLarge.copyWith(color: color);
       case GabiumButtonSize.small:
-        return AppTypography.labelMedium.copyWith(color: Colors.white);
+        return AppTypography.labelMedium.copyWith(color: color);
+    }
+  }
+
+  Color _getTextColor() {
+    switch (variant) {
+      case GabiumButtonVariant.primary:
+      case GabiumButtonVariant.danger:
+        return Colors.white;
+      case GabiumButtonVariant.secondary:
+      case GabiumButtonVariant.tertiary:
+      case GabiumButtonVariant.ghost:
+        return AppColors.primary;
     }
   }
 

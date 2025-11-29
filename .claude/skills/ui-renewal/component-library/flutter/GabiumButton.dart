@@ -121,22 +121,37 @@ class GabiumButton extends StatelessWidget {
   }
 
   TextStyle _getTextStyle() {
+    final color = _getTextColor();
     switch (size) {
       case GabiumButtonSize.large:
-        return const TextStyle(
+        return TextStyle(
           fontSize: 18, // lg
           fontWeight: FontWeight.w600, // Semibold
+          color: color,
         );
       case GabiumButtonSize.medium:
-        return const TextStyle(
+        return TextStyle(
           fontSize: 16, // base
           fontWeight: FontWeight.w500, // Medium
+          color: color,
         );
       case GabiumButtonSize.small:
-        return const TextStyle(
+        return TextStyle(
           fontSize: 14, // sm
           fontWeight: FontWeight.w500, // Medium
+          color: color,
         );
+    }
+  }
+
+  Color _getTextColor() {
+    switch (variant) {
+      case GabiumButtonVariant.primary:
+        return Colors.white;
+      case GabiumButtonVariant.secondary:
+      case GabiumButtonVariant.tertiary:
+      case GabiumButtonVariant.ghost:
+        return const Color(0xFF4ADE80); // Primary
     }
   }
 
