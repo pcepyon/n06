@@ -36,97 +36,107 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
-      title: Text(
-        '투여 기록',
-        style: AppTypography.heading1.copyWith(color: AppColors.textPrimary),
-      ),
-      contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${widget.schedule.scheduledDoseMg} mg를 투여했습니다.',
-              style: AppTypography.bodyLarge.copyWith(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 16),
-
-            InjectionSiteSelectorV2(
-              onSiteSelected: (site) {
-                setState(() {
-                  selectedSite = site;
-                });
-              },
-              recentRecords: widget.recentRecords,
-            ),
-
-            const SizedBox(height: 16),
-            Text(
-              '메모 (선택사항)',
-              style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: noteController,
-              style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                hintText: '메모를 입력하세요',
-                hintStyle: AppTypography.bodyLarge.copyWith(color: AppColors.textDisabled),
-                filled: true,
-                fillColor: AppColors.surface,
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 16,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: AppColors.borderDark,
-                    width: 2,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: AppColors.primary,
-                    width: 2,
-                  ),
-                ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 제목
+              Text(
+                '투여 기록',
+                style: AppTypography.heading1.copyWith(color: AppColors.textPrimary),
               ),
-              maxLines: 3,
-              maxLength: 100,
-            ),
-          ],
+              const SizedBox(height: 24),
+
+              // 콘텐츠
+              Text(
+                '${widget.schedule.scheduledDoseMg} mg를 투여했습니다.',
+                style: AppTypography.bodyLarge.copyWith(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 16),
+
+              InjectionSiteSelectorV2(
+                onSiteSelected: (site) {
+                  setState(() {
+                    selectedSite = site;
+                  });
+                },
+                recentRecords: widget.recentRecords,
+              ),
+
+              const SizedBox(height: 16),
+              Text(
+                '메모 (선택사항)',
+                style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: noteController,
+                style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  hintText: '메모를 입력하세요',
+                  hintStyle: AppTypography.bodyLarge.copyWith(color: AppColors.textDisabled),
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: AppColors.borderDark,
+                      width: 2,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                maxLines: 3,
+                maxLength: 100,
+              ),
+              const SizedBox(height: 24),
+
+              // 액션 버튼
+              Row(
+                children: [
+                  Expanded(
+                    child: GabiumButton(
+                      text: '취소',
+                      onPressed: isLoading ? null : () => Navigator.of(context).pop(),
+                      variant: GabiumButtonVariant.secondary,
+                      size: GabiumButtonSize.medium,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: GabiumButton(
+                      text: '저장',
+                      onPressed: isLoading || selectedSite == null
+                          ? null
+                          : _saveDoseRecord,
+                      variant: GabiumButtonVariant.primary,
+                      size: GabiumButtonSize.medium,
+                      isLoading: isLoading,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-      actionsPadding: const EdgeInsets.all(24),
-      actions: [
-        Expanded(
-          child: GabiumButton(
-            text: '취소',
-            onPressed: isLoading ? null : () => Navigator.of(context).pop(),
-            variant: GabiumButtonVariant.secondary,
-            size: GabiumButtonSize.medium,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: GabiumButton(
-            text: '저장',
-            onPressed: isLoading || selectedSite == null
-                ? null
-                : _saveDoseRecord,
-            variant: GabiumButtonVariant.primary,
-            size: GabiumButtonSize.medium,
-            isLoading: isLoading,
-          ),
-        ),
-      ],
     );
   }
 

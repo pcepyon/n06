@@ -21,6 +21,12 @@
 
 ## 2025-11-30
 
+- [fix] 투여 기록 다이얼로그 ParentDataWidget 오류 수정
+  - AlertDialog.actions에서 Expanded 사용 시 OverflowBar와 타입 충돌 발생
+  - AlertDialog → Dialog + Row + Expanded 패턴으로 전환
+  - `lib/features/tracking/presentation/dialogs/dose_record_dialog_v2.dart`
+  - `lib/features/tracking/presentation/dialogs/off_schedule_dose_dialog.dart`
+
 - [feat] 일정 외 투여 기록 기능 추가
   - 예정 없는 날짜에도 투여 기록 가능 (가장 가까운 미완료 스케줄에 연결)
   - 조기/지연 투여 안내 메시지 및 48시간 간격 검증
