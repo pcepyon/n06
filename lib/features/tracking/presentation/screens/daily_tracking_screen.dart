@@ -141,6 +141,11 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
     setState(() {
       _symptomPersistent[symptom] = value;
     });
+
+    // UF-F005: 24시간 이상 지속 = 예 선택 시 증상 체크 화면으로 안내
+    if (value == true) {
+      context.pushNamed('emergency_check');
+    }
   }
 
   void _handleTagToggle(String symptom, String tag) {

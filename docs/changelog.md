@@ -21,6 +21,17 @@
 
 ## 2025-11-30
 
+- [feat] 부작용 기록에서 긴급 증상 체크 화면 자동 진입 기능 추가
+  - 심각도 7-10점 + "24시간 이상 지속" = 예 선택 시 EmergencyCheckScreen으로 자동 이동
+  - UF-F005 유저플로우 진입점 구현 완료
+  - `lib/features/tracking/presentation/screens/daily_tracking_screen.dart`
+
+- [refactor] 긴급 증상 체크 UI를 Design System 기준에 맞게 개선
+  - Colors.white → AppColors.surface 토큰 사용
+  - 커스텀 ElevatedButton → GabiumButton danger variant로 통일
+  - `lib/features/tracking/presentation/widgets/emergency_checklist_item.dart`
+  - `lib/features/tracking/presentation/widgets/consultation_recommendation_dialog.dart`
+
 - [fix] 부작용 기록 저장 후 로그인이 풀리는 문제 수정
   - 존재하지 않는 `/dashboard` 경로 대신 `goNamed('home')` 사용
   - `lib/features/tracking/presentation/screens/daily_tracking_screen.dart`

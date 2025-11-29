@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 
 /// F005: 전문가 상담 권장 다이얼로그
 ///
@@ -159,27 +160,11 @@ class ConsultationRecommendationDialog extends StatelessWidget {
                   ),
                 ),
               ),
-              child: SizedBox(
-                width: double.infinity,
-                height: 44,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.error,
-                    foregroundColor: AppColors.surface,
-                    disabledBackgroundColor: AppColors.error.withValues(alpha: 0.4),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    '확인',
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.surface,
-                    ),
-                  ),
-                ),
+              child: GabiumButton(
+                text: '확인',
+                onPressed: () => Navigator.of(context).pop(),
+                variant: GabiumButtonVariant.danger,
+                size: GabiumButtonSize.medium,
               ),
             ),
           ],

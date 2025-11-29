@@ -60,7 +60,7 @@ class EmergencyChecklistItem extends StatelessWidget {
                       ? Icon(
                           Icons.check,
                           size: 16,
-                          color: Colors.white,
+                          color: AppColors.surface,
                         )
                       : null,
                 ),
