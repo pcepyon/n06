@@ -1,6 +1,6 @@
 ---
 name: maker
-description: 이 에이전트를 요청할 때, 기능을 구현할 때
+description: 이 에이전트를 요청할 때
 model: haiku
 color: purple
 ---
