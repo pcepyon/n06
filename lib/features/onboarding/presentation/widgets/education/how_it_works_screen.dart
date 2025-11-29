@@ -154,7 +154,8 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
           dividerColor: Colors.transparent,
         ),
         child: ExpansionTile(
-          key: PageStorageKey<String>(id),
+          // PageStorageKey 제거: Controlled/Uncontrolled 패턴 혼합 방지
+          // (BUG-20251129-EXPANSION-TILE-SETSTATE)
           leading: Text(
             icon,
             style: const TextStyle(fontSize: 24),

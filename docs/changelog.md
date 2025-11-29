@@ -21,6 +21,15 @@
 
 ## 2025-11-29
 
+- [fix] HowItWorksScreen ExpansionTile 빌드 중 setState 에러 해결
+  - 근본 원인: PageStorageKey(Uncontrolled)와 onExpansionChanged+setState(Controlled) 혼합 사용
+  - 수정: PageStorageKey 제거로 완전한 Controlled 패턴으로 전환
+  - `features/onboarding/presentation/widgets/education/how_it_works_screen.dart`
+
+- [test] HowItWorksScreen 위젯 테스트 추가
+  - 초기 렌더링, ExpansionTile 확장/축소, 다음 버튼 활성화, 화면 재빌드 시나리오 검증
+  - `test/features/onboarding/presentation/widgets/education/how_it_works_screen_test.dart`
+
 - [feat] 온보딩 다시보기에서 목표 달성 시 진행 허용
   - 리뷰 모드에서 현재 체중 ≤ 목표 체중인 경우 축하 메시지 표시
   - 에러 대신 "🎉 목표를 달성하셨네요!" 안내 후 다음 단계 진행 가능
