@@ -43,6 +43,12 @@ Application/Presentation → Repository Interface (Domain)
                         → Repository Implementation (Infrastructure)
 ```
 
+### Dialog 버튼 레이아웃 (BUG-20251130-152000)
+```
+❌ AlertDialog.actions + Expanded → OverflowBar 타입 충돌
+✅ Dialog + Row + Expanded → 정상 동작
+```
+
 ---
 
 ## Decision Trees
