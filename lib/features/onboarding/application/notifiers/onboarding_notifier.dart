@@ -169,6 +169,14 @@ class OnboardingNotifier extends _$OnboardingNotifier {
       initialDose: initialDose,
     );
   }
+
+  /// 기존 투여 계획을 조회한다. (리뷰 모드용)
+  ///
+  /// Layer 규칙 준수: Presentation → Application → Infrastructure
+  Future<DosagePlan?> getActiveDosagePlan(String userId) async {
+    final dosagePlanRepo = ref.read(tracking_providers.dosagePlanRepositoryProvider);
+    return dosagePlanRepo.getActiveDosagePlan(userId);
+  }
 }
 
 

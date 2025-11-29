@@ -48,7 +48,23 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
       if (template != null) {
         _selectedTemplate = template;
         _selectedDose = widget.initialDose ?? template.recommendedStartDose;
+        // 리뷰 모드에서 초기값이 있으면 부모에게 즉시 알림
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _notifyParent();
+        });
       }
+    }
+  }
+
+  /// 부모에게 현재 선택된 데이터를 전달
+  void _notifyParent() {
+    if (_selectedTemplate != null && _selectedDose != null) {
+      widget.onDataChanged(
+        _selectedTemplate!.displayName,
+        _startDate ?? DateTime.now(),
+        _selectedTemplate!.standardCycleDays,
+        _selectedDose!,
+      );
     }
   }
 
@@ -129,6 +145,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
                   _selectedTemplate = template;
                   _selectedDose = template?.recommendedStartDose;
                 });
+                _notifyParent();
               },
             ),
             const SizedBox(height: 16), // md
@@ -146,6 +163,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
                   setState(() {
                     _startDate = date;
                   });
+                  _notifyParent();
                 }
               },
               child: Container(
@@ -245,6 +263,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
                       setState(() {
                         _selectedDose = dose;
                       });
+                      _notifyParent();
                     },
             ),
             const SizedBox(height: 24), // lg
@@ -261,17 +280,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
             // Next Button
             GabiumButton(
               text: '다음',
-              onPressed: _canProceed()
-                  ? () {
-                      widget.onDataChanged(
-                        _selectedTemplate!.displayName,
-                        _startDate ?? DateTime.now(),
-                        _selectedTemplate!.standardCycleDays,
-                        _selectedDose!,
-                      );
-                      widget.onNext();
-                    }
-                  : null,
+              onPressed: _canProceed() ? widget.onNext : null,
               variant: GabiumButtonVariant.primary,
               size: GabiumButtonSize.medium,
             ),

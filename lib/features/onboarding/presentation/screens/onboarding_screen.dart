@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/journey_progress_indicator.dart';
+import 'package:n06/features/onboarding/application/notifiers/onboarding_notifier.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
-import 'package:n06/features/tracking/application/providers.dart';
 // PART 1: 공감과 희망
 import 'package:n06/features/onboarding/presentation/widgets/education/welcome_screen.dart';
 import 'package:n06/features/onboarding/presentation/widgets/education/not_your_fault_screen.dart';
@@ -79,6 +79,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // [4] Food Noise 데이터
   int? _initialFoodNoiseLevel;
 
+  /// 유효한 userId를 반환 (widget.userId 우선, 없으면 authProvider에서 조회)
+  String get _effectiveUserId {
+    if (widget.userId != null && widget.userId!.isNotEmpty) {
+      return widget.userId!;
+    }
+    final authState = ref.read(authNotifierProvider);
+    return authState.value?.id ?? '';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -98,7 +107,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   /// 리뷰 모드: 기존 프로필 및 투여 계획 데이터를 로드하여 초기값으로 설정
   Future<void> _loadExistingProfileData() async {
-    // 1. 프로필 데이터 로드
+    // 1. 프로필 데이터 로드 (watch 대신 read - 초기 로드 용도)
     final profileState = ref.read(profileNotifierProvider);
     profileState.whenData((profile) {
       if (profile != null && mounted) {
@@ -111,12 +120,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       }
     });
 
-    // 2. 투여 계획 데이터 로드
-    final authState = ref.read(authNotifierProvider);
-    if (authState.hasValue && authState.value != null) {
-      final userId = authState.value!.id;
-      final dosagePlanRepo = ref.read(dosagePlanRepositoryProvider);
-      final dosagePlan = await dosagePlanRepo.getActiveDosagePlan(userId);
+    // 2. 투여 계획 데이터 로드 (Application 계층 통해 접근)
+    final userId = _effectiveUserId;
+    if (userId.isNotEmpty) {
+      final dosagePlan = await ref
+          .read(onboardingNotifierProvider.notifier)
+          .getActiveDosagePlan(userId);
       if (dosagePlan != null && mounted) {
         setState(() {
           _medicationName = dosagePlan.medicationName;
@@ -275,7 +284,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
                 // [11] 요약 확인
                 SummaryScreen(
-                  userId: widget.userId ?? '',
+                  userId: _effectiveUserId,
                   name: _name,
                   currentWeight: _currentWeight,
                   targetWeight: _targetWeight,

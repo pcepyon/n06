@@ -21,6 +21,16 @@
 
 ## 2025-11-29
 
+- [fix] 온보딩 첫 사용자 정보 입력 안정성 개선
+  - DosagePlanForm: 선택 시점에 즉시 부모에게 데이터 전달
+  - userId 빈 문자열 방지 (authProvider 폴백)
+  - 체중 0 이하 값 입력 방지
+  - Layer 위반 수정: Repository 직접 접근 → Application 계층 통해 접근
+  - `features/onboarding/application/notifiers/onboarding_notifier.dart`
+  - `features/onboarding/presentation/screens/onboarding_screen.dart`
+  - `features/onboarding/presentation/widgets/dosage_plan_form.dart`
+  - `features/onboarding/presentation/widgets/weight_goal_form.dart`
+
 - [feat] 설정에서 온보딩 다시 보기 기능 추가
   - 기존 사용자가 교육 콘텐츠를 언제든 다시 볼 수 있음
   - 리뷰 모드: 기존 데이터 표시, 수정 가능하나 DB 저장 안 함

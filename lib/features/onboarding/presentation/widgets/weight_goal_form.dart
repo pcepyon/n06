@@ -84,6 +84,17 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
         return;
       }
 
+      // 0 이하 값 방지
+      if (_currentWeight! <= 0) {
+        _errorMessage = '현재 체중을 입력해주세요.';
+        return;
+      }
+
+      if (_targetWeight! <= 0) {
+        _errorMessage = '목표 체중을 입력해주세요.';
+        return;
+      }
+
       if (_currentWeight! < 20 || _currentWeight! > 300) {
         _errorMessage = '현재 체중은 20kg 이상 300kg 이하여야 합니다.';
         return;
@@ -105,7 +116,11 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
       }
     });
 
-    widget.onDataChanged(_currentWeight ?? 0, _targetWeight ?? 0, _targetPeriod);
+    // 유효한 값만 부모에게 전달 (0 이하 값 방지)
+    if (_currentWeight != null && _currentWeight! > 0 &&
+        _targetWeight != null && _targetWeight! > 0) {
+      widget.onDataChanged(_currentWeight!, _targetWeight!, _targetPeriod);
+    }
   }
 
   @override
@@ -117,7 +132,11 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
   }
 
   bool _canProceed() {
-    return _currentWeight != null && _targetWeight != null && _errorMessage == null;
+    return _currentWeight != null &&
+           _currentWeight! > 0 &&
+           _targetWeight != null &&
+           _targetWeight! > 0 &&
+           _errorMessage == null;
   }
 
   Widget _buildPredictionCard() {
