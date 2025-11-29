@@ -19,6 +19,19 @@
 
 ---
 
+## 2025-11-30
+
+- [feat] 일정 외 투여 기록 기능 추가
+  - 예정 없는 날짜에도 투여 기록 가능 (가장 가까운 미완료 스케줄에 연결)
+  - 조기/지연 투여 안내 메시지 및 48시간 간격 검증
+  - `lib/features/tracking/presentation/dialogs/off_schedule_dose_dialog.dart`
+  - `lib/features/tracking/presentation/widgets/selected_date_detail_card.dart`
+
+- [feat] 캘린더 마커를 실제 투여일 기준으로 표시
+  - 스케줄 예정일이 아닌 실제 투여일(administeredAt)에 완료 마커 표시
+  - 원래 예정일 선택 시 "X월X일에 조기/지연 투여됨" 안내 표시
+  - `lib/features/tracking/presentation/screens/dose_calendar_screen.dart`
+
 ## 2025-11-29
 
 - [fix] 스낵바가 Dialog/BottomSheet에 가려지는 z-index 문제 해결

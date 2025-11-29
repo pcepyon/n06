@@ -109,6 +109,8 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
                         schedule: schedule,
                         record: _getRecordForSchedule(schedule, records),
                         recentRecords: _getRecentRecords(records, 30),
+                        allSchedules: schedules,
+                        allRecords: records,
                       );
                     },
                   ),
@@ -141,16 +143,46 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
     List<DoseSchedule> schedules,
     List<DoseRecord> records,
   ) {
+    // 1. 이 날짜에 실제 투여된 기록이 있는지 확인 (administeredAt 기준)
+    final recordOnDay = _getRecordOnDate(day, records);
+
+    if (recordOnDay != null) {
+      // 이 날짜에 투여가 완료됨 -> 완료 마커 표시
+      return [MissedDoseGuidanceType.completed.name];
+    }
+
+    // 2. 이 날짜에 예정된 스케줄 확인
     final schedule = _getScheduleForDay(day, schedules);
     if (schedule == null) return [];
 
-    final isCompleted = _getRecordForSchedule(schedule, records) != null;
+    // 3. 해당 스케줄에 연결된 기록 확인 (다른 날짜에 투여됐을 수 있음)
+    final recordForSchedule = _getRecordForSchedule(schedule, records);
+
+    if (recordForSchedule != null) {
+      // 이 스케줄은 다른 날짜에 투여됨 -> 원래 예정일에는 마커 없음
+      // (실제 투여일에 마커가 표시됨)
+      return [];
+    }
+
+    // 4. 미완료 스케줄 -> 상태에 따른 마커
     final guidance = MissedDoseGuidance.fromSchedule(
       schedule: schedule,
-      isCompleted: isCompleted,
+      isCompleted: false,
     );
 
     return [guidance.type.name];
+  }
+
+  /// 특정 날짜에 투여된 기록 찾기 (administeredAt 기준)
+  DoseRecord? _getRecordOnDate(DateTime day, List<DoseRecord> records) {
+    return records.cast<DoseRecord?>().firstWhere(
+      (r) =>
+          r != null &&
+          r.administeredAt.year == day.year &&
+          r.administeredAt.month == day.month &&
+          r.administeredAt.day == day.day,
+      orElse: () => null,
+    );
   }
 
   DoseSchedule? _getScheduleForDay(DateTime day, List<DoseSchedule> schedules) {
