@@ -141,6 +141,11 @@ class SettingsScreen extends ConsumerWidget {
               subtitle: '저장된 기록을 확인하거나 삭제할 수 있습니다',
               onTap: () => context.push('/records'),
             ),
+            SettingsMenuItemImproved(
+              title: '온보딩 다시 보기',
+              subtitle: 'GLP-1 약물 정보, 부작용 안내 등 교육 콘텐츠를 다시 볼 수 있습니다',
+              onTap: () => context.push('/onboarding/review'),
+            ),
             const SizedBox(height: 24.0), // lg spacing after menu items
 
             // Logout section

@@ -115,7 +115,22 @@ final appRouter = GoRouter(
       name: 'onboarding',
       builder: (context, state) {
         final userId = state.extra as String?;
-        return OnboardingScreen(userId: userId);
+        return OnboardingScreen(
+          userId: userId,
+          onComplete: () => context.go('/home'),
+        );
+      },
+    ),
+
+    /// Onboarding Review (다시 보기) - without Bottom Nav
+    GoRoute(
+      path: '/onboarding/review',
+      name: 'onboarding_review',
+      builder: (context, state) {
+        return OnboardingScreen(
+          isReviewMode: true,
+          onComplete: () => context.pop(),
+        );
       },
     ),
 

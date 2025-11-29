@@ -8,8 +8,20 @@ import 'package:n06/features/tracking/domain/entities/medication_template.dart';
 class DosagePlanForm extends StatefulWidget {
   final Function(String, DateTime, int, double) onDataChanged;
   final VoidCallback onNext;
+  final bool isReviewMode;
+  final String? initialMedicationName;
+  final DateTime? initialStartDate;
+  final double? initialDose;
 
-  const DosagePlanForm({super.key, required this.onDataChanged, required this.onNext});
+  const DosagePlanForm({
+    super.key,
+    required this.onDataChanged,
+    required this.onNext,
+    this.isReviewMode = false,
+    this.initialMedicationName,
+    this.initialStartDate,
+    this.initialDose,
+  });
 
   @override
   State<DosagePlanForm> createState() => _DosagePlanFormState();
@@ -25,7 +37,19 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
   @override
   void initState() {
     super.initState();
-    _startDate = DateTime.now();
+    _startDate = widget.initialStartDate ?? DateTime.now();
+
+    // 리뷰 모드: 초기값 설정
+    if (widget.isReviewMode && widget.initialMedicationName != null) {
+      // 약물 이름으로 템플릿 찾기
+      final template = MedicationTemplate.all.where(
+        (t) => t.displayName == widget.initialMedicationName,
+      ).firstOrNull;
+      if (template != null) {
+        _selectedTemplate = template;
+        _selectedDose = widget.initialDose ?? template.recommendedStartDose;
+      }
+    }
   }
 
   bool _canProceed() {
@@ -52,9 +76,9 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 16), // md
-            const Text(
-              '투여 계획 설정',
-              style: TextStyle(
+            Text(
+              widget.isReviewMode ? '투여 계획 확인' : '투여 계획 설정',
+              style: const TextStyle(
                 fontSize: 20, // xl
                 fontWeight: FontWeight.w600, // Semibold
                 color: Color(0xFF1E293B), // Neutral-800

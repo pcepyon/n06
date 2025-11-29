@@ -18,6 +18,7 @@ class SummaryScreen extends ConsumerWidget {
   final int cycleDays;
   final double initialDose;
   final VoidCallback? onComplete;
+  final bool isReviewMode;
 
   const SummaryScreen({
     super.key,
@@ -31,6 +32,7 @@ class SummaryScreen extends ConsumerWidget {
     required this.cycleDays,
     required this.initialDose,
     this.onComplete,
+    this.isReviewMode = false,
   });
 
   @override
@@ -44,9 +46,21 @@ class SummaryScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 16), // md
-            const Text(
-              '정보 확인',
+            // Encouragement Message
+            Text(
+              isReviewMode ? '입력하신 정보입니다' : '준비가 잘 되었어요! ✨',
               style: TextStyle(
+                fontSize: 16, // base
+                fontWeight: FontWeight.w500,
+                color: isReviewMode
+                    ? const Color(0xFF64748B) // Neutral-500
+                    : const Color(0xFF4ADE80), // Primary
+              ),
+            ),
+            const SizedBox(height: 8), // sm
+            Text(
+              isReviewMode ? '정보 확인 (저장되지 않음)' : '정보 확인',
+              style: const TextStyle(
                 fontSize: 20, // xl
                 fontWeight: FontWeight.w600, // Semibold
                 color: Color(0xFF1E293B), // Neutral-800
@@ -82,7 +96,19 @@ class SummaryScreen extends ConsumerWidget {
             const SizedBox(height: 24), // lg
 
             // Loading/Error/Success States
-            if (onboardingState.isLoading)
+            // 리뷰 모드: 저장 없이 다음 단계로 이동
+            if (isReviewMode)
+              GabiumButton(
+                text: '다음',
+                onPressed: () {
+                  if (onComplete != null) {
+                    onComplete!();
+                  }
+                },
+                variant: GabiumButtonVariant.primary,
+                size: GabiumButtonSize.medium,
+              )
+            else if (onboardingState.isLoading)
               const Center(
                 child: SizedBox(
                   width: 48,

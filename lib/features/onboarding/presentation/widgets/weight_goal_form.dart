@@ -7,8 +7,20 @@ import 'package:n06/features/onboarding/presentation/widgets/validation_alert.da
 class WeightGoalForm extends StatefulWidget {
   final Function(double, double, int?) onDataChanged;
   final VoidCallback onNext;
+  final bool isReviewMode;
+  final double? initialCurrentWeight;
+  final double? initialTargetWeight;
+  final int? initialTargetPeriod;
 
-  const WeightGoalForm({super.key, required this.onDataChanged, required this.onNext});
+  const WeightGoalForm({
+    super.key,
+    required this.onDataChanged,
+    required this.onNext,
+    this.isReviewMode = false,
+    this.initialCurrentWeight,
+    this.initialTargetWeight,
+    this.initialTargetPeriod,
+  });
 
   @override
   State<WeightGoalForm> createState() => _WeightGoalFormState();
@@ -29,13 +41,33 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
   @override
   void initState() {
     super.initState();
-    _currentWeightController = TextEditingController();
-    _targetWeightController = TextEditingController();
-    _targetPeriodController = TextEditingController();
+    // 리뷰 모드: 초기값 설정
+    _currentWeightController = TextEditingController(
+      text: widget.initialCurrentWeight != null && widget.initialCurrentWeight! > 0
+          ? widget.initialCurrentWeight.toString()
+          : '',
+    );
+    _targetWeightController = TextEditingController(
+      text: widget.initialTargetWeight != null && widget.initialTargetWeight! > 0
+          ? widget.initialTargetWeight.toString()
+          : '',
+    );
+    _targetPeriodController = TextEditingController(
+      text: widget.initialTargetPeriod != null
+          ? widget.initialTargetPeriod.toString()
+          : '',
+    );
 
     _currentWeightController.addListener(_recalculate);
     _targetWeightController.addListener(_recalculate);
     _targetPeriodController.addListener(_recalculate);
+
+    // 리뷰 모드에서 초기값이 있으면 계산 및 부모에게 알림
+    if (widget.isReviewMode) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _recalculate();
+      });
+    }
   }
 
   void _recalculate() {
@@ -88,6 +120,75 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
     return _currentWeight != null && _targetWeight != null && _errorMessage == null;
   }
 
+  Widget _buildPredictionCard() {
+    if (_currentWeight == null || _currentWeight! <= 0) {
+      return const SizedBox.shrink();
+    }
+
+    final predicted12Week = _currentWeight! * 0.10;
+    final predicted72Week = _currentWeight! * 0.21;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9), // Neutral-100
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '예상 변화',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '12주 후: -${predicted12Week.toStringAsFixed(1)}kg',
+            style: const TextStyle(fontSize: 14, color: Color(0xFF334155)),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '72주 후: -${predicted72Week.toStringAsFixed(1)}kg',
+            style: const TextStyle(fontSize: 14, color: Color(0xFF334155)),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            '* 임상시험 평균 기준',
+            style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMotivationCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF), // Blue-50
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0x4D3B82F6)), // Blue-500 with 30% opacity
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('💡', style: TextStyle(fontSize: 16)),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '임상시험에서 72주 동안 평균 21% 감량을 달성했어요\n무리하지 않는 목표가 오히려 더 좋은 결과를 만들어요',
+              style: TextStyle(fontSize: 14, color: Color(0xFF1E40AF)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -97,9 +198,11 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 16), // md
-            const Text(
-              '체중 및 목표 설정',
-              style: TextStyle(
+            Text(
+              widget.isReviewMode
+                  ? '📊 체중 목표 확인'
+                  : '📊 목표를 함께 세워볼까요?',
+              style: const TextStyle(
                 fontSize: 20, // xl
                 fontWeight: FontWeight.w600, // Semibold
                 color: Color(0xFF1E293B), // Neutral-800
@@ -115,6 +218,10 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
             const SizedBox(height: 16), // md
+
+            // Prediction Card
+            _buildPredictionCard(),
+            if (_currentWeight != null && _currentWeight! > 0) const SizedBox(height: 16), // md
 
             // Target Weight Input
             GabiumTextField(
@@ -161,6 +268,8 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
               const SizedBox(height: 8), // sm
             ],
 
+            // Motivation Card
+            _buildMotivationCard(),
             const SizedBox(height: 16), // md
 
             // Next Button
