@@ -13,6 +13,8 @@ import 'package:n06/features/tracking/presentation/widgets/input_validation_widg
 import 'package:n06/features/tracking/presentation/widgets/appeal_score_chip.dart';
 import 'package:n06/features/tracking/presentation/widgets/severity_level_indicator.dart';
 import 'package:n06/features/tracking/presentation/widgets/conditional_section.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// 통합 데일리 기록 화면 (UI Renewed)
 ///
@@ -247,21 +249,17 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
     return Scaffold(
       // Change 1: AppBar 스타일 Design System 적용
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
+        backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text(
+        title: Text(
           '데일리 기록',
-          style: TextStyle(
-            fontSize: 20.0, // xl
-            fontWeight: FontWeight.w600, // Semibold
-            color: Color(0xFF1E293B), // Neutral-800
-          ),
+          style: AppTypography.heading2.copyWith(color: AppColors.textPrimary),
         ),
         centerTitle: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
           child: Container(
-            color: const Color(0xFFE2E8F0), // Neutral-200
+            color: AppColors.border,
             height: 1.0,
           ),
         ),
@@ -310,10 +308,10 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
     return Container(
       // Change 3: 카드 스타일 개선
       decoration: BoxDecoration(
-        color: Colors.white, // White
-        borderRadius: BorderRadius.circular(12.0), // md
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12.0),
         border: Border.all(
-          color: const Color(0xFFE2E8F0), // Neutral-200
+          color: AppColors.border,
           width: 1.0,
         ),
         boxShadow: [
@@ -324,18 +322,14 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
           ), // sm shadow
         ],
       ),
-      padding: const EdgeInsets.all(16.0), // md
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Change 10: 섹션 제목 타이포그래피 계층 개선
-          const Text(
+          Text(
             '신체 기록',
-            style: TextStyle(
-              fontSize: 20.0, // xl
-              fontWeight: FontWeight.w600, // Semibold
-              color: Color(0xFF1E293B), // Neutral-800
-            ),
+            style: AppTypography.heading2.copyWith(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 12.0), // sm + xs
 
@@ -349,13 +343,9 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
           const SizedBox(height: 16.0), // md
 
           // 식욕 조절 점수 (필수)
-          const Text(
+          Text(
             '식욕 조절 *',
-            style: TextStyle(
-              fontSize: 18.0, // lg
-              fontWeight: FontWeight.w600, // Semibold
-              color: Color(0xFF334155), // Neutral-700
-            ),
+            style: AppTypography.heading3.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 12.0), // sm + xs
           _buildAppetiteButtons(),
@@ -395,10 +385,10 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
     return Container(
       // Change 3: 카드 스타일 개선, 초기 확장 상태
       decoration: BoxDecoration(
-        color: Colors.white, // White
-        borderRadius: BorderRadius.circular(12.0), // md
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12.0),
         border: Border.all(
-          color: const Color(0xFFE2E8F0), // Neutral-200
+          color: AppColors.border,
           width: 1.0,
         ),
         boxShadow: [
@@ -409,29 +399,21 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
           ), // sm shadow
         ],
       ),
-      padding: const EdgeInsets.all(16.0), // md
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 섹션 제목
-          const Text(
+          Text(
             '부작용 기록 (선택)',
-            style: TextStyle(
-              fontSize: 20.0, // xl
-              fontWeight: FontWeight.w600, // Semibold
-              color: Color(0xFF1E293B), // Neutral-800
-            ),
+            style: AppTypography.heading2.copyWith(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 12.0), // sm + xs
 
           // 증상 선택 칩
-          const Text(
+          Text(
             '증상 선택',
-            style: TextStyle(
-              fontSize: 18.0, // lg
-              fontWeight: FontWeight.w600, // Semibold
-              color: Color(0xFF334155), // Neutral-700
-            ),
+            style: AppTypography.heading3.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 12.0), // sm + xs
 
@@ -445,8 +427,8 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
                 label: Text(symptom),
                 selected: isSelected,
                 onSelected: (_) => _handleSymptomToggle(symptom),
-                backgroundColor: const Color(0xFFF1F5F9), // Neutral-100
-                selectedColor: const Color(0xFF4ADE80), // Primary
+                backgroundColor: AppColors.surfaceVariant,
+                selectedColor: AppColors.primary,
                 side: BorderSide.none,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(999.0), // full
@@ -456,7 +438,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
                   fontSize: 14.0, // sm
                   color: isSelected
                       ? Colors.white
-                      : const Color(0xFF334155), // Neutral-700
+                      : AppColors.textSecondary,
                 ),
               );
             }).toList(),
@@ -465,13 +447,9 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
 
           // 선택된 증상별 개별 설정
           if (_selectedSymptoms.isNotEmpty) ...[
-            const Text(
+            Text(
               '선택된 증상',
-              style: TextStyle(
-                fontSize: 18.0, // lg
-                fontWeight: FontWeight.w600, // Semibold
-                color: Color(0xFF334155), // Neutral-700
-              ),
+              style: AppTypography.heading3.copyWith(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 12.0), // sm + xs
             ..._selectedSymptoms.map((symptom) {
@@ -482,12 +460,11 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
           // 공통 메모
           const SizedBox(height: 16.0), // md
           // Change 7: 입력 필드 높이 & 스타일 통일
-          const Text(
+          Text(
             '메모 (선택)',
-            style: TextStyle(
-              fontSize: 14.0, // sm
-              fontWeight: FontWeight.w600, // Semibold
-              color: Color(0xFF334155), // Neutral-700
+            style: AppTypography.bodySmall.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 8.0), // sm
@@ -495,33 +472,29 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
             decoration: InputDecoration(
               hintText: '추가 메모를 입력하세요',
               filled: true,
-              fillColor: Colors.white,
+              fillColor: AppColors.surface,
               contentPadding: const EdgeInsets.symmetric(
                 vertical: 12.0,
                 horizontal: 16.0,
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0), // sm
-                borderSide: const BorderSide(
-                  color: Color(0xFFCBD5E1), // Neutral-300
+                borderRadius: BorderRadius.circular(8.0),
+                borderSide: BorderSide(
+                  color: AppColors.borderDark,
                   width: 2.0,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0), // sm
-                borderSide: const BorderSide(
-                  color: Color(0xFF4ADE80), // Primary
+                borderRadius: BorderRadius.circular(8.0),
+                borderSide: BorderSide(
+                  color: AppColors.primary,
                   width: 2.0,
                 ),
               ),
             ),
             maxLines: 4,
             minLines: 4,
-            style: const TextStyle(
-              fontSize: 16.0, // base
-              fontWeight: FontWeight.w400, // Regular
-              color: Color(0xFF0F172A), // Neutral-900
-            ),
+            style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
             onChanged: (value) => setState(() => _note = value),
           ),
         ],
@@ -536,12 +509,12 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
 
     return Container(
       // 증상 상세 카드
-      margin: const EdgeInsets.only(bottom: 16.0), // md
+      margin: const EdgeInsets.only(bottom: 16.0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.0), // md
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12.0),
         border: Border.all(
-          color: const Color(0xFFE2E8F0), // Neutral-200
+          color: AppColors.border,
           width: 1.0,
         ),
         boxShadow: [
@@ -552,28 +525,23 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(16.0), // md
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 증상명
           Text(
             symptom,
-            style: const TextStyle(
-              fontSize: 18.0, // lg
-              fontWeight: FontWeight.w600, // Semibold
-              color: Color(0xFF1E293B), // Neutral-800
-            ),
+            style: AppTypography.heading3.copyWith(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 16.0), // md
 
           // Change 4: 심각도 슬라이더 의미 시각화 (SeverityLevelIndicator 사용)
-          const Text(
+          Text(
             '심각도',
-            style: TextStyle(
-              fontSize: 14.0, // sm
-              fontWeight: FontWeight.w600, // Semibold
-              color: Color(0xFF334155), // Neutral-700
+            style: AppTypography.bodySmall.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 8.0), // sm
@@ -595,12 +563,10 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
                     children: [
                       Expanded(
                         child: RadioListTile<bool>(
-                          title: const Text(
+                          title: Text(
                             '예',
-                            style: TextStyle(
-                              fontSize: 16.0, // base
-                              fontWeight: FontWeight.w400, // Regular
-                              color: Color(0xFF334155), // Neutral-700
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: AppColors.textSecondary,
                             ),
                           ),
                           value: true,
@@ -609,17 +575,15 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
                               _handlePersistentChanged(symptom, value),
                           contentPadding: EdgeInsets.zero,
                           dense: true,
-                          activeColor: const Color(0xFF4ADE80), // Primary
+                          activeColor: AppColors.primary,
                         ),
                       ),
                       Expanded(
                         child: RadioListTile<bool>(
-                          title: const Text(
+                          title: Text(
                             '아니오',
-                            style: TextStyle(
-                              fontSize: 16.0, // base
-                              fontWeight: FontWeight.w400, // Regular
-                              color: Color(0xFF334155), // Neutral-700
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: AppColors.textSecondary,
                             ),
                           ),
                           value: false,
@@ -628,7 +592,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
                               _handlePersistentChanged(symptom, value),
                           contentPadding: EdgeInsets.zero,
                           dense: true,
-                          activeColor: const Color(0xFF4ADE80), // Primary
+                          activeColor: AppColors.primary,
                         ),
                       ),
                     ],
@@ -651,18 +615,18 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
                     label: Text(tag),
                     selected: isSelected,
                     onSelected: (_) => _handleTagToggle(symptom, tag),
-                    backgroundColor: const Color(0xFFF1F5F9), // Neutral-100
-                    selectedColor: const Color(0xFF4ADE80), // Primary
+                    backgroundColor: AppColors.surfaceVariant,
+                    selectedColor: AppColors.primary,
                     side: BorderSide.none,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999.0), // full
+                      borderRadius: BorderRadius.circular(999.0),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0), // sm
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     labelStyle: TextStyle(
-                      fontSize: 14.0, // sm
+                      fontSize: 14.0,
                       color: isSelected
                           ? Colors.white
-                          : const Color(0xFF334155), // Neutral-700
+                          : AppColors.textSecondary,
                     ),
                   );
                 }).toList(),

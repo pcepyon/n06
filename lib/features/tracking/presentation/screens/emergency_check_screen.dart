@@ -8,6 +8,8 @@ import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
 import 'package:n06/features/tracking/presentation/widgets/consultation_recommendation_dialog.dart';
 import 'package:n06/features/tracking/presentation/widgets/emergency_checklist_item.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// F005: 증상 체크 화면
 ///
@@ -113,27 +115,16 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
     // Provider를 구독하여 화면이 활성화된 동안 유지
     ref.watch(emergencyCheckNotifierProvider);
 
-    // Gabium Design System Colors
-    const neutral50 = Color(0xFFF8FAFC); // Page background
-    const neutral100 = Color(0xFFF1F5F9); // Header background
-    const neutral800 = Color(0xFF1E293B); // Text - strong
-    const neutral600 = Color(0xFF475569); // Text - secondary
-    const errorColor = Color(0xFFEF4444); // Error accent
-
     return Scaffold(
-      backgroundColor: neutral50,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           '증상 체크',
-          style: TextStyle(
-            fontSize: 20, // xl
-            fontWeight: FontWeight.w600, // Semibold
-            color: neutral800,
-          ),
+          style: AppTypography.heading2.copyWith(color: AppColors.textPrimary),
         ),
-        backgroundColor: neutral50,
+        backgroundColor: AppColors.background,
         elevation: 0,
-        foregroundColor: neutral800,
+        foregroundColor: AppColors.textPrimary,
         centerTitle: false,
       ),
       body: SingleChildScrollView(
@@ -142,10 +133,10 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
             // Header Section with Warning Accent
             Container(
               padding: const EdgeInsets.all(24), // lg
-              color: neutral100,
+              color: AppColors.surfaceVariant,
               decoration: BoxDecoration(
                 border: Border(
-                  left: BorderSide(color: errorColor, width: 4),
+                  left: BorderSide(color: AppColors.error, width: 4),
                 ),
               ),
               child: Column(
@@ -153,20 +144,12 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
                 children: [
                   Text(
                     '다음 증상 중 해당하는 것이 있나요?',
-                    style: TextStyle(
-                      fontSize: 20, // xl
-                      fontWeight: FontWeight.w600, // Semibold
-                      color: neutral800,
-                    ),
+                    style: AppTypography.heading2.copyWith(color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     '해당하는 증상을 선택해주세요.',
-                    style: TextStyle(
-                      fontSize: 16, // base
-                      fontWeight: FontWeight.w400, // Regular
-                      color: neutral600,
-                    ),
+                    style: AppTypography.bodyLarge.copyWith(color: AppColors.textSecondary),
                   ),
                 ],
               ),
@@ -194,8 +177,8 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
         ),
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16), // md
-        color: neutral50,
+        padding: const EdgeInsets.all(16),
+        color: AppColors.background,
         child: Row(
           children: [
             // Secondary Button: No Symptoms
@@ -207,7 +190,7 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
                 size: GabiumButtonSize.medium,
               ),
             ),
-            const SizedBox(width: 12), // spacing between buttons
+            const SizedBox(width: 12),
             // Primary Button: Confirm (disabled if no symptoms selected)
             Expanded(
               child: GabiumButton(

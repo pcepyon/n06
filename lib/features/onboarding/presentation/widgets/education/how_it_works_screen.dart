@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
 
 class HowItWorksScreen extends StatefulWidget {
@@ -51,24 +53,22 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
               color: const Color(0xFFFFFBEB), // Warning Yellow-50
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: const Color(0x4DD97706), // Yellow-600 with 30% opacity
+                color: AppColors.warning.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.touch_app,
                   size: 16,
-                  color: Color(0xFFD97706), // Warning Yellow-600
+                  color: AppColors.warning,
                 ),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
                     '탭해서 자세히 알아보기',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFD97706), // Warning Yellow-600
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.warning,
                     ),
                   ),
                 ),
@@ -142,12 +142,10 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9), // Neutral-100
+        color: AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isExpanded
-              ? const Color(0xFF4ADE80) // Primary
-              : const Color(0xFFE2E8F0), // Neutral-200
+          color: isExpanded ? AppColors.primary : AppColors.border,
           width: isExpanded ? 2 : 1,
         ),
       ),
@@ -163,16 +161,13 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
           ),
           title: Text(
             title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1E293B), // Neutral-800
-              height: 1.4,
+            style: AppTypography.heading2.copyWith(
+              color: AppColors.textPrimary,
             ),
           ),
           trailing: Icon(
             isExpanded ? Icons.expand_less : Icons.expand_more,
-            color: const Color(0xFF4ADE80), // Primary
+            color: AppColors.primary,
           ),
           onExpansionChanged: onExpansionChanged,
           children: [
@@ -182,11 +177,8 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   description,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF64748B), // Neutral-500
-                    height: 1.5,
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.textTertiary,
                   ),
                 ),
               ),
@@ -201,20 +193,17 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(
+        Icon(
           Icons.check_circle,
           size: 20,
-          color: Color(0xFF4ADE80), // Primary
+          color: AppColors.primary,
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF166534), // Green-800
-              height: 1.5,
+            style: AppTypography.bodyLarge.copyWith(
+              color: const Color(0xFF166534), // Green-800
             ),
           ),
         ),

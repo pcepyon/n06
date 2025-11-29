@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
 
 class JourneyRoadmapScreen extends StatelessWidget {
@@ -62,7 +64,7 @@ class JourneyRoadmapScreen extends StatelessWidget {
               color: const Color(0xFFEFF6FF), // Info Blue-50
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: const Color(0x4D3B82F6), // Blue-500 with 30% opacity
+                color: AppColors.info.withValues(alpha: 0.3),
               ),
             ),
             child: Column(
@@ -205,21 +207,15 @@ class JourneyRoadmapScreen extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 phase,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
+                style: AppTypography.heading2.copyWith(
                   color: color,
-                  height: 1.4,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 description,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF64748B), // Neutral-500
-                  height: 1.5,
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.textTertiary,
                 ),
               ),
             ],

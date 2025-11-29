@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 enum ValidationAlertType {
   error,
@@ -50,11 +52,8 @@ class ValidationAlert extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: TextStyle(
-                fontSize: 14, // base
-                fontWeight: FontWeight.w400, // Regular
+              style: AppTypography.bodySmall.copyWith(
                 color: config.textColor,
-                height: 1.5,
               ),
             ),
           ),
@@ -68,28 +67,28 @@ class ValidationAlert extends StatelessWidget {
       case ValidationAlertType.error:
         return _AlertConfig(
           backgroundColor: const Color(0xFFFEF2F2), // Error background at 5%
-          borderColor: const Color(0xFFEF4444), // Error
+          borderColor: AppColors.error,
           textColor: const Color(0xFF991B1B), // Dark Error
           defaultIcon: Icons.error_outline,
         );
       case ValidationAlertType.warning:
         return _AlertConfig(
           backgroundColor: const Color(0xFFFFFBEB), // Warning background at 5%
-          borderColor: const Color(0xFFF59E0B), // Warning
+          borderColor: AppColors.warning,
           textColor: const Color(0xFF92400E), // Dark Warning
           defaultIcon: Icons.warning_amber_outlined,
         );
       case ValidationAlertType.info:
         return _AlertConfig(
           backgroundColor: const Color(0xFFEFF6FF), // Info background at 5%
-          borderColor: const Color(0xFF3B82F6), // Info
+          borderColor: AppColors.info,
           textColor: const Color(0xFF1E40AF), // Dark Info
           defaultIcon: Icons.info_outline,
         );
       case ValidationAlertType.success:
         return _AlertConfig(
           backgroundColor: const Color(0xFFECFDF5), // Success background at 5%
-          borderColor: const Color(0xFF10B981), // Success
+          borderColor: AppColors.success,
           textColor: const Color(0xFF065F46), // Dark Success
           defaultIcon: Icons.check_circle_outline,
         );

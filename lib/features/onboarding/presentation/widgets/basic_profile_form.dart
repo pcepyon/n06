@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/presentation/widgets/auth_hero_section.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_text_field.dart';
@@ -88,24 +90,21 @@ class _BasicProfileFormState extends State<BasicProfileForm> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9), // Neutral-100
+                color: AppColors.surfaceVariant,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Row(
+              child: Row(
                 children: [
                   Icon(
                     Icons.lock_outline,
                     size: 16,
-                    color: Color(0xFF64748B), // Neutral-500
+                    color: AppColors.textTertiary,
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       '입력하신 건강 데이터는 암호화되어 안전하게 보관됩니다.',
-                      style: TextStyle(
-                        fontSize: 12, // xs
-                        color: Color(0xFF64748B), // Neutral-500
-                      ),
+                      style: AppTypography.caption,
                     ),
                   ),
                 ],

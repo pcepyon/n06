@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// 긴급 증상 체크리스트 항목 컴포넌트
 ///
@@ -29,12 +31,6 @@ class EmergencyChecklistItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Gabium Design System Colors
-    const primaryColor = Color(0xFF4ADE80); // Primary
-    const neutral600 = Color(0xFF475569); // Neutral-600
-    const neutral400 = Color(0xFF94A3B8); // Neutral-400
-    const white = Color(0xFFFFFFFF);
-
     return GestureDetector(
       onTap: () => onChanged(!isChecked),
       child: Container(
@@ -54,17 +50,17 @@ class EmergencyChecklistItem extends StatelessWidget {
                   height: 24,
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: isChecked ? primaryColor : neutral400,
+                      color: isChecked ? AppColors.primary : AppColors.textDisabled,
                       width: 2,
                     ),
-                    borderRadius: BorderRadius.circular(4), // sm radius
-                    color: isChecked ? primaryColor : white,
+                    borderRadius: BorderRadius.circular(4),
+                    color: isChecked ? AppColors.primary : AppColors.surface,
                   ),
                   child: isChecked
                       ? Icon(
                           Icons.check,
                           size: 16,
-                          color: white,
+                          color: Colors.white,
                         )
                       : null,
                 ),
@@ -76,11 +72,9 @@ class EmergencyChecklistItem extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 2),
                 child: Text(
                   symptom,
-                  style: TextStyle(
-                    fontSize: 16, // base scale
-                    fontWeight: FontWeight.w400, // Regular
-                    color: neutral600,
-                    height: 1.5, // line height for Korean text
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.5,
                   ),
                 ),
               ),

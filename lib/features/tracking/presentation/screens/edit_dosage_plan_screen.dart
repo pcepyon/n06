@@ -9,6 +9,8 @@ import 'package:n06/features/tracking/domain/entities/medication_template.dart';
 import 'package:n06/features/tracking/domain/usecases/analyze_plan_change_impact_usecase.dart';
 import 'package:n06/features/tracking/presentation/widgets/date_picker_field.dart';
 import 'package:n06/core/presentation/widgets/impact_analysis_dialog.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 class EditDosagePlanScreen extends ConsumerWidget {
   const EditDosagePlanScreen({
@@ -22,17 +24,17 @@ class EditDosagePlanScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('투여 계획 수정'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
         shadowColor: Colors.transparent,
       ),
-      backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: medicationState.when(
           loading: () => Center(
             child: CircularProgressIndicator(
-              color: const Color(0xFF4ADE80), // Primary
+              color: AppColors.primary,
             ),
           ),
           error: (error, stack) => Center(
@@ -42,20 +44,20 @@ class EditDosagePlanScreen extends ConsumerWidget {
                 Icon(
                   Icons.error_outline,
                   size: 48,
-                  color: const Color(0xFFEF4444), // Error
+                  color: AppColors.error,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   '오류가 발생했습니다',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: const Color(0xFF1E293B),
+                  style: AppTypography.heading1.copyWith(
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   error.toString(),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF64748B), // Neutral-500
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textTertiary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -81,13 +83,13 @@ class EditDosagePlanScreen extends ConsumerWidget {
                     Icon(
                       Icons.info_outline,
                       size: 48,
-                      color: const Color(0xFF3B82F6), // Info
+                      color: AppColors.info,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       '활성 투여 계획이 없습니다',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: const Color(0xFF1E293B),
+                      style: AppTypography.heading1.copyWith(
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -239,10 +241,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
         // ============== 섹션 제목 ==============
         Text(
           '투여 계획 수정',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: const Color(0xFF1E293B), // Neutral-800
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
+          style: AppTypography.heading1.copyWith(
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 24), // lg spacing
@@ -253,10 +253,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
           children: [
             Text(
               '약물명',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: const Color(0xFF334155), // Neutral-700
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+              style: AppTypography.labelMedium.copyWith(
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -264,16 +262,16 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
               decoration: BoxDecoration(
                 border: Border.all(
                   color: _selectedTemplate == null
-                    ? const Color(0xFFCBD5E1) // Neutral-300
-                    : const Color(0xFF4ADE80), // Primary (focus state)
+                    ? AppColors.borderDark
+                    : AppColors.primary,
                   width: 2,
                 ),
-                borderRadius: BorderRadius.circular(8), // sm
-                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                color: AppColors.surface,
               ),
               child: Theme(
                 data: Theme.of(context).copyWith(
-                  canvasColor: Colors.white,
+                  canvasColor: AppColors.surface,
                 ),
                 child: DropdownButton<MedicationTemplate>(
                   isExpanded: true,
@@ -283,9 +281,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       '약물을 선택하세요',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF94A3B8), // Neutral-400
-                        fontSize: 16,
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textDisabled,
                       ),
                     ),
                   ),
@@ -296,9 +293,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           template.displayName,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF334155), // Neutral-700
-                            fontSize: 16,
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ),
@@ -319,9 +315,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   '약물을 선택하면 용량을 선택할 수 있습니다',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF94A3B8), // Neutral-400
-                    fontSize: 12,
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.textDisabled,
                   ),
                 ),
               ),
@@ -335,10 +330,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
           children: [
             Text(
               '초기 용량 (mg)',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: const Color(0xFF334155), // Neutral-700
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+              style: AppTypography.labelMedium.copyWith(
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -346,18 +339,18 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
               decoration: BoxDecoration(
                 border: Border.all(
                   color: _selectedDose == null
-                    ? const Color(0xFFCBD5E1) // Neutral-300
-                    : const Color(0xFF4ADE80), // Primary
+                    ? AppColors.borderDark
+                    : AppColors.primary,
                   width: 2,
                 ),
-                borderRadius: BorderRadius.circular(8), // sm
+                borderRadius: BorderRadius.circular(8),
                 color: _selectedTemplate == null
-                  ? const Color(0xFFF8FAFC) // Neutral-50 (disabled)
-                  : Colors.white,
+                  ? AppColors.background
+                  : AppColors.surface,
               ),
               child: Theme(
                 data: Theme.of(context).copyWith(
-                  canvasColor: Colors.white,
+                  canvasColor: AppColors.surface,
                 ),
                 child: DropdownButton<double>(
                   isExpanded: true,
@@ -369,9 +362,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
                       _selectedTemplate == null
                         ? '먼저 약물을 선택하세요'
                         : '용량을 선택하세요',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF94A3B8), // Neutral-400
-                        fontSize: 16,
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textDisabled,
                       ),
                     ),
                   ),
@@ -379,9 +371,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       '용량을 선택하세요',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF94A3B8), // Neutral-400
-                        fontSize: 16,
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textDisabled,
                       ),
                     ),
                   ),
@@ -392,9 +383,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           '$dose mg',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF334155), // Neutral-700
-                            fontSize: 16,
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ),
@@ -419,10 +409,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
           children: [
             Text(
               '투여 주기',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: const Color(0xFF334155), // Neutral-700
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+              style: AppTypography.labelMedium.copyWith(
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -431,11 +419,11 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: const Color(0xFFE2E8F0), // Neutral-200
+                  color: AppColors.border,
                   width: 1,
                 ),
-                borderRadius: BorderRadius.circular(8), // sm
-                color: const Color(0xFFF8FAFC), // Neutral-50 (read-only)
+                borderRadius: BorderRadius.circular(8),
+                color: AppColors.background,
               ),
               child: Align(
                 alignment: Alignment.centerLeft,
@@ -443,9 +431,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
                   _selectedTemplate != null
                     ? '${_selectedTemplate!.standardCycleDays}일 (매주)'
                     : '-',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF475569), // Neutral-600
-                    fontSize: 16,
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -454,9 +441,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
               padding: const EdgeInsets.only(top: 4),
               child: Text(
                 '약물에 따라 자동으로 설정됩니다',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(0xFF94A3B8), // Neutral-400
-                  fontSize: 12,
+                style: AppTypography.labelSmall.copyWith(
+                  color: AppColors.textDisabled,
                 ),
               ),
             ),

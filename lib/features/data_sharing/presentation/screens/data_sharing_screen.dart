@@ -6,6 +6,8 @@ import 'package:n06/features/data_sharing/domain/repositories/date_range.dart';
 import 'package:n06/features/data_sharing/presentation/widgets/data_sharing_period_selector.dart';
 import 'package:n06/features/data_sharing/presentation/widgets/exit_confirmation_dialog.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 class DataSharingScreen extends ConsumerStatefulWidget {
   final String? userId;
@@ -47,29 +49,25 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
         _showExitDialog(context);
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
+        backgroundColor: AppColors.background,
         appBar: AppBar(
-          backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
-          foregroundColor: const Color(0xFF1E293B), // Neutral-800
+          backgroundColor: AppColors.background,
+          foregroundColor: AppColors.textPrimary,
           elevation: 0,
           title: const Text(
             '기록 보여주기',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700, // Bold
-              color: Color(0xFF1E293B),
-            ),
+            style: AppTypography.heading2,
           ),
           leading: IconButton(
             icon: const Icon(Icons.close, size: 24),
-            color: const Color(0xFF475569), // Neutral-600
+            color: AppColors.textSecondary,
             onPressed: () => _showExitDialog(context),
             tooltip: '공유 종료',
           ),
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(1),
             child: Container(
-              color: const Color(0xFFE2E8F0), // Neutral-200
+              color: AppColors.border,
               height: 1,
             ),
           ),
@@ -81,7 +79,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                   height: 48,
                   child: CircularProgressIndicator(
                     valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFF4ADE80), // Primary
+                      AppColors.primary,
                     ),
                     strokeWidth: 2,
                   ),
@@ -104,26 +102,19 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
             Icon(
               Icons.error_outline,
               size: 32, // lg
-              color: const Color(0xFFEF4444), // Error
+              color: AppColors.error,
             ),
             const SizedBox(height: 24), // lg
             const Text(
               '오류가 발생했습니다',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600, // Semibold
-                color: Color(0xFF1E293B), // Neutral-800
-              ),
+              style: AppTypography.heading3,
             ),
             const SizedBox(height: 12),
             Text(
               error,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF475569), // Neutral-600
-                height: 1.5,
+              style: AppTypography.bodyLarge.copyWith(
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 24), // lg
@@ -162,26 +153,19 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
               Icon(
                 Icons.inbox_outlined,
                 size: 32, // lg
-                color: const Color(0xFFCBD5E1), // Neutral-300
+                color: AppColors.borderDark,
               ),
               const SizedBox(height: 24), // lg
               const Text(
                 '선택된 기간에 기록이 없습니다',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600, // Semibold
-                  color: Color(0xFF334155), // Neutral-700
-                ),
+                style: AppTypography.heading3,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 '다른 기간을 선택하거나 기록을 추가해보세요',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF64748B), // Neutral-500
-                  height: 1.5,
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.textTertiary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -270,11 +254,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
       padding: const EdgeInsets.only(top: 24, bottom: 16), // lg spacing
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600, // Semibold
-          color: Color(0xFF1E293B), // Neutral-800
-        ),
+        style: AppTypography.heading3,
       ),
     );
   }
@@ -284,11 +264,11 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     return Column(
       children: records.map<Widget>((record) {
         return Card(
-          color: Colors.white,
+          color: AppColors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12), // md
             side: const BorderSide(
-              color: Color(0xFFE2E8F0), // Neutral-200
+              color: AppColors.border,
               width: 1,
             ),
           ),
@@ -302,10 +282,10 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4ADE80), // Primary
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(8), // sm
                   ),
-                  child: const Icon(Icons.medical_services, color: Colors.white, size: 20),
+                  child: const Icon(Icons.medical_services, color: AppColors.surface, size: 20),
                 ),
                 const SizedBox(width: 16), // md
                 Expanded(
@@ -314,20 +294,14 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                     children: [
                       Text(
                         '${record.actualDoseMg} mg',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500, // Medium
-                          color: Color(0xFF1E293B), // Neutral-800
-                        ),
+                        style: AppTypography.bodyLarge,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '${record.administeredAt.toLocal().toString().split('.')[0]} | '
                         '${record.injectionSite ?? '부위 미지정'}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400, // Regular
-                          color: Color(0xFF475569), // Neutral-600
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -344,11 +318,11 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
   Widget _buildAdherenceRateSection(dynamic report) {
     final rate = report.calculateAdherenceRate();
     return Card(
-      color: Colors.white,
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12), // md
         side: const BorderSide(
-          color: Color(0xFFE2E8F0), // Neutral-200
+          color: AppColors.border,
           width: 1,
         ),
       ),
@@ -360,11 +334,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
           children: [
             const Text(
               '투여 순응도',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600, // Semibold
-                color: Color(0xFF1E293B), // Neutral-800
-              ),
+              style: AppTypography.heading3,
             ),
             const SizedBox(height: 16), // md
             Row(
@@ -372,11 +342,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
               children: [
                 Text(
                   '${rate.toStringAsFixed(1)}%',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700, // Bold
-                    color: Color(0xFF1E293B),
-                  ),
+                  style: AppTypography.heading1,
                 ),
                 Expanded(
                   child: Padding(
@@ -384,9 +350,9 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                     child: LinearProgressIndicator(
                       value: rate / 100,
                       minHeight: 8,
-                      backgroundColor: const Color(0xFFE2E8F0), // Neutral-200
+                      backgroundColor: AppColors.border,
                       valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFF4ADE80), // Primary
+                        AppColors.primary,
                       ),
                     ),
                   ),
@@ -416,11 +382,11 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     return Column(
       children: logs.map<Widget>((log) {
         return Card(
-          color: Colors.white,
+          color: AppColors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12), // md
             side: const BorderSide(
-              color: Color(0xFFE2E8F0), // Neutral-200
+              color: AppColors.border,
               width: 1,
             ),
           ),
@@ -434,10 +400,10 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF10B981), // Emerald (Weight)
+                    color: AppColors.success,
                     borderRadius: BorderRadius.circular(8), // sm
                   ),
-                  child: const Icon(Icons.scale, color: Colors.white, size: 20),
+                  child: const Icon(Icons.scale, color: AppColors.surface, size: 20),
                 ),
                 const SizedBox(width: 16), // md
                 Expanded(
@@ -446,19 +412,13 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                     children: [
                       Text(
                         '${log.weightKg} kg',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500, // Medium
-                          color: Color(0xFF1E293B), // Neutral-800
-                        ),
+                        style: AppTypography.bodyLarge,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         log.logDate.toString().split(' ')[0],
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400, // Regular
-                          color: Color(0xFF475569), // Neutral-600
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -477,11 +437,11 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     return Column(
       children: logs.map<Widget>((log) {
         return Card(
-          color: Colors.white,
+          color: AppColors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12), // md
             side: const BorderSide(
-              color: Color(0xFFE2E8F0), // Neutral-200
+              color: AppColors.border,
               width: 1,
             ),
           ),
@@ -495,10 +455,10 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B), // Amber (Symptom)
+                    color: AppColors.warning,
                     borderRadius: BorderRadius.circular(8), // sm
                   ),
-                  child: const Icon(Icons.warning, color: Colors.white, size: 20),
+                  child: const Icon(Icons.warning, color: AppColors.surface, size: 20),
                 ),
                 const SizedBox(width: 16), // md
                 Expanded(
@@ -507,19 +467,13 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                     children: [
                       Text(
                         log.symptomName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500, // Medium
-                          color: Color(0xFF1E293B), // Neutral-800
-                        ),
+                        style: AppTypography.bodyLarge,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '심각도: ${log.severity}/10',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400, // Regular
-                          color: Color(0xFF475569), // Neutral-600
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -527,11 +481,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                 ),
                 Text(
                   log.logDate.toString().split(' ')[0],
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF64748B), // Neutral-500
-                  ),
+                  style: AppTypography.caption,
                 ),
               ],
             ),

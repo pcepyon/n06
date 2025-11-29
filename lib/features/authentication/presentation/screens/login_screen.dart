@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/authentication/domain/exceptions/auth_exceptions.dart';
 import 'package:n06/features/authentication/presentation/widgets/auth_hero_section.dart';
@@ -385,15 +387,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // 2. Consent Section (Card-like background)
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9), // Neutral-100
+                    color: AppColors.surfaceVariant,
                     border: Border.all(
-                      color: const Color(0xFFE2E8F0), // Neutral-200
+                      color: AppColors.border,
                       width: 1,
                     ),
-                    borderRadius: BorderRadius.circular(12), // Border radius md
+                    borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0x0F172A).withOpacity(0.05),
+                        color: AppColors.neutral900.withValues(alpha: 0.05),
                         blurRadius: 2,
                         offset: const Offset(0, 1),
                       ),
@@ -435,28 +437,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B).withOpacity(0.08), // Warning-50
+                      color: AppColors.warning.withValues(alpha: 0.08),
                       border: Border.all(
-                        color: const Color(0xFFF59E0B).withOpacity(0.2),
+                        color: AppColors.warning.withValues(alpha: 0.2),
                         width: 1,
                       ),
-                      borderRadius: BorderRadius.circular(8), // Border radius sm
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.info_outline,
-                          color: Color(0xFFF59E0B), // Warning
+                          color: AppColors.warning,
                           size: 24,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             '소셜 로그인하려면 약관에 모두 동의해주세요',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFFF59E0B),
-                              height: 24 / 16,
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: AppColors.warning,
                             ),
                           ),
                         ),
@@ -494,23 +494,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Expanded(
                       child: Divider(
                         height: 1,
-                        color: const Color(0xFFE2E8F0), // Neutral-200
+                        color: AppColors.border,
                       ),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         '또는',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF64748B), // Neutral-500
-                        ),
+                        style: AppTypography.bodySmall,
                       ),
                     ),
                     Expanded(
                       child: Divider(
                         height: 1,
-                        color: const Color(0xFFE2E8F0), // Neutral-200
+                        color: AppColors.border,
                       ),
                     ),
                   ],
@@ -518,67 +515,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 20),
 
                 // 6. Email Section Label
-                const Text(
+                Text(
                   '다른 계정으로 계속하기',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF334155), // Neutral-700
+                  style: AppTypography.labelMedium.copyWith(
+                    color: AppColors.neutral700,
                   ),
                 ),
                 const SizedBox(height: 12),
 
                 // Email Login Button
-                ElevatedButton.icon(
+                OutlinedButton.icon(
                   key: const Key('email_login_button'),
                   onPressed: () => context.go('/email-signin'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFF4ADE80), // Primary
-                    elevation: 0,
-                    side: const BorderSide(
-                      color: Color(0xFF4ADE80),
-                      width: 2,
-                    ),
+                  style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
                   ),
                   icon: const Icon(Icons.email_outlined),
-                  label: const Text(
+                  label: Text(
                     '이메일로 로그인',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                    style: AppTypography.labelLarge.copyWith(
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
                 const SizedBox(height: 8),
 
                 // Email Signup Button (consistent with login)
-                ElevatedButton.icon(
+                OutlinedButton.icon(
                   key: const Key('email_signup_link'),
                   onPressed: () => context.go('/email-signup'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFF4ADE80),
-                    elevation: 0,
-                    side: const BorderSide(
-                      color: Color(0xFF4ADE80),
-                      width: 2,
-                    ),
+                  style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
                   ),
                   icon: const Icon(Icons.person_add_outlined),
-                  label: const Text(
+                  label: Text(
                     '이메일로 회원가입',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                    style: AppTypography.labelLarge.copyWith(
+                      color: AppColors.primary,
                     ),
                   ),
                 ),

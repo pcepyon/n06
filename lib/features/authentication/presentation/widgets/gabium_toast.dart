@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 enum GabiumToastVariant {
   error,
@@ -69,10 +71,10 @@ class GabiumToast extends StatelessWidget {
     final config = _getConfig();
 
     return Container(
-      padding: const EdgeInsets.all(16), // md
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: config.backgroundColor,
-        borderRadius: BorderRadius.circular(12), // md
+        borderRadius: BorderRadius.circular(12),
         border: Border(
           left: BorderSide(
             color: config.borderColor,
@@ -81,7 +83,7 @@ class GabiumToast extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0x0F0F172A).withValues(alpha: 0.10),
+            color: AppColors.neutral900.withValues(alpha: 0.10),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -98,9 +100,7 @@ class GabiumToast extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: TextStyle(
-                fontSize: 14, // sm
-                fontWeight: FontWeight.w400, // Regular
+              style: AppTypography.bodySmall.copyWith(
                 color: config.textColor,
               ),
             ),
@@ -114,34 +114,34 @@ class GabiumToast extends StatelessWidget {
     switch (variant) {
       case GabiumToastVariant.error:
         return _ToastConfig(
-          backgroundColor: const Color(0xFFFEF2F2),
-          borderColor: const Color(0xFFEF4444), // Error
-          textColor: const Color(0xFF991B1B), // Error dark
-          iconColor: const Color(0xFFEF4444),
+          backgroundColor: AppColors.error.withValues(alpha: 0.1),
+          borderColor: AppColors.error,
+          textColor: const Color(0xFF991B1B),
+          iconColor: AppColors.error,
           icon: Icons.error_outline,
         );
       case GabiumToastVariant.success:
         return _ToastConfig(
-          backgroundColor: const Color(0xFFECFDF5),
-          borderColor: const Color(0xFF10B981), // Success
-          textColor: const Color(0xFF065F46), // Success dark
-          iconColor: const Color(0xFF10B981),
+          backgroundColor: AppColors.success.withValues(alpha: 0.1),
+          borderColor: AppColors.success,
+          textColor: const Color(0xFF065F46),
+          iconColor: AppColors.success,
           icon: Icons.check_circle_outline,
         );
       case GabiumToastVariant.warning:
         return _ToastConfig(
-          backgroundColor: const Color(0xFFFEF3C7),
-          borderColor: const Color(0xFFF59E0B), // Warning
-          textColor: const Color(0xFF92400E), // Warning dark
-          iconColor: const Color(0xFFF59E0B),
+          backgroundColor: AppColors.warning.withValues(alpha: 0.15),
+          borderColor: AppColors.warning,
+          textColor: const Color(0xFF92400E),
+          iconColor: AppColors.warning,
           icon: Icons.warning_amber_outlined,
         );
       case GabiumToastVariant.info:
         return _ToastConfig(
-          backgroundColor: const Color(0xFFEFF6FF),
-          borderColor: const Color(0xFF3B82F6), // Info
-          textColor: const Color(0xFF1E3A8A), // Info dark
-          iconColor: const Color(0xFF3B82F6),
+          backgroundColor: AppColors.info.withValues(alpha: 0.1),
+          borderColor: AppColors.info,
+          textColor: const Color(0xFF1E3A8A),
+          iconColor: AppColors.info,
           icon: Icons.info_outline,
         );
     }

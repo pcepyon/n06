@@ -6,6 +6,8 @@ import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/presentation/widgets/injection_site_selector_v2.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 class DoseRecordDialogV2 extends ConsumerStatefulWidget {
   final DoseSchedule schedule;
@@ -38,13 +40,9 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
-      title: const Text(
+      title: Text(
         '투여 기록',
-        style: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF1E293B),
-        ),
+        style: AppTypography.heading1.copyWith(color: AppColors.textPrimary),
       ),
       contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
       content: SingleChildScrollView(
@@ -54,11 +52,7 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
           children: [
             Text(
               '${widget.schedule.scheduledDoseMg} mg를 투여했습니다.',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF334155),
-              ),
+              style: AppTypography.bodyLarge.copyWith(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
 
@@ -72,44 +66,34 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
             ),
 
             const SizedBox(height: 16),
-            const Text(
+            Text(
               '메모 (선택사항)',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF334155),
-              ),
+              style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: noteController,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF1E293B),
-              ),
+              style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: '메모를 입력하세요',
-                hintStyle: const TextStyle(
-                  color: Color(0xFF94A3B8),
-                ),
+                hintStyle: AppTypography.bodyLarge.copyWith(color: AppColors.textDisabled),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.surface,
                 contentPadding: const EdgeInsets.symmetric(
                   vertical: 12,
                   horizontal: 16,
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFCBD5E1),
+                  borderSide: BorderSide(
+                    color: AppColors.borderDark,
                     width: 2,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF4ADE80),
+                  borderSide: BorderSide(
+                    color: AppColors.primary,
                     width: 2,
                   ),
                 ),

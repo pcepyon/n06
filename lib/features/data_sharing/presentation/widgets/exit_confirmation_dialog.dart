@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// ExitConfirmationDialog - 공유 종료 확인 다이얼로그 (Gabium Design System)
 ///
@@ -19,26 +21,19 @@ class ExitConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16), // lg
       ),
       elevation: 10, // xl shadow
       title: const Text(
         '공유 종료',
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w700, // Bold
-          color: Color(0xFF1E293B), // Neutral-800
-        ),
+        style: AppTypography.heading2,
       ),
-      content: const Text(
+      content: Text(
         '정말로 공유를 종료하시겠습니까?',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          color: Color(0xFF475569), // Neutral-600
-          height: 1.5,
+        style: AppTypography.bodyLarge.copyWith(
+          color: AppColors.textSecondary,
         ),
       ),
       contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
@@ -46,20 +41,18 @@ class ExitConfirmationDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: onCancel ?? () => Navigator.of(context).pop(),
-          child: const Text(
+          child: Text(
             '취소',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF475569), // Neutral-600
+            style: AppTypography.labelLarge.copyWith(
+              color: AppColors.textSecondary,
             ),
           ),
         ),
         ElevatedButton(
           onPressed: onConfirm,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF59E0B), // Warning/Secondary
-            foregroundColor: Colors.white,
+            backgroundColor: AppColors.warning,
+            foregroundColor: AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8), // sm
             ),
@@ -70,7 +63,7 @@ class ExitConfirmationDialog extends StatelessWidget {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600, // Semibold
-              color: Colors.white,
+              color: AppColors.surface,
             ),
           ),
         ),

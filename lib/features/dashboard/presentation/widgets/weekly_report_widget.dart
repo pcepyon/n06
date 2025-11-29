@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import '../../domain/entities/weekly_summary.dart';
 
 class WeeklyReportWidget extends StatefulWidget {
@@ -36,12 +38,12 @@ class _WeeklyReportWidgetState extends State<WeeklyReportWidget> {
         curve: Curves.easeInOut,
         transform: Matrix4.translationValues(0, _isPressed ? -2 : 0, 0),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           border: Border.all(
-            color: Color(0xFFE2E8F0), // Neutral-200
+            color: AppColors.border,
             width: 1,
           ),
-          borderRadius: BorderRadius.circular(12), // md
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
               color: _isPressed ? Color(0x140F172A) : Color(0x0F0F172A),
@@ -50,19 +52,14 @@ class _WeeklyReportWidgetState extends State<WeeklyReportWidget> {
             ),
           ],
         ),
-        padding: EdgeInsets.all(24), // lg padding
+        padding: EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Section Title
             Text(
               '지난주 요약',
-              style: TextStyle(
-                fontSize: 18, // lg
-                fontWeight: FontWeight.w600, // Semibold
-                color: Color(0xFF1E293B), // Neutral-800
-                height: 1.3,
-              ),
+              style: AppTypography.heading3,
             ),
 
             SizedBox(height: 16), // md spacing
@@ -73,19 +70,19 @@ class _WeeklyReportWidgetState extends State<WeeklyReportWidget> {
               children: [
                 _ReportItem(
                   icon: Icons.medication,
-                  iconColor: Color(0xFF4ADE80), // Primary
+                  iconColor: AppColors.primary,
                   label: '투여',
                   value: '${widget.summary.doseCompletedCount}회',
                 ),
                 _ReportItem(
                   icon: Icons.monitor_weight,
-                  iconColor: Color(0xFF10B981), // Success
+                  iconColor: AppColors.success,
                   label: '체중',
                   value: _formatWeightChange(widget.summary.weightChangeKg),
                 ),
                 _ReportItem(
                   icon: Icons.warning_amber,
-                  iconColor: Color(0xFFEF4444), // Error
+                  iconColor: AppColors.error,
                   label: '부작용',
                   value: '${widget.summary.symptomRecordCount}회',
                 ),
@@ -97,33 +94,25 @@ class _WeeklyReportWidgetState extends State<WeeklyReportWidget> {
             // Adherence Container
             Container(
               decoration: BoxDecoration(
-                color: Color(0xFFF8FAFC), // Neutral-50
+                color: AppColors.background,
                 border: Border.all(
-                  color: Color(0xFFE2E8F0), // Neutral-200
+                  color: AppColors.border,
                   width: 1,
                 ),
-                borderRadius: BorderRadius.circular(8), // sm
+                borderRadius: BorderRadius.circular(8),
               ),
-              padding: EdgeInsets.all(16), // md padding
+              padding: EdgeInsets.all(16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     '투여 순응도',
-                    style: TextStyle(
-                      fontSize: 14, // sm
-                      fontWeight: FontWeight.w400, // Regular
-                      color: Color(0xFF64748B), // Neutral-500
-                      height: 1.5,
-                    ),
+                    style: AppTypography.bodySmall,
                   ),
                   Text(
                     '${widget.summary.adherencePercentage.toStringAsFixed(0)}%',
-                    style: TextStyle(
-                      fontSize: 18, // lg
-                      fontWeight: FontWeight.w700, // Bold
-                      color: Color(0xFF4ADE80), // Primary
-                      height: 1.3,
+                    style: AppTypography.heading3.copyWith(
+                      color: AppColors.primary,
                     ),
                   ),
                 ],
@@ -161,21 +150,13 @@ class _ReportItem extends StatelessWidget {
         SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12, // xs
-            fontWeight: FontWeight.w400, // Regular
-            color: Color(0xFF64748B), // Neutral-500
-            height: 1.4,
-          ),
+          style: AppTypography.caption,
         ),
         SizedBox(height: 2),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 16, // base
-            fontWeight: FontWeight.w600, // Semibold
-            color: Color(0xFF1E293B), // Neutral-800
-            height: 1.4,
+          style: AppTypography.labelMedium.copyWith(
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],

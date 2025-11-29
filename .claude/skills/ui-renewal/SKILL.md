@@ -1,47 +1,72 @@
 ---
 name: ui-renewal
-description: Orchestrates 5-phase UI renewal workflow with automated implementation. Creates Design System, analyzes UI, generates implementation specs, auto-implements in Presentation layer only, and organizes reusable assets. User approves/rejects, agent executes. Maintains Clean Architecture. All communication in Korean.
+description: |
+  UI 리뉴얼 워크플로우 오케스트레이션. 두 가지 모드 지원:
+
+  (1) 화면별 순차 리뉴얼 (Phase 1→2A→2B→2C→3): 디자인 시스템 생성 후 각 화면을 분석→스펙→구현→정리 순으로 진행. "이 화면 개선해줘", "UI 분석해줘" 등 요청 시 사용.
+
+  (2) 전체 앱 일괄 적용 (Phase F: Foundation): 디자인 시스템이 이미 존재할 때, 분석/제안 없이 ThemeData + 폰트를 전체 앱에 바로 적용. "전체 테마 적용해줘", "폰트 적용해줘", "앱 전체 스타일 통일해줘" 등 요청 시 사용.
+
+  Clean Architecture의 Presentation 레이어만 수정. 모든 커뮤니케이션은 한글.
 ---
 
 # UI Renewal Skill
 
-Fully automated professional UI renewal with systematic design system creation, automatic code implementation, and asset organization.
-
-## When to Use This Skill
-
-Trigger this skill when users request:
-- "Redesign my [app/website/interface]"
-- "Improve the UI of [screen/feature]"
-- "Create a design system for my product"
-- "Make this look better/more professional/more modern"
-- "Fix the UX of [feature]"
-- Any request to improve visual design or user experience
-
 ## Workflow Overview
 
 ```
-Phase 1: Design System Creation
-   ↓
-[User approves]
-   ↓
-Phase 2A: Analysis & Direction (for each screen/feature)
-   ↓
-[User approves direction]
-   ↓
-Phase 2B: Implementation Specification
-   ↓
-[User approves specification]
-   ↓
-Phase 2C: Automated Implementation
-   ↓
-[Agent implements code automatically]
-   ↓
-Phase 3: Asset Organization & Completion
-   ↓
-[Complete]
-   ↓
-[Repeat 2A→2B→2C→3 for next screen/feature]
+┌─────────────────────────────────────────────────────────────┐
+│                    Phase 1: Design System                    │
+│              (디자인 시스템이 없을 때만 실행)                   │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+        ┌─────────────────────┴─────────────────────┐
+        ↓                                           ↓
+┌───────────────────┐                   ┌───────────────────────┐
+│  Phase F:         │                   │  Phase 2A→2B→2C→3:    │
+│  Foundation       │                   │  화면별 순차 리뉴얼      │
+│                   │                   │                       │
+│  전체 앱 일괄 적용   │                   │  분석→스펙→구현→정리    │
+│  (ThemeData+폰트)  │                   │  (화면마다 반복)        │
+└───────────────────┘                   └───────────────────────┘
 ```
+
+**Phase F 선택 기준:** 디자인 시스템 존재 + 전체 앱 스타일 통일 요청
+**Phase 2A~3 선택 기준:** 특정 화면 개선 요청 또는 세부 분석 필요
+
+---
+
+## Phase F: Foundation (전체 앱 일괄 적용)
+
+**Trigger:** 디자인 시스템 존재 + "전체 테마 적용", "폰트 적용", "앱 스타일 통일" 요청
+
+**Purpose:** 분석/제안 단계 없이 디자인 시스템을 ThemeData + 폰트로 전체 앱에 즉시 적용
+
+**Execute:** 직접 실행 (Task agent 불필요)
+- Read: `.claude/skills/ui-renewal/references/phase-f-foundation.md`
+- Read: Design System (`design-systems/{product}-design-system-v*.md`)
+
+**Tasks:**
+1. 폰트 설치 (pubspec.yaml + assets/fonts/)
+2. AppTheme 클래스 생성 (`lib/core/presentation/theme/app_theme.dart`)
+3. ThemeData + ThemeExtension 정의
+4. main.dart에 테마 적용
+5. 빌드 확인
+
+**Output:**
+- `lib/core/presentation/theme/app_theme.dart` (ThemeData + Extension)
+- `lib/core/presentation/theme/app_colors.dart` (색상 상수)
+- `lib/core/presentation/theme/app_typography.dart` (타이포그래피)
+- Updated `pubspec.yaml` (폰트 등록)
+- Updated `main.dart` (테마 적용)
+
+**CRITICAL Constraints:**
+- ONLY modify: `lib/core/presentation/**`, `pubspec.yaml`, `main.dart`
+- NEVER modify: 개별 위젯의 하드코딩된 스타일 (이후 Phase 2A~3에서 처리)
+
+**Next:** 완료 또는 Phase 2A~3로 화면별 세부 작업
+
+---
 
 ## Phase 1: Design System Creation
 

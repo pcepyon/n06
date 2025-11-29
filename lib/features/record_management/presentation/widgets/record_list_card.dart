@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/widgets/record_type_icon.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
 
 /// RecordListCard component
 /// 기록 항목을 표시하는 카드 컨테이너
@@ -79,35 +80,35 @@ class _RecordListCardState extends State<RecordListCard>
                 ),
                 decoration: BoxDecoration(
                   color: _isPressed
-                      ? const Color(0xFFF1F5F9) // Neutral-100 (롱프레스)
-                      : const Color(0xFFFFFFFF), // White
+                      ? AppColors.surfaceVariant
+                      : AppColors.surface,
                   border: Border.all(
-                    color: const Color(0xFFE2E8F0), // Neutral-200
+                    color: AppColors.border,
                     width: 1,
                   ),
                   borderRadius: BorderRadius.circular(12), // md
                   boxShadow: [
                     // Shadow sm (기본)
                     BoxShadow(
-                      color: const Color(0x0F0F172A).withValues(alpha: 0.06),
+                      color: AppColors.neutral900.withValues(alpha: 0.06),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
                     BoxShadow(
-                      color: const Color(0x0F0F172A).withValues(alpha: 0.04),
+                      color: AppColors.neutral900.withValues(alpha: 0.04),
                       blurRadius: 2,
                       offset: const Offset(0, 1),
                     ),
                     // Shadow md (호버)
                     if (_isHovering)
                       BoxShadow(
-                        color: const Color(0x0F0F172A).withValues(alpha: 0.08),
+                        color: AppColors.neutral900.withValues(alpha: 0.08),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
                     if (_isHovering)
                       BoxShadow(
-                        color: const Color(0x0F0F172A).withValues(alpha: 0.04),
+                        color: AppColors.neutral900.withValues(alpha: 0.04),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -144,12 +145,12 @@ class _RecordListCardState extends State<RecordListCard>
                           icon: const Icon(
                             Icons.delete_outline,
                             size: 24,
-                            color: Color(0xFFEF4444), // Error
+                            color: AppColors.error,
                           ),
                           splashColor:
-                              const Color(0xFFFEF2F2), // Error at 10%
-                          highlightColor: const Color(0xFFFEF2F2),
-                          hoverColor: const Color(0xFFFEF2F2),
+                              AppColors.error.withValues(alpha: 0.1),
+                          highlightColor: AppColors.error.withValues(alpha: 0.1),
+                          hoverColor: AppColors.error.withValues(alpha: 0.1),
                           tooltip: '삭제',
                         ),
                       ),

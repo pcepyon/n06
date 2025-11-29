@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 class InjectionSiteSelectorV2 extends ConsumerStatefulWidget {
   final String? initialSite;
@@ -52,13 +54,9 @@ class _InjectionSiteSelectorV2State extends ConsumerState<InjectionSiteSelectorV
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '주사 부위 선택',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF334155),
-          ),
+          style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 12),
 
@@ -102,14 +100,14 @@ class _InjectionSiteSelectorV2State extends ConsumerState<InjectionSiteSelectorV
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7), // Yellow-100
+              color: AppColors.warning.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.warning_amber,
-                  color: Color(0xFFF59E0B),
+                  color: AppColors.warning,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -117,7 +115,9 @@ class _InjectionSiteSelectorV2State extends ConsumerState<InjectionSiteSelectorV
                   child: Text(
                     '이 부위는 ${_getDaysAgo(selectedSite!)}일 전에 사용했습니다. '
                     '1주 이상 간격을 권장합니다.',
-                    style: const TextStyle(fontSize: 14, color: Color(0xFF92400E)),
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.warning,
+                    ),
                   ),
                 ),
               ],
@@ -164,16 +164,16 @@ class _InjectionSiteSelectorV2State extends ConsumerState<InjectionSiteSelectorV
       },
       style: OutlinedButton.styleFrom(
         backgroundColor: isSelected
-            ? const Color(0xFFDCFCE7) // Primary-light
+            ? AppColors.primary.withValues(alpha: 0.1)
             : isRecentlyUsed
-                ? const Color(0xFFFEF3C7) // Yellow-100
-                : Colors.white,
+                ? AppColors.warning.withValues(alpha: 0.1)
+                : AppColors.surface,
         side: BorderSide(
           color: isSelected
-              ? const Color(0xFF4ADE80) // Primary
+              ? AppColors.primary
               : isRecentlyUsed
-                  ? const Color(0xFFF59E0B) // Yellow-500
-                  : const Color(0xFFCBD5E1), // Neutral-300
+                  ? AppColors.warning
+                  : AppColors.borderDark,
           width: 2,
         ),
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -183,17 +183,15 @@ class _InjectionSiteSelectorV2State extends ConsumerState<InjectionSiteSelectorV
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 14,
-              color: isSelected ? const Color(0xFF16A34A) : const Color(0xFF334155),
+            style: AppTypography.labelMedium.copyWith(
+              color: isSelected ? AppColors.success : AppColors.textSecondary,
             ),
           ),
           if (daysAgo < 999)
             Text(
               '$daysAgo일 전',
-              style: const TextStyle(
-                fontSize: 11,
-                color: Color(0xFF64748B),
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textTertiary,
               ),
             ),
         ],

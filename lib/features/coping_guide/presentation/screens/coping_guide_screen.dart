@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import '../../application/notifiers/coping_guide_notifier.dart';
 import '../widgets/coping_guide_card.dart';
 import 'detailed_guide_screen.dart';
@@ -31,39 +33,35 @@ class _CopingGuideScreenState extends ConsumerState<CopingGuideScreen> {
       appBar: AppBar(
         title: const Text(
           '부작용 대처 가이드',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1E293B),
-          ),
+          style: AppTypography.heading2,
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
           child: Column(
             children: [
               const Divider(
-                color: Color(0xFFE2E8F0),
+                color: AppColors.border,
                 height: 1,
                 thickness: 1,
               ),
               Container(
                 height: 3,
-                color: const Color(0xFF4ADE80),
+                color: AppColors.primary,
               ),
             ],
           ),
         ),
         iconTheme: const IconThemeData(
-          color: Color(0xFF475569),
+          color: AppColors.textSecondary,
           size: 24,
         ),
       ),
       body: guideList.when(
         loading: () => const Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4ADE80)),
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
           ),
         ),
         error: (err, stack) => const Center(child: Text('오류가 발생했습니다')),
@@ -78,7 +76,7 @@ class _CopingGuideScreenState extends ConsumerState<CopingGuideScreen> {
             separatorBuilder: (context, index) => const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Divider(
-                color: Color(0xFFE2E8F0),
+                color: AppColors.border,
                 height: 1,
                 thickness: 1,
               ),

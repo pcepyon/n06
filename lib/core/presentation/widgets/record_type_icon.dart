@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
 
 /// RecordTypeIcon component
 /// 기록 타입별 아이콘과 색상을 반환하는 재사용 가능한 위젯
@@ -35,17 +36,17 @@ class RecordTypeIcon extends StatelessWidget {
       case RecordType.weight:
         return _RecordTypeConfig(
           icon: Icons.monitor_weight_outlined,
-          color: const Color(0xFF10B981), // Emerald
+          color: AppColors.success,
         );
       case RecordType.symptom:
         return _RecordTypeConfig(
           icon: Icons.warning_amber_outlined,
-          color: const Color(0xFFF59E0B), // Amber
+          color: AppColors.warning,
         );
       case RecordType.dose:
         return _RecordTypeConfig(
           icon: Icons.medical_services_outlined,
-          color: const Color(0xFF4ADE80), // Primary
+          color: AppColors.primary,
         );
     }
   }
@@ -54,11 +55,11 @@ class RecordTypeIcon extends StatelessWidget {
   static Color getColorBarColor(RecordType type) {
     switch (type) {
       case RecordType.weight:
-        return const Color(0xFF10B981); // Emerald
+        return AppColors.success;
       case RecordType.symptom:
-        return const Color(0xFFF59E0B); // Amber
+        return AppColors.warning;
       case RecordType.dose:
-        return const Color(0xFF4ADE80); // Primary
+        return AppColors.primary;
     }
   }
 }

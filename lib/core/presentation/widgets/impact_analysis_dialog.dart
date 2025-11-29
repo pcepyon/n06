@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/tracking/domain/usecases/analyze_plan_change_impact_usecase.dart';
 
 /// ImpactAnalysisDialog: 투여 계획 변경 영향 분석 다이얼로그
@@ -29,18 +31,17 @@ class ImpactAnalysisDialog extends StatelessWidget {
       child: Container(
         constraints: const BoxConstraints(maxWidth: 480),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16), // lg
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            // xl shadow
             BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.12),
+              color: AppColors.neutral900.withValues(alpha: 0.12),
               blurRadius: 32,
               spreadRadius: 8,
               offset: const Offset(0, 16),
             ),
             BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.08),
+              color: AppColors.neutral900.withValues(alpha: 0.08),
               blurRadius: 16,
               spreadRadius: 0,
               offset: const Offset(0, 8),
@@ -56,7 +57,7 @@ class ImpactAnalysisDialog extends StatelessWidget {
               decoration: const BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: Color(0xFFE2E8F0), // Neutral-200
+                    color: AppColors.border,
                     width: 1,
                   ),
                 ),
@@ -66,11 +67,7 @@ class ImpactAnalysisDialog extends StatelessWidget {
                 children: [
                   Text(
                     '투여 계획 변경',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: const Color(0xFF1E293B), // Neutral-800
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24,
-                    ),
+                    style: AppTypography.heading1,
                   ),
                   GestureDetector(
                     onTap: onCancel,
@@ -79,7 +76,7 @@ class ImpactAnalysisDialog extends StatelessWidget {
                       child: Icon(
                         Icons.close,
                         size: 24,
-                        color: const Color(0xFF64748B), // Neutral-500
+                        color: AppColors.textTertiary,
                       ),
                     ),
                   ),
@@ -94,14 +91,9 @@ class ImpactAnalysisDialog extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 설명 텍스트
                   Text(
                     '투여 계획 변경 시 이후 스케줄이 재계산됩니다.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF475569), // Neutral-600
-                      height: 1.5,
-                      fontSize: 16,
-                    ),
+                    style: AppTypography.bodyMedium,
                   ),
                   const SizedBox(height: 24),
 
@@ -109,9 +101,9 @@ class ImpactAnalysisDialog extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4), // Success light
+                      color: AppColors.success.withValues(alpha: 0.1),
                       border: Border.all(
-                        color: const Color(0xFFD1FAE5), // Success lighter
+                        color: AppColors.success.withValues(alpha: 0.3),
                         width: 1,
                       ),
                       borderRadius: BorderRadius.circular(8),
@@ -121,16 +113,15 @@ class ImpactAnalysisDialog extends StatelessWidget {
                         Icon(
                           Icons.info,
                           size: 20,
-                          color: const Color(0xFF10B981), // Success
+                          color: AppColors.success,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             '영향받는 스케줄: ${impact.affectedScheduleCount}개',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: const Color(0xFF065F46), // Success dark
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: const Color(0xFF065F46),
                               fontWeight: FontWeight.w500,
-                              fontSize: 16,
                             ),
                           ),
                         ),
@@ -143,10 +134,8 @@ class ImpactAnalysisDialog extends StatelessWidget {
                   if (impact.changedFields.isNotEmpty) ...[
                     Text(
                       '변경되는 항목:',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: const Color(0xFF334155), // Neutral-700
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.neutral700,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -160,19 +149,17 @@ class ImpactAnalysisDialog extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF), // Info light
+                            color: AppColors.info.withValues(alpha: 0.1),
                             border: Border.all(
-                              color: const Color(0xFFBFDBFE), // Info lighter
+                              color: AppColors.info.withValues(alpha: 0.3),
                               width: 1,
                             ),
-                            borderRadius: BorderRadius.circular(20), // full
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             field,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: const Color(0xFF1E40AF), // Info dark
-                              fontWeight: FontWeight.w500,
-                              fontSize: 12,
+                            style: AppTypography.labelSmall.copyWith(
+                              color: const Color(0xFF1E40AF),
                             ),
                           ),
                         );
@@ -186,9 +173,9 @@ class ImpactAnalysisDialog extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEF3C7), // Warning light
+                        color: AppColors.warning.withValues(alpha: 0.15),
                         border: Border.all(
-                          color: const Color(0xFFFDE68A), // Warning lighter
+                          color: AppColors.warning.withValues(alpha: 0.4),
                           width: 1,
                         ),
                         borderRadius: BorderRadius.circular(8),
@@ -199,16 +186,14 @@ class ImpactAnalysisDialog extends StatelessWidget {
                           Icon(
                             Icons.warning_amber,
                             size: 20,
-                            color: const Color(0xFFB45309), // Warning dark
+                            color: AppColors.secondaryPressed,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               impact.warningMessage!,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: const Color(0xFFB45309), // Warning dark
-                                height: 1.4,
-                                fontSize: 14,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.secondaryPressed,
                               ),
                             ),
                           ),
@@ -225,7 +210,7 @@ class ImpactAnalysisDialog extends StatelessWidget {
               decoration: const BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: Color(0xFFE2E8F0), // Neutral-200
+                    color: AppColors.border,
                     width: 1,
                   ),
                 ),
@@ -233,52 +218,30 @@ class ImpactAnalysisDialog extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // 취소 버튼
                   Expanded(
                     child: SizedBox(
                       height: 44,
                       child: OutlinedButton(
                         onPressed: onCancel,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(
-                            color: Color(0xFF4ADE80), // Primary
-                            width: 2,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8), // sm
-                          ),
-                        ),
                         child: Text(
                           '취소',
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: const Color(0xFF4ADE80), // Primary
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
+                          style: AppTypography.labelMedium.copyWith(
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // 확인 버튼
                   Expanded(
                     child: SizedBox(
                       height: 44,
                       child: ElevatedButton(
                         onPressed: onConfirm,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4ADE80), // Primary
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8), // sm
-                          ),
-                        ),
                         child: Text(
                           '확인',
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          style: AppTypography.labelMedium.copyWith(
                             color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
                           ),
                         ),
                       ),

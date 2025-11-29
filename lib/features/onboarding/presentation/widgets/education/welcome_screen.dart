@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -51,11 +53,8 @@ class WelcomeScreen extends StatelessWidget {
           },
           child: Text(
             '당신이 여기까지 오기까지\n얼마나 많은 노력을 했는지 알아요',
-            style: const TextStyle(
-              fontSize: 16, // base
-              fontWeight: FontWeight.w400, // Regular
-              color: Color(0xFF334155), // Neutral-700
-              height: 1.5, // 24/16
+            style: AppTypography.bodyLarge.copyWith(
+              color: const Color(0xFF334155), // Neutral-700
             ),
             textAlign: TextAlign.center,
           ),
@@ -90,14 +89,14 @@ class WelcomeScreen extends StatelessWidget {
         return Container(
           height: effectiveHeight,
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9), // Neutral-100
+            color: AppColors.surfaceVariant,
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Center(
             child: Icon(
               Icons.animation,
               size: 48,
-              color: Color(0xFF94A3B8), // Neutral-400
+              color: AppColors.textDisabled,
             ),
           ),
         );
@@ -112,15 +111,14 @@ class WelcomeScreen extends StatelessWidget {
         color: const Color(0xFFF0FDF4), // Green-50
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFF4ADE80).withValues(alpha: 0.3),
+          color: AppColors.primary.withValues(alpha: 0.3),
         ),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 16,
+        style: AppTypography.bodyLarge.copyWith(
           fontStyle: FontStyle.italic,
-          color: Color(0xFF166534), // Green-800
+          color: const Color(0xFF166534), // Green-800
           height: 1.6,
         ),
         textAlign: TextAlign.center,

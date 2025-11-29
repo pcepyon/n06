@@ -11,6 +11,8 @@ import 'package:n06/core/presentation/widgets/record_type_icon.dart';
 import 'package:n06/core/presentation/widgets/empty_state_widget.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_toast.dart';
 import 'package:intl/intl.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// 과거 기록 목록 화면 (체중/증상/투여)
 /// Gabium Design System 기반 UI 개선 완료
@@ -25,14 +27,10 @@ class RecordListScreen extends ConsumerWidget {
         // Change 1: AppBar 색상 및 스타일 적용
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
+          backgroundColor: AppColors.background,
           title: const Text(
             '기록 관리',
-            style: TextStyle(
-              fontSize: 20, // Typography - xl
-              fontWeight: FontWeight.bold, // 700
-              color: Color(0xFF1E293B), // Neutral-800
-            ),
+            style: AppTypography.heading2,
           ),
           centerTitle: false,
           bottom: PreferredSize(
@@ -43,8 +41,8 @@ class RecordListScreen extends ConsumerWidget {
                 Container(
                   color: Colors.transparent,
                   child: const TabBar(
-                    labelColor: Color(0xFF4ADE80), // Primary
-                    unselectedLabelColor: Color(0xFF64748B), // Neutral-500
+                    labelColor: AppColors.primary,
+                    unselectedLabelColor: AppColors.textTertiary,
                     labelStyle: TextStyle(
                       fontSize: 16, // Typography - base
                       fontWeight: FontWeight.w500, // Medium (500)
@@ -55,7 +53,7 @@ class RecordListScreen extends ConsumerWidget {
                     ),
                     indicator: UnderlineTabIndicator(
                       borderSide: BorderSide(
-                        color: Color(0xFF4ADE80), // Primary
+                        color: AppColors.primary,
                         width: 2, // 2px
                       ),
                     ),
@@ -70,7 +68,7 @@ class RecordListScreen extends ConsumerWidget {
                 // 하단 테두리
                 Container(
                   height: 1,
-                  color: const Color(0xFFE2E8F0), // Neutral-200
+                  color: AppColors.border,
                 ),
               ],
             ),
@@ -78,7 +76,7 @@ class RecordListScreen extends ConsumerWidget {
         ),
         // TabBarView 배경색
         body: Container(
-          color: const Color(0xFFF8FAFC), // Neutral-50
+          color: AppColors.background,
           child: const TabBarView(
             children: [
               _WeightRecordsTab(),
@@ -200,20 +198,14 @@ class _WeightRecordTile extends ConsumerWidget {
           // Change 3: 기본 정보 (lg, Semibold)
           Text(
             '${record.weightKg} kg',
-            style: const TextStyle(
-              fontSize: 18, // Typography - lg
-              fontWeight: FontWeight.w600, // Semibold (600)
-              color: Color(0xFF1E293B), // Neutral-800
-            ),
+            style: AppTypography.heading3,
           ),
           const SizedBox(height: 4), // xs
           // Change 3: 메타데이터 (sm, Regular)
           Text(
             '$dateStr $timeStr',
-            style: const TextStyle(
-              fontSize: 14, // Typography - sm
-              fontWeight: FontWeight.normal, // Regular (400)
-              color: Color(0xFF64748B), // Neutral-500
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textTertiary,
             ),
           ),
         ],
@@ -248,26 +240,19 @@ class _WeightRecordTile extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFFFFFFFF), // White
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16), // lg
         ),
         elevation: 4, // xl shadow approximation
         title: const Text(
           '기록을 삭제하시겠습니까?',
-          style: TextStyle(
-            fontSize: 24, // 2xl
-            fontWeight: FontWeight.bold, // 700
-            color: Color(0xFF1E293B), // Neutral-800
-          ),
+          style: AppTypography.heading1,
         ),
-        content: const Text(
+        content: Text(
           '삭제된 기록은 복구할 수 없습니다.',
-          style: TextStyle(
-            fontSize: 16, // base
-            fontWeight: FontWeight.normal, // 400
-            color: Color(0xFF64748B), // Neutral-500
-            height: 1.5, // 24px line height
+          style: AppTypography.bodyLarge.copyWith(
+            color: AppColors.textTertiary,
           ),
         ),
         actions: [
@@ -275,12 +260,12 @@ class _WeightRecordTile extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF4ADE80), // Primary
+              foregroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8), // sm
                 side: const BorderSide(
-                  color: Color(0xFF4ADE80), // Primary
+                  color: AppColors.primary,
                   width: 2,
                 ),
               ),
@@ -298,8 +283,8 @@ class _WeightRecordTile extends ConsumerWidget {
           ElevatedButton(
             onPressed: () => _deleteWeight(context, ref),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444), // Error
-              foregroundColor: const Color(0xFFFFFFFF),
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.surface,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8), // sm
@@ -334,20 +319,18 @@ class _SymptomRecordsTab extends ConsumerWidget {
       error: (err, stack) => Center(
         child: Text(
           '오류: $err',
-          style: const TextStyle(
-            fontSize: 16,
-            color: Color(0xFFEF4444),
+          style: AppTypography.bodyLarge.copyWith(
+            color: AppColors.error,
           ),
         ),
       ),
       data: (user) {
         if (user == null) {
-          return const Center(
+          return Center(
             child: Text(
               '로그인이 필요합니다',
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF64748B),
+              style: AppTypography.bodyLarge.copyWith(
+                color: AppColors.textTertiary,
               ),
             ),
           );
@@ -425,30 +408,22 @@ class _SymptomRecordTile extends ConsumerWidget {
           // 기본 정보
           Text(
             record.symptomName,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1E293B),
-            ),
+            style: AppTypography.heading3,
           ),
           const SizedBox(height: 4),
           // 보조 정보
           Text(
             '심각도: ${record.severity}/10',
-            style: const TextStyle(
-              fontSize: 16, // Typography - base
-              fontWeight: FontWeight.normal, // Regular (400)
-              color: Color(0xFF475569), // Neutral-600
+            style: AppTypography.bodyLarge.copyWith(
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 4),
           // 메타데이터
           Text(
             '$dateStr $timeStr',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
-              color: Color(0xFF64748B),
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textTertiary,
             ),
           ),
         ],
@@ -481,38 +456,31 @@ class _SymptomRecordTile extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         elevation: 4,
         title: const Text(
           '기록을 삭제하시겠습니까?',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
-          ),
+          style: AppTypography.heading1,
         ),
-        content: const Text(
+        content: Text(
           '삭제된 기록은 복구할 수 없습니다.',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.normal,
-            color: Color(0xFF64748B),
-            height: 1.5,
+          style: AppTypography.bodyLarge.copyWith(
+            color: AppColors.textTertiary,
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF4ADE80),
+              foregroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
                 side: const BorderSide(
-                  color: Color(0xFF4ADE80),
+                  color: AppColors.primary,
                   width: 2,
                 ),
               ),
@@ -529,8 +497,8 @@ class _SymptomRecordTile extends ConsumerWidget {
           ElevatedButton(
             onPressed: () => _deleteSymptom(context, ref),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-              foregroundColor: const Color(0xFFFFFFFF),
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.surface,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -565,20 +533,18 @@ class _DoseRecordsTab extends ConsumerWidget {
       error: (err, stack) => Center(
         child: Text(
           '오류: $err',
-          style: const TextStyle(
-            fontSize: 16,
-            color: Color(0xFFEF4444),
+          style: AppTypography.bodyLarge.copyWith(
+            color: AppColors.error,
           ),
         ),
       ),
       data: (user) {
         if (user == null) {
-          return const Center(
+          return Center(
             child: Text(
               '로그인이 필요합니다',
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF64748B),
+              style: AppTypography.bodyLarge.copyWith(
+                color: AppColors.textTertiary,
               ),
             ),
           );
@@ -656,30 +622,22 @@ class _DoseRecordTile extends ConsumerWidget {
           // 기본 정보
           Text(
             '${record.actualDoseMg} mg',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1E293B),
-            ),
+            style: AppTypography.heading3,
           ),
           const SizedBox(height: 4),
           // 보조 정보
           Text(
             '부위: $siteDisplay',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.normal,
-              color: Color(0xFF475569),
+            style: AppTypography.bodyLarge.copyWith(
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 4),
           // 메타데이터
           Text(
             dateStr,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
-              color: Color(0xFF64748B),
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textTertiary,
             ),
           ),
         ],
@@ -715,38 +673,31 @@ class _DoseRecordTile extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         elevation: 4,
         title: const Text(
           '기록을 삭제하시겠습니까?',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
-          ),
+          style: AppTypography.heading1,
         ),
-        content: const Text(
+        content: Text(
           '삭제된 기록은 복구할 수 없습니다.',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.normal,
-            color: Color(0xFF64748B),
-            height: 1.5,
+          style: AppTypography.bodyLarge.copyWith(
+            color: AppColors.textTertiary,
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF4ADE80),
+              foregroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
                 side: const BorderSide(
-                  color: Color(0xFF4ADE80),
+                  color: AppColors.primary,
                   width: 2,
                 ),
               ),
@@ -763,8 +714,8 @@ class _DoseRecordTile extends ConsumerWidget {
           ElevatedButton(
             onPressed: () => _deleteDose(context, ref),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-              foregroundColor: const Color(0xFFFFFFFF),
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.surface,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -791,19 +742,17 @@ Widget _buildLoadingState() {
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        CircularProgressIndicator(
-          valueColor: const AlwaysStoppedAnimation<Color>(
-            Color(0xFF4ADE80), // Colors - Primary
+        const CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(
+            AppColors.primary,
           ),
           strokeWidth: 3,
         ),
         const SizedBox(height: 16), // md
-        const Text(
+        Text(
           '기록을 불러오는 중...',
-          style: TextStyle(
-            fontSize: 16, // base
-            fontWeight: FontWeight.normal,
-            color: Color(0xFF64748B), // Neutral-500
+          style: AppTypography.bodyLarge.copyWith(
+            color: AppColors.textTertiary,
           ),
         ),
       ],

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import '../../../../features/authentication/presentation/widgets/gabium_button.dart';
 import '../../../../features/onboarding/presentation/widgets/validation_alert.dart';
 import '../../domain/entities/coping_guide.dart';
@@ -48,13 +50,13 @@ class CopingGuideCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              top: BorderSide(color: Color(0xFF4ADE80), width: 3),
-              bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-              left: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-              right: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: const Border(
+              top: BorderSide(color: AppColors.primary, width: 3),
+              bottom: BorderSide(color: AppColors.border, width: 1),
+              left: BorderSide(color: AppColors.border, width: 1),
+              right: BorderSide(color: AppColors.border, width: 1),
             ),
           ),
           padding: const EdgeInsets.all(16),
@@ -71,26 +73,16 @@ class CopingGuideCard extends StatelessWidget {
           ],
           Text(
             '${currentGuide.symptomName} 대처 가이드',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1E293B),
-              height: 1.44,
-            ),
+            style: AppTypography.heading3.copyWith(height: 1.44),
           ),
           const SizedBox(height: 16),
           Text(
             currentGuide.shortGuide,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF475569),
-              height: 1.5,
-            ),
+            style: AppTypography.bodyMedium.copyWith(height: 1.5),
           ),
           const SizedBox(height: 16),
           const Divider(
-            color: Color(0xFFE2E8F0),
+            color: AppColors.border,
             height: 1,
             thickness: 1,
           ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// EmptyStateWidget
 /// 빈 상태를 표시하는 위젯
@@ -24,68 +26,46 @@ class EmptyStateWidget extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: 16, // md spacing
-          vertical: 32, // xl spacing
+          horizontal: 16,
+          vertical: 32,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon (120x120px)
             Icon(
               icon,
               size: 120,
-              color: const Color(0xFFCBD5E1), // Neutral-300
+              color: AppColors.neutral300,
             ),
-            const SizedBox(height: 24), // lg spacing
-
-            // Title (lg, Semibold)
+            const SizedBox(height: 24),
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18, // lg
-                fontWeight: FontWeight.w600, // Semibold
-                color: Color(0xFF334155), // Neutral-700
+              style: AppTypography.heading3.copyWith(
+                color: AppColors.neutral700,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24), // lg spacing
-
-            // Description (base, Regular)
+            const SizedBox(height: 24),
             Text(
               description,
-              style: const TextStyle(
-                fontSize: 16, // base
-                fontWeight: FontWeight.w400, // Regular
-                color: Color(0xFF64748B), // Neutral-500
-                height: 1.5, // 24px line height
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textTertiary,
               ),
               textAlign: TextAlign.center,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
-
-            // Optional CTA Button
             if (buttonText != null && onButtonPressed != null) ...[
-              const SizedBox(height: 24), // lg spacing
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                height: 44, // Medium button height
+                height: 44,
                 child: ElevatedButton(
                   onPressed: onButtonPressed,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4ADE80), // Primary
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8), // sm radius
-                    ),
-                    elevation: 2, // sm shadow
-                  ),
                   child: Text(
                     buttonText!,
-                    style: const TextStyle(
-                      fontSize: 16, // base
-                      fontWeight: FontWeight.w600, // Semibold
+                    style: AppTypography.labelLarge.copyWith(
+                      color: Colors.white,
                     ),
                   ),
                 ),

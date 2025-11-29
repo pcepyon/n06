@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// Summary card component for displaying grouped data
 /// Reusable for summary screens across the app
@@ -17,9 +19,9 @@ class SummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16), // md
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF), // White
+        color: AppColors.surface,
         border: Border.all(
-          color: const Color(0xFFE2E8F0), // Neutral-200
+          color: AppColors.border,
           width: 1,
         ),
         borderRadius: BorderRadius.circular(12), // md
@@ -40,11 +42,7 @@ class SummaryCard extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 16),
             child: Text(
               title,
-              style: const TextStyle(
-                fontSize: 18, // lg
-                fontWeight: FontWeight.w600, // Semibold
-                color: Color(0xFF1E293B), // Neutral-800
-              ),
+              style: AppTypography.heading3,
             ),
           ),
 
@@ -62,21 +60,15 @@ class SummaryCard extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
-                      fontSize: 14, // sm
-                      fontWeight: FontWeight.w500, // Medium
-                      color: Color(0xFF334155), // Neutral-700
-                    ),
+                    style: AppTypography.labelMedium,
                   ),
                   const SizedBox(width: 16),
                   Flexible(
                     child: Text(
                       value,
                       textAlign: TextAlign.right,
-                      style: const TextStyle(
-                        fontSize: 16, // base
-                        fontWeight: FontWeight.w400, // Regular
-                        color: Color(0xFF475569), // Neutral-600
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ),

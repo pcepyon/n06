@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 class SettingsMenuItemImproved extends StatefulWidget {
   final String title;
@@ -34,7 +36,7 @@ class _SettingsMenuItemImprovedState extends State<SettingsMenuItemImproved>
 
     _bgColorAnimation = ColorTween(
       begin: Colors.transparent,
-      end: const Color(0xFFF1F5F9), // Neutral-100
+      end: AppColors.surfaceVariant,
     ).animate(_controller);
   }
 
@@ -77,7 +79,7 @@ class _SettingsMenuItemImprovedState extends State<SettingsMenuItemImproved>
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: const Color(0xFFE2E8F0), // Neutral-200
+                color: AppColors.border,
                 width: 1.0,
               ),
             ),
@@ -104,23 +106,19 @@ class _SettingsMenuItemImprovedState extends State<SettingsMenuItemImproved>
                     children: [
                       Text(
                         widget.title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: AppTypography.bodyLarge.copyWith(
                           color: widget.enabled
-                              ? const Color(0xFF1E293B) // Neutral-800
-                              : const Color(0xFF1E293B).withOpacity(0.4),
-                          fontSize: 16.0, // base
-                          fontWeight: FontWeight.w600, // Semibold
+                              ? AppColors.textPrimary
+                              : AppColors.textPrimary.withValues(alpha: 0.4),
                         ),
                       ),
                       const SizedBox(height: 2.0),
                       Text(
                         widget.subtitle,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        style: AppTypography.bodySmall.copyWith(
                           color: widget.enabled
-                              ? const Color(0xFF64748B) // Neutral-500
-                              : const Color(0xFF64748B).withOpacity(0.4),
-                          fontSize: 14.0, // sm
-                          fontWeight: FontWeight.w400, // Regular
+                              ? AppColors.textTertiary
+                              : AppColors.textTertiary.withValues(alpha: 0.4),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -135,8 +133,8 @@ class _SettingsMenuItemImprovedState extends State<SettingsMenuItemImproved>
                   Icons.chevron_right,
                   size: 20.0, // Icon size
                   color: widget.enabled
-                      ? const Color(0xFF94A3B8) // Neutral-400
-                      : const Color(0xFF94A3B8).withOpacity(0.4),
+                      ? AppColors.textDisabled
+                      : AppColors.textDisabled.withValues(alpha: 0.4),
                 ),
               ],
             ),

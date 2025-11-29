@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';
 import 'package:n06/features/dashboard/presentation/widgets/greeting_widget.dart';
 import 'package:n06/features/dashboard/presentation/widgets/weekly_progress_widget.dart';
@@ -16,35 +18,28 @@ class HomeDashboardScreen extends ConsumerWidget {
     final dashboardState = ref.watch(dashboardNotifierProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         toolbarHeight: 56,
         title: Text(
           '홈',
-          style: TextStyle(
-            fontSize: 20, // xl
-            fontWeight: FontWeight.w600, // Semibold
-            color: Color(0xFF1E293B), // Neutral-800
-          ),
+          style: AppTypography.heading2,
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.settings_outlined, size: 24),
-            color: Color(0xFF334155), // Neutral-700
-            onPressed: () {
-              // Settings navigation is handled by Bottom Nav
-              // This can be removed or kept as a shortcut
-            },
-            constraints: BoxConstraints.tightFor(width: 44, height: 44),
+            icon: const Icon(Icons.settings_outlined, size: 24),
+            color: AppColors.neutral700,
+            onPressed: () {},
+            constraints: const BoxConstraints.tightFor(width: 44, height: 44),
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(1),
+          preferredSize: const Size.fromHeight(1),
           child: Container(
-            color: Color(0xFFE2E8F0), // Neutral-200
+            color: AppColors.border,
             height: 1,
           ),
         ),
@@ -52,63 +47,47 @@ class HomeDashboardScreen extends ConsumerWidget {
       body: dashboardState.when(
         loading: () => Center(
           child: CircularProgressIndicator(
-            color: Color(0xFF4ADE80), // Primary
+            color: AppColors.primary,
             strokeWidth: 4.0,
           ),
         ),
         error: (error, stackTrace) => Center(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   Icons.error_outline,
                   size: 60,
-                  color: Color(0xFFEF4444), // Error
+                  color: AppColors.error,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
                   '데이터를 불러올 수 없습니다',
-                  style: TextStyle(
-                    fontSize: 18, // lg
-                    fontWeight: FontWeight.w600, // Semibold
-                    color: Color(0xFF1E293B), // Neutral-800
-                  ),
+                  style: AppTypography.heading3,
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   '네트워크 연결을 확인하고 다시 시도해주세요.',
-                  style: TextStyle(
-                    fontSize: 16, // base
-                    fontWeight: FontWeight.w400, // Regular
-                    color: Color(0xFF475569), // Neutral-600
-                  ),
+                  style: AppTypography.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
                     ref.invalidate(dashboardNotifierProvider);
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF4ADE80), // Primary
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text('다시 시도'),
+                  child: const Text('다시 시도'),
                 ),
               ],
             ),
           ),
         ),
         data: (dashboardData) => RefreshIndicator(
-          color: Color(0xFF4ADE80), // Primary
-          backgroundColor: Colors.white,
+          color: AppColors.primary,
+          backgroundColor: AppColors.surface,
           strokeWidth: 3.0,
           displacement: 40.0,
           onRefresh: () async {

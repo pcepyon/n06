@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// 날짜 선택 위젯
 ///
@@ -62,7 +64,7 @@ class _DateSelectionWidgetState extends State<DateSelectionWidget> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: Theme.of(context).primaryColor,
+              primary: AppColors.primary,
             ),
           ),
           child: child!,
@@ -117,17 +119,17 @@ class _DateSelectionWidgetState extends State<DateSelectionWidget> {
             icon: const Icon(Icons.calendar_today, size: 20.0),
             label: Text(
               _formatDate(selectedDate),
-              style: const TextStyle(
-                fontSize: 16.0, // base
-                fontWeight: FontWeight.w500, // Medium
+              style: AppTypography.bodyLarge.copyWith(
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
               ),
             ),
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 48),
-              backgroundColor: const Color(0xFF4ADE80), // Primary
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0), // sm
+                borderRadius: BorderRadius.circular(8.0),
               ),
             ),
           ),

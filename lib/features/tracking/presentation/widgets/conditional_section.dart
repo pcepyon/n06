@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// 조건부 UI 섹션 컨테이너
 ///
@@ -23,16 +25,16 @@ class ConditionalSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color bgColor = isHighSeverity
-        ? const Color(0xFFF59E0B).withValues(alpha: 0.08) // Warning at 8%
-        : const Color(0xFF3B82F6).withValues(alpha: 0.08); // Info at 8%
+        ? AppColors.warning.withValues(alpha: 0.08)
+        : AppColors.info.withValues(alpha: 0.08);
 
     final Color borderColor = isHighSeverity
-        ? const Color(0xFFF59E0B) // Warning
-        : const Color(0xFF3B82F6); // Info
+        ? AppColors.warning
+        : AppColors.info;
 
     final IconData icon = isHighSeverity
-        ? Icons.error_outline // alert-circle equivalent
-        : Icons.label_outline; // tag equivalent
+        ? Icons.error_outline
+        : Icons.label_outline;
 
     final String label = isHighSeverity ? '24시간 지속 여부' : '관련 상황';
 
@@ -45,10 +47,10 @@ class ConditionalSection extends StatelessWidget {
             width: 4.0,
           ),
         ),
-        borderRadius: BorderRadius.circular(8.0), // sm
+        borderRadius: BorderRadius.circular(8.0),
       ),
-      padding: const EdgeInsets.all(16.0), // md
-      margin: const EdgeInsets.only(bottom: 16.0), // md
+      padding: const EdgeInsets.all(16.0),
+      margin: const EdgeInsets.only(bottom: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -60,13 +62,11 @@ class ConditionalSection extends StatelessWidget {
                 size: 20.0,
                 color: borderColor,
               ),
-              const SizedBox(width: 8.0), // sm
+              const SizedBox(width: 8.0),
               Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 18.0, // lg
-                  fontWeight: FontWeight.w600, // Semibold
-                  color: Color(0xFF334155), // Neutral-700
+                style: AppTypography.heading3.copyWith(
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],

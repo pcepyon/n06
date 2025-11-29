@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// 동의 체크박스 컴포넌트
 ///
@@ -40,7 +42,7 @@ class ConsentCheckbox extends StatelessWidget {
     return GestureDetector(
       onTap: () => onChanged(!value),
       child: SizedBox(
-        height: 44, // Touch target size
+        height: 44,
         child: Row(
           children: [
             // Checkbox (24x24px visual, 44x44px touch area)
@@ -50,13 +52,11 @@ class ConsentCheckbox extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: value
-                        ? const Color(0xFF4ADE80) // Primary
-                        : const Color(0xFF94A3B8), // Neutral-400
+                    color: value ? AppColors.primary : AppColors.neutral400,
                     width: 2,
                   ),
                   borderRadius: BorderRadius.circular(4),
-                  color: value ? const Color(0xFF4ADE80) : Colors.transparent,
+                  color: value ? AppColors.primary : Colors.transparent,
                 ),
                 child: value
                     ? const Icon(
@@ -67,7 +67,7 @@ class ConsentCheckbox extends StatelessWidget {
                     : null,
               ),
             ),
-            const SizedBox(width: 8), // Spacing xs
+            const SizedBox(width: 8),
             // Label
             Expanded(
               child: Row(
@@ -75,11 +75,8 @@ class ConsentCheckbox extends StatelessWidget {
                   Expanded(
                     child: Text(
                       label,
-                      style: const TextStyle(
-                        fontSize: 16, // Typography base
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFF334155), // Neutral-700
-                        height: 24 / 16,
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.neutral700,
                       ),
                     ),
                   ),
@@ -91,16 +88,14 @@ class ConsentCheckbox extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color:
-                            const Color(0xFFEF4444).withOpacity(0.1), // Error-50
+                        color: AppColors.error.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text(
+                      child: Text(
                         '필수',
-                        style: TextStyle(
-                          fontSize: 12, // Typography xs
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.error,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFFEF4444), // Error
                         ),
                       ),
                     ),

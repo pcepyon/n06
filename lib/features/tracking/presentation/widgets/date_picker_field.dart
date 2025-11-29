@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// DatePickerField: GabiumTextField 스타일을 따르는 날짜 선택 필드
 ///
@@ -53,10 +55,10 @@ class _DatePickerFieldState extends State<DatePickerField> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF4ADE80), // Primary
-              surface: Colors.white,
-              onSurface: Color(0xFF1E293B), // Neutral-800
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary,
+              surface: AppColors.surface,
+              onSurface: AppColors.textPrimary,
             ),
           ),
           child: child!,
@@ -85,10 +87,8 @@ class _DatePickerFieldState extends State<DatePickerField> {
         // 라벨
         Text(
           widget.label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: const Color(0xFF334155), // Neutral-700
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+          style: AppTypography.labelMedium.copyWith(
+            color: AppColors.textSecondary,
           ),
         ),
         const SizedBox(height: 8),
@@ -107,33 +107,32 @@ class _DatePickerFieldState extends State<DatePickerField> {
               decoration: BoxDecoration(
                 border: Border.all(
                   color: isFocused && widget.enabled
-                    ? const Color(0xFF4ADE80) // Primary (focus)
-                    : const Color(0xFFCBD5E1), // Neutral-300
+                    ? AppColors.primary
+                    : AppColors.borderDark,
                   width: 2,
                 ),
-                borderRadius: BorderRadius.circular(8), // sm
+                borderRadius: BorderRadius.circular(8),
                 color: isDisabled
-                  ? const Color(0xFFF8FAFC) // Neutral-50
-                  : Colors.white,
+                  ? AppColors.background
+                  : AppColors.surface,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     formattedDate,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    style: AppTypography.bodyLarge.copyWith(
                       color: isDisabled
-                        ? const Color(0xFFCBD5E1) // Neutral-300
-                        : const Color(0xFF334155), // Neutral-700
-                      fontSize: 16,
+                        ? AppColors.textDisabled
+                        : AppColors.textSecondary,
                     ),
                   ),
                   Icon(
                     Icons.calendar_today,
                     size: 24,
                     color: isDisabled
-                      ? const Color(0xFFCBD5E1) // Neutral-300
-                      : const Color(0xFF475569), // Neutral-600
+                      ? AppColors.textDisabled
+                      : AppColors.textSecondary,
                   ),
                 ],
               ),
@@ -146,9 +145,8 @@ class _DatePickerFieldState extends State<DatePickerField> {
           const SizedBox(height: 4),
           Text(
             widget.helperText!,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: const Color(0xFF94A3B8), // Neutral-400
-              fontSize: 12,
+            style: AppTypography.labelSmall.copyWith(
+              color: AppColors.textDisabled,
             ),
           ),
         ],

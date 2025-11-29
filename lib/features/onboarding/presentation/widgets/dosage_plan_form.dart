@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_text_field.dart';
 import 'package:n06/features/onboarding/presentation/widgets/validation_alert.dart';
@@ -94,11 +96,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
             const SizedBox(height: 16), // md
             Text(
               widget.isReviewMode ? '투여 계획 확인' : '투여 계획 설정',
-              style: const TextStyle(
-                fontSize: 20, // xl
-                fontWeight: FontWeight.w600, // Semibold
-                color: Color(0xFF1E293B), // Neutral-800
-              ),
+              style: AppTypography.heading2,
             ),
             const SizedBox(height: 16), // md
 
@@ -108,28 +106,24 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
               value: _selectedTemplate, // ignore: deprecated_member_use
               decoration: InputDecoration(
                 labelText: '약물명',
-                labelStyle: const TextStyle(
-                  fontSize: 14, // sm
-                  fontWeight: FontWeight.w600, // Semibold
-                  color: Color(0xFF334155), // Neutral-700
-                ),
+                labelStyle: AppTypography.labelMedium,
                 filled: true,
-                fillColor: const Color(0xFFFFFFFF),
+                fillColor: AppColors.surface,
                 contentPadding: const EdgeInsets.symmetric(
                   vertical: 12,
                   horizontal: 16,
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFCBD5E1), // Neutral-300
+                  borderSide: BorderSide(
+                    color: AppColors.borderDark,
                     width: 2,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(
-                    color: Color(0xFF4ADE80), // Primary
+                    color: AppColors.primary,
                     width: 2,
                   ),
                 ),
@@ -170,30 +164,26 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
                 height: 48,
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: const Color(0xFFCBD5E1), // Neutral-300
+                    color: AppColors.borderDark,
                     width: 2,
                   ),
                   borderRadius: BorderRadius.circular(8),
-                  color: const Color(0xFFFFFFFF),
+                  color: AppColors.surface,
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       '시작일',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF334155),
-                      ),
+                      style: AppTypography.labelMedium,
                     ),
                     Text(
                       _startDate != null
                           ? '${_startDate!.year}-${_startDate!.month.toString().padLeft(2, '0')}-${_startDate!.day.toString().padLeft(2, '0')}'
                           : '',
-                      style: const TextStyle(fontSize: 16),
+                      style: AppTypography.bodyLarge,
                     ),
                   ],
                 ),
@@ -218,35 +208,31 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
               value: _selectedDose, // ignore: deprecated_member_use
               decoration: InputDecoration(
                 labelText: '초기 용량 (mg)',
-                labelStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF334155),
-                ),
+                labelStyle: AppTypography.labelMedium,
                 filled: true,
-                fillColor: const Color(0xFFFFFFFF),
+                fillColor: AppColors.surface,
                 contentPadding: const EdgeInsets.symmetric(
                   vertical: 12,
                   horizontal: 16,
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFCBD5E1),
+                  borderSide: BorderSide(
+                    color: AppColors.borderDark,
                     width: 2,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(
-                    color: Color(0xFF4ADE80),
+                    color: AppColors.primary,
                     width: 2,
                   ),
                 ),
                 disabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFCBD5E1),
+                  borderSide: BorderSide(
+                    color: AppColors.borderDark,
                     width: 2,
                   ),
                 ),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
+
 /// Success state widget after feedback submission
 /// Shows animated checkmark with thank you message
 /// Auto-dismisses after 3 seconds or allows re-rating
@@ -60,9 +63,9 @@ class _CopingGuideFeedbackResultState extends State<CopingGuideFeedbackResult>
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFFECFDF5), // Success-50
+            color: AppColors.success.withValues(alpha: 0.1),
             border: const Border(
-              left: BorderSide(color: Color(0xFF10B981), width: 4),
+              left: BorderSide(color: AppColors.success, width: 4),
             ),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -70,7 +73,7 @@ class _CopingGuideFeedbackResultState extends State<CopingGuideFeedbackResult>
             children: [
               const Icon(
                 Icons.check_circle,
-                color: Color(0xFF10B981),
+                color: AppColors.success,
                 size: 24,
               ),
               const SizedBox(width: 12),
@@ -79,12 +82,11 @@ class _CopingGuideFeedbackResultState extends State<CopingGuideFeedbackResult>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
+                    Text(
                       '피드백을 주셔서 감사합니다!',
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: AppTypography.bodyLarge.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF065F46),
+                        color: AppColors.success,
                       ),
                     ),
                     if (widget.onRetry != null) ...[
@@ -101,7 +103,7 @@ class _CopingGuideFeedbackResultState extends State<CopingGuideFeedbackResult>
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: Color(0xFF10B981),
+                            color: AppColors.success,
                           ),
                         ),
                       ),

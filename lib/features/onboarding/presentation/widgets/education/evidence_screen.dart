@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
 
 class EvidenceScreen extends StatefulWidget {
@@ -69,10 +71,10 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9), // Neutral-100
+        color: AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFFE2E8F0), // Neutral-200
+          color: AppColors.border,
         ),
       ),
       child: Column(
@@ -86,31 +88,23 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
                 value: _showCounter ? 21 : 0,
                 duration: const Duration(milliseconds: 1500),
                 curve: Curves.easeOutCubic,
-                textStyle: const TextStyle(
-                  fontSize: 56,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF4ADE80), // Primary
-                  height: 1.0,
+                textStyle: AppTypography.numericLarge.copyWith(
+                  color: AppColors.primary,
                 ),
               ),
-              const Text(
+              Text(
                 '%',
-                style: TextStyle(
-                  fontSize: 56,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF4ADE80), // Primary
-                  height: 1.0,
+                style: AppTypography.numericLarge.copyWith(
+                  color: AppColors.primary,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             '평균 체중 감량',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF334155), // Neutral-700
+            style: AppTypography.heading3.copyWith(
+              color: const Color(0xFF334155), // Neutral-700
             ),
           ),
           const SizedBox(height: 16),
@@ -138,18 +132,17 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     '출처: 72주 임상시험 결과 (NEJM)',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF64748B), // Neutral-500
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textTertiary,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
+                  Icon(
                     Icons.open_in_new,
                     size: 14,
-                    color: Color(0xFF64748B), // Neutral-500
+                    color: AppColors.textTertiary,
                   ),
                 ],
               ),

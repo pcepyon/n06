@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/features/onboarding/application/notifiers/onboarding_notifier.dart';
 import 'package:n06/features/onboarding/presentation/widgets/summary_card.dart';
@@ -49,22 +51,15 @@ class SummaryScreen extends ConsumerWidget {
             // Encouragement Message
             Text(
               isReviewMode ? '입력하신 정보입니다' : '준비가 잘 되었어요! ✨',
-              style: TextStyle(
-                fontSize: 16, // base
+              style: AppTypography.bodyLarge.copyWith(
                 fontWeight: FontWeight.w500,
-                color: isReviewMode
-                    ? const Color(0xFF64748B) // Neutral-500
-                    : const Color(0xFF4ADE80), // Primary
+                color: isReviewMode ? AppColors.textTertiary : AppColors.primary,
               ),
             ),
             const SizedBox(height: 8), // sm
             Text(
               isReviewMode ? '정보 확인 (저장되지 않음)' : '정보 확인',
-              style: const TextStyle(
-                fontSize: 20, // xl
-                fontWeight: FontWeight.w600, // Semibold
-                color: Color(0xFF1E293B), // Neutral-800
-              ),
+              style: AppTypography.heading2,
             ),
             const SizedBox(height: 24), // lg
 
@@ -114,7 +109,7 @@ class SummaryScreen extends ConsumerWidget {
                   width: 48,
                   height: 48,
                   child: CircularProgressIndicator(
-                    color: Color(0xFF4ADE80), // Primary
+                    color: AppColors.primary,
                     strokeWidth: 4,
                   ),
                 ),

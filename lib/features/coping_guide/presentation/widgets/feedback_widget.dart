@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import '../../../../features/authentication/presentation/widgets/gabium_button.dart';
 import 'coping_guide_feedback_result.dart';
 
@@ -33,11 +34,7 @@ class _FeedbackWidgetState extends State<FeedbackWidget> {
       children: [
         const Text(
           '도움이 되었나요?',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF475569),
-          ),
+          style: AppTypography.bodySmall,
         ),
         const SizedBox(height: 12),
         Row(

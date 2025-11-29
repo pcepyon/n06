@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 class JourneyProgressIndicator extends StatelessWidget {
   final int currentStep; // 0-13
@@ -34,12 +36,9 @@ class JourneyProgressIndicator extends StatelessWidget {
               final isCurrent = index == _currentPart;
               return Text(
                 parts[index],
-                style: TextStyle(
-                  fontSize: 12,
+                style: AppTypography.caption.copyWith(
                   fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
-                  color: isActive
-                      ? const Color(0xFF4ADE80) // Primary
-                      : const Color(0xFF94A3B8), // Neutral-400
+                  color: isActive ? AppColors.primary : AppColors.textDisabled,
                 ),
               );
             }),
@@ -55,9 +54,7 @@ class JourneyProgressIndicator extends StatelessWidget {
                 return Expanded(
                   child: Container(
                     height: 2,
-                    color: isCompleted
-                        ? const Color(0xFF4ADE80)
-                        : const Color(0xFFE2E8F0),
+                    color: isCompleted ? AppColors.primary : AppColors.border,
                   ),
                 );
               } else {
@@ -69,9 +66,7 @@ class JourneyProgressIndicator extends StatelessWidget {
                   height: 12,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isActive
-                        ? const Color(0xFF4ADE80)
-                        : const Color(0xFFE2E8F0),
+                    color: isActive ? AppColors.primary : AppColors.border,
                   ),
                 );
               }

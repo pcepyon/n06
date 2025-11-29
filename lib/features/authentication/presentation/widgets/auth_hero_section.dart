@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// 인증 화면의 헤로 섹션 (로고, 제목, 부제목)
 ///
@@ -41,11 +43,11 @@ class AuthHeroSection extends StatelessWidget {
         vertical: 32,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC), // Neutral-50
-        borderRadius: BorderRadius.circular(12), // Border Radius md
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: const Color(0x0F172A).withOpacity(0.05), // Shadow xs
+            color: AppColors.neutral900.withValues(alpha: 0.05),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),
@@ -62,29 +64,20 @@ class AuthHeroSection extends StatelessWidget {
             cacheHeight: logoSize.toInt(),
             cacheWidth: logoSize.toInt(),
           ),
-          const SizedBox(height: 24), // Spacing lg
+          const SizedBox(height: 24),
           // Title
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 28, // Typography 3xl
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1E293B), // Neutral-800
-              height: 36 / 28,
-              letterSpacing: -0.02,
-            ),
+            style: AppTypography.display,
           ),
           const SizedBox(height: 8),
           // Subtitle
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 18, // Typography lg
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF4ADE80), // Primary
-              height: 26 / 18,
+            style: AppTypography.heading3.copyWith(
+              color: AppColors.primary,
             ),
           ),
         ],

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import '../../domain/entities/user_badge.dart';
 
 // Helper class to get badge metadata from badgeId
@@ -71,12 +73,7 @@ class BadgeWidget extends StatelessWidget {
         // Section Title
         Text(
           '성취 뱃지',
-          style: TextStyle(
-            fontSize: 18, // lg
-            fontWeight: FontWeight.w600, // Semibold
-            color: Color(0xFF1E293B), // Neutral-800
-            height: 1.3,
-          ),
+          style: AppTypography.heading3,
         ),
 
         SizedBox(height: 16), // md spacing
@@ -142,30 +139,30 @@ class _BadgeItemState extends State<_BadgeItem> {
 
     if (isAchieved) {
       // Achieved state
-      backgroundColor = Color(0xFFF59E0B); // Gold (gradient not supported in Container, use decoration gradient)
-      borderColor = Color(0xFFF59E0B);
+      backgroundColor = AppColors.gold;
+      borderColor = AppColors.gold;
       borderWidth = 3;
-      iconColor = Colors.white;
+      iconColor = AppColors.surface;
       boxShadow = [
         BoxShadow(
-          color: Color(0x33F59E0B), // 0.2 opacity
+          color: AppColors.gold.withValues(alpha: 0.2),
           blurRadius: 8,
           offset: Offset(0, 4),
         ),
       ];
     } else if (isLocked) {
       // Locked state
-      backgroundColor = Color(0xFFE2E8F0); // Neutral-200
+      backgroundColor = AppColors.neutral200;
       borderColor = null;
       borderWidth = 0;
-      iconColor = Color(0xFFCBD5E1); // Neutral-300
+      iconColor = AppColors.borderDark;
       boxShadow = null;
     } else {
       // In Progress state
-      backgroundColor = Color(0xFFF1F5F9); // Neutral-100
-      borderColor = Color(0xFFCBD5E1); // Neutral-300
+      backgroundColor = AppColors.surfaceVariant;
+      borderColor = AppColors.borderDark;
       borderWidth = 2;
-      iconColor = Color(0xFF94A3B8); // Neutral-400
+      iconColor = AppColors.neutral400;
       boxShadow = null;
     }
 
@@ -196,7 +193,7 @@ class _BadgeItemState extends State<_BadgeItem> {
                 boxShadow: boxShadow,
                 gradient: isAchieved
                     ? LinearGradient(
-                        colors: [Color(0xFFF59E0B), Color(0xFFFCD34D)],
+                        colors: [AppColors.gold, Color(0xFFFCD34D)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       )
@@ -216,11 +213,8 @@ class _BadgeItemState extends State<_BadgeItem> {
             // Badge Label
             Text(
               metadata.name,
-              style: TextStyle(
-                fontSize: 12, // xs
-                fontWeight: FontWeight.w500, // Medium
-                color: Color(0xFF334155), // Neutral-700
-                height: 1.4,
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.neutral700,
               ),
               textAlign: TextAlign.center,
               maxLines: 2,
@@ -232,12 +226,7 @@ class _BadgeItemState extends State<_BadgeItem> {
               SizedBox(height: 4),
               Text(
                 '${(progress * 100).toInt()}%',
-                style: TextStyle(
-                  fontSize: 12, // xs
-                  fontWeight: FontWeight.w400, // Regular
-                  color: Color(0xFF64748B), // Neutral-500
-                  height: 1.4,
-                ),
+                style: AppTypography.caption,
               ),
             ],
           ],
@@ -259,24 +248,26 @@ class _BadgeItemState extends State<_BadgeItem> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(metadata.icon, size: 80, color: Color(0xFF4ADE80)),
+              Icon(metadata.icon, size: 80, color: AppColors.primary),
               SizedBox(height: 16),
               Text(
                 metadata.name,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                style: AppTypography.heading2,
               ),
               SizedBox(height: 8),
               Text(
                 metadata.description,
-                style: TextStyle(fontSize: 16, color: Color(0xFF64748B)),
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.textTertiary,
+                ),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 16),
               if (widget.badge.status != BadgeStatus.achieved)
                 LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: Color(0xFFE2E8F0),
-                  valueColor: AlwaysStoppedAnimation(Color(0xFF4ADE80)),
+                  backgroundColor: AppColors.border,
+                  valueColor: AlwaysStoppedAnimation(AppColors.primary),
                 ),
             ],
           ),
@@ -291,40 +282,34 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Color(0xFFF8FAFC), // Neutral-50
+        color: AppColors.background,
         border: Border.all(
-          color: Color(0xFFE2E8F0), // Neutral-200
+          color: AppColors.border,
           width: 1,
         ),
-        borderRadius: BorderRadius.circular(12), // md
+        borderRadius: BorderRadius.circular(12),
       ),
-      padding: EdgeInsets.all(32), // xl padding
+      padding: EdgeInsets.all(32),
       child: Column(
         children: [
           Icon(
             Icons.emoji_events_outlined,
-            size: 48, // xl
-            color: Color(0xFF4ADE80), // Primary
+            size: 48,
+            color: AppColors.primary,
           ),
           SizedBox(height: 16),
           Text(
             '첫 뱃지를 획득해보세요!',
-            style: TextStyle(
-              fontSize: 18, // lg
-              fontWeight: FontWeight.w600, // Semibold
-              color: Color(0xFF334155), // Neutral-700
-              height: 1.3,
+            style: AppTypography.heading3.copyWith(
+              color: AppColors.neutral700,
             ),
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 8),
           Text(
             '목표를 달성하고 성취 뱃지를 모아보세요.',
-            style: TextStyle(
-              fontSize: 16, // base
-              fontWeight: FontWeight.w400, // Regular
-              color: Color(0xFF475569), // Neutral-600
-              height: 1.4,
+            style: AppTypography.bodyLarge.copyWith(
+              color: AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -334,8 +319,8 @@ class _EmptyState extends StatelessWidget {
               // Navigate to achievements screen or show goal list
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF4ADE80), // Primary
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.surface,
               padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),

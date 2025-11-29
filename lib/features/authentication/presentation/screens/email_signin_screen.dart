@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/core/utils/validators.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/authentication/presentation/widgets/auth_hero_section.dart';
@@ -138,57 +140,47 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
                 width: 32,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFCBD5E1), // Neutral-300
+                  color: AppColors.neutral300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               const SizedBox(height: 12),
 
               // Icon
-              const Icon(
+              Icon(
                 Icons.lock_outline,
                 size: 48,
-                color: Color(0xFFF59E0B), // Warning
+                color: AppColors.warning,
               ),
               const SizedBox(height: 16),
 
               // Title
-              const Text(
+              Text(
                 '로그인에 실패했습니다',
-                style: TextStyle(
-                  fontSize: 24, // 2xl
-                  fontWeight: FontWeight.w700, // Bold
-                  color: Color(0xFF1E293B), // Neutral-800
-                ),
+                style: AppTypography.heading1,
               ),
               const SizedBox(height: 8),
 
               // Description
-              const Text(
+              Text(
                 '입력하신 이메일 또는 비밀번호가\n일치하지 않습니다.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16, // base
-                  fontWeight: FontWeight.w400, // Regular
-                  color: Color(0xFF475569), // Neutral-600
-                ),
+                style: AppTypography.bodyMedium,
               ),
               const SizedBox(height: 24),
 
               // Divider
-              const Divider(
-                color: Color(0xFFE2E8F0), // Neutral-200
+              Divider(
+                color: AppColors.border,
                 thickness: 1,
               ),
               const SizedBox(height: 24),
 
               // Prompt
-              const Text(
+              Text(
                 '💡 혹시 계정이 없으신가요?',
-                style: TextStyle(
-                  fontSize: 18, // lg
-                  fontWeight: FontWeight.w600, // Semibold
-                  color: Color(0xFF334155), // Neutral-700
+                style: AppTypography.heading3.copyWith(
+                  color: AppColors.neutral700,
                 ),
               ),
               const SizedBox(height: 16),
@@ -229,23 +221,19 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
     final isLoading = authState.isLoading;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF), // White
+        backgroundColor: AppColors.surface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF334155)), // Neutral-700
-        title: const Text(
+        iconTheme: IconThemeData(color: AppColors.neutral700),
+        title: Text(
           '이메일로 로그인',
-          style: TextStyle(
-            fontSize: 20, // xl
-            fontWeight: FontWeight.w600, // Semibold
-            color: Color(0xFF1E293B), // Neutral-800
-          ),
+          style: AppTypography.heading2,
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
-            color: const Color(0xFFE2E8F0), // Neutral-200
+            color: AppColors.border,
             height: 1,
           ),
         ),
@@ -255,11 +243,11 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Color(0xFFEF4444)),
+              Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 16),
               Text(
                 '오류 발생: $error',
-                style: const TextStyle(color: Color(0xFFEF4444)),
+                style: TextStyle(color: AppColors.error),
               ),
             ],
           ),
@@ -301,7 +289,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
                   suffixIcon: IconButton(
                     icon: Icon(
                       _showPassword ? Icons.visibility : Icons.visibility_off,
-                      color: const Color(0xFF64748B), // Neutral-500
+                      color: AppColors.textTertiary,
                     ),
                     onPressed: () => setState(() => _showPassword = !_showPassword),
                   ),

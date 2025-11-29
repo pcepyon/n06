@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
 import 'package:slide_to_confirm/slide_to_confirm.dart';
 import 'package:intl/intl.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 class CommitmentScreen extends StatefulWidget {
   final String name;
@@ -95,19 +97,16 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
               widget.onComplete();
             },
             style: TextButton.styleFrom(
-              backgroundColor: const Color(0xFF4ADE80),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text(
+            child: Text(
               '설정으로 돌아가기',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTypography.labelLarge,
             ),
           ),
         ],
@@ -123,20 +122,16 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        title: const Text(
+        title: Text(
           '여정 시작을 축하해요! 🎉',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B),
+          style: AppTypography.heading2.copyWith(
+            color: AppColors.textPrimary,
           ),
         ),
-        content: const Text(
+        content: Text(
           '첫 번째 미션: 현재 체중을 기록해보세요',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF64748B),
+          style: AppTypography.bodyLarge.copyWith(
+            color: AppColors.textTertiary,
           ),
         ),
         actions: [
@@ -147,19 +142,16 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
               widget.onComplete();
             },
             style: TextButton.styleFrom(
-              backgroundColor: const Color(0xFF4ADE80),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text(
+            child: Text(
               '기록하러 가기',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTypography.labelLarge,
             ),
           ),
         ],
@@ -172,7 +164,7 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
     final formattedDate = DateFormat('yyyy년 M월 d일').format(widget.startDate);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           // Main content

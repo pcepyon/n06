@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
 
 class FoodNoiseScreen extends StatefulWidget {
@@ -81,13 +83,10 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
           const SizedBox(height: 24),
 
           // Food Noise 설명
-          const Text(
+          Text(
             '이걸 \'Food Noise\'라고 불러요',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF1E293B), // Neutral-800
-              height: 1.5,
+            style: AppTypography.bodyLarge.copyWith(
+              color: AppColors.textPrimary,
             ),
           ),
 
@@ -107,39 +106,32 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9), // Neutral-100
+              color: AppColors.surfaceVariant,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '나의 상태',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF334155), // Neutral-700
-                    height: 1.5,
+                  style: AppTypography.heading3.copyWith(
+                    color: const Color(0xFF334155), // Neutral-700
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   '현재 음식 생각이 얼마나 자주 나나요?',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF64748B), // Neutral-500
-                    height: 1.43,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textTertiary,
                   ),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       '1',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF94A3B8), // Neutral-400
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textDisabled,
                       ),
                     ),
                     Expanded(
@@ -148,16 +140,15 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
                         min: 1,
                         max: 10,
                         divisions: 9,
-                        activeColor: const Color(0xFF4ADE80), // Primary
-                        inactiveColor: const Color(0xFFE2E8F0), // Neutral-200
+                        activeColor: AppColors.primary,
+                        inactiveColor: AppColors.border,
                         onChanged: _hasSimulated ? null : _onSliderChanged,
                       ),
                     ),
-                    const Text(
+                    Text(
                       '10',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF94A3B8), // Neutral-400
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textDisabled,
                       ),
                     ),
                   ],
@@ -165,10 +156,8 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
                 Center(
                   child: Text(
                     '${_userLevel.toInt()}',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF4ADE80), // Primary
+                    style: AppTypography.numericMedium.copyWith(
+                      color: AppColors.primary,
                     ),
                   ),
                 ),

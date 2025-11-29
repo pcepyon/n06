@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_toast.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
@@ -21,23 +23,18 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final profileState = ref.watch(profileNotifierProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('프로필 및 목표 수정'),
-        backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
+        backgroundColor: AppColors.background,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         toolbarHeight: 56,
-        titleTextStyle: const TextStyle(
-          color: Color(0xFF1E293B), // Neutral-800
-          fontSize: 20,
-          fontWeight: FontWeight.w600, // Semibold
-          fontFamily: 'Pretendard',
-        ),
+        titleTextStyle: AppTypography.heading2,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
-            color: const Color(0xFFE2E8F0), // Neutral-200
+            color: AppColors.border,
             height: 1,
           ),
         ),
@@ -46,7 +43,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         loading: () => const Center(
           child: CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(
-              Color(0xFF4ADE80), // Primary
+              AppColors.primary,
             ),
           ),
         ),
@@ -60,29 +57,20 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 const Icon(
                   Icons.error_outline,
                   size: 48,
-                  color: Color(0xFFEF4444), // Error
+                  color: AppColors.error,
                 ),
                 const SizedBox(height: 16),
                 // Error title
-                const Text(
+                Text(
                   '오류 발생',
-                  style: TextStyle(
-                    color: Color(0xFF1E293B), // Neutral-800
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600, // Semibold
-                    fontFamily: 'Pretendard',
-                  ),
+                  style: AppTypography.heading3,
                 ),
                 const SizedBox(height: 8),
                 // Error message
                 Text(
                   '프로필을 불러오는 중에 오류가 발생했습니다. 다시 시도해주세요.',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Color(0xFF64748B), // Neutral-500
-                    fontSize: 14,
-                    fontFamily: 'Pretendard',
-                  ),
+                  style: AppTypography.bodySmall,
                 ),
                 const SizedBox(height: 24),
                 // Retry button
@@ -90,7 +78,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4ADE80), // Primary
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(

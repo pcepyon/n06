@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 enum GabiumButtonVariant {
   primary,
@@ -74,13 +76,13 @@ class GabiumButton extends StatelessWidget {
     switch (variant) {
       case GabiumButtonVariant.primary:
         return ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF4ADE80), // Primary
-          foregroundColor: const Color(0xFFFFFFFF),
-          disabledBackgroundColor: const Color(0xFF4ADE80).withValues(alpha: 0.4),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.4),
           elevation: 0,
-          shadowColor: const Color(0x0F0F172A).withValues(alpha: 0.06),
+          shadowColor: AppColors.neutral900.withValues(alpha: 0.06),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8), // sm
+            borderRadius: BorderRadius.circular(8),
           ),
           padding: EdgeInsets.symmetric(
             horizontal: size == GabiumButtonSize.large ? 32 : 24,
@@ -89,10 +91,10 @@ class GabiumButton extends StatelessWidget {
           overlayColor: WidgetStateProperty.resolveWith<Color?>(
             (Set<WidgetState> states) {
               if (states.contains(WidgetState.hovered)) {
-                return const Color(0xFF22C55E); // Hover
+                return AppColors.primaryHover;
               }
               if (states.contains(WidgetState.pressed)) {
-                return const Color(0xFF16A34A); // Active
+                return AppColors.primaryPressed;
               }
               return null;
             },
@@ -102,11 +104,11 @@ class GabiumButton extends StatelessWidget {
       case GabiumButtonVariant.secondary:
         return ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
-          foregroundColor: const Color(0xFF4ADE80), // Primary
+          foregroundColor: AppColors.primary,
           elevation: 0,
           shadowColor: Colors.transparent,
           side: const BorderSide(
-            color: Color(0xFF4ADE80),
+            color: AppColors.primary,
             width: 2,
           ),
           shape: RoundedRectangleBorder(
@@ -119,10 +121,10 @@ class GabiumButton extends StatelessWidget {
           overlayColor: WidgetStateProperty.resolveWith<Color?>(
             (Set<WidgetState> states) {
               if (states.contains(WidgetState.hovered)) {
-                return const Color(0xFF4ADE80).withValues(alpha: 0.08);
+                return AppColors.primary.withValues(alpha: 0.08);
               }
               if (states.contains(WidgetState.pressed)) {
-                return const Color(0xFF4ADE80).withValues(alpha: 0.12);
+                return AppColors.primary.withValues(alpha: 0.12);
               }
               return null;
             },
@@ -132,7 +134,7 @@ class GabiumButton extends StatelessWidget {
       case GabiumButtonVariant.ghost:
         return ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
-          foregroundColor: const Color(0xFF4ADE80), // Primary
+          foregroundColor: AppColors.primary,
           elevation: 0,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
@@ -143,10 +145,10 @@ class GabiumButton extends StatelessWidget {
           overlayColor: WidgetStateProperty.resolveWith<Color?>(
             (Set<WidgetState> states) {
               if (states.contains(WidgetState.hovered)) {
-                return const Color(0xFF4ADE80).withValues(alpha: 0.08);
+                return AppColors.primary.withValues(alpha: 0.08);
               }
               if (states.contains(WidgetState.pressed)) {
-                return const Color(0xFF4ADE80).withValues(alpha: 0.12);
+                return AppColors.primary.withValues(alpha: 0.12);
               }
               return null;
             },
@@ -155,13 +157,13 @@ class GabiumButton extends StatelessWidget {
 
       case GabiumButtonVariant.danger:
         return ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFEF4444), // Error
-          foregroundColor: const Color(0xFFFFFFFF),
-          disabledBackgroundColor: const Color(0xFFEF4444).withValues(alpha: 0.4),
+          backgroundColor: AppColors.error,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.error.withValues(alpha: 0.4),
           elevation: 0,
-          shadowColor: const Color(0x0F0F172A).withValues(alpha: 0.06),
+          shadowColor: AppColors.neutral900.withValues(alpha: 0.06),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8), // sm
+            borderRadius: BorderRadius.circular(8),
           ),
           padding: EdgeInsets.symmetric(
             horizontal: size == GabiumButtonSize.large ? 32 : 24,
@@ -170,10 +172,10 @@ class GabiumButton extends StatelessWidget {
           overlayColor: WidgetStateProperty.resolveWith<Color?>(
             (Set<WidgetState> states) {
               if (states.contains(WidgetState.hovered)) {
-                return const Color(0xFFDC2626); // Error darker (Red-600)
+                return const Color(0xFFDC2626);
               }
               if (states.contains(WidgetState.pressed)) {
-                return const Color(0xFFB91C1C); // Error darkest (Red-700)
+                return const Color(0xFFB91C1C);
               }
               return null;
             },
@@ -182,8 +184,8 @@ class GabiumButton extends StatelessWidget {
 
       default:
         return ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF4ADE80),
-          foregroundColor: const Color(0xFFFFFFFF),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
         );
     }
   }
@@ -191,20 +193,11 @@ class GabiumButton extends StatelessWidget {
   TextStyle _getTextStyle() {
     switch (size) {
       case GabiumButtonSize.large:
-        return const TextStyle(
-          fontSize: 18, // lg
-          fontWeight: FontWeight.w600, // Semibold
-        );
+        return AppTypography.heading3.copyWith(color: Colors.white);
       case GabiumButtonSize.medium:
-        return const TextStyle(
-          fontSize: 16, // base
-          fontWeight: FontWeight.w500, // Medium
-        );
+        return AppTypography.labelLarge.copyWith(color: Colors.white);
       case GabiumButtonSize.small:
-        return const TextStyle(
-          fontSize: 14, // sm
-          fontWeight: FontWeight.w500, // Medium
-        );
+        return AppTypography.labelMedium.copyWith(color: Colors.white);
     }
   }
 

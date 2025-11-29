@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// 상태 배지 타입
 enum StatusBadgeType {
@@ -27,13 +29,13 @@ class StatusBadge extends StatelessWidget {
   Color get backgroundColor {
     switch (type) {
       case StatusBadgeType.success:
-        return const Color(0xFFECFDF5); // Success Light
+        return AppColors.success.withValues(alpha: 0.1);
       case StatusBadgeType.error:
-        return const Color(0xFFFEF2F2); // Error Light
+        return AppColors.error.withValues(alpha: 0.1);
       case StatusBadgeType.warning:
-        return const Color(0xFFFFFBEB); // Warning Light
+        return AppColors.warning.withValues(alpha: 0.1);
       case StatusBadgeType.info:
-        return const Color(0xFFEFF6FF); // Info Light
+        return AppColors.info.withValues(alpha: 0.1);
     }
   }
 
@@ -41,13 +43,13 @@ class StatusBadge extends StatelessWidget {
   Color get textColor {
     switch (type) {
       case StatusBadgeType.success:
-        return const Color(0xFF065F46); // Success Dark
+        return const Color(0xFF065F46);
       case StatusBadgeType.error:
-        return const Color(0xFF991B1B); // Error Dark
+        return const Color(0xFF991B1B);
       case StatusBadgeType.warning:
-        return const Color(0xFF92400E); // Warning Dark
+        return const Color(0xFF92400E);
       case StatusBadgeType.info:
-        return const Color(0xFF1E40AF); // Info Dark
+        return const Color(0xFF1E40AF);
     }
   }
 
@@ -55,13 +57,13 @@ class StatusBadge extends StatelessWidget {
   Color get borderColor {
     switch (type) {
       case StatusBadgeType.success:
-        return const Color(0xFF10B981); // Success
+        return AppColors.success;
       case StatusBadgeType.error:
-        return const Color(0xFFEF4444); // Error
+        return AppColors.error;
       case StatusBadgeType.warning:
-        return const Color(0xFFF59E0B); // Warning
+        return AppColors.warning;
       case StatusBadgeType.info:
-        return const Color(0xFF3B82F6); // Info
+        return AppColors.info;
     }
   }
 
@@ -71,31 +73,25 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 44), // Touch target (44x44px)
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // sm spacing
+      constraints: const BoxConstraints(minHeight: 44),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: backgroundColor,
         border: Border.all(color: borderColor, width: 1),
-        borderRadius: BorderRadius.circular(8), // sm radius
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 아이콘 (20x20px)
           Icon(
             icon,
             size: 20,
             color: iconColor,
           ),
-          const SizedBox(width: 8), // sm spacing (아이콘-텍스트 간격)
-          // 텍스트 (14px, Regular)
+          const SizedBox(width: 8),
           Text(
             text,
-            style: TextStyle(
-              fontSize: 14, // sm
-              fontWeight: FontWeight.w400, // Regular
-              color: textColor,
-            ),
+            style: AppTypography.bodySmall.copyWith(color: textColor),
           ),
         ],
       ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// F005: 전문가 상담 권장 다이얼로그
 ///
@@ -18,19 +20,10 @@ class ConsultationRecommendationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Gabium Design System Colors
-    const errorColor = Color(0xFFEF4444); // Error
-    const errorBg = Color(0xFFFEF2F2); // Error light bg (50)
-    const errorBorder = Color(0xFFFECACA); // Error 200
-    const neutral800 = Color(0xFF1E293B); // Neutral-800
-    const neutral600 = Color(0xFF475569); // Neutral-600
-    const neutral100 = Color(0xFFF1F5F9); // Neutral-100
-    const white = Color(0xFFFFFFFF);
-
     return Dialog(
-      backgroundColor: white,
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16), // lg
+        borderRadius: BorderRadius.circular(16),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -38,11 +31,11 @@ class ConsultationRecommendationDialog extends StatelessWidget {
           children: [
             // Header with Error accent
             Container(
-              padding: const EdgeInsets.all(24), // lg
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: errorBg,
+                color: AppColors.error.withValues(alpha: 0.05),
                 border: Border(
-                  left: BorderSide(color: errorColor, width: 4),
+                  left: BorderSide(color: AppColors.error, width: 4),
                 ),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
@@ -55,10 +48,8 @@ class ConsultationRecommendationDialog extends StatelessWidget {
                   Expanded(
                     child: Text(
                       '전문가와 상담이 필요합니다',
-                      style: TextStyle(
-                        fontSize: 24, // 2xl
-                        fontWeight: FontWeight.w700, // Bold
-                        color: neutral800,
+                      style: AppTypography.heading1.copyWith(
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -66,7 +57,7 @@ class ConsultationRecommendationDialog extends StatelessWidget {
                     onTap: () => Navigator.of(context).pop(),
                     child: Icon(
                       Icons.close,
-                      color: errorColor,
+                      color: AppColors.error,
                       size: 24,
                     ),
                   ),
@@ -76,25 +67,23 @@ class ConsultationRecommendationDialog extends StatelessWidget {
 
             // Content
             Padding(
-              padding: const EdgeInsets.all(24), // lg
+              padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Label
                   Text(
                     '선택하신 증상:',
-                    style: TextStyle(
-                      fontSize: 18, // lg
-                      fontWeight: FontWeight.w600, // Semibold
-                      color: neutral800,
+                    style: AppTypography.heading3.copyWith(
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 16), // md
+                  const SizedBox(height: 16),
 
                   // Symptom List
                   ...selectedSymptoms.map(
                     (symptom) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12), // md
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -102,18 +91,16 @@ class ConsultationRecommendationDialog extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 2),
                             child: Icon(
                               Icons.warning_rounded,
-                              color: errorColor,
+                              color: AppColors.error,
                               size: 20,
                             ),
                           ),
-                          const SizedBox(width: 12), // md
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               symptom,
-                              style: TextStyle(
-                                fontSize: 14, // sm
-                                fontWeight: FontWeight.w400, // Regular
-                                color: neutral600,
+                              style: AppTypography.labelMedium.copyWith(
+                                color: AppColors.textSecondary,
                                 height: 1.5,
                               ),
                             ),
@@ -122,36 +109,34 @@ class ConsultationRecommendationDialog extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24), // lg
+                  const SizedBox(height: 24),
 
                   // Alert Banner (Warning pattern)
                   Container(
-                    padding: const EdgeInsets.all(16), // md
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: errorBg,
+                      color: AppColors.error.withValues(alpha: 0.05),
                       border: Border.all(
-                        color: errorBorder,
+                        color: AppColors.error.withValues(alpha: 0.2),
                         width: 1,
                       ),
-                      borderRadius: BorderRadius.circular(8), // sm
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
                           Icons.info_outlined,
-                          color: errorColor,
+                          color: AppColors.error,
                           size: 20,
                         ),
-                        const SizedBox(width: 12), // md
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             '선택하신 증상으로 보아 전문가의 상담이 필요해 보입니다. '
                             '가능한 한 빨리 의료진에게 연락하시기 바랍니다.',
-                            style: TextStyle(
-                              fontSize: 14, // sm
-                              fontWeight: FontWeight.w400, // Regular
-                              color: neutral600,
+                            style: AppTypography.labelMedium.copyWith(
+                              color: AppColors.textSecondary,
                               height: 1.5,
                             ),
                           ),
@@ -165,35 +150,33 @@ class ConsultationRecommendationDialog extends StatelessWidget {
 
             // Footer with action button
             Container(
-              padding: const EdgeInsets.all(24), // lg
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: neutral100,
+                    color: AppColors.surfaceVariant,
                     width: 1,
                   ),
                 ),
               ),
               child: SizedBox(
                 width: double.infinity,
-                height: 44, // Medium button height
+                height: 44,
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: errorColor,
-                    foregroundColor: white,
-                    disabledBackgroundColor: errorColor.withValues(alpha: 0.4),
+                    backgroundColor: AppColors.error,
+                    foregroundColor: AppColors.surface,
+                    disabledBackgroundColor: AppColors.error.withValues(alpha: 0.4),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8), // sm
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   child: Text(
                     '확인',
-                    style: TextStyle(
-                      fontSize: 16, // base
-                      fontWeight: FontWeight.w600, // Semibold
-                      color: white,
+                    style: AppTypography.labelLarge.copyWith(
+                      color: AppColors.surface,
                     ),
                   ),
                 ),

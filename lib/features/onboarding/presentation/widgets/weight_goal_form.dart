@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_text_field.dart';
 import 'package:n06/features/onboarding/presentation/widgets/validation_alert.dart';
@@ -150,34 +152,30 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9), // Neutral-100
+        color: AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '예상 변화',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1E293B),
-            ),
+            style: AppTypography.labelMedium,
           ),
           const SizedBox(height: 8),
           Text(
             '12주 후: -${predicted12Week.toStringAsFixed(1)}kg',
-            style: const TextStyle(fontSize: 14, color: Color(0xFF334155)),
+            style: AppTypography.bodySmall,
           ),
           const SizedBox(height: 4),
           Text(
             '72주 후: -${predicted72Week.toStringAsFixed(1)}kg',
-            style: const TextStyle(fontSize: 14, color: Color(0xFF334155)),
+            style: AppTypography.bodySmall,
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             '* 임상시험 평균 기준',
-            style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+            style: AppTypography.caption,
           ),
         ],
       ),
@@ -190,17 +188,19 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
       decoration: BoxDecoration(
         color: const Color(0xFFEFF6FF), // Blue-50
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0x4D3B82F6)), // Blue-500 with 30% opacity
+        border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('💡', style: TextStyle(fontSize: 16)),
-          SizedBox(width: 8),
+          const Text('💡', style: TextStyle(fontSize: 16)),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               '임상시험에서 72주 동안 평균 21% 감량을 달성했어요\n무리하지 않는 목표가 오히려 더 좋은 결과를 만들어요',
-              style: TextStyle(fontSize: 14, color: Color(0xFF1E40AF)),
+              style: AppTypography.bodySmall.copyWith(
+                color: const Color(0xFF1E40AF),
+              ),
             ),
           ),
         ],
@@ -221,11 +221,7 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
               widget.isReviewMode
                   ? '📊 체중 목표 확인'
                   : '📊 목표를 함께 세워볼까요?',
-              style: const TextStyle(
-                fontSize: 20, // xl
-                fontWeight: FontWeight.w600, // Semibold
-                color: Color(0xFF1E293B), // Neutral-800
-              ),
+              style: AppTypography.heading2,
             ),
             const SizedBox(height: 16), // md
 

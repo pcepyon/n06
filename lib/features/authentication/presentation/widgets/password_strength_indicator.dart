@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/core/utils/validators.dart';
 
 /// Password Strength Indicator component
@@ -23,8 +25,8 @@ class PasswordStrengthIndicator extends StatelessWidget {
           child: Container(
             height: 8,
             decoration: BoxDecoration(
-              color: const Color(0xFFE2E8F0), // Neutral-200
-              borderRadius: BorderRadius.circular(999), // full
+              color: AppColors.border,
+              borderRadius: BorderRadius.circular(999),
             ),
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
@@ -34,7 +36,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
                 curve: Curves.ease,
                 decoration: BoxDecoration(
                   color: color,
-                  borderRadius: BorderRadius.circular(999), // full
+                  borderRadius: BorderRadius.circular(999),
                 ),
               ),
             ),
@@ -43,11 +45,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12, // xs
-            fontWeight: FontWeight.w500, // Medium
-            color: color,
-          ),
+          style: AppTypography.labelSmall.copyWith(color: color),
         ),
       ],
     );
@@ -56,11 +54,11 @@ class PasswordStrengthIndicator extends StatelessWidget {
   Color _getColor() {
     switch (strength) {
       case PasswordStrength.weak:
-        return const Color(0xFFEF4444); // Error
+        return AppColors.error;
       case PasswordStrength.medium:
-        return const Color(0xFFF59E0B); // Warning
+        return AppColors.warning;
       case PasswordStrength.strong:
-        return const Color(0xFF10B981); // Success
+        return AppColors.success;
     }
   }
 

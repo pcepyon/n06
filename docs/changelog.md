@@ -21,6 +21,21 @@
 
 ## 2025-11-29
 
+- [refactor] Phase F 마이그레이션 - 하드코딩 스타일을 Theme 시스템으로 전환
+  - 75개 파일에서 Color/TextStyle 하드코딩 제거
+  - AppColors, AppTypography, AppTheme 신규 추가
+  - withOpacity() → withValues(alpha:) deprecated 해결
+  - Batch 1-2: Core 위젯 및 Authentication (16개)
+  - Batch 3: Dashboard (7개)
+  - Batch 4: Tracking (15개)
+  - Batch 5: Onboarding (18개)
+  - Batch 6: Settings & Profile (9개)
+  - Batch 7: Coping Guide (5개)
+  - Batch 8: Data Sharing & Record (5개)
+  - `lib/core/presentation/theme/app_colors.dart`
+  - `lib/core/presentation/theme/app_typography.dart`
+  - `lib/core/presentation/theme/app_theme.dart`
+
 - [fix] 온보딩 첫 사용자 정보 입력 안정성 개선
   - DosagePlanForm: 선택 시점에 즉시 부모에게 데이터 전달
   - userId 빈 문자열 방지 (authProvider 폴백)

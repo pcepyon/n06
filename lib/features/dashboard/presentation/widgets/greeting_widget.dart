@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/dashboard/domain/entities/dashboard_data.dart';
 
 class GreetingWidget extends StatelessWidget {
@@ -13,37 +15,29 @@ class GreetingWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border.all(
-          color: Color(0xFFE2E8F0), // Neutral-200
+          color: AppColors.border,
           width: 1,
         ),
-        borderRadius: BorderRadius.circular(12), // md
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Color(0x0F0F172A), // rgba(15, 23, 42, 0.06)
+            color: AppColors.neutral900.withValues(alpha: 0.06),
             blurRadius: 4,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      padding: EdgeInsets.all(24), // lg padding
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Greeting Title
           Text(
             '안녕하세요, ${dashboardData.userName}님',
-            style: TextStyle(
-              fontSize: 24, // 2xl
-              fontWeight: FontWeight.w700, // Bold
-              color: Color(0xFF1E293B), // Neutral-800
-              height: 1.3,
-            ),
+            style: AppTypography.heading1,
           ),
-          SizedBox(height: 16), // md spacing
-
-          // Stats Row
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -52,7 +46,7 @@ class GreetingWidget extends StatelessWidget {
                   value: '${dashboardData.continuousRecordDays}일',
                 ),
               ),
-              SizedBox(width: 16), // md spacing
+              const SizedBox(width: 16),
               Expanded(
                 child: _StatColumn(
                   label: '현재 주차',
@@ -61,18 +55,12 @@ class GreetingWidget extends StatelessWidget {
               ),
             ],
           ),
-
           if (dashboardData.insightMessage != null) ...[
-            SizedBox(height: 24), // lg spacing
-
-            // Insight Message
+            const SizedBox(height: 24),
             Text(
               dashboardData.insightMessage!,
-              style: TextStyle(
-                fontSize: 14, // sm
-                fontWeight: FontWeight.w500, // Medium
-                color: Color(0xFF4ADE80), // Primary
-                height: 1.5,
+              style: AppTypography.labelMedium.copyWith(
+                color: AppColors.primary,
               ),
             ),
           ],
@@ -98,22 +86,12 @@ class _StatColumn extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12, // xs
-            fontWeight: FontWeight.w400, // Regular
-            color: Color(0xFF64748B), // Neutral-500
-            height: 1.4,
-          ),
+          style: AppTypography.caption,
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 18, // lg
-            fontWeight: FontWeight.w600, // Semibold
-            color: Color(0xFF1E293B), // Neutral-800
-            height: 1.3,
-          ),
+          style: AppTypography.heading3,
         ),
       ],
     );

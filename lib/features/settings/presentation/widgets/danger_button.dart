@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 class DangerButton extends StatefulWidget {
   final String text;
@@ -84,24 +86,24 @@ class _DangerButtonState extends State<DangerButton>
 
             if (_isPressed && !isDisabled) {
               // Active state
-              bgColor = const Color(0xFFB91C1C); // Error darkest
+              bgColor = const Color(0xFFB91C1C);
               elevation = 1.0; // xs shadow
             } else if (_controller.value > 0 && !isDisabled) {
               // Hover state (interpolated)
               bgColor = Color.lerp(
-                const Color(0xFFEF4444),
+                AppColors.error,
                 const Color(0xFFDC2626),
                 _controller.value,
               )!;
               elevation = 2.0 + (2.0 * _controller.value);
             } else {
               // Default state
-              bgColor = const Color(0xFFEF4444); // Error
+              bgColor = AppColors.error;
               elevation = 2.0; // sm shadow
             }
 
             if (isDisabled) {
-              bgColor = const Color(0xFFEF4444).withOpacity(0.4);
+              bgColor = AppColors.error.withValues(alpha: 0.4);
             }
 
             return Container(
@@ -112,7 +114,7 @@ class _DangerButtonState extends State<DangerButton>
                 borderRadius: BorderRadius.circular(8.0), // sm border-radius
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF0F172A).withOpacity(0.06),
+                    color: AppColors.neutral900.withValues(alpha: 0.06),
                     blurRadius: elevation * 2,
                     offset: Offset(0, elevation),
                   ),
@@ -129,8 +131,8 @@ class _DangerButtonState extends State<DangerButton>
                       height: 20.0,
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white.withOpacity(
-                            isDisabled ? 0.6 : 1.0,
+                          Colors.white.withValues(
+                            alpha: isDisabled ? 0.6 : 1.0,
                           ),
                         ),
                         strokeWidth: 2.0,
@@ -138,15 +140,10 @@ class _DangerButtonState extends State<DangerButton>
                     )
                         : Text(
                       widget.text,
-                      style: Theme.of(context)
-                          .textTheme
-                          .labelLarge
-                          ?.copyWith(
-                        color: Colors.white.withOpacity(
-                          isDisabled ? 0.6 : 1.0,
+                      style: AppTypography.labelLarge.copyWith(
+                        color: Colors.white.withValues(
+                          alpha: isDisabled ? 0.6 : 1.0,
                         ),
-                        fontSize: 16.0, // base
-                        fontWeight: FontWeight.w600, // Semibold
                       ),
                     ),
                   ),

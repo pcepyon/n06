@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// Bottom navigation item data model
 class GabiumBottomNavItem {
@@ -71,18 +73,18 @@ class GabiumBottomNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
+        color: AppColors.surface,
+        border: const Border(
           top: BorderSide(
-            color: Color(0xFFE2E8F0), // Neutral-200
+            color: AppColors.border,
             width: 1,
           ),
         ),
         boxShadow: [
           BoxShadow(
-            color: Color(0x140F172A), // rgba(15, 23, 42, 0.08)
+            color: AppColors.neutral900.withValues(alpha: 0.08),
             blurRadius: 8,
-            offset: Offset(0, -4), // Reverse shadow for elevation above content
+            offset: const Offset(0, -4),
           ),
         ],
       ),
@@ -135,9 +137,7 @@ class _BottomNavItemState extends State<_BottomNavItem> {
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.isActive
-        ? Color(0xFF4ADE80) // Primary (active state)
-        : Color(0xFF64748B); // Neutral-500 (inactive state)
+    final color = widget.isActive ? AppColors.primary : AppColors.textTertiary;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -148,11 +148,11 @@ class _BottomNavItemState extends State<_BottomNavItem> {
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedScale(
         scale: _isPressed ? 0.95 : 1.0,
-        duration: Duration(milliseconds: 150),
+        duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
         child: Container(
-          constraints: BoxConstraints(minWidth: 56, minHeight: 56),
-          padding: EdgeInsets.only(top: 8, bottom: 4),
+          constraints: const BoxConstraints(minWidth: 56, minHeight: 56),
+          padding: const EdgeInsets.only(top: 8, bottom: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -162,15 +162,10 @@ class _BottomNavItemState extends State<_BottomNavItem> {
                 size: 24,
                 color: color,
               ),
-              SizedBox(height: 2),
+              const SizedBox(height: 2),
               Text(
                 widget.label,
-                style: TextStyle(
-                  fontSize: 12, // xs
-                  fontWeight: FontWeight.w500, // Medium
-                  color: color,
-                  height: 1.2,
-                ),
+                style: AppTypography.labelSmall.copyWith(color: color),
               ),
             ],
           ),

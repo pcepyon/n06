@@ -6,6 +6,8 @@ import 'package:n06/features/tracking/domain/value_objects/missed_dose_guidance.
 import 'package:n06/features/tracking/presentation/dialogs/dose_record_dialog_v2.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/core/presentation/widgets/status_badge.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 class SelectedDateDetailCard extends ConsumerWidget {
   final DateTime selectedDate;
@@ -29,25 +31,21 @@ class SelectedDateDetailCard extends ConsumerWidget {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const Icon(
+              Icon(
                 Icons.event_busy_outlined,
                 size: 48,
-                color: Color(0xFF94A3B8),
+                color: AppColors.textDisabled,
               ),
               const SizedBox(height: 16),
               Text(
                 '${selectedDate.month}월 ${selectedDate.day}일',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTypography.heading2,
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 '투여 예정이 없는 날입니다',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF64748B),
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.textTertiary,
                 ),
               ),
             ],
@@ -71,10 +69,8 @@ class SelectedDateDetailCard extends ConsumerWidget {
             // 날짜
             Text(
               '${selectedDate.month}월 ${selectedDate.day}일 (${_getWeekday(selectedDate)})',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1E293B),
+              style: AppTypography.heading2.copyWith(
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -88,10 +84,8 @@ class SelectedDateDetailCard extends ConsumerWidget {
                 ),
                 Text(
                   '${schedule!.scheduledDoseMg} mg',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1E293B),
+                  style: AppTypography.display.copyWith(
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(width: 12),

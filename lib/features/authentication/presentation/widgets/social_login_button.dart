@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// 소셜 로그인 버튼 컴포넌트
 ///
@@ -50,15 +51,15 @@ class SocialLoginButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: backgroundColor,
         foregroundColor: foregroundColor,
-        disabledBackgroundColor: backgroundColor.withOpacity(0.4), // Disabled
-        elevation: 2, // Shadow sm
+        disabledBackgroundColor: backgroundColor.withValues(alpha: 0.4),
+        elevation: 2,
         padding: const EdgeInsets.symmetric(
-          horizontal: 16, // Spacing md
+          horizontal: 16,
           vertical: 8,
         ),
-        minimumSize: const Size(double.infinity, 44), // Button height
+        minimumSize: const Size(double.infinity, 44),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8), // Border radius sm
+          borderRadius: BorderRadius.circular(8),
         ),
       ),
       icon: isLoading
@@ -73,10 +74,7 @@ class SocialLoginButton extends StatelessWidget {
           : Icon(icon, size: 24),
       label: Text(
         label,
-        style: const TextStyle(
-          fontSize: 16, // Typography base
-          fontWeight: FontWeight.w600,
-        ),
+        style: AppTypography.labelLarge.copyWith(color: foregroundColor),
       ),
     );
   }

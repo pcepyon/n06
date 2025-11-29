@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/dashboard/domain/entities/weekly_progress.dart';
 
 class WeeklyProgressWidget extends StatelessWidget {
@@ -17,12 +19,7 @@ class WeeklyProgressWidget extends StatelessWidget {
         // Section Title
         Text(
           '주간 목표 진행도',
-          style: TextStyle(
-            fontSize: 18, // lg
-            fontWeight: FontWeight.w600, // Semibold
-            color: Color(0xFF1E293B), // Neutral-800
-            height: 1.3,
-          ),
+          style: AppTypography.heading3,
         ),
         SizedBox(height: 16), // md spacing
 
@@ -68,19 +65,19 @@ class _ProgressItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress = total > 0 ? current / total : 0.0;
     final isComplete = progress >= 1.0;
-    final fillColor = isComplete ? Color(0xFF10B981) : Color(0xFF4ADE80); // Success : Primary
+    final fillColor = isComplete ? AppColors.success : AppColors.primary;
     final percentage = (progress * 100).toInt();
 
     return Container(
       decoration: BoxDecoration(
-        color: Color(0xFFF8FAFC), // Neutral-50
+        color: AppColors.background,
         border: Border.all(
-          color: Color(0xFFE2E8F0), // Neutral-200
+          color: AppColors.border,
           width: 1,
         ),
-        borderRadius: BorderRadius.circular(8), // sm
+        borderRadius: BorderRadius.circular(8),
       ),
-      padding: EdgeInsets.all(16), // md padding
+      padding: EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -90,21 +87,13 @@ class _ProgressItem extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 16, // base
-                  fontWeight: FontWeight.w500, // Medium
-                  color: Color(0xFF334155), // Neutral-700
-                  height: 1.4,
+                style: AppTypography.labelMedium.copyWith(
+                  color: AppColors.neutral700,
                 ),
               ),
               Text(
                 '$current/$total',
-                style: TextStyle(
-                  fontSize: 14, // sm
-                  fontWeight: FontWeight.w400, // Regular
-                  color: Color(0xFF64748B), // Neutral-500
-                  height: 1.5,
-                ),
+                style: AppTypography.bodySmall,
               ),
             ],
           ),
@@ -112,12 +101,12 @@ class _ProgressItem extends StatelessWidget {
 
           // Progress Bar
           ClipRRect(
-            borderRadius: BorderRadius.circular(999), // full (pill)
+            borderRadius: BorderRadius.circular(999),
             child: SizedBox(
               height: 8,
               child: LinearProgressIndicator(
                 value: progress,
-                backgroundColor: Color(0xFFE2E8F0), // Neutral-200
+                backgroundColor: AppColors.border,
                 valueColor: AlwaysStoppedAnimation<Color>(fillColor),
               ),
             ),
@@ -129,11 +118,8 @@ class _ProgressItem extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: Text(
               '$percentage%',
-              style: TextStyle(
-                fontSize: 14, // sm
-                fontWeight: FontWeight.w500, // Medium
+              style: AppTypography.labelMedium.copyWith(
                 color: fillColor,
-                height: 1.5,
               ),
             ),
           ),

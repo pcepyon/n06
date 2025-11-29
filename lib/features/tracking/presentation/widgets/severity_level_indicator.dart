@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// 심각도 레벨 표시 위젯
 ///
@@ -23,8 +25,8 @@ class SeverityLevelIndicator extends StatelessWidget {
 
   Color get _sliderColor =>
       severity <= 6
-          ? const Color(0xFF3B82F6) // Info (Blue)
-          : const Color(0xFFF59E0B); // Warning (Amber)
+          ? AppColors.info
+          : AppColors.warning;
 
   @override
   Widget build(BuildContext context) {
@@ -38,18 +40,16 @@ class SeverityLevelIndicator extends StatelessWidget {
             children: [
               Text(
                 '경미',
-                style: TextStyle(
-                  fontSize: 14.0, // sm
-                  fontWeight: FontWeight.w400, // Regular
-                  color: const Color(0xFF334155), // Neutral-700
+                style: AppTypography.labelMedium.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
               Text(
                 '중증',
-                style: TextStyle(
-                  fontSize: 14.0, // sm
-                  fontWeight: FontWeight.w400, // Regular
-                  color: const Color(0xFF334155), // Neutral-700
+                style: AppTypography.labelMedium.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],
@@ -60,7 +60,7 @@ class SeverityLevelIndicator extends StatelessWidget {
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: _sliderColor,
-            inactiveTrackColor: const Color(0xFFE2E8F0), // Neutral-200
+            inactiveTrackColor: AppColors.border,
             thumbColor: _sliderColor,
             overlayColor: _sliderColor.withValues(alpha: 0.2),
             trackHeight: 4.0,
@@ -81,10 +81,9 @@ class SeverityLevelIndicator extends StatelessWidget {
           padding: const EdgeInsets.only(top: 8.0), // sm
           child: Text(
             '$severity점',
-            style: const TextStyle(
-              fontSize: 16.0, // base
-              fontWeight: FontWeight.w600, // Semibold
-              color: Color(0xFF1E293B), // Neutral-800
+            style: AppTypography.bodyLarge.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
             ),
           ),
         ),

@@ -7,6 +7,7 @@ import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/tracking/domain/value_objects/missed_dose_guidance.dart';
 import 'package:n06/features/tracking/presentation/widgets/selected_date_detail_card.dart';
 import 'package:n06/core/presentation/widgets/empty_state_widget.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
 
 class DoseCalendarScreen extends ConsumerStatefulWidget {
   const DoseCalendarScreen({super.key});
@@ -77,15 +78,15 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
                 ),
                 calendarStyle: CalendarStyle(
                   todayDecoration: BoxDecoration(
-                    color: const Color(0x4DFB923C), // 30% opacity
+                    color: AppColors.warning.withValues(alpha: 0.3),
                     shape: BoxShape.circle,
                   ),
-                  selectedDecoration: const BoxDecoration(
-                    color: Color(0xFF4ADE80),
+                  selectedDecoration: BoxDecoration(
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
-                  markerDecoration: const BoxDecoration(
-                    color: Color(0xFF4ADE80),
+                  markerDecoration: BoxDecoration(
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -116,9 +117,9 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
             ],
           );
         },
-        loading: () => const Center(
+        loading: () => Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4ADE80)),
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
           ),
         ),
         error: (error, stack) => Center(

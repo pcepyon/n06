@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_text_field.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
@@ -171,24 +173,24 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
           if (_calculatedWeeklyGoal != null) ...[
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 border: _showWeeklyGoalWarning
-                    ? const Border(
+                    ? Border(
                         left: BorderSide(
-                          color: Color(0xFFF59E0B), // Warning
+                          color: AppColors.warning,
                           width: 4,
                         ),
                       )
                     : Border.all(
-                        color: const Color(0xFFE2E8F0), // Neutral-200
+                        color: AppColors.border,
                         width: 1,
                       ),
                 borderRadius: BorderRadius.circular(12), // md
                 boxShadow: [
                   BoxShadow(
                     color: _showWeeklyGoalWarning
-                        ? const Color(0xFFF59E0B).withValues(alpha: 0.1)
-                        : const Color(0xFF0F172A).withValues(alpha: 0.06),
+                        ? AppColors.warning.withValues(alpha: 0.1)
+                        : AppColors.neutral900.withValues(alpha: 0.06),
                     blurRadius: _showWeeklyGoalWarning ? 8 : 4,
                     offset: const Offset(0, 2),
                   ),
@@ -199,25 +201,15 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Title
-                  const Text(
+                  Text(
                     '주간 감량 목표',
-                    style: TextStyle(
-                      color: Color(0xFF334155), // Neutral-700
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600, // Semibold
-                      fontFamily: 'Pretendard',
-                    ),
+                    style: AppTypography.labelMedium,
                   ),
                   const SizedBox(height: 8),
                   // Goal value
                   Text(
                     '${_calculatedWeeklyGoal!.toStringAsFixed(2)}kg',
-                    style: const TextStyle(
-                      color: Color(0xFF1E293B), // Neutral-800
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700, // Bold
-                      fontFamily: 'Pretendard',
-                    ),
+                    style: AppTypography.heading2,
                   ),
                   if (_showWeeklyGoalWarning) ...[
                     const SizedBox(height: 12),
@@ -229,21 +221,16 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.warning_amber_rounded,
-                            color: Color(0xFFF59E0B), // Warning
+                            color: AppColors.warning,
                             size: 20,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               '주당 1kg 초과의 감량 목표는 위험할 수 있습니다.',
-                              style: const TextStyle(
-                                color: Color(0xFF92400E), // Dark Warning
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: 'Pretendard',
-                              ),
+                              style: AppTypography.caption,
                             ),
                           ),
                         ],

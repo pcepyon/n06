@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/core/utils/validators.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/authentication/presentation/widgets/auth_hero_section.dart';
@@ -162,20 +164,16 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: AppColors.surface,
         elevation: 0,
-        title: const Text(
+        title: Text(
           '가비움 시작하기',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B), // Neutral-800
-          ),
+          style: AppTypography.heading2,
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF334155)), // Neutral-700
+          icon: Icon(Icons.arrow_back, color: AppColors.neutral700),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -188,7 +186,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
           preferredSize: const Size.fromHeight(1),
           child: Container(
             height: 1,
-            color: const Color(0xFFE2E8F0), // Neutral-200
+            color: AppColors.border,
           ),
         ),
       ),
@@ -227,7 +225,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
                 suffixIcon: IconButton(
                   icon: Icon(
                     _showPassword ? Icons.visibility : Icons.visibility_off,
-                    color: const Color(0xFF64748B), // Neutral-500
+                    color: AppColors.textTertiary,
                   ),
                   onPressed: () => setState(() => _showPassword = !_showPassword),
                 ),
@@ -247,7 +245,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
                 suffixIcon: IconButton(
                   icon: Icon(
                     _showConfirmPassword ? Icons.visibility : Icons.visibility_off,
-                    color: const Color(0xFF64748B), // Neutral-500
+                    color: AppColors.textTertiary,
                   ),
                   onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
                 ),
@@ -258,8 +256,8 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC), // Neutral-50
-                  border: Border.all(color: const Color(0xFFE2E8F0)), // Neutral-200
+                  color: AppColors.background,
+                  border: Border.all(color: AppColors.border),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(

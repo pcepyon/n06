@@ -121,6 +121,12 @@ flutter:
     - .env
     - assets/logos/
 
+  # Custom fonts
+  fonts:
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/PretendardVariable.ttf
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import '../../domain/entities/timeline_event.dart';
 
 class TimelineWidget extends StatelessWidget {
@@ -17,12 +19,7 @@ class TimelineWidget extends StatelessWidget {
         // Section Title
         Text(
           '치료 여정',
-          style: TextStyle(
-            fontSize: 18, // lg
-            fontWeight: FontWeight.w600, // Semibold
-            color: Color(0xFF1E293B), // Neutral-800
-            height: 1.3,
-          ),
+          style: AppTypography.heading3,
         ),
 
         SizedBox(height: 16), // md spacing
@@ -56,13 +53,13 @@ class _TimelineEventItem extends StatelessWidget {
   Color _getEventColor(TimelineEventType type) {
     switch (type) {
       case TimelineEventType.treatmentStart:
-        return Color(0xFF3B82F6); // Info (Blue-500)
+        return AppColors.info;
       case TimelineEventType.escalation:
-        return Color(0xFFF59E0B); // Warning (Amber-500)
+        return AppColors.warning;
       case TimelineEventType.weightMilestone:
-        return Color(0xFF10B981); // Success (Emerald-500)
+        return AppColors.success;
       case TimelineEventType.badgeAchievement:
-        return Color(0xFFF59E0B); // Warning (Amber-500, Gold)
+        return AppColors.gold;
     }
   }
 
@@ -85,7 +82,7 @@ class _TimelineEventItem extends StatelessWidget {
                   height: 16,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white,
+                    color: AppColors.surface,
                     border: Border.all(
                       color: eventColor,
                       width: 3,
@@ -98,7 +95,7 @@ class _TimelineEventItem extends StatelessWidget {
                   Expanded(
                     child: Container(
                       width: 3,
-                      color: Color(0xFFCBD5E1), // Neutral-300
+                      color: AppColors.borderDark,
                       margin: EdgeInsets.only(top: 4, bottom: 4),
                     ),
                   ),
@@ -111,27 +108,21 @@ class _TimelineEventItem extends StatelessWidget {
           // Event Content
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 24), // lg spacing between events
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     event.title,
-                    style: TextStyle(
-                      fontSize: 16, // base
-                      fontWeight: FontWeight.w600, // Semibold
-                      color: Color(0xFF1E293B), // Neutral-800
-                      height: 1.4,
+                    style: AppTypography.labelLarge.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   SizedBox(height: 4),
                   Text(
                     event.description,
-                    style: TextStyle(
-                      fontSize: 14, // sm
-                      fontWeight: FontWeight.w400, // Regular
-                      color: Color(0xFF475569), // Neutral-600
-                      height: 1.5,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],

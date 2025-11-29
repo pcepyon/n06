@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
 
 class AppFeaturesScreen extends StatefulWidget {
@@ -76,11 +78,11 @@ class _AppFeaturesScreenState extends State<AppFeaturesScreen> {
             child: SmoothPageIndicator(
               controller: _pageController,
               count: 4,
-              effect: const WormEffect(
+              effect: WormEffect(
                 dotHeight: 8,
                 dotWidth: 8,
-                activeDotColor: Color(0xFF4ADE80), // Primary
-                dotColor: Color(0xFFE2E8F0), // Neutral-200
+                activeDotColor: AppColors.primary,
+                dotColor: AppColors.border,
                 spacing: 12,
               ),
             ),
@@ -88,14 +90,11 @@ class _AppFeaturesScreenState extends State<AppFeaturesScreen> {
           const SizedBox(height: 16),
 
           // Swipe instruction
-          const Text(
+          Text(
             '스와이프해서 더 보기 →',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF94A3B8), // Neutral-400
-              height: 1.43,
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textDisabled,
             ),
           ),
         ],

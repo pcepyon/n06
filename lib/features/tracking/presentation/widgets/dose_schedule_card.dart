@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/widgets/status_badge.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// DoseScheduleCard 위젯
 /// 투여 스케줄 정보를 표시하는 카드 컴포넌트
@@ -66,16 +68,15 @@ class _DoseScheduleCardState extends State<DoseScheduleCard>
               child: Container(
                 margin: const EdgeInsets.only(bottom: 16), // md spacing (카드 간 여백)
                 decoration: BoxDecoration(
-                  color: Colors.white, // Card background
+                  color: AppColors.surface,
                   border: Border.all(
-                    color: const Color(0xFFE2E8F0), // Neutral-200
+                    color: AppColors.border,
                     width: 1,
                   ),
-                  borderRadius: BorderRadius.circular(12), // md radius
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
-                    // sm shadow → md shadow on hover
                     BoxShadow(
-                      color: const Color(0xFF0F172A).withValues(
+                      color: Colors.black.withValues(
                         alpha: 0.06 + 0.02 * _hoverController.value,
                       ),
                       blurRadius: 4 + 4 * _hoverController.value,
@@ -83,28 +84,24 @@ class _DoseScheduleCardState extends State<DoseScheduleCard>
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(16), // md padding
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Dose Amount (xl, Semibold) - 투여량
                     Text(
                       widget.doseAmount,
-                      style: const TextStyle(
-                        fontSize: 20, // xl
-                        fontWeight: FontWeight.w600, // Semibold
-                        color: Color(0xFF1E293B), // Neutral-800
+                      style: AppTypography.heading2.copyWith(
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 8), // sm spacing
+                    const SizedBox(height: 8),
 
                     // Scheduled Date (base, Regular) - 예정 날짜
                     Text(
                       widget.scheduledDate,
-                      style: const TextStyle(
-                        fontSize: 16, // base
-                        fontWeight: FontWeight.w400, // Regular
-                        color: Color(0xFF334155), // Neutral-700
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 8), // sm spacing
@@ -124,16 +121,16 @@ class _DoseScheduleCardState extends State<DoseScheduleCard>
                       child: ElevatedButton(
                         onPressed: widget.isLoading ? null : widget.onActionPressed,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4ADE80), // Primary
+                          backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           disabledBackgroundColor:
-                              const Color(0xFF4ADE80).withValues(alpha: 0.4),
+                              AppColors.primary.withValues(alpha: 0.4),
                           disabledForegroundColor: Colors.white.withValues(alpha: 0.5),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8), // sm radius
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          elevation: 2, // sm shadow
+                          elevation: 2,
                         ),
                         child: widget.isLoading
                             ? const SizedBox(
@@ -146,11 +143,10 @@ class _DoseScheduleCardState extends State<DoseScheduleCard>
                                   ),
                                 ),
                               )
-                            : const Text(
+                            : Text(
                                 '기록',
-                                style: TextStyle(
-                                  fontSize: 16, // base
-                                  fontWeight: FontWeight.w600, // Semibold
+                                style: AppTypography.labelLarge.copyWith(
+                                  color: Colors.white,
                                 ),
                               ),
                       ),

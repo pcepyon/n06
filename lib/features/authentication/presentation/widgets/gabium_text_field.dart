@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// Gabium branded text input
 /// Handles default, focus, error states
@@ -39,82 +41,73 @@ class GabiumTextField extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
             label,
-            style: const TextStyle(
-              fontSize: 14, // sm
-              fontWeight: FontWeight.w600, // Semibold
-              color: Color(0xFF334155), // Neutral-700
+            style: AppTypography.labelMedium.copyWith(
+              color: AppColors.neutral700,
             ),
           ),
         ),
 
         // Input field (48px 고정 높이)
         SizedBox(
-          height: 48.0, // 고정 높이
+          height: 48.0,
           child: TextFormField(
             controller: controller,
             obscureText: obscureText,
             keyboardType: keyboardType,
             validator: validator,
             onChanged: onChanged,
-            style: const TextStyle(
-              fontSize: 16, // base
-              fontWeight: FontWeight.w400, // Regular
-              color: Color(0xFF1E293B), // Neutral-800
-            ),
+            style: AppTypography.bodyLarge,
             decoration: InputDecoration(
               hintText: hint,
               helperText: helperText,
               errorText: errorText,
               suffixIcon: suffixIcon,
               filled: true,
-              fillColor: const Color(0xFFFFFFFF), // White background
+              fillColor: AppColors.surface,
               contentPadding: const EdgeInsets.symmetric(
-                vertical: 12, // md
-                horizontal: 16, // md
+                vertical: 12,
+                horizontal: 16,
               ),
               // Default border
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8), // sm
+                borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(
-                  color: Color(0xFFCBD5E1), // Neutral-300
+                  color: AppColors.neutral300,
                   width: 2,
                 ),
               ),
               // Focus border
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8), // sm
+                borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(
-                  color: Color(0xFF4ADE80), // Primary
+                  color: AppColors.primary,
                   width: 2,
                 ),
               ),
               // Error border
               errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8), // sm
+                borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(
-                  color: Color(0xFFEF4444), // Error
+                  color: AppColors.error,
                   width: 2,
                 ),
               ),
               // Focused error border
               focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8), // sm
+                borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(
-                  color: Color(0xFFEF4444), // Error
+                  color: AppColors.error,
                   width: 2,
                 ),
               ),
               // Error style
-              errorStyle: const TextStyle(
-                fontSize: 12, // xs
-                fontWeight: FontWeight.w500, // Medium
-                color: Color(0xFFEF4444), // Error
+              errorStyle: AppTypography.caption.copyWith(
+                color: AppColors.error,
+                fontWeight: FontWeight.w500,
               ),
               // Helper text style
-              helperStyle: const TextStyle(
-                fontSize: 12, // xs
-                fontWeight: FontWeight.w400, // Regular
-                color: Color(0xFF64748B), // Neutral-500
+              helperStyle: AppTypography.caption.copyWith(
+                color: AppColors.textTertiary,
               ),
             ),
           ),

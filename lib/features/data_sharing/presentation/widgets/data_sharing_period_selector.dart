@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/features/data_sharing/domain/repositories/date_range.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// DataSharingPeriodSelector - 기간 선택 칩 그룹 (Gabium Design System)
 ///
@@ -23,15 +25,15 @@ class DataSharingPeriodSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC), // Neutral-50
+        color: AppColors.background,
         border: Border.all(
-          color: const Color(0xFFE2E8F0), // Neutral-200
+          color: AppColors.border,
           width: 1,
         ),
         borderRadius: BorderRadius.circular(12), // md
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+            color: AppColors.neutral900.withValues(alpha: 0.06),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -43,11 +45,7 @@ class DataSharingPeriodSelector extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600, // Semibold
-              color: Color(0xFF334155), // Neutral-700
-            ),
+            style: AppTypography.labelMedium,
           ),
           const SizedBox(height: 8), // sm
           Wrap(
@@ -64,20 +62,20 @@ class DataSharingPeriodSelector extends StatelessWidget {
                         ? FontWeight.w500 // Medium
                         : FontWeight.w400, // Regular
                     color: isSelected
-                        ? Colors.white
-                        : const Color(0xFF334155), // Neutral-700
+                        ? AppColors.surface
+                        : AppColors.textPrimary,
                   ),
                 ),
                 onSelected: (selected) => onPeriodChanged(period),
                 selected: isSelected,
-                backgroundColor: const Color(0xFFF1F5F9), // Neutral-100
-                selectedColor: const Color(0xFF4ADE80), // Primary
+                backgroundColor: AppColors.surfaceVariant,
+                selectedColor: AppColors.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8), // sm
                   side: BorderSide(
                     color: isSelected
-                        ? const Color(0xFF4ADE80)
-                        : const Color(0xFFCBD5E1), // Neutral-300
+                        ? AppColors.primary
+                        : AppColors.borderDark,
                   ),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

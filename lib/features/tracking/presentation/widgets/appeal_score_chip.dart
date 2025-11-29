@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
 
 /// 식욕 조절 점수 선택 칩
 ///
@@ -28,39 +29,37 @@ class AppealScoreChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF4ADE80) // Primary
-              : const Color(0xFFF1F5F9), // Neutral-100
-          borderRadius: BorderRadius.circular(8.0), // sm
+          color: isSelected ? AppColors.primary : AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(8.0),
           boxShadow: [
             if (isSelected)
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.06),
                 blurRadius: 4.0,
                 offset: const Offset(0, 2),
-              ) // sm shadow
+              )
             else
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 2.0,
                 offset: const Offset(0, 1),
-              ), // xs shadow
+              ),
           ],
         ),
         constraints: const BoxConstraints(
-          minHeight: 44.0, // 터치 권장 높이
+          minHeight: 44.0,
           minWidth: 60.0,
         ),
         alignment: Alignment.center,
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 16.0, // base
+            fontSize: 16.0,
             fontWeight:
-                isSelected ? FontWeight.w500 : FontWeight.w400, // Medium or Regular
+                isSelected ? FontWeight.w500 : FontWeight.w400,
             color: isSelected
                 ? Colors.white
-                : const Color(0xFF334155), // White or Neutral-700
+                : AppColors.textSecondary,
           ),
         ),
       ),

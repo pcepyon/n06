@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/authentication/presentation/widgets/logout_confirm_dialog.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
@@ -22,9 +24,9 @@ class SettingsScreen extends ConsumerWidget {
         appBar: AppBar(
           title: const Text('설정'),
           elevation: 0,
-          backgroundColor: const Color(0xFFFFFFFF), // White
+          backgroundColor: AppColors.surface,
           surfaceTintColor: Colors.transparent,
-          shadowColor: const Color(0xFF0F172A).withOpacity(0.06),
+          shadowColor: AppColors.neutral900.withValues(alpha: 0.06),
         ),
         body: const Center(
           child: CircularProgressIndicator(),
@@ -56,14 +58,10 @@ class SettingsScreen extends ConsumerWidget {
           appBar: AppBar(
             title: const Text('설정'),
             elevation: 0,
-            backgroundColor: const Color(0xFFFFFFFF), // White
+            backgroundColor: AppColors.surface,
             surfaceTintColor: Colors.transparent,
-            shadowColor: const Color(0xFF0F172A).withOpacity(0.06),
-            titleTextStyle: Theme.of(context).textTheme.headlineLarge?.copyWith(
-              color: const Color(0xFF1E293B), // Neutral-800
-              fontSize: 24.0, // 2xl
-              fontWeight: FontWeight.bold,
-            ),
+            shadowColor: AppColors.neutral900.withValues(alpha: 0.06),
+            titleTextStyle: AppTypography.heading1,
           ),
           body: profileState.when(
             loading: () => const Center(
@@ -91,7 +89,7 @@ class SettingsScreen extends ConsumerWidget {
     final userName = profile.userName ?? profile.userId.split('@').first;
 
     return Container(
-      color: const Color(0xFFF8FAFC), // Neutral-50 배경
+      color: AppColors.background,
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0), // md
         child: Column(
@@ -107,11 +105,7 @@ class SettingsScreen extends ConsumerWidget {
             // Settings menu section
             Text(
               '설정',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: const Color(0xFF1E293B), // Neutral-800
-                fontSize: 20.0, // xl
-                fontWeight: FontWeight.w600, // Semibold
-              ),
+              style: AppTypography.heading2,
             ),
             const SizedBox(height: 16.0), // md spacing
 

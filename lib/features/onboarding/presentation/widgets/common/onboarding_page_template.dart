@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 
 class OnboardingPageTemplate extends StatelessWidget {
@@ -43,11 +45,10 @@ class OnboardingPageTemplate extends StatelessWidget {
                     HapticFeedback.lightImpact();
                     onSkip?.call();
                   },
-                  child: const Text(
+                  child: Text(
                     '건너뛰기',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF64748B), // Neutral-500
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textTertiary,
                     ),
                   ),
                 ),
@@ -58,12 +59,7 @@ class OnboardingPageTemplate extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 title!,
-                style: const TextStyle(
-                  fontSize: 28, // 3xl
-                  fontWeight: FontWeight.w700, // Bold
-                  color: Color(0xFF1E293B), // Neutral-800
-                  height: 1.29, // 36/28
-                ),
+                style: AppTypography.display,
               ),
             ],
 
@@ -72,11 +68,8 @@ class OnboardingPageTemplate extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 subtitle!,
-                style: const TextStyle(
-                  fontSize: 16, // base
-                  fontWeight: FontWeight.w400, // Regular
-                  color: Color(0xFF64748B), // Neutral-500
-                  height: 1.5,
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.textTertiary,
                 ),
               ),
             ],

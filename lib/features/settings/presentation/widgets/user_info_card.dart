@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 
 class UserInfoCard extends StatelessWidget {
   final String userName;
@@ -14,15 +16,15 @@ class UserInfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF), // White
+        color: AppColors.surface,
         border: Border.all(
-          color: const Color(0xFFE2E8F0), // Neutral-200
+          color: AppColors.border,
           width: 1.0,
         ),
         borderRadius: BorderRadius.circular(12.0), // md (12px)
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.06), // sm shadow
+            color: AppColors.neutral900.withValues(alpha: 0.06),
             blurRadius: 4.0,
             offset: const Offset(0, 2),
           ),
@@ -35,11 +37,7 @@ class UserInfoCard extends StatelessWidget {
           // Section title
           Text(
             '사용자 정보',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: const Color(0xFF1E293B), // Neutral-800
-              fontSize: 20.0, // xl
-              fontWeight: FontWeight.w600, // Semibold
-            ),
+            style: AppTypography.heading2,
           ),
           const SizedBox(height: 8.0), // sm spacing after title
 
@@ -49,19 +47,13 @@ class UserInfoCard extends StatelessWidget {
             children: [
               Text(
                 '이름',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(0xFF334155), // Neutral-700
-                  fontSize: 14.0, // sm
-                  fontWeight: FontWeight.w500, // Medium
-                ),
+                style: AppTypography.labelSmall,
               ),
               const SizedBox(height: 4.0),
               Text(
                 userName,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF475569), // Neutral-600
-                  fontSize: 16.0, // base
-                  fontWeight: FontWeight.w400, // Regular
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
@@ -74,19 +66,13 @@ class UserInfoCard extends StatelessWidget {
             children: [
               Text(
                 '목표 체중',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(0xFF334155), // Neutral-700
-                  fontSize: 14.0, // sm
-                  fontWeight: FontWeight.w500, // Medium
-                ),
+                style: AppTypography.labelSmall,
               ),
               const SizedBox(height: 4.0),
               Text(
                 '${targetWeight.toStringAsFixed(1)}kg',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF475569), // Neutral-600
-                  fontSize: 16.0, // base
-                  fontWeight: FontWeight.w400, // Regular
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
