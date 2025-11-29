@@ -39,6 +39,7 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
   double? _weeklyGoal;
   bool _hasWarning = false;
   String? _errorMessage;
+  bool _goalAchieved = false;
 
   @override
   void initState() {
@@ -81,6 +82,7 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
       _errorMessage = null;
       _weeklyGoal = null;
       _hasWarning = false;
+      _goalAchieved = false;
 
       if (_currentWeight == null || _targetWeight == null) {
         return;
@@ -108,11 +110,16 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
       }
 
       if (_targetWeight! >= _currentWeight!) {
-        _errorMessage = '목표 체중은 현재 체중보다 작아야 합니다.';
-        return;
+        // 리뷰 모드에서는 목표 달성 시 축하 메시지 표시 및 진행 허용
+        if (widget.isReviewMode) {
+          _goalAchieved = true;
+        } else {
+          _errorMessage = '목표 체중은 현재 체중보다 작아야 합니다.';
+          return;
+        }
       }
 
-      if (_targetPeriod != null && _targetPeriod! > 0) {
+      if (_targetPeriod != null && _targetPeriod! > 0 && !_goalAchieved) {
         _weeklyGoal = (_currentWeight! - _targetWeight!) / _targetPeriod!;
         _hasWarning = _weeklyGoal! > 1.0;
       }
@@ -261,6 +268,15 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
               ValidationAlert(
                 type: ValidationAlertType.error,
                 message: _errorMessage!,
+              ),
+              const SizedBox(height: 8), // sm
+            ],
+
+            // Goal Achieved Alert (리뷰 모드에서 목표 달성 시)
+            if (_goalAchieved && _errorMessage == null) ...[
+              ValidationAlert(
+                type: ValidationAlertType.success,
+                message: '🎉 목표를 달성하셨네요! 새로운 목표를 설정하거나 그대로 진행하세요.',
               ),
               const SizedBox(height: 8), // sm
             ],

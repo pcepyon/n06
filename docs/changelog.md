@@ -21,6 +21,11 @@
 
 ## 2025-11-29
 
+- [feat] 온보딩 다시보기에서 목표 달성 시 진행 허용
+  - 리뷰 모드에서 현재 체중 ≤ 목표 체중인 경우 축하 메시지 표시
+  - 에러 대신 "🎉 목표를 달성하셨네요!" 안내 후 다음 단계 진행 가능
+  - `features/onboarding/presentation/widgets/weight_goal_form.dart`
+
 - [refactor] Phase F 마이그레이션 - 하드코딩 스타일을 Theme 시스템으로 전환
   - 75개 파일에서 Color/TextStyle 하드코딩 제거
   - AppColors, AppTypography, AppTheme 신규 추가
