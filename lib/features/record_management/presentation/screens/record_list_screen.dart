@@ -281,7 +281,7 @@ class _WeightRecordTile extends ConsumerWidget {
           const SizedBox(width: 8),
           // 삭제 버튼 (Danger 스타일)
           ElevatedButton(
-            onPressed: () => _deleteWeight(context, ref),
+            onPressed: () => _deleteWeight(dialogContext, ref),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
               foregroundColor: AppColors.surface,
@@ -495,7 +495,7 @@ class _SymptomRecordTile extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           ElevatedButton(
-            onPressed: () => _deleteSymptom(context, ref),
+            onPressed: () => _deleteSymptom(dialogContext, ref),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
               foregroundColor: AppColors.surface,
@@ -712,7 +712,7 @@ class _DoseRecordTile extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           ElevatedButton(
-            onPressed: () => _deleteDose(context, ref),
+            onPressed: () => _deleteDose(dialogContext, ref),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
               foregroundColor: AppColors.surface,
