@@ -21,6 +21,10 @@
 
 ## 2025-11-30
 
+- [fix] 부작용 기록 저장 후 로그인이 풀리는 문제 수정
+  - 존재하지 않는 `/dashboard` 경로 대신 `goNamed('home')` 사용
+  - `lib/features/tracking/presentation/screens/daily_tracking_screen.dart`
+
 - [fix] 기록 관리 삭제 다이얼로그가 자동으로 닫히지 않는 문제 수정
   - 삭제 버튼이 외부 context 대신 dialogContext를 전달하도록 수정
   - 체중/증상/투여 기록 삭제 버튼 3개 위치 모두 수정
