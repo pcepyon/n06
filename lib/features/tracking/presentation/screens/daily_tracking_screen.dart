@@ -235,7 +235,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
 
       // 7. 저장 성공 시 대시보드로 이동 (Presentation Layer 책임)
       if (!mounted) return;
-      context.go('/dashboard');
+      context.goNamed('home');
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);

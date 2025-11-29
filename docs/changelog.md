@@ -21,6 +21,11 @@
 
 ## 2025-11-30
 
+- [fix] 기록 관리 삭제 다이얼로그가 자동으로 닫히지 않는 문제 수정
+  - 삭제 버튼이 외부 context 대신 dialogContext를 전달하도록 수정
+  - 체중/증상/투여 기록 삭제 버튼 3개 위치 모두 수정
+  - `lib/features/record_management/presentation/screens/record_list_screen.dart`
+
 - [fix] GabiumButton secondary/ghost variant 텍스트 색상 수정
   - secondary, tertiary, ghost 버튼의 텍스트가 흰색으로 표시되어 보이지 않던 문제 해결
   - variant별 텍스트 색상 분기 로직 추가 (primary/danger → 흰색, 나머지 → primary 색상)
