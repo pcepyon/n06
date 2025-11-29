@@ -8,7 +8,7 @@
 /// Usage:
 /// ```dart
 /// final wegovy = MedicationTemplate.wegovy;
-/// final doses = wegovy.availableDoses; // [0.25, 0.5, 1.0, 1.7, 2.4, 7.2]
+/// final doses = wegovy.availableDoses; // [0.25, 0.5, 1.0, 1.7, 2.4]
 /// ```
 class MedicationTemplate {
   final String displayName;
@@ -28,11 +28,12 @@ class MedicationTemplate {
   /// Source: FDA Wegovy Prescribing Information (08/2025)
   /// https://www.accessdata.fda.gov/drugsatfda_docs/label/2025/215256s024lbl.pdf
   ///
-  /// Available doses: 0.25mg, 0.5mg, 1.0mg, 1.7mg, 2.4mg, 7.2mg (approved 2025)
+  /// 용량 적정 스케줄 (각 단계 4주, 총 16주):
+  /// 0.25mg → 0.5mg → 1.0mg → 1.7mg → 2.4mg (유지용량)
   /// Recommended start dose: 0.25mg
   static const wegovy = MedicationTemplate(
     displayName: 'Wegovy (세마글루타이드)',
-    availableDoses: [0.25, 0.5, 1.0, 1.7, 2.4, 7.2],
+    availableDoses: [0.25, 0.5, 1.0, 1.7, 2.4],
     recommendedStartDose: 0.25,
     standardCycleDays: 7, // Weekly injection
   );

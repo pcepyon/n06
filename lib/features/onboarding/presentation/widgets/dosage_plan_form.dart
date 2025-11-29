@@ -138,6 +138,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
                 setState(() {
                   _selectedTemplate = template;
                   _selectedDose = template?.recommendedStartDose;
+                  _errorMessage = null; // 약물 선택 시 에러 메시지 초기화
                 });
                 _notifyParent();
               },

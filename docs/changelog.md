@@ -21,6 +21,15 @@
 
 ## 2025-11-29
 
+- [fix] 온보딩 투여 계획 설정 - 약물 선택 시 에러 메시지 미초기화 버그 수정
+  - 약물 선택 후 초기 용량이 자동 설정되어도 "약물을 선택해주세요" 에러 메시지가 남아있던 문제 해결
+  - `features/onboarding/presentation/widgets/dosage_plan_form.dart`
+
+- [fix] 위고비 용량 데이터 수정 - 7.2mg 제거
+  - 한국 식약처 승인 기준 2.4mg이 최고 용량
+  - 7.2mg은 STEP UP Trial 연구용량으로 실제 제품에 없음
+  - `features/tracking/domain/entities/medication_template.dart`
+
 - [fix] HowItWorksScreen ExpansionTile 빌드 중 setState 에러 해결
   - 근본 원인: PageStorageKey(Uncontrolled)와 onExpansionChanged+setState(Controlled) 혼합 사용
   - 수정: PageStorageKey 제거로 완전한 Controlled 패턴으로 전환
