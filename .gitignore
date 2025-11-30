@@ -226,3 +226,7 @@ $RECYCLE.BIN/
 # Custom Project Specific
 # Add any project-specific ignores below this line
 TEST_SETUP_COMPLETE.md
+
+# Claude Code skill logs
+.claude/skills/**/projects/**/*-implementation-log*.md
+.claude/debug-status/
