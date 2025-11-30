@@ -133,8 +133,8 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
             // Header Section with Warning Accent
             Container(
               padding: const EdgeInsets.all(24), // lg
-              color: AppColors.surfaceVariant,
               decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
                 border: Border(
                   left: BorderSide(color: AppColors.error, width: 4),
                 ),

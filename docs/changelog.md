@@ -21,6 +21,11 @@
 
 ## 2025-11-30
 
+- [fix] EmergencyCheckScreen Container color/decoration 동시 사용 버그 수정
+  - color를 BoxDecoration 내부로 이동하여 assertion 에러 해결
+  - CLAUDE.md에 Container 스타일링 규칙 추가
+  - `lib/features/tracking/presentation/screens/emergency_check_screen.dart`
+
 - [feat] 부작용 기록에서 긴급 증상 체크 화면 자동 진입 기능 추가
   - 심각도 7-10점 + "24시간 이상 지속" = 예 선택 시 EmergencyCheckScreen으로 자동 이동
   - UF-F005 유저플로우 진입점 구현 완료

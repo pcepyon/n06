@@ -49,6 +49,12 @@ Application/Presentation → Repository Interface (Domain)
 ✅ Dialog + Row + Expanded → 정상 동작
 ```
 
+### Container 스타일링 (BUG-20251130-110218)
+```
+❌ Container(color: X, decoration: BoxDecoration(...))
+✅ Container(decoration: BoxDecoration(color: X, ...))
+```
+
 ---
 
 ## Decision Trees
