@@ -30,7 +30,7 @@ class _WeeklyReportWidgetState extends State<WeeklyReportWidget> {
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
         setState(() => _isPressed = false);
-        context.push('/data-sharing');
+        context.push('/trend-dashboard');
       },
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedContainer(

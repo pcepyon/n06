@@ -21,6 +21,12 @@
 
 ## 2025-12-01
 
+- [feat] 트렌드 대시보드 유저플로우 접근 경로 추가
+  - WeeklyReportWidget 탭 시 트렌드 대시보드로 이동 (기존: data-sharing)
+  - 설정 화면에 '의료진 데이터 공유' 메뉴 추가
+  - `lib/features/dashboard/presentation/widgets/weekly_report_widget.dart`
+  - `lib/features/settings/presentation/screens/settings_screen.dart`
+
 - [fix] 부작용 가이드 콘텐츠를 content-guide.md 기준으로 정확히 반영
   - 두통 안심 메시지에 "혈당 변화" 추가
   - 변비/복통 통계적 안심 메시지 보완 (섬유질, 휴식)

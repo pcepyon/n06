@@ -136,6 +136,11 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => context.push('/records'),
             ),
             SettingsMenuItemImproved(
+              title: '의료진 데이터 공유',
+              subtitle: '담당 의료진에게 기록 데이터를 공유합니다',
+              onTap: () => context.push('/data-sharing'),
+            ),
+            SettingsMenuItemImproved(
               title: '온보딩 다시 보기',
               subtitle: 'GLP-1 약물 정보, 부작용 안내 등 교육 콘텐츠를 다시 볼 수 있습니다',
               onTap: () => context.push('/onboarding/review'),
