@@ -19,6 +19,15 @@
 
 ---
 
+## 2025-12-01
+
+- [fix] 부작용 가이드 콘텐츠를 content-guide.md 기준으로 정확히 반영
+  - 두통 안심 메시지에 "혈당 변화" 추가
+  - 변비/복통 통계적 안심 메시지 보완 (섬유질, 휴식)
+  - detailedSections를 2-3개 섹션으로 간결화 (기존 4개)
+  - 섹션 제목을 케어 기반 대화체로 변경
+  - `lib/features/coping_guide/infrastructure/repositories/static_coping_guide_repository.dart`
+
 ## 2025-11-30
 
 - [feat] 부작용 UX 개선 Phase 1-4 전체 구현 완료
