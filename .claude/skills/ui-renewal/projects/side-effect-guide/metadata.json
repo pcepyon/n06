@@ -1,0 +1,43 @@
+{
+  "project_name": "side-effect-guide",
+  "status": "completed",
+  "current_phase": "phase1",
+  "created_date": "20251130",
+  "last_updated": "20251130",
+  "framework": "flutter",
+  "design_system_version": "Gabium Design System v1.0",
+  "components_created": [
+    "InlineSymptomGuideCard",
+    "SeverityFeedbackChip",
+    "ExpandableGuideSection"
+  ],
+  "source_spec": "docs/side-effect-ux-improvement-plan.md",
+  "content_guide": "docs/side-effect-content-guide.md",
+  "phases": {
+    "phase1": {
+      "name": "안심 퍼스트 가이드 리뉴얼",
+      "status": "completed",
+      "completion_date": "20251130",
+      "components": [
+        "InlineSymptomGuideCard",
+        "SeverityFeedbackChip",
+        "ExpandableGuideSection"
+      ]
+    },
+    "phase2": {
+      "name": "컨텍스트 인식 가이드",
+      "status": "pending",
+      "components": [
+        "PatternInsightCard"
+      ]
+    },
+    "phase3": {
+      "name": "트렌드 대시보드",
+      "status": "pending",
+      "components": [
+        "SymptomHeatmapCalendar",
+        "SymptomTrendChart"
+      ]
+    }
+  }
+}

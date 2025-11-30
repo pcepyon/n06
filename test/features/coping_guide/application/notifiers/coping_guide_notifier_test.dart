@@ -53,6 +53,8 @@ void main() {
       final expectedGuide = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '소량씩 자주 식사하세요',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
       when(() => mockGuideRepo.getGuideBySymptom('메스꺼움'))
           .thenAnswer((_) async => expectedGuide);
@@ -86,8 +88,18 @@ void main() {
     test('모든 가이드 목록 조회', () async {
       // Arrange
       final expectedGuides = [
-        CopingGuide(symptomName: '메스꺼움', shortGuide: '...'),
-        CopingGuide(symptomName: '구토', shortGuide: '...'),
+        CopingGuide(
+          symptomName: '메스꺼움',
+          shortGuide: '...',
+          reassuranceMessage: '몸이 적응하는 중이에요',
+          immediateAction: '물 한 컵 마시기',
+        ),
+        CopingGuide(
+          symptomName: '구토',
+          shortGuide: '...',
+          reassuranceMessage: '잠시 쉬어가세요',
+          immediateAction: '입을 헹구세요',
+        ),
       ];
       when(() => mockGuideRepo.getAllGuides())
           .thenAnswer((_) async => expectedGuides);
@@ -107,6 +119,8 @@ void main() {
       final expectedGuide = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '소량씩 자주 식사하세요',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
       when(() => mockGuideRepo.getGuideBySymptom('메스꺼움'))
           .thenAnswer((_) async => expectedGuide);
@@ -126,6 +140,8 @@ void main() {
       final expectedGuide = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '소량씩 자주 식사하세요',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
       when(() => mockGuideRepo.getGuideBySymptom('메스꺼움'))
           .thenAnswer((_) async => expectedGuide);
@@ -144,6 +160,8 @@ void main() {
       final expectedGuide = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '소량씩 자주 식사하세요',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
       when(() => mockGuideRepo.getGuideBySymptom('메스꺼움'))
           .thenAnswer((_) async => expectedGuide);

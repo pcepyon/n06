@@ -12,6 +12,8 @@ void main() {
         symptomName: '메스꺼움',
         shortGuide: '...',
         detailedSections: [],
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Act
@@ -36,6 +38,8 @@ void main() {
           GuideSection(title: '생활 습관', content: '충분한 휴식'),
           GuideSection(title: '경과 관찰', content: '3일 후에도 지속 시 상담'),
         ],
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Act
@@ -63,6 +67,8 @@ void main() {
           GuideSection(title: '생활 습관', content: '충분한 휴식'),
           GuideSection(title: '경과 관찰', content: '3일 후에도 지속 시 상담'),
         ],
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Act
@@ -85,6 +91,8 @@ void main() {
         symptomName: '메스꺼움',
         shortGuide: '...',
         detailedSections: [],
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Act
@@ -104,6 +112,8 @@ void main() {
         symptomName: '메스꺼움',
         shortGuide: '...',
         detailedSections: [],
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Act
@@ -123,6 +133,8 @@ void main() {
         symptomName: '메스꺼움',
         shortGuide: '...',
         detailedSections: [],
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Act
@@ -145,6 +157,8 @@ void main() {
           10,
           (i) => GuideSection(title: '섹션 $i', content: '내용 ' * 50),
         ),
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Act

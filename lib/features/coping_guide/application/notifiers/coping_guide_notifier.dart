@@ -15,6 +15,8 @@ class CopingGuideNotifier extends _$CopingGuideNotifier {
     final defaultGuide = CopingGuide(
       symptomName: '일반',
       shortGuide: '전문가와 상담하여 구체적인 조언을 받으시기 바랍니다.',
+      reassuranceMessage: '전문가와 함께 관리해봐요',
+      immediateAction: '의료진에게 문의하기',
     );
     return CopingGuideState(guide: defaultGuide);
   }
@@ -32,6 +34,8 @@ class CopingGuideNotifier extends _$CopingGuideNotifier {
           guide: CopingGuide(
             symptomName: '일반',
             shortGuide: '전문가와 상담하여 구체적인 조언을 받으시기 바랍니다.',
+            reassuranceMessage: '전문가와 함께 관리해봐요',
+            immediateAction: '의료진에게 문의하기',
           ),
         );
       }
@@ -56,6 +60,8 @@ class CopingGuideNotifier extends _$CopingGuideNotifier {
           CopingGuide(
             symptomName: '일반',
             shortGuide: '전문가와 상담하여 구체적인 조언을 받으시기 바랍니다.',
+            reassuranceMessage: '전문가와 함께 관리해봐요',
+            immediateAction: '의료진에게 문의하기',
           );
 
       // 심각도 7-10점 AND 24시간 이상 지속 시 경고 활성화

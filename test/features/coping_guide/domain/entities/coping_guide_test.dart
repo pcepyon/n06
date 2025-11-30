@@ -11,6 +11,8 @@ void main() {
       final guide = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '소량씩 자주 식사하세요',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Assert
@@ -30,6 +32,8 @@ void main() {
         symptomName: '메스꺼움',
         shortGuide: '소량씩 자주 식사하세요',
         detailedSections: sections,
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Assert
@@ -42,10 +46,14 @@ void main() {
       final guide1 = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '소량씩 자주 식사하세요',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
       final guide2 = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '소량씩 자주 식사하세요',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Assert
@@ -125,6 +133,8 @@ void main() {
       final guide = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '소량씩 자주 식사하세요',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Act
@@ -143,6 +153,8 @@ void main() {
       final guide = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '소량씩 자주 식사하세요',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Act
@@ -157,6 +169,8 @@ void main() {
       final guide = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '소량씩 자주 식사하세요',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
       final state1 = CopingGuideState(
         guide: guide,

@@ -13,6 +13,12 @@ import 'package:n06/features/tracking/presentation/widgets/input_validation_widg
 import 'package:n06/features/tracking/presentation/widgets/appeal_score_chip.dart';
 import 'package:n06/features/tracking/presentation/widgets/severity_level_indicator.dart';
 import 'package:n06/features/tracking/presentation/widgets/conditional_section.dart';
+import 'package:n06/features/tracking/presentation/widgets/inline_symptom_guide_card.dart';
+import 'package:n06/features/tracking/presentation/widgets/severity_feedback_chip.dart';
+import 'package:n06/features/tracking/presentation/widgets/expandable_guide_section.dart';
+import 'package:n06/features/tracking/presentation/widgets/contextual_guide_card.dart';
+import 'package:n06/features/tracking/application/notifiers/symptom_guide_notifier.dart';
+import 'package:n06/features/tracking/application/notifiers/symptom_pattern_notifier.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 
@@ -448,6 +454,121 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
               );
             }).toList(),
           ),
+
+          // Phase 2: 컨텍스트 인식 가이드 카드 (최근 선택한 증상에 대해 패턴 인사이트 + 안심 메시지)
+          if (_selectedSymptoms.isNotEmpty) ...[
+            const SizedBox(height: 16.0),
+            Consumer(
+              builder: (context, ref, _) {
+                final userId = _getCurrentUserId();
+                if (userId == null) return const SizedBox.shrink();
+
+                final lastSymptom = _selectedSymptoms.last;
+                final guideAsync = ref.watch(symptomGuideProvider(lastSymptom));
+                final patternAsync = ref.watch(symptomPatternProvider(
+                  userId: userId,
+                  symptomName: lastSymptom,
+                ));
+
+                return guideAsync.when(
+                  data: (guide) {
+                    if (guide == null) return const SizedBox.shrink();
+
+                    return patternAsync.when(
+                      data: (insights) {
+                        return ContextualGuideCard(
+                          guide: guide,
+                          insights: insights,
+                          onMoreInfoTap: guide.detailedSections != null &&
+                                  guide.detailedSections!.isNotEmpty
+                              ? () {
+                                  showDetailedGuideBottomSheet(
+                                    context,
+                                    symptomName: guide.symptomName,
+                                    sections: guide.detailedSections!
+                                        .map((section) => {
+                                              'title': section.title,
+                                              'items': section.content
+                                                  .split('\n')
+                                                  .where((line) => line.trim().isNotEmpty)
+                                                  .map((line) => line.replaceFirst('- ', ''))
+                                                  .toList(),
+                                              'initiallyExpanded': false,
+                                            })
+                                        .toList(),
+                                  );
+                                }
+                              : null,
+                          onDismissInsight: () {
+                            // 인사이트 닫기 시 새로고침
+                            ref.invalidate(symptomPatternProvider(
+                              userId: userId,
+                              symptomName: lastSymptom,
+                            ));
+                          },
+                        );
+                      },
+                      loading: () => InlineSymptomGuideCard(
+                        symptomName: guide.symptomName,
+                        reassuranceMessage: guide.reassuranceMessage,
+                        reassuranceStat: guide.reassuranceStat,
+                        immediateAction: guide.immediateAction,
+                        onMoreInfoTap: guide.detailedSections != null &&
+                                guide.detailedSections!.isNotEmpty
+                            ? () {
+                                showDetailedGuideBottomSheet(
+                                  context,
+                                  symptomName: guide.symptomName,
+                                  sections: guide.detailedSections!
+                                      .map((section) => {
+                                            'title': section.title,
+                                            'items': section.content
+                                                .split('\n')
+                                                .where((line) => line.trim().isNotEmpty)
+                                                .map((line) => line.replaceFirst('- ', ''))
+                                                .toList(),
+                                            'initiallyExpanded': false,
+                                          })
+                                      .toList(),
+                                );
+                              }
+                            : null,
+                      ),
+                      error: (_, __) => InlineSymptomGuideCard(
+                        symptomName: guide.symptomName,
+                        reassuranceMessage: guide.reassuranceMessage,
+                        reassuranceStat: guide.reassuranceStat,
+                        immediateAction: guide.immediateAction,
+                        onMoreInfoTap: guide.detailedSections != null &&
+                                guide.detailedSections!.isNotEmpty
+                            ? () {
+                                showDetailedGuideBottomSheet(
+                                  context,
+                                  symptomName: guide.symptomName,
+                                  sections: guide.detailedSections!
+                                      .map((section) => {
+                                            'title': section.title,
+                                            'items': section.content
+                                                .split('\n')
+                                                .where((line) => line.trim().isNotEmpty)
+                                                .map((line) => line.replaceFirst('- ', ''))
+                                                .toList(),
+                                            'initiallyExpanded': false,
+                                          })
+                                      .toList(),
+                                );
+                              }
+                            : null,
+                      ),
+                    );
+                  },
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                );
+              },
+            ),
+          ],
+
           const SizedBox(height: 24.0), // lg
 
           // 선택된 증상별 개별 설정
@@ -553,6 +674,16 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
           SeverityLevelIndicator(
             severity: severity,
             onChanged: (value) => _handleSeverityChanged(symptom, value),
+          ),
+          const SizedBox(height: 12.0), // sm
+
+          // Phase 1: 심각도 피드백 칩
+          SeverityFeedbackChip(
+            severity: severity,
+            symptomName: symptom,
+            onEmergencyCheckTap: () {
+              context.pushNamed('emergency_check');
+            },
           ),
           const SizedBox(height: 16.0), // md
 

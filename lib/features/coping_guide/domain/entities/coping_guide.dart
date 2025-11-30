@@ -9,10 +9,20 @@ class CopingGuide {
   final String shortGuide;
   final List<GuideSection>? detailedSections;
 
+  // Phase 1: 안심 퍼스트 가이드 필드
+  final String reassuranceMessage;
+  final String? reassuranceStat;
+  final String immediateAction;
+  final String? positiveFraming;
+
   const CopingGuide({
     required this.symptomName,
     required this.shortGuide,
     this.detailedSections,
+    required this.reassuranceMessage,
+    this.reassuranceStat,
+    required this.immediateAction,
+    this.positiveFraming,
   });
 
   @override
@@ -22,11 +32,21 @@ class CopingGuide {
           runtimeType == other.runtimeType &&
           symptomName == other.symptomName &&
           shortGuide == other.shortGuide &&
-          detailedSections == other.detailedSections;
+          detailedSections == other.detailedSections &&
+          reassuranceMessage == other.reassuranceMessage &&
+          reassuranceStat == other.reassuranceStat &&
+          immediateAction == other.immediateAction &&
+          positiveFraming == other.positiveFraming;
 
   @override
   int get hashCode =>
-      symptomName.hashCode ^ shortGuide.hashCode ^ detailedSections.hashCode;
+      symptomName.hashCode ^
+      shortGuide.hashCode ^
+      detailedSections.hashCode ^
+      reassuranceMessage.hashCode ^
+      reassuranceStat.hashCode ^
+      immediateAction.hashCode ^
+      positiveFraming.hashCode;
 
   @override
   String toString() =>

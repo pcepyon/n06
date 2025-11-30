@@ -695,10 +695,307 @@
       },
       "reusability": "High - Similar checkbox lists, form selections",
       "dependencies": ["Material Design Icons"]
+    },
+    {
+      "name": "InlineSymptomGuideCard",
+      "createdDate": "2025-11-30",
+      "framework": "Flutter",
+      "file": "flutter/inline_symptom_guide_card.dart",
+      "projectFile": "lib/features/tracking/presentation/widgets/inline_symptom_guide_card.dart",
+      "usedIn": [
+        "Daily Tracking Screen"
+      ],
+      "category": "Feedback",
+      "description": "증상 선택 시 즉시 표시되는 인라인 안심 가이드 카드. Phase 1 안심 퍼스트 가이드 리뉴얼의 핵심 컴포넌트. 안심 메시지, 통계적 안심, 즉시 행동을 표시하며 SlideTransition + FadeTransition 애니메이션 제공",
+      "props": {
+        "symptomName": "String (required)",
+        "reassuranceMessage": "String (required)",
+        "reassuranceStat": "String (optional)",
+        "immediateAction": "String (required)",
+        "onMoreInfoTap": "VoidCallback (optional)"
+      },
+      "designTokens": {
+        "background": "Neutral-50 (#F8FAFC)",
+        "border": "Neutral-200 (#E2E8F0), 1px",
+        "borderRadius": "md (12px)",
+        "padding": "md (16px)",
+        "titleColor": "Neutral-800 (#1E293B)",
+        "titleSize": "lg (18px Semibold)",
+        "bodyColor": "Neutral-700 (#334155)",
+        "bodySize": "base (16px Regular)",
+        "secondaryColor": "Neutral-600 (#475569)",
+        "secondarySize": "sm (14px Regular)",
+        "dividerColor": "Neutral-200 (#E2E8F0)",
+        "linkColor": "Primary (#4ADE80)",
+        "linkSize": "sm (14px Medium)",
+        "animationDuration": "300ms",
+        "animationCurve": "Curves.easeOut"
+      }
+    },
+    {
+      "name": "SeverityFeedbackChip",
+      "createdDate": "2025-11-30",
+      "framework": "Flutter",
+      "file": "flutter/severity_feedback_chip.dart",
+      "projectFile": "lib/features/tracking/presentation/widgets/severity_feedback_chip.dart",
+      "usedIn": [
+        "Daily Tracking Screen"
+      ],
+      "category": "Feedback",
+      "description": "심각도 변경 시 실시간으로 업데이트되는 피드백 칩. Phase 1 안심 퍼스트 가이드 리뉴얼 컴포넌트. 심각도 1-10에 따라 메시지와 배경색이 동적으로 변경되며 AnimatedSwitcher로 부드러운 전환 제공",
+      "props": {
+        "severity": "int (required, 1-10)",
+        "symptomName": "String (required)",
+        "onEmergencyCheckTap": "VoidCallback (optional)"
+      },
+      "designTokens": {
+        "severity1-3Background": "Success at 10% (#10B981)",
+        "severity1-3Border": "Success at 30%",
+        "severity1-3Message": "가볍게 지나갈 거예요",
+        "severity4-6Background": "Info at 10% (#3B82F6)",
+        "severity4-6Border": "Info at 30%",
+        "severity4-6Message": "몸이 적응 중이에요. 며칠 내 나아질 거예요",
+        "severity7-10Background": "Warning at 10% (#F59E0B)",
+        "severity7-10Border": "Warning at 30%",
+        "severity7-10Message": "불편하시죠. 함께 확인해봐요",
+        "padding": "12px 16px",
+        "borderRadius": "sm (8px)",
+        "borderWidth": "1px",
+        "textColor": "Neutral-800 (#1E293B)",
+        "textSize": "base (16px Medium)",
+        "secondaryTextColor": "Warning (#F59E0B)",
+        "secondaryTextSize": "sm (14px Medium)",
+        "animationDuration": "200ms"
+      }
+    },
+    {
+      "name": "ExpandableGuideSection",
+      "createdDate": "2025-11-30",
+      "framework": "Flutter",
+      "file": "flutter/expandable_guide_section.dart",
+      "projectFile": "lib/features/tracking/presentation/widgets/expandable_guide_section.dart",
+      "usedIn": [
+        "Detailed Guide Bottom Sheet"
+      ],
+      "category": "Layout",
+      "description": "상세 가이드 확장 섹션. Phase 1 안심 퍼스트 가이드 리뉴얼 컴포넌트. ExpansionTile을 사용하여 섹션별로 확장 가능하며, 헤더에 제목과 항목 수 뱃지를 표시하고 본문은 번호 리스트 형태로 제공. showDetailedGuideBottomSheet 헬퍼 함수 포함",
+      "props": {
+        "title": "String (required)",
+        "items": "List<String> (required)",
+        "initiallyExpanded": "bool (optional, default: false)"
+      },
+      "designTokens": {
+        "border": "Neutral-200 (#E2E8F0), 1px",
+        "borderRadius": "sm (8px)",
+        "padding": "16px",
+        "titleColor": "Neutral-800 (#1E293B)",
+        "titleSize": "base (16px Semibold)",
+        "badgeBackground": "Neutral-100 (#F1F5F9)",
+        "badgeTextColor": "Neutral-600 (#475569)",
+        "badgeTextSize": "xs (12px Medium)",
+        "itemColor": "Neutral-700 (#334155)",
+        "itemSize": "sm (14px Regular)",
+        "itemNumberColor": "Neutral-700 (#334155)",
+        "itemNumberSize": "sm (14px Medium)",
+        "bottomSheetBackground": "Neutral-50 (#F8FAFC)",
+        "handleBarColor": "Neutral-300 (#CBD5E1)",
+        "handleBarSize": "32x4px",
+        "modalBorderRadius": "16px (top corners only)",
+        "modalMaxHeight": "90vh"
+      }
+    },
+    {
+      "name": "PatternInsightCard",
+      "createdDate": "2025-11-30",
+      "framework": "Flutter",
+      "file": "flutter/pattern_insight_card.dart",
+      "projectFile": "lib/features/tracking/presentation/widgets/pattern_insight_card.dart",
+      "usedIn": [
+        "Daily Tracking Screen",
+        "Contextual Guide Card"
+      ],
+      "category": "Feedback",
+      "description": "패턴 인사이트 카드. Phase 2 컨텍스트 인식 가이드 컴포넌트. 최근 증상 기록에서 발견된 패턴(반복, 컨텍스트 연관, 개선/악화 추세)을 시각화하여 표시. 패턴 유형별 아이콘과 색상, 메시지, 제안, 선택적 신뢰도 표시 제공",
+      "props": {
+        "insight": "PatternInsight (required)",
+        "onDismiss": "VoidCallback (optional)",
+        "onLearnMore": "VoidCallback (optional)",
+        "showConfidence": "bool (optional, default: false)"
+      },
+      "designTokens": {
+        "recurringBackground": "Info at 10% (#3B82F6)",
+        "recurringBorder": "Info at 30%",
+        "contextBackground": "Info at 10% (#3B82F6)",
+        "contextBorder": "Info at 30%",
+        "improvingBackground": "Success at 10% (#10B981)",
+        "improvingBorder": "Success at 30%",
+        "worseningBackground": "Warning at 10% (#F59E0B)",
+        "worseningBorder": "Warning at 30%",
+        "borderRadius": "md (12px)",
+        "padding": "md (16px)",
+        "titleColor": "Neutral-800 (#1E293B)",
+        "titleSize": "lg (18px Semibold)",
+        "messageColor": "Neutral-700 (#334155)",
+        "messageSize": "base (16px Regular)",
+        "suggestionBackground": "White at 50%",
+        "suggestionPadding": "12px",
+        "suggestionBorderRadius": "sm (8px)",
+        "suggestionColor": "Neutral-700 (#334155)",
+        "suggestionSize": "sm (14px Medium)",
+        "confidenceIconSize": "14px",
+        "confidenceTextColor": "Neutral-500 (#64748B)",
+        "confidenceTextSize": "xs (12px Regular)"
+      }
+    },
+    {
+      "name": "ContextualGuideCard",
+      "createdDate": "2025-11-30",
+      "framework": "Flutter",
+      "file": "flutter/contextual_guide_card.dart",
+      "projectFile": "lib/features/tracking/presentation/widgets/contextual_guide_card.dart",
+      "usedIn": [
+        "Daily Tracking Screen"
+      ],
+      "category": "Feedback",
+      "description": "컨텍스트 인식 가이드 카드. Phase 2에서 InlineSymptomGuideCard를 확장한 버전. 패턴 인사이트 섹션과 Phase 1의 안심 메시지를 결합하여 표시. 이전 기록 기반 맞춤 메시지 제공. SlideTransition + FadeTransition 애니메이션 포함",
+      "props": {
+        "guide": "CopingGuide (required)",
+        "insights": "List<PatternInsight> (optional, default: [])",
+        "onMoreInfoTap": "VoidCallback (optional)",
+        "onDismissInsight": "VoidCallback (optional)"
+      },
+      "designTokens": {
+        "background": "Neutral-50 (#F8FAFC)",
+        "border": "Neutral-200 (#E2E8F0), 1px",
+        "borderRadius": "md (12px)",
+        "padding": "md (16px)",
+        "titleColor": "Neutral-800 (#1E293B)",
+        "titleSize": "lg (18px Semibold)",
+        "bodyColor": "Neutral-700 (#334155)",
+        "bodySize": "base (16px Regular)",
+        "secondaryColor": "Neutral-600 (#475569)",
+        "secondarySize": "sm (14px Regular)",
+        "dividerColor": "Neutral-200 (#E2E8F0)",
+        "linkColor": "Primary (#4ADE80)",
+        "linkSize": "sm (14px Medium)",
+        "animationDuration": "300ms",
+        "animationCurve": "Curves.easeOut",
+        "insightSpacing": "12px (between insights)"
+      }
+    },
+    {
+      "name": "SymptomHeatmapCalendar",
+      "createdDate": "2025-11-30",
+      "framework": "Flutter",
+      "file": "flutter/symptom_heatmap_calendar.dart",
+      "projectFile": "lib/features/tracking/presentation/widgets/symptom_heatmap_calendar.dart",
+      "usedIn": [
+        "Trend Dashboard Screen"
+      ],
+      "category": "Data Visualization",
+      "description": "증상 빈도 히트맵 캘린더. Phase 3 트렌드 대시보드 컴포넌트. 7x4~5 그리드로 날짜별 증상 개수를 색상 강도로 표현. 요일 헤더, 범례 포함",
+      "props": {
+        "startDate": "DateTime (required)",
+        "endDate": "DateTime (required)",
+        "symptomCounts": "Map<DateTime, int> (required)",
+        "onDateTap": "Function(DateTime) (optional)"
+      },
+      "designTokens": {
+        "noneColor": "Neutral-100 (#F1F5F9)",
+        "mildColor": "Success 30% (#10B981)",
+        "moderateColor": "Warning 50% (#F59E0B)",
+        "severeColor": "Error 70% (#EF4444)",
+        "cellSize": "40x40px",
+        "borderRadius": "4px",
+        "weekdayFont": "caption (12px Medium)",
+        "weekdayColor": "Neutral-500 (#64748B)",
+        "dateFont": "caption (12px Medium)",
+        "dateColor": "Neutral-600 or White (depending on count)"
+      }
+    },
+    {
+      "name": "SymptomTrendChart",
+      "createdDate": "2025-11-30",
+      "framework": "Flutter",
+      "file": "flutter/symptom_trend_chart.dart",
+      "projectFile": "lib/features/tracking/presentation/widgets/symptom_trend_chart.dart",
+      "usedIn": [
+        "Trend Dashboard Screen"
+      ],
+      "category": "Data Visualization",
+      "description": "증상 심각도 추이 차트. Phase 3 트렌드 대시보드 컴포넌트. fl_chart LineChart로 시계열 데이터 시각화. 증상별 색상 구분, 곡선형 그래프, 터치 툴팁 지원",
+      "props": {
+        "trends": "List<SeverityTrend> (required)",
+        "period": "TrendPeriod (required)"
+      },
+      "designTokens": {
+        "chartColor1": "Primary (#4ADE80)",
+        "chartColor2": "Info (#3B82F6)",
+        "chartColor3": "Warning (#F59E0B)",
+        "gridLines": "Neutral-200 (#E2E8F0), 1px",
+        "axisColor": "Neutral-500 (#64748B)",
+        "axisFont": "caption (12px Medium)",
+        "borderBottom": "Neutral-300 (#CBD5E1), 1px",
+        "borderLeft": "Neutral-300 (#CBD5E1), 1px",
+        "lineWidth": "3px",
+        "curveSmooth": "0.3",
+        "dotRadius": "4px",
+        "dotBorder": "2px (color per trend)",
+        "areaOpacity": "0.1",
+        "tooltipBackground": "Neutral-800 (#1E293B)",
+        "tooltipBorder": "Neutral-700 (#334155), 1px",
+        "tooltipPadding": "12px 16px",
+        "tooltipFont": "12px Medium",
+        "legendFont": "caption (12px Medium)",
+        "legendIconWidth": "16px",
+        "legendIconHeight": "3px"
+      },
+      "dependencies": ["fl_chart: 1.1.1"]
+    },
+    {
+      "name": "TrendInsightCard",
+      "createdDate": "2025-11-30",
+      "framework": "Flutter",
+      "file": "flutter/trend_insight_card.dart",
+      "projectFile": "lib/features/tracking/presentation/widgets/trend_insight_card.dart",
+      "usedIn": [
+        "Trend Dashboard Screen"
+      ],
+      "category": "Feedback",
+      "description": "트렌드 요약 카드. Phase 3 트렌드 대시보드 컴포넌트. 전체 트렌드 방향 아이콘, 요약 메시지, TOP 3 증상 리스트 표시. 상세 보기 링크 선택적 제공",
+      "props": {
+        "insight": "TrendInsight (required)",
+        "onViewDetails": "VoidCallback (optional)"
+      },
+      "designTokens": {
+        "background": "White (#FFFFFF)",
+        "border": "Neutral-200 (#E2E8F0), 1px",
+        "borderRadius": "md (12px)",
+        "padding": "md (16px)",
+        "shadow": "sm (0 2px 4px rgba(15, 23, 42, 0.06))",
+        "headerIconSize": "24px",
+        "periodFont": "heading3 (18px Semibold)",
+        "periodColor": "Neutral-700 (#334155)",
+        "summaryFont": "bodyLarge (16px Semibold)",
+        "summaryColor": "Neutral-800 (#1E293B)",
+        "dividerColor": "Neutral-200 (#E2E8F0), 1px",
+        "sectionTitleFont": "bodySmall (14px Medium)",
+        "sectionTitleColor": "Neutral-600 (#475569)",
+        "symptomFont": "bodySmall (14px Regular)",
+        "symptomColor": "Neutral-700 (#334155)",
+        "countFont": "bodySmall (14px Medium)",
+        "countColor": "Neutral-600 (#475569)",
+        "percentageFont": "caption (12px Regular)",
+        "percentageColor": "Neutral-500 (#64748B)",
+        "bulletColor": "Primary (#4ADE80)",
+        "bulletSize": "6px",
+        "linkColor": "Primary (#4ADE80)",
+        "linkFont": "bodySmall (14px Medium)"
+      }
     }
   ],
   "metadata": {
-    "totalComponents": 23,
+    "totalComponents": 31,
     "frameworks": ["Flutter"],
     "categories": [
       "Authentication",
@@ -711,7 +1008,36 @@
       "Form Elements",
       "Layout",
       "Cards",
-      "Icons"
-    ]
+      "Icons",
+      "Data Visualization"
+    ],
+    "lastUpdated": "2025-11-30",
+    "designSystem": "Gabium v1.0",
+    "projects": {
+      "side-effect-guide": {
+        "status": "Completed",
+        "phases": 3,
+        "componentsAdded": 8,
+        "componentsList": [
+          "InlineSymptomGuideCard",
+          "SeverityFeedbackChip",
+          "ExpandableGuideSection",
+          "PatternInsightCard",
+          "ContextualGuideCard",
+          "SymptomHeatmapCalendar",
+          "SymptomTrendChart",
+          "TrendInsightCard"
+        ]
+      }
+    },
+    "stats": {
+      "totalNewCodeLines": 2611,
+      "totalComponentsLines": 1339,
+      "totalNotifiersLines": 231,
+      "totalEntitiesLines": 183,
+      "totalServicesLines": 411,
+      "lintIssues": 0,
+      "architectureViolations": 0
+    }
   }
 }

@@ -11,6 +11,8 @@ void main() {
       final guide = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '소량씩 자주 식사하세요',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Act
@@ -32,6 +34,8 @@ void main() {
       final guide = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '...',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Act
@@ -52,6 +56,8 @@ void main() {
       final guide = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '...',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Act
@@ -77,6 +83,8 @@ void main() {
       final guide = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '...',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
       bool navigated = false;
 
@@ -104,6 +112,8 @@ void main() {
         guide: CopingGuide(
           symptomName: '메스꺼움',
           shortGuide: '...',
+          reassuranceMessage: '몸이 적응하는 중이에요',
+          immediateAction: '물 한 컵 마시기',
         ),
         showSeverityWarning: true,
       );
@@ -131,6 +141,8 @@ void main() {
         guide: CopingGuide(
           symptomName: '메스꺼움',
           shortGuide: '...',
+          reassuranceMessage: '몸이 적응하는 중이에요',
+          immediateAction: '물 한 컵 마시기',
         ),
         showSeverityWarning: false,
       );
@@ -155,6 +167,8 @@ void main() {
         guide: CopingGuide(
           symptomName: '메스꺼움',
           shortGuide: '...',
+          reassuranceMessage: '몸이 적응하는 중이에요',
+          immediateAction: '물 한 컵 마시기',
         ),
         showSeverityWarning: true,
       );
@@ -183,6 +197,8 @@ void main() {
       final guide = CopingGuide(
         symptomName: '메스꺼움',
         shortGuide: '...',
+        reassuranceMessage: '몸이 적응하는 중이에요',
+        immediateAction: '물 한 컵 마시기',
       );
 
       // Act

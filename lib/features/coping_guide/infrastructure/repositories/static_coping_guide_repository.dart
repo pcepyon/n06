@@ -8,6 +8,10 @@ class StaticCopingGuideRepository implements CopingGuideRepository {
     '메스꺼움': CopingGuide(
       symptomName: '메스꺼움',
       shortGuide: '소량씩 자주 식사하고, 생강차나 박하 음료를 마시세요.',
+      reassuranceMessage: '몸이 약에 적응하는 자연스러운 반응이에요',
+      reassuranceStat: '85%가 2주 내 개선을 경험해요',
+      immediateAction: '시원한 물 한 모금 마시기',
+      positiveFraming: '메스꺼움은 약이 작동하고 있다는 신호예요',
       detailedSections: [
         GuideSection(
           title: '즉시 조치',
@@ -30,6 +34,9 @@ class StaticCopingGuideRepository implements CopingGuideRepository {
     '구토': CopingGuide(
       symptomName: '구토',
       shortGuide: '수분을 조금씩 자주 마시고, 회복 단계별로 천천히 음식을 섭취하세요.',
+      reassuranceMessage: '불편하시죠. 대부분 며칠 내 나아져요',
+      reassuranceStat: '대부분 1주 내 완화돼요',
+      immediateAction: '10분간 휴식 후 물 섭취',
       detailedSections: [
         GuideSection(
           title: '즉시 조치',
@@ -52,6 +59,9 @@ class StaticCopingGuideRepository implements CopingGuideRepository {
     '변비': CopingGuide(
       symptomName: '변비',
       shortGuide: '섬유질과 수분 섭취를 늘리고, 신체 활동을 유지하세요.',
+      reassuranceMessage: '장이 새로운 리듬을 찾는 중이에요',
+      reassuranceStat: '수분 섭취로 80% 개선돼요',
+      immediateAction: '물 한 컵 마시기',
       detailedSections: [
         GuideSection(
           title: '즉시 조치',
@@ -74,6 +84,9 @@ class StaticCopingGuideRepository implements CopingGuideRepository {
     '설사': CopingGuide(
       symptomName: '설사',
       shortGuide: '수분과 전해질을 보충하고, 소화 부담을 줄이세요.',
+      reassuranceMessage: '장이 적응하는 과정이에요',
+      reassuranceStat: '보통 2-3일 내 안정돼요',
+      immediateAction: '전해질 음료 섭취',
       detailedSections: [
         GuideSection(
           title: '즉시 조치',
@@ -96,6 +109,9 @@ class StaticCopingGuideRepository implements CopingGuideRepository {
     '복통': CopingGuide(
       symptomName: '복통',
       shortGuide: '온찜질을 하고, 가벼운 식사를 하며, 스트레스를 관리하세요.',
+      reassuranceMessage: '소화기관이 적응 중이에요',
+      reassuranceStat: '가벼운 식사로 완화돼요',
+      immediateAction: '따뜻한 물 + 휴식',
       detailedSections: [
         GuideSection(
           title: '즉시 조치',
@@ -118,6 +134,9 @@ class StaticCopingGuideRepository implements CopingGuideRepository {
     '두통': CopingGuide(
       symptomName: '두통',
       shortGuide: '충분한 수분을 섭취하고, 휴식을 취하며, 스트레스를 줄이세요.',
+      reassuranceMessage: '수분 부족일 수 있어요',
+      reassuranceStat: '수분 섭취로 빠른 완화돼요',
+      immediateAction: '물 한 컵 + 5분 휴식',
       detailedSections: [
         GuideSection(
           title: '즉시 조치',
@@ -140,6 +159,9 @@ class StaticCopingGuideRepository implements CopingGuideRepository {
     '피로': CopingGuide(
       symptomName: '피로',
       shortGuide: '충분한 수면과 영양가 있는 식사를 하고, 활동을 조절하세요.',
+      reassuranceMessage: '에너지 조절 중이에요',
+      reassuranceStat: '1-2주 후 적응해요',
+      immediateAction: '10분 가벼운 휴식',
       detailedSections: [
         GuideSection(
           title: '즉시 조치',

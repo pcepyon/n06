@@ -21,6 +21,18 @@
 
 ## 2025-11-30
 
+- [feat] 부작용 UX 개선 Phase 1-4 전체 구현 완료
+  - Phase 1: 안심 퍼스트 가이드 (InlineSymptomGuideCard, SeverityFeedbackChip, ExpandableGuideSection)
+  - Phase 2: 컨텍스트 인식 가이드 (PatternInsightCard, ContextualGuideCard, SymptomPatternAnalyzer)
+  - Phase 3: 트렌드 대시보드 (SymptomHeatmapCalendar, SymptomTrendChart, TrendInsightCard, TrendDashboardScreen)
+  - Phase 4: 통합 테스트 94개 작성 및 문서화
+  - `lib/features/tracking/domain/entities/pattern_insight.dart`
+  - `lib/features/tracking/domain/entities/trend_insight.dart`
+  - `lib/features/tracking/domain/services/symptom_pattern_analyzer.dart`
+  - `lib/features/tracking/domain/services/trend_insight_analyzer.dart`
+  - `lib/features/tracking/presentation/widgets/` (8개 위젯)
+  - `lib/features/tracking/presentation/screens/trend_dashboard_screen.dart`
+
 - [fix] EmergencyCheckScreen Container color/decoration 동시 사용 버그 수정
   - color를 BoxDecoration 내부로 이동하여 assertion 에러 해결
   - CLAUDE.md에 Container 스타일링 규칙 추가

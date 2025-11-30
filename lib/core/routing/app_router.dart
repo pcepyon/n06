@@ -20,6 +20,7 @@ import 'package:n06/features/record_management/presentation/screens/record_list_
 import 'package:n06/features/authentication/presentation/screens/email_signup_screen.dart';
 import 'package:n06/features/authentication/presentation/screens/email_signin_screen.dart';
 import 'package:n06/features/authentication/presentation/screens/password_reset_screen.dart';
+import 'package:n06/features/tracking/presentation/screens/trend_dashboard_screen.dart';
 
 /// GoRouter configuration for the application
 final appRouter = GoRouter(
@@ -224,6 +225,12 @@ final appRouter = GoRouter(
       path: '/records',
       name: 'record_list',
       builder: (context, state) => const RecordListScreen(),
+    ),
+
+    GoRoute(
+      path: '/trend-dashboard',
+      name: 'trend_dashboard',
+      builder: (context, state) => const TrendDashboardScreen(),
     ),
   ],
 );
