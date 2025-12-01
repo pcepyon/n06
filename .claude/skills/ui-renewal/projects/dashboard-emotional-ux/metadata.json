@@ -1,0 +1,95 @@
+{
+  "project_name": "dashboard-emotional-ux",
+  "status": "ready_for_implementation",
+  "current_phase": "phase2b",
+  "created_date": "2024-12-01",
+  "last_updated": "2024-12-01T00:00:00Z",
+  "framework": "flutter",
+  "design_system_version": "v1.0",
+  "versions": {
+    "proposal": "v1",
+    "implementation": "v1"
+  },
+  "dependencies": [],
+  "components_to_create": [
+    "EmotionalGreetingWidget",
+    "EncouragingProgressWidget",
+    "HopefulScheduleWidget",
+    "CelebratoryReportWidget",
+    "JourneyTimelineWidget",
+    "CelebratoryBadgeWidget"
+  ],
+  "existing_widgets_to_replace": [
+    {
+      "old": "GreetingWidget",
+      "new": "EmotionalGreetingWidget"
+    },
+    {
+      "old": "WeeklyProgressWidget",
+      "new": "EncouragingProgressWidget"
+    },
+    {
+      "old": "NextScheduleWidget",
+      "new": "HopefulScheduleWidget"
+    },
+    {
+      "old": "WeeklyReportWidget",
+      "new": "CelebratoryReportWidget"
+    },
+    {
+      "old": "TimelineWidget",
+      "new": "JourneyTimelineWidget"
+    },
+    {
+      "old": "BadgeWidget",
+      "new": "CelebratoryBadgeWidget"
+    }
+  ],
+  "design_intent": {
+    "core_goals": [
+      "거부감 감소 - GLP-1 주사제에 대한 두려움과 불안 감소",
+      "긍정적 프레이밍 - 숫자와 데이터를 성취의 언어로 재해석",
+      "감정적 연결 - 치료 여정에 공감하고 동행하는 느낌",
+      "지속 동기부여 - 작은 성공을 축하하는 마이크로인터랙션"
+    ],
+    "psychological_basis": [
+      "CBT 원리 - 긍정적 사고 전환",
+      "정상화 - 부작용을 적응 과정으로 프레이밍",
+      "손실 회피 대신 성장 동기"
+    ],
+    "reframing_rules": {
+      "labels": {
+        "부작용 기록": "몸의 신호 체크",
+        "체중 기록": "변화 추적",
+        "다음 투여": "다음 단계",
+        "다음 증량": "성장의 순간",
+        "부작용": "적응기"
+      },
+      "values": {
+        "부작용 X회": "X일을 잘 견뎌냈어요",
+        "순응도 X%": "목표의 X% 달성!"
+      }
+    }
+  },
+  "orchestration": {
+    "step1_implementation": {
+      "description": "6개 위젯 순차 구현 + UX 심리학 적용",
+      "agent_type": "general-purpose",
+      "model": "opus",
+      "prompts_file": "orchestration-prompts.md#step-1",
+      "ux_principles": ["Noom CBT", "Headspace 환영", "Duolingo 게이미피케이션", "정상화"]
+    },
+    "step2_validation": {
+      "description": "기술적 검증 + UX 의도 검증 + 금지어 검사",
+      "agent_type": "general-purpose",
+      "model": "opus",
+      "prompts_file": "orchestration-prompts.md#step-2"
+    },
+    "step3_asset_reuse": {
+      "description": "Component Registry 업데이트 + designIntent 문서화",
+      "agent_type": "general-purpose",
+      "model": "opus",
+      "prompts_file": "orchestration-prompts.md#step-3"
+    }
+  }
+}

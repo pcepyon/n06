@@ -554,3 +554,49 @@
 ---
 
 ## Pending
+
+### dashboard-emotional-ux
+- **Status**: 🔄 Ready for Implementation (Phase 2B Complete)
+- **Date**: 2025-12-01
+- **Framework**: Flutter
+- **Design System**: Gabium v1.0
+- **Screen Path**: lib/features/dashboard/presentation/screens/home_dashboard_screen.dart
+- **Feature**: dashboard
+- **Description**: GLP-1 대시보드 감정적 UX 개선 - Noom/Headspace/Duolingo 베스트 프랙티스 적용. 거부감 감소, 긍정적 프레이밍, 감정적 연결, 지속 동기부여
+- **Phase Status**:
+  - Phase 2A (Analysis & Direction): ✅ Complete
+  - Phase 2B (Implementation Spec): ✅ Complete
+  - Phase 2C (Auto Implementation): 🔄 Ready
+  - Phase 3 (Asset Organization): ⏳ Pending
+- **Documents**:
+  - Proposal: 20251201-proposal-v1.md ✅
+  - Implementation: 20251201-implementation-v1.md ✅
+  - Orchestration Prompts: orchestration-prompts.md ✅
+- **Components to Create**: 6
+  - EmotionalGreetingWidget (시간대별 인사 + 격려)
+  - EncouragingProgressWidget (긍정적 라벨 진행률)
+  - HopefulScheduleWidget (희망적 스케줄 표현)
+  - CelebratoryReportWidget (성취 중심 요약)
+  - JourneyTimelineWidget (여정 스토리텔링)
+  - CelebratoryBadgeWidget (축하 애니메이션 뱃지)
+- **Widgets to Replace**: 6
+  - GreetingWidget → EmotionalGreetingWidget
+  - WeeklyProgressWidget → EncouragingProgressWidget
+  - NextScheduleWidget → HopefulScheduleWidget
+  - WeeklyReportWidget → CelebratoryReportWidget
+  - TimelineWidget → JourneyTimelineWidget
+  - BadgeWidget → CelebratoryBadgeWidget
+- **Key Design Intent**:
+  - 거부감 감소: "부작용 기록" → "몸의 신호 체크" (정상화)
+  - 긍정적 프레이밍: "순응도 72%" → "목표의 70% 이상 달성!"
+  - 임계값 축하: 70%+ → Success 컬러 + 격려 메시지
+  - 시간대별 인사: 아침/오후/저녁 맞춤 인사
+  - 마일스톤 강조: 여정 요약 + gold glow 효과
+  - 부작용 아이콘: Error → Warning (덜 위협적)
+- **Orchestration**:
+  - Step 1: 6개 위젯 순차 구현 (sonnet)
+  - Step 2: 의도대로 구현 검증 (sonnet)
+  - Step 3: Component Registry 업데이트 (haiku)
+- **Notes**: 모든 프롬프트가 orchestration-prompts.md에 정밀 설계됨. 각 에이전트가 필요한 파일만 읽고 컨텍스트 오버플로우 없이 작업 완료 가능.
+
+---
