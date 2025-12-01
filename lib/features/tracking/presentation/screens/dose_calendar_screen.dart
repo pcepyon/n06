@@ -86,7 +86,7 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
                     shape: BoxShape.circle,
                   ),
                   markerDecoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: AppColors.achievement,
                     shape: BoxShape.circle,
                   ),
                 ),

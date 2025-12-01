@@ -98,11 +98,56 @@ abstract final class AppColors {
   // ============================================
 
   static const List<Color> chartColors = [
-    primary,    // 주요 데이터
-    info,       // 보조 데이터
-    secondary,  // 경고/주의
+    primary, // 주요 데이터
+    info, // 보조 데이터
+    secondary, // 경고/주의
     Color(0xFF8B5CF6), // Purple
     Color(0xFFEC4899), // Pink
-    success,    // 성공/목표
+    success, // 성공/목표
   ];
+
+  // ============================================
+  // Feature Colors (감정적 UX 매핑)
+  // PRD 감정 목표에 따른 기능별 색상
+  // ============================================
+
+  /// 성취/마일스톤: 뱃지, 축하, 연속 기록 - 성취감, 자부심
+  static const Color achievement = gold;
+
+  /// 따뜻한 환영: 복귀 메시지, 격려 - 수용, 따뜻함
+  static const Color warmWelcome = Color(0xFFF97316); // Orange-500
+
+  /// 교육/안내: 대처 가이드, 팁 - 안심, 신뢰
+  static const Color education = info;
+
+  /// 기록/회고: 타임라인, 히스토리 - 연결감
+  static const Color history = Color(0xFF8B5CF6); // Purple-500
+
+  // ============================================
+  // Feature Background Colors (연한 배경)
+  // ============================================
+
+  /// 성취 관련 배경 (연속 기록, 뱃지 배경)
+  static const Color achievementBackground = Color(0xFFFEF3C7); // Amber-100
+
+  /// 환영 메시지 배경
+  static const Color welcomeBackground = Color(0xFFFFF7ED); // Orange-50
+
+  /// 교육/안내 콘텐츠 배경
+  static const Color educationBackground = Color(0xFFEFF6FF); // Blue-50
+
+  /// 히스토리/타임라인 배경
+  static const Color historyBackground = Color(0xFFF5F3FF); // Purple-50
+
+  /// Success 배경
+  static const Color successBackground = Color(0xFFECFDF5); // Emerald-50
+
+  /// Error 배경
+  static const Color errorBackground = Color(0xFFFEF2F2); // Red-50
+
+  /// Warning 배경
+  static const Color warningBackground = Color(0xFFFFFBEB); // Amber-50
+
+  /// Info 배경
+  static const Color infoBackground = Color(0xFFEFF6FF); // Blue-50
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
 import 'package:n06/features/profile/presentation/widgets/weekly_goal_input_widget.dart';
 
@@ -133,7 +134,7 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
                     width: 4.0,
                     height: 60.0,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6), // Info color
+                      color: AppColors.education, // Info/Education color
                       borderRadius: BorderRadius.circular(2.0),
                     ),
                   ),

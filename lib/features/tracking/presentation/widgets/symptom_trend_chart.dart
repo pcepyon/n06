@@ -251,12 +251,7 @@ class SymptomTrendChart extends StatelessWidget {
   }
 
   Color _getColorForIndex(int index) {
-    final colors = [
-      AppColors.primary,
-      AppColors.info,
-      AppColors.warning,
-    ];
-    return colors[index % colors.length];
+    return AppColors.chartColors[index % AppColors.chartColors.length];
   }
 
   String _getTrendIcon(TrendDirection direction) {

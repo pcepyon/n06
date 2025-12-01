@@ -63,9 +63,9 @@ class _CopingGuideFeedbackResultState extends State<CopingGuideFeedbackResult>
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.success.withValues(alpha: 0.1),
+            color: AppColors.educationBackground,
             border: const Border(
-              left: BorderSide(color: AppColors.success, width: 4),
+              left: BorderSide(color: AppColors.education, width: 4),
             ),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -73,7 +73,7 @@ class _CopingGuideFeedbackResultState extends State<CopingGuideFeedbackResult>
             children: [
               const Icon(
                 Icons.check_circle,
-                color: AppColors.success,
+                color: AppColors.education,
                 size: 24,
               ),
               const SizedBox(width: 12),
@@ -86,7 +86,7 @@ class _CopingGuideFeedbackResultState extends State<CopingGuideFeedbackResult>
                       '피드백을 주셔서 감사합니다!',
                       style: AppTypography.bodyLarge.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.success,
+                        color: AppColors.education,
                       ),
                     ),
                     if (widget.onRetry != null) ...[
@@ -103,7 +103,7 @@ class _CopingGuideFeedbackResultState extends State<CopingGuideFeedbackResult>
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.success,
+                            color: AppColors.education,
                           ),
                         ),
                       ),

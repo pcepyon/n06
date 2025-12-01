@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
 
 enum InjectionSite { abdomen, thigh, arm }
@@ -103,9 +104,9 @@ class InjectionGuideScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF), // Blue-50
+              color: AppColors.educationBackground, // Blue-50
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0x333B82F6)),
+              border: Border.all(color: AppColors.education.withValues(alpha: 0.2)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,19 +268,19 @@ class _CheckItem extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(
+        Icon(
           Icons.check_circle,
-          color: Color(0xFF3B82F6), // Blue-500
+          color: AppColors.education,
           size: 20,
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: Color(0xFF1E40AF), // Blue-800
+              color: AppColors.education,
               height: 1.43,
             ),
           ),

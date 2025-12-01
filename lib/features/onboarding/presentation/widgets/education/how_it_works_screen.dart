@@ -50,10 +50,10 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFBEB), // Warning Yellow-50
+              color: AppColors.educationBackground, // Blue-50
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: AppColors.warning.withValues(alpha: 0.3),
+                color: AppColors.education.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -61,14 +61,14 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
                 Icon(
                   Icons.touch_app,
                   size: 16,
-                  color: AppColors.warning,
+                  color: AppColors.education,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     '탭해서 자세히 알아보기',
                     style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.warning,
+                      color: AppColors.education,
                     ),
                   ),
                 ),

@@ -51,9 +51,9 @@ class CopingGuideCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AppColors.educationBackground,
             border: const Border(
-              top: BorderSide(color: AppColors.primary, width: 3),
+              top: BorderSide(color: AppColors.education, width: 3),
               bottom: BorderSide(color: AppColors.border, width: 1),
               left: BorderSide(color: AppColors.border, width: 1),
               right: BorderSide(color: AppColors.border, width: 1),

@@ -717,7 +717,56 @@ See `scripts/export_design_tokens.py` for conversion.
 
 ---
 
-## 13. Notes & Decisions
+## 13. Feature Color Mapping (감정적 UX)
+
+PRD의 감정적 UX 원칙을 색상으로 구현하기 위한 기능별 색상 매핑입니다.
+
+### Feature Color 정의
+
+| 감정 목표 | 색상 이름 | Hex | 사용 컨텍스트 |
+|----------|----------|-----|--------------|
+| **성취/자부심** | Achievement | `#F59E0B` (Gold) | 뱃지, 마일스톤, 연속 기록, 축하 |
+| **안심/신뢰** | Education | `#3B82F6` (Info) | 대처 가이드, 팁, 교육 콘텐츠 |
+| **따뜻함/환영** | WarmWelcome | `#F97316` (Orange) | 복귀 메시지, 응원, 격려 |
+| **연결/회고** | History | `#8B5CF6` (Purple) | 타임라인, 기록 히스토리, 차트 |
+| **성장/건강** | Primary | `#4ADE80` (Green) | 투여 완료, 건강 지표, 기본 CTA |
+| **위험/경고** | Error | `#EF4444` (Red) | 심각 증상, 필수 알림, 삭제 |
+
+### Feature Background Color
+
+각 Feature Color의 연한 배경색입니다.
+
+| Feature | 배경색 | Hex |
+|---------|--------|-----|
+| Achievement | Amber-100 | `#FEF3C7` |
+| Education | Blue-50 | `#EFF6FF` |
+| WarmWelcome | Orange-50 | `#FFF7ED` |
+| History | Purple-50 | `#F5F3FF` |
+
+### PRD 터치포인트 매핑
+
+| 터치포인트 | 예상 감정 | 목표 감정 | 적용 색상 |
+|-----------|----------|----------|----------|
+| 첫 로그인 | 기대+불안 | 희망 | WarmWelcome |
+| 부작용 기록 | 불안 | 안심 | Education |
+| 체중 정체 | 좌절 | 인내 | Education |
+| 투여 완료 | 뿌듯함 | 성취 | Achievement |
+| 공백 후 복귀 | 죄책감 | 수용 | WarmWelcome |
+| 마일스톤 달성 | 성취감 | 자부심 | Achievement |
+
+### 색상 선택 규칙
+
+1. **Primary(Green)**: CTA 버튼, 완료 액션에만 사용
+2. **Achievement(Gold)**: 성취/축하 상황에만 사용
+3. **Education(Blue)**: 정보 제공, 안심시키는 콘텐츠에 사용
+4. **WarmWelcome(Orange)**: 환영, 격려 메시지에 사용
+5. **History(Purple)**: 과거 기록, 타임라인에 사용
+
+**상세 가이드:** `.claude/skills/ui-renewal/references/feature-color-guide.md` 참조
+
+---
+
+## 14. Notes & Decisions
 
 ### Design Decisions Log
 

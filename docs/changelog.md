@@ -21,6 +21,14 @@
 
 ## 2025-12-01
 
+- [feat] PRD 감정적 UX 원칙에 맞춘 전체 앱 색상 개선
+  - 성취/자부심 → Gold (#F59E0B): 연속 기록, 뱃지, 마일스톤
+  - 따뜻함/환영 → Orange (#F97316): 복귀 메시지, 환영, 격려
+  - 안심/신뢰 → Blue (#3B82F6): 대처 가이드, 교육 콘텐츠, 팁
+  - 연결/회고 → Purple (#8B5CF6): 타임라인, 기록 히스토리
+  - Dashboard, Tracking, Coping Guide, Onboarding, Data Sharing 19개 파일 수정
+  - `.claude/skills/ui-renewal/references/feature-color-guide.md`
+
 - [docs] PRD 감정적 UX 원칙 및 사용자 감정 프로파일 추가
   - 핵심 가치 5개 재정의 (감정적 지지, 안심감, 성취감, 연결감, 안전성)
   - Target User 감정적 프로파일 섹션 추가 (거부감, 불안, 자존감, 의욕 저하, 고립감)

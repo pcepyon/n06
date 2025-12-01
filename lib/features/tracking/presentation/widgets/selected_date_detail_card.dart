@@ -378,10 +378,10 @@ class SelectedDateDetailCard extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.info.withValues(alpha: 0.1),
+                color: AppColors.education.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: AppColors.info.withValues(alpha: 0.3),
+                  color: AppColors.education.withValues(alpha: 0.3),
                 ),
               ),
               child: Column(
@@ -392,7 +392,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                       Icon(
                         isEarly ? Icons.fast_forward : Icons.history,
                         size: 16,
-                        color: AppColors.info,
+                        color: AppColors.education,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -401,7 +401,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                               ? '$actualDateStr에 조기 투여됨 (${daysDiff.abs()}일 전)'
                               : '$actualDateStr에 지연 투여됨 (${daysDiff.abs()}일 후)',
                           style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.info,
+                            color: AppColors.education,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -512,7 +512,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
       // 선택한 날짜가 예정일보다 이전 (조기 투여)
       if (daysDiff <= 2) {
         message = '📅 $dateStr 예정 투여를 조기 기록합니다';
-        messageColor = AppColors.info;
+        messageColor = AppColors.education;
       } else {
         message = '⚠️ $dateStr 예정보다 $daysDiff일 빠릅니다\n최대 2일 전까지 조기 투여를 권장합니다';
         messageColor = AppColors.warning;
@@ -623,18 +623,18 @@ class SelectedDateDetailCard extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.info.withValues(alpha: 0.1),
+                  color: AppColors.education.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, size: 16, color: AppColors.info),
+                    Icon(Icons.info_outline, size: 16, color: AppColors.education),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         '원래 예정: ${linkedSchedule.scheduledDate.month}/${linkedSchedule.scheduledDate.day}(${_getWeekday(linkedSchedule.scheduledDate)})',
                         style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.info,
+                          color: AppColors.education,
                         ),
                       ),
                     ),

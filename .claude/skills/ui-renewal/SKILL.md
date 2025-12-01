@@ -36,6 +36,25 @@ description: |
 
 ---
 
+## Feature Color Guide (필수 참조)
+
+모든 UI 작업 시 **감정적 UX를 위한 색상 가이드**를 반드시 참조:
+
+- **가이드 문서:** `.claude/skills/ui-renewal/references/feature-color-guide.md`
+- **디자인 시스템 섹션:** `design-systems/gabium-design-system-v1.0.md` → Section 13
+
+### Quick Reference
+
+| 감정 목표 | 색상 | 사용처 |
+|----------|------|-------|
+| 성취/축하 | `AppColors.achievement` (Gold) | 뱃지, 연속 기록, 마일스톤 |
+| 안심/교육 | `AppColors.education` (Blue) | 대처 가이드, 팁 |
+| 환영/격려 | `AppColors.warmWelcome` (Orange) | 복귀 메시지 |
+| 회고/연결 | `AppColors.history` (Purple) | 타임라인 |
+| 건강/완료 | `AppColors.primary` (Green) | CTA, 투여 완료 |
+
+---
+
 ## Phase F: Foundation (전체 앱 일괄 적용)
 
 **Trigger:** 디자인 시스템 존재 + "전체 테마 적용", "폰트 적용", "앱 스타일 통일" 요청

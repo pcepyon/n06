@@ -108,17 +108,17 @@ class WelcomeScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4), // Green-50
+        color: AppColors.welcomeBackground, // Orange-50
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.3),
+          color: AppColors.warmWelcome.withValues(alpha: 0.3),
         ),
       ),
       child: Text(
         text,
         style: AppTypography.bodyLarge.copyWith(
           fontStyle: FontStyle.italic,
-          color: const Color(0xFF166534), // Green-800
+          color: AppColors.warmWelcome,
           height: 1.6,
         ),
         textAlign: TextAlign.center,

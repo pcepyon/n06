@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
 
 class SideEffectsScreen extends StatelessWidget {
@@ -134,10 +135,10 @@ class SideEffectsScreen extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9), // Neutral-100
+        color: AppColors.educationBackground, // Blue-50 for education
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFFE2E8F0), // Neutral-200
+          color: AppColors.education.withValues(alpha: 0.2),
         ),
       ),
       child: Theme(
@@ -154,10 +155,10 @@ class SideEffectsScreen extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B), // Neutral-800
+                    color: AppColors.textPrimary,
                     height: 1.4,
                   ),
                 ),
@@ -183,9 +184,9 @@ class SideEffectsScreen extends StatelessWidget {
                 ),
             ],
           ),
-          trailing: const Icon(
+          trailing: Icon(
             Icons.expand_more,
-            color: Color(0xFF4ADE80), // Primary
+            color: AppColors.education,
           ),
           onExpansionChanged: (isExpanded) {
             if (isExpanded) {
@@ -203,22 +204,22 @@ class SideEffectsScreen extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           '•',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF4ADE80), // Primary
+                            color: AppColors.education,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             tip,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w400,
-                              color: Color(0xFF64748B), // Neutral-500
+                              color: AppColors.textSecondary,
                               height: 1.5,
                             ),
                           ),

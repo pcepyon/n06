@@ -97,7 +97,7 @@ class EmotionalGreetingWidget extends StatelessWidget {
                     dashboardData.continuousRecordDays,
                   ),
                   value: '${dashboardData.continuousRecordDays}일째',
-                  valueColor: AppColors.primary,
+                  valueColor: AppColors.achievement,
                 ),
               ),
               const SizedBox(width: 16),
@@ -171,7 +171,7 @@ class _EncouragementContainer extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.success.withValues(alpha: 0.1),
+        color: AppColors.welcomeBackground,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -180,16 +180,16 @@ class _EncouragementContainer extends StatelessWidget {
           Icon(
             Icons.auto_awesome,
             size: 20,
-            color: AppColors.success,
+            color: AppColors.warmWelcome,
             semanticLabel: '격려 메시지',
           ),
           const SizedBox(width: 8),
-          // 격려 메시지: 14px Medium, Success
+          // 격려 메시지: 14px Medium, WarmWelcome
           Expanded(
             child: Text(
               message,
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.success,
+                color: AppColors.warmWelcome,
               ),
             ),
           ),

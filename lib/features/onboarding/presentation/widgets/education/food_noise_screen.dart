@@ -173,8 +173,8 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
               child: ElevatedButton(
                 onPressed: _simulateChange,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEFF6FF), // Info Blue-50
-                  foregroundColor: const Color(0xFF3B82F6), // Blue-500
+                  backgroundColor: AppColors.educationBackground, // Blue-50
+                  foregroundColor: AppColors.education, // Blue-500
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
@@ -357,10 +357,10 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
+        color: AppColors.educationBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0x4D3B82F6), // Blue-500 with 30% opacity
+          color: AppColors.education.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -374,9 +374,9 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF1E40AF),
+                color: AppColors.education,
               ),
             ),
           ),

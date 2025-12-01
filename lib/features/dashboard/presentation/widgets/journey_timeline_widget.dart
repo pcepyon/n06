@@ -94,7 +94,7 @@ class _JourneySummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.success.withValues(alpha: 0.1), // #ECFDF5 equivalent
+        color: AppColors.historyBackground,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -102,14 +102,14 @@ class _JourneySummary extends StatelessWidget {
           Icon(
             Icons.emoji_events,
             size: 20,
-            color: AppColors.primary,
+            color: AppColors.achievement,
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               '$weeksCount주간 $milestoneCount개의 성취를 달성했어요!',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.primary,
+                color: AppColors.history,
               ),
             ),
           ),

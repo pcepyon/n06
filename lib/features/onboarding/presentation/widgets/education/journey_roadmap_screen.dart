@@ -29,7 +29,7 @@ class JourneyRoadmapScreen extends StatelessWidget {
             icon: '🌱',
             phase: '1-4주: 적응기',
             description: '몸이 약과 친해지는 시간\n큰 변화 없어도 정상이에요',
-            color: const Color(0xFF4ADE80), // Primary
+            color: AppColors.history.withValues(alpha: 0.7), // Purple lighter
             isLast: false,
           ),
 
@@ -40,7 +40,7 @@ class JourneyRoadmapScreen extends StatelessWidget {
             icon: '🌿',
             phase: '5-12주: 변화기',
             description: '본격적인 효과가 나타나요\n체중 감소가 눈에 보여요',
-            color: const Color(0xFF22C55E), // Primary Hover
+            color: AppColors.history, // Purple
             isLast: false,
           ),
 
@@ -51,7 +51,7 @@ class JourneyRoadmapScreen extends StatelessWidget {
             icon: '🌳',
             phase: '13주+: 성장기',
             description: '새로운 습관이 자리잡아요\n건강한 일상이 되어가요',
-            color: const Color(0xFF166534), // Green-800
+            color: const Color(0xFF6B21A8), // Purple-800 (darker)
             isLast: true,
           ),
 
@@ -61,10 +61,10 @@ class JourneyRoadmapScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF), // Info Blue-50
+              color: AppColors.historyBackground, // Purple-50
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.info.withValues(alpha: 0.3),
+                color: AppColors.history.withValues(alpha: 0.3),
               ),
             ),
             child: Column(
@@ -80,13 +80,13 @@ class JourneyRoadmapScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: RichText(
-                        text: const TextSpan(
+                        text: TextSpan(
                           style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF1E40AF), // Blue-800
+                            color: AppColors.history,
                             height: 1.43,
                           ),
-                          children: [
+                          children: const [
                             TextSpan(
                               text: '평균 4-5주 후부터\n',
                               style: TextStyle(fontWeight: FontWeight.w600),
@@ -101,8 +101,8 @@ class JourneyRoadmapScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Divider(
-                  color: Color(0xFF3B82F6),
+                Divider(
+                  color: AppColors.history.withValues(alpha: 0.5),
                   height: 1,
                   thickness: 0.5,
                 ),
@@ -117,13 +117,13 @@ class JourneyRoadmapScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: RichText(
-                        text: const TextSpan(
+                        text: TextSpan(
                           style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF1E40AF), // Blue-800
+                            color: AppColors.history,
                             height: 1.43,
                           ),
-                          children: [
+                          children: const [
                             TextSpan(
                               text: '체중이 잠시 멈추는 건\n',
                             ),

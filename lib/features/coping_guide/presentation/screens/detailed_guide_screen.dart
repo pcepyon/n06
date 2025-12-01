@@ -57,11 +57,11 @@ class DetailedGuideScreen extends StatelessWidget {
                     // Title Card (Symptom Name)
                     Container(
                       decoration: BoxDecoration(
-                        color: AppColors.background,
+                        color: AppColors.educationBackground,
                         borderRadius: BorderRadius.circular(12.0),
                         border: const Border(
                           left: BorderSide(
-                            color: AppColors.primary,
+                            color: AppColors.education,
                             width: 4.0,
                           ),
                         ),
@@ -125,7 +125,7 @@ class DetailedGuideScreen extends StatelessWidget {
                                     decoration: const BoxDecoration(
                                       border: Border(
                                         top: BorderSide(
-                                          color: AppColors.primary,
+                                          color: AppColors.education,
                                           width: 2.0,
                                         ),
                                       ),

@@ -48,7 +48,7 @@ class _CopingGuideScreenState extends ConsumerState<CopingGuideScreen> {
               ),
               Container(
                 height: 3,
-                color: AppColors.primary,
+                color: AppColors.education,
               ),
             ],
           ),
@@ -61,7 +61,7 @@ class _CopingGuideScreenState extends ConsumerState<CopingGuideScreen> {
       body: guideList.when(
         loading: () => const Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.education),
           ),
         ),
         error: (err, stack) => const Center(child: Text('오류가 발생했습니다')),

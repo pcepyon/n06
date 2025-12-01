@@ -39,34 +39,34 @@ class _AppFeaturesScreenState extends State<AppFeaturesScreen> {
               onPageChanged: (index) {
                 HapticFeedback.lightImpact();
               },
-              children: const [
+              children: [
                 _FeatureCard(
                   emoji: '📅',
                   title: '투여 알림',
                   description: '잊지 않도록 챙겨드려요',
-                  color: Color(0xFFEFF6FF), // Blue-50
-                  iconColor: Color(0xFF3B82F6), // Blue-500
+                  color: AppColors.educationBackground, // Blue-50
+                  iconColor: AppColors.education, // Blue-500
                 ),
                 _FeatureCard(
                   emoji: '📊',
                   title: '변화 기록',
                   description: '체중, 증상을 한눈에',
-                  color: Color(0xFFF0FDF4), // Green-50
-                  iconColor: Color(0xFF22C55E), // Green-500
+                  color: AppColors.historyBackground, // Purple-50
+                  iconColor: AppColors.history, // Purple-500
                 ),
                 _FeatureCard(
                   emoji: '🆘',
                   title: '부작용 가이드',
                   description: '불편할 땐 바로 확인',
-                  color: Color(0xFFFEF3C7), // Yellow-50
-                  iconColor: Color(0xFFF59E0B), // Yellow-500
+                  color: AppColors.educationBackground, // Blue-50
+                  iconColor: AppColors.education, // Blue-500
                 ),
                 _FeatureCard(
                   emoji: '📋',
                   title: '의료진 공유',
                   description: '진료 시 보여드리기 편해요',
-                  color: Color(0xFFFCE7F3), // Pink-50
-                  iconColor: Color(0xFFEC4899), // Pink-500
+                  color: AppColors.educationBackground, // Blue-50
+                  iconColor: AppColors.education, // Blue-500
                 ),
               ],
             ),

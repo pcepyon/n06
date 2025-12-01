@@ -79,7 +79,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                   height: 48,
                   child: CircularProgressIndicator(
                     valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.primary,
+                      AppColors.education,
                     ),
                     strokeWidth: 2,
                   ),
@@ -264,7 +264,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     return Column(
       children: records.map<Widget>((record) {
         return Card(
-          color: AppColors.surface,
+          color: AppColors.historyBackground,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12), // md
             side: const BorderSide(
@@ -282,7 +282,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: AppColors.education,
                     borderRadius: BorderRadius.circular(8), // sm
                   ),
                   child: const Icon(Icons.medical_services, color: AppColors.surface, size: 20),
@@ -318,7 +318,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
   Widget _buildAdherenceRateSection(dynamic report) {
     final rate = report.calculateAdherenceRate();
     return Card(
-      color: AppColors.surface,
+      color: AppColors.educationBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12), // md
         side: const BorderSide(
@@ -352,7 +352,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                       minHeight: 8,
                       backgroundColor: AppColors.border,
                       valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.primary,
+                        AppColors.education,
                       ),
                     ),
                   ),
@@ -382,7 +382,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     return Column(
       children: logs.map<Widget>((log) {
         return Card(
-          color: AppColors.surface,
+          color: AppColors.historyBackground,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12), // md
             side: const BorderSide(
@@ -400,7 +400,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.success,
+                    color: AppColors.history,
                     borderRadius: BorderRadius.circular(8), // sm
                   ),
                   child: const Icon(Icons.scale, color: AppColors.surface, size: 20),
@@ -437,7 +437,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     return Column(
       children: logs.map<Widget>((log) {
         return Card(
-          color: AppColors.surface,
+          color: AppColors.historyBackground,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12), // md
             side: const BorderSide(
@@ -455,7 +455,7 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.warning,
+                    color: AppColors.history,
                     borderRadius: BorderRadius.circular(8), // sm
                   ),
                   child: const Icon(Icons.warning, color: AppColors.surface, size: 20),
