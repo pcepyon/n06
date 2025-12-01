@@ -21,6 +21,15 @@
 
 ## 2025-12-01
 
+- [fix] 지난 주 요약 위젯 체중 변화 계산 버그 수정
+  - 체중 감소 시 "증가"로 잘못 표시되던 문제 해결 (계산 순서 반전: first-last → last-first)
+  - `lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
+
+- [fix] 지난 주 요약 위젯 적응기 표시 개선
+  - 기존: "N일을 잘 견뎌냈어요" (증상 건수를 일수로 잘못 표시, 0건 시 부정적)
+  - 변경: 증상 건수별 긍정적 프레이밍 (0건: "증상 없이 잘 지냈어요!", 1-2건: "가벼운 적응기", 3-5건: "N건의 증상을 잘 견뎌냈어요", 6건+: "적응 중이에요, 잘하고 있어요!")
+  - `lib/features/dashboard/presentation/widgets/celebratory_report_widget.dart`
+
 - [feat] PRD 감정적 UX 원칙에 맞춘 전체 앱 색상 개선
   - 성취/자부심 → Gold (#F59E0B): 연속 기록, 뱃지, 마일스톤
   - 따뜻함/환영 → Orange (#F97316): 복귀 메시지, 환영, 격려

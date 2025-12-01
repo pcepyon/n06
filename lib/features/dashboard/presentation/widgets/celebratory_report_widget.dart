@@ -46,7 +46,16 @@ class _CelebratoryReportWidgetState extends State<CelebratoryReportWidget> {
         final direction = weightValue < 0 ? '줄었어요' : '늘었어요';
         return '${weightValue.abs().toStringAsFixed(1)}kg $direction';
       case 'symptom':
-        return '$value일을 잘 견뎌냈어요';
+        final int count = value as int;
+        if (count == 0) {
+          return '증상 없이 잘 지냈어요!';
+        } else if (count <= 2) {
+          return '가벼운 적응기를 잘 보냈어요';
+        } else if (count <= 5) {
+          return '$count건의 증상을 잘 견뎌냈어요';
+        } else {
+          return '적응 중이에요, 잘하고 있어요!';
+        }
       case 'adherence':
         final double adherenceValue = value as double;
         return '목표의 ${adherenceValue.toStringAsFixed(0)}% 달성!';

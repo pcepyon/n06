@@ -208,7 +208,7 @@ class DashboardNotifier extends _$DashboardNotifier {
       ..sort((a, b) => a.logDate.compareTo(b.logDate));
 
     final weightChange = recentWeights.length >= 2
-        ? recentWeights.first.weightKg - recentWeights.last.weightKg
+        ? recentWeights.last.weightKg - recentWeights.first.weightKg
         : 0.0;
 
     // 지난 7일간 증상 개수
