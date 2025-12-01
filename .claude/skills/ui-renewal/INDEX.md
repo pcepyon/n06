@@ -1,6 +1,56 @@
 # UI Renewal Workflow 프로젝트 인덱스
 
-## 프로젝트 현황
+---
+
+## Completed Projects
+
+### Dashboard Emotional UX 개선
+
+**상태:** Completed (모든 Phase 완료)
+
+| 구분 | 내용 |
+|------|------|
+| 프로젝트명 | Dashboard Emotional UX |
+| 시작일 | 2025-12-01 |
+| 완료일 | 2025-12-01 |
+| Framework | Flutter (Dart) |
+| Design System | Gabium v1.0 |
+| Feature | dashboard |
+| Layer | Presentation |
+
+**적용된 UX 원칙:**
+- Noom CBT 기반 긍정적 재해석
+- Headspace 스타일 따뜻한 환영
+- Duolingo 스타일 게이미피케이션
+- Forest 스타일 성장 은유
+- 정상화 (부작용 -> 적응기)
+
+**생성된 컴포넌트 (6개):**
+| 컴포넌트 | UX 의도 |
+|---------|---------|
+| EmotionalGreetingWidget | Headspace 스타일 따뜻한 환영, 시간대별 인사 |
+| EncouragingProgressWidget | 정상화 + Duolingo 80% 축하 |
+| HopefulScheduleWidget | Forest 스타일 성장 은유 |
+| CelebratoryReportWidget | Duolingo 스타일 축하 언어 |
+| JourneyTimelineWidget | 스토리텔링 + 마일스톤 강조 |
+| CelebratoryBadgeWidget | 게이미피케이션 강화 |
+
+**핵심 리프레이밍:**
+| Before | After |
+|--------|-------|
+| 부작용 기록 | 몸의 신호 체크 |
+| 다음 투여 | 다음 단계 |
+| 순응도 72% | 목표의 72% 달성! |
+| 부작용 3회 | 3일을 잘 견뎌냈어요 |
+
+**관련 문서:**
+- 계획서: `.claude/skills/ui-renewal/projects/dashboard-emotional-ux/20251201-dashboard-emotional-ux-plan.md`
+- 오케스트레이션 프롬프트: `.claude/skills/ui-renewal/projects/dashboard-emotional-ux/orchestration-prompts.md`
+- 메타데이터: `.claude/skills/ui-renewal/projects/dashboard-emotional-ux/metadata.json`
+
+---
+
+## In Progress Projects
 
 ### RecordListScreen UI 개선
 

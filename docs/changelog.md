@@ -21,6 +21,17 @@
 
 ## 2025-12-01
 
+- [feat] 대시보드 감정적 UX 개선 위젯 6개 구현
+  - 핵심 리프레이밍: "부작용 기록" → "몸의 신호 체크", "다음 투여" → "다음 단계"
+  - EmotionalGreetingWidget: 시간대별 인사 + 마일스톤 격려 메시지
+  - EncouragingProgressWidget: 정상화 + 80% sparkle 축하 애니메이션
+  - HopefulScheduleWidget: Forest 스타일 성장 은유 + 격려 컨테이너
+  - CelebratoryReportWidget: Duolingo 스타일 축하 언어 + warning 색상
+  - JourneyTimelineWidget: 스토리텔링 + gold glow 마일스톤
+  - CelebratoryBadgeWidget: Next-Up dashed border 하이라이트
+  - 기존 6개 위젯 삭제 (greeting, weekly_progress, next_schedule, weekly_report, timeline, badge)
+  - `lib/features/dashboard/presentation/widgets/*.dart`
+
 - [feat] 트렌드 대시보드 유저플로우 접근 경로 추가
   - WeeklyReportWidget 탭 시 트렌드 대시보드로 이동 (기존: data-sharing)
   - 설정 화면에 '의료진 데이터 공유' 메뉴 추가

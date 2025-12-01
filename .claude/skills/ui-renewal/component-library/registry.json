@@ -992,10 +992,372 @@
         "linkColor": "Primary (#4ADE80)",
         "linkFont": "bodySmall (14px Medium)"
       }
+    },
+    {
+      "name": "EmotionalGreetingWidget",
+      "createdDate": "2025-12-01",
+      "framework": "Flutter",
+      "file": "flutter/emotional_greeting_widget.dart",
+      "projectFile": "lib/features/dashboard/presentation/widgets/emotional_greeting_widget.dart",
+      "usedIn": [
+        "Dashboard Screen"
+      ],
+      "category": "Display",
+      "description": "시간대별 인사 + 격려 메시지 위젯. Headspace/Noom 스타일의 따뜻한 UX를 제공하며, 연속 기록일을 성장의 증거로 프레이밍합니다.",
+      "designIntent": {
+        "uxPrinciple": "Headspace 스타일 따뜻한 환영",
+        "psychologicalBasis": "첫인상이 전체 경험을 좌우함. 시간대별 맞춤 인사로 개인화된 환영 제공",
+        "keyFeatures": [
+          "시간대별 인사 (아침/오후/저녁)",
+          "연속 기록일을 성장 표현으로 변환",
+          "격려 메시지 컨테이너 (마일스톤 달성 시)"
+        ],
+        "reframingRules": {
+          "연속 7일": "일주일 연속 달성!",
+          "연속 14일": "2주째 건강한 습관!",
+          "연속 30일": "한 달간 꾸준히!"
+        }
+      },
+      "props": [
+        {
+          "name": "dashboardData",
+          "type": "DashboardData",
+          "required": true,
+          "description": "Dashboard data entity containing userName, continuousRecordDays, currentWeek, insightMessage"
+        }
+      ],
+      "designTokens": {
+        "containerBackground": "AppColors.surface (White)",
+        "containerBorder": "AppColors.neutral200 (#E2E8F0), 1px",
+        "containerBorderRadius": "md (12px)",
+        "containerShadow": "sm (0 2px 4px rgba(15, 23, 42, 0.06))",
+        "containerPadding": "lg (24px)",
+        "greetingFont": "AppTypography.display",
+        "statLabelFont": "AppTypography.caption",
+        "statLabelColor": "AppColors.textTertiary",
+        "statValueFont": "AppTypography.heading2",
+        "primaryValueColor": "AppColors.primary (#4ADE80)",
+        "encouragementBackground": "AppColors.success at 10%",
+        "encouragementBorderRadius": "sm (8px)",
+        "encouragementPadding": "12px",
+        "encouragementIconSize": "20px",
+        "encouragementTextFont": "AppTypography.labelMedium",
+        "encouragementTextColor": "AppColors.success (#10B981)"
+      }
+    },
+    {
+      "name": "EncouragingProgressWidget",
+      "createdDate": "2025-12-01",
+      "framework": "Flutter",
+      "file": "flutter/encouraging_progress_widget.dart",
+      "projectFile": "lib/features/dashboard/presentation/widgets/encouraging_progress_widget.dart",
+      "usedIn": [
+        "Dashboard Screen"
+      ],
+      "category": "Display",
+      "description": "진행률을 긍정적 언어로 표현하고, 80%+ 달성 시 시각적 축하를 제공하는 위젯. 부정적 라벨을 정상화된 라벨로 변환합니다.",
+      "designIntent": {
+        "uxPrinciple": "정상화 + Duolingo 스타일 80% 축하",
+        "psychologicalBasis": "부작용을 문제가 아닌 피드백으로 재해석. 80%도 충분히 잘하고 있다는 메시지 전달",
+        "keyFeatures": [
+          "부정적 라벨 -> 긍정적 라벨 변환",
+          "그라데이션 진행률 바",
+          "80%+ 달성 시 sparkle 애니메이션",
+          "100% 달성 시 완료! 텍스트"
+        ],
+        "reframingRules": {
+          "부작용 기록": "몸의 신호 체크",
+          "체중 기록": "변화 추적",
+          "투여": "투여 완료"
+        }
+      },
+      "props": [
+        {
+          "name": "weeklyProgress",
+          "type": "WeeklyProgress",
+          "required": true,
+          "description": "Weekly progress data with dose, weight, symptom counts and targets"
+        }
+      ],
+      "designTokens": {
+        "sectionTitleFont": "AppTypography.heading2",
+        "itemBackground": "AppColors.neutral50 (#F8FAFC)",
+        "itemBorder": "AppColors.neutral200 (#E2E8F0), 1px",
+        "itemBorderRadius": "sm (8px)",
+        "itemPadding": "md (16px)",
+        "labelFont": "AppTypography.labelMedium",
+        "labelColor": "AppColors.neutral700",
+        "fractionFont": "AppTypography.bodySmall",
+        "fractionColor": "AppColors.neutral600",
+        "progressBarHeight": "8px",
+        "progressBarBackground": "AppColors.neutral200",
+        "progressBarGradient": "AppColors.primary 60% -> 100%",
+        "progressBarComplete": "AppColors.success",
+        "progressBarBorderRadius": "full (999px)",
+        "percentageFont": "AppTypography.labelMedium",
+        "percentageColor": "AppColors.primary or AppColors.success",
+        "sparkleIcon": "Icons.auto_awesome",
+        "sparkleSize": "16px",
+        "sparkleColor": "AppColors.success",
+        "sparkleAnimation": "300ms elasticOut"
+      }
+    },
+    {
+      "name": "HopefulScheduleWidget",
+      "createdDate": "2025-12-01",
+      "framework": "Flutter",
+      "file": "flutter/hopeful_schedule_widget.dart",
+      "projectFile": "lib/features/dashboard/presentation/widgets/hopeful_schedule_widget.dart",
+      "usedIn": [
+        "Dashboard Screen"
+      ],
+      "category": "Display",
+      "description": "희망적 프레이밍의 일정 위젯. Forest 스타일의 성장 은유와 Headspace 스타일의 부드러운 안내를 적용합니다.",
+      "designIntent": {
+        "uxPrinciple": "Forest 스타일 성장 은유",
+        "psychologicalBasis": "치료를 여정의 일부로 인식. 불안 감소를 위한 미리 준비 메시지 제공",
+        "keyFeatures": [
+          "의료 용어 -> 여정/성장 언어 변환",
+          "각 일정에 따뜻한 격려 메시지",
+          "아이콘에 원형 배경 (시각적 따뜻함)"
+        ],
+        "reframingRules": {
+          "다음 투여": "다음 단계",
+          "다음 증량": "성장의 순간"
+        }
+      },
+      "props": [
+        {
+          "name": "schedule",
+          "type": "NextSchedule",
+          "required": true,
+          "description": "Next schedule data with nextDoseDate, nextDoseMg, nextEscalationDate"
+        }
+      ],
+      "designTokens": {
+        "containerBackground": "AppColors.surface (White)",
+        "containerBorder": "AppColors.border",
+        "containerBorderRadius": "md (12px)",
+        "containerShadow": "sm",
+        "containerPadding": "lg (24px)",
+        "sectionTitleFont": "AppTypography.heading2",
+        "iconContainerSize": "40x40px",
+        "iconContainerBackground": "AppColors.primary at 10%",
+        "iconContainerBorderRadius": "full (20px)",
+        "iconSize": "20px",
+        "titleFont": "AppTypography.caption",
+        "dateFont": "AppTypography.labelMedium (500 weight)",
+        "subtitleFont": "AppTypography.bodySmall",
+        "supportMessageBackground": "AppColors.neutral50",
+        "supportMessageBorderRadius": "6px",
+        "supportMessagePadding": "12px horizontal, 8px vertical",
+        "supportMessageFont": "AppTypography.bodySmall",
+        "supportMessageColor": "AppColors.primary"
+      }
+    },
+    {
+      "name": "CelebratoryReportWidget",
+      "createdDate": "2025-12-01",
+      "framework": "Flutter",
+      "file": "flutter/celebratory_report_widget.dart",
+      "projectFile": "lib/features/dashboard/presentation/widgets/celebratory_report_widget.dart",
+      "usedIn": [
+        "Dashboard Screen"
+      ],
+      "category": "Display",
+      "description": "주간 요약을 축하의 관점으로 전환. Duolingo 스타일 임계값 축하와 Noom 스타일 긍정적 재해석을 적용합니다.",
+      "designIntent": {
+        "uxPrinciple": "Duolingo 스타일 축하 언어",
+        "psychologicalBasis": "70%도 잘하고 있어요 (Duolingo는 50%도 칭찬). 피해자 -> 극복자 언어 변환",
+        "keyFeatures": [
+          "냉정한 숫자 -> 축하의 언어 변환",
+          "부작용 아이콘 error -> warning 색상",
+          "부작용 라벨 -> 적응기",
+          "70%+ 순응도 시 격려 메시지",
+          "탭 시 hover 애니메이션 + 트렌드 대시보드 이동"
+        ],
+        "reframingRules": {
+          "부작용 3회": "3일을 잘 견뎌냈어요",
+          "순응도 72%": "목표의 72% 달성!",
+          "부작용": "적응기"
+        }
+      },
+      "props": [
+        {
+          "name": "summary",
+          "type": "WeeklySummary",
+          "required": true,
+          "description": "Weekly summary with doseCompletedCount, weightChangeKg, symptomRecordCount, adherencePercentage"
+        }
+      ],
+      "designTokens": {
+        "containerBackground": "AppColors.surface",
+        "containerBorder": "AppColors.border",
+        "containerBorderRadius": "md (12px)",
+        "containerShadowDefault": "sm (0x0F0F172A)",
+        "containerShadowHover": "md (0x140F172A)",
+        "containerPadding": "lg (24px)",
+        "hoverTranslateY": "-2px",
+        "hoverTransition": "200ms easeInOut",
+        "sectionTitleFont": "AppTypography.heading2",
+        "reportItemIconSize": "24px",
+        "reportItemLabelFont": "AppTypography.caption",
+        "reportItemValueFont": "AppTypography.labelMedium (600 weight)",
+        "doseIconColor": "AppColors.primary",
+        "weightIconColor": "AppColors.success",
+        "symptomIconColor": "AppColors.warning (NOT error!)",
+        "symptomIcon": "Icons.favorite_border (더 부드러운 아이콘)",
+        "adherenceContainerBackground": "AppColors.background",
+        "adherenceContainerBorder": "AppColors.border",
+        "adherenceContainerBorderRadius": "sm (8px)",
+        "adherenceContainerPadding": "md (16px)",
+        "adherenceLabelFont": "AppTypography.bodySmall",
+        "adherenceMessageFont": "AppTypography.labelMedium",
+        "adherenceMessageColor": "AppColors.success",
+        "adherenceValueFont": "AppTypography.heading2",
+        "adherenceValueColor70Plus": "AppColors.success",
+        "adherenceValueColorBelow70": "AppColors.primary"
+      }
+    },
+    {
+      "name": "JourneyTimelineWidget",
+      "createdDate": "2025-12-01",
+      "framework": "Flutter",
+      "file": "flutter/journey_timeline_widget.dart",
+      "projectFile": "lib/features/dashboard/presentation/widgets/journey_timeline_widget.dart",
+      "usedIn": [
+        "Dashboard Screen"
+      ],
+      "category": "Display",
+      "description": "여정 타임라인 위젯. Forest 스타일 여정 요약과 Fitbit 스타일 마일스톤 glow/NEW 뱃지를 제공합니다.",
+      "designIntent": {
+        "uxPrinciple": "스토리텔링 + 마일스톤 강조",
+        "psychologicalBasis": "치료를 단순 기록이 아닌 여정의 스토리로 시각화. 마일스톤에 특별한 의미 부여",
+        "keyFeatures": [
+          "상단 여정 요약 (X주간 X개 성취 달성)",
+          "마일스톤 이벤트 gold glow 효과",
+          "24시간 내 이벤트 NEW 뱃지",
+          "이벤트 타입별 색상 구분"
+        ],
+        "eventTypeColors": {
+          "treatmentStart": "AppColors.info",
+          "escalation": "AppColors.warning",
+          "weightMilestone": "AppColors.success",
+          "badgeAchievement": "AppColors.gold"
+        }
+      },
+      "props": [
+        {
+          "name": "events",
+          "type": "List<TimelineEvent>",
+          "required": true,
+          "description": "Timeline events with eventType, title, description, dateTime"
+        }
+      ],
+      "designTokens": {
+        "sectionTitleFont": "AppTypography.heading2",
+        "journeySummaryBackground": "AppColors.success at 10%",
+        "journeySummaryBorderRadius": "sm (8px)",
+        "journeySummaryPadding": "16px horizontal, 12px vertical",
+        "journeySummaryIconSize": "20px",
+        "journeySummaryIconColor": "AppColors.primary",
+        "journeySummaryFont": "AppTypography.labelMedium",
+        "journeySummaryColor": "AppColors.primary",
+        "timelineDotSizeNormal": "16px",
+        "timelineDotBorderNormal": "3px",
+        "timelineDotSizeMilestone": "20px",
+        "timelineDotBorderMilestone": "4px",
+        "milestoneDotBackground": "#FEF3C7 (Gold-100)",
+        "milestoneDotBorder": "AppColors.gold",
+        "milestoneDotGlow": "AppColors.gold at 40%, 8px blur",
+        "connectorWidth": "3px",
+        "connectorColor": "AppColors.neutral300",
+        "eventTitleFont": "AppTypography.labelLarge (600 weight)",
+        "eventTitleColor": "AppColors.textPrimary",
+        "eventDescFont": "AppTypography.bodySmall",
+        "eventDescColor": "AppColors.textTertiary",
+        "newBadgeBackground": "AppColors.primary at 10%",
+        "newBadgeBorderRadius": "full (999px)",
+        "newBadgePadding": "8px horizontal, 2px vertical",
+        "newBadgeFont": "AppTypography.labelSmall (12px, 500 weight)",
+        "newBadgeColor": "AppColors.primary"
+      }
+    },
+    {
+      "name": "CelebratoryBadgeWidget",
+      "createdDate": "2025-12-01",
+      "framework": "Flutter",
+      "file": "flutter/celebratory_badge_widget.dart",
+      "projectFile": "lib/features/dashboard/presentation/widgets/celebratory_badge_widget.dart",
+      "usedIn": [
+        "Dashboard Screen"
+      ],
+      "category": "Display",
+      "description": "축하 애니메이션과 함께하는 뱃지 위젯. Duolingo 스타일 즉각적 보상과 Fitbit 스타일 next-up 하이라이트를 제공합니다.",
+      "designIntent": {
+        "uxPrinciple": "게이미피케이션 강화",
+        "psychologicalBasis": "Duolingo 스타일 즉각적 보상으로 동기부여. 다음 목표를 시각적으로 하이라이트하여 달성 욕구 자극",
+        "keyFeatures": [
+          "다음 획득 가능 뱃지 하이라이트 (dashed Primary border)",
+          "탭 피드백 애니메이션 (scale 0.95)",
+          "뱃지 상세 bottom sheet",
+          "격려적인 빈 상태 메시지"
+        ],
+        "badgeStates": {
+          "achieved": "gold gradient + glow shadow",
+          "inProgress": "surfaceVariant + borderDark border",
+          "nextUp": "dashed Primary border + primary 5% background",
+          "locked": "neutral200 background, no border"
+        }
+      },
+      "props": [
+        {
+          "name": "badges",
+          "type": "List<UserBadge>",
+          "required": true,
+          "description": "User badges with id, badgeId, status, progressPercentage"
+        }
+      ],
+      "designTokens": {
+        "sectionTitleFont": "AppTypography.heading2",
+        "gridCrossAxisCount": "4",
+        "gridSpacing": "md (16px)",
+        "gridChildAspectRatio": "0.8",
+        "badgeCircleSize": "80x80px",
+        "badgeIconSize": "32px",
+        "achievedBackground": "AppColors.gold gradient to #FCD34D",
+        "achievedBorder": "AppColors.gold, 3px",
+        "achievedShadow": "AppColors.gold at 20%, 8px blur, 4px offset",
+        "achievedIconColor": "AppColors.surface (White)",
+        "inProgressBackground": "AppColors.surfaceVariant",
+        "inProgressBorder": "AppColors.borderDark, 2px",
+        "inProgressIconColor": "AppColors.neutral400",
+        "nextUpDashedBorder": "AppColors.primary, 2px, dash 5px/space 3px",
+        "nextUpBackground": "AppColors.primary at 5%",
+        "nextUpIconColor": "AppColors.primary",
+        "lockedBackground": "AppColors.neutral200",
+        "lockedIconColor": "AppColors.borderDark",
+        "labelFont": "AppTypography.labelSmall",
+        "labelColor": "AppColors.neutral700",
+        "progressFont": "AppTypography.caption",
+        "tapScaleAnimation": "0.95, 100ms easeOut",
+        "emptyStateBackground": "AppColors.surfaceVariant",
+        "emptyStateBorder": "AppColors.border",
+        "emptyStateBorderRadius": "md (12px)",
+        "emptyStatePadding": "xl (32px)",
+        "emptyStateIconSize": "48px",
+        "emptyStateIconColor": "AppColors.primary",
+        "emptyStateTitleFont": "AppTypography.heading2",
+        "emptyStateTitleColor": "AppColors.neutral700",
+        "emptyStateDescFont": "AppTypography.bodyLarge",
+        "emptyStateDescColor": "AppColors.textTertiary",
+        "emptyStateButtonBackground": "AppColors.primary",
+        "emptyStateButtonText": "AppColors.surface"
+      }
     }
   ],
   "metadata": {
-    "totalComponents": 31,
+    "totalComponents": 37,
     "frameworks": ["Flutter"],
     "categories": [
       "Authentication",
@@ -1011,7 +1373,7 @@
       "Icons",
       "Data Visualization"
     ],
-    "lastUpdated": "2025-11-30",
+    "lastUpdated": "2025-12-01",
     "designSystem": "Gabium v1.0",
     "projects": {
       "side-effect-guide": {
@@ -1028,11 +1390,30 @@
           "SymptomTrendChart",
           "TrendInsightCard"
         ]
+      },
+      "dashboard-emotional-ux": {
+        "status": "Completed",
+        "phases": 3,
+        "componentsAdded": 6,
+        "componentsList": [
+          "EmotionalGreetingWidget",
+          "EncouragingProgressWidget",
+          "HopefulScheduleWidget",
+          "CelebratoryReportWidget",
+          "JourneyTimelineWidget",
+          "CelebratoryBadgeWidget"
+        ],
+        "uxPrinciples": [
+          "Noom CBT 기반 긍정적 재해석",
+          "Headspace 스타일 따뜻한 환영",
+          "Duolingo 스타일 게이미피케이션",
+          "정상화 (부작용 -> 적응기)"
+        ]
       }
     },
     "stats": {
-      "totalNewCodeLines": 2611,
-      "totalComponentsLines": 1339,
+      "totalNewCodeLines": 3600,
+      "totalComponentsLines": 2200,
       "totalNotifiersLines": 231,
       "totalEntitiesLines": 183,
       "totalServicesLines": 411,

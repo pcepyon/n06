@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';
-import 'package:n06/features/dashboard/presentation/widgets/greeting_widget.dart';
-import 'package:n06/features/dashboard/presentation/widgets/weekly_progress_widget.dart';
-import 'package:n06/features/dashboard/presentation/widgets/next_schedule_widget.dart';
-import 'package:n06/features/dashboard/presentation/widgets/weekly_report_widget.dart';
-import 'package:n06/features/dashboard/presentation/widgets/timeline_widget.dart';
-import 'package:n06/features/dashboard/presentation/widgets/badge_widget.dart';
+import 'package:n06/features/dashboard/presentation/widgets/emotional_greeting_widget.dart';
+import 'package:n06/features/dashboard/presentation/widgets/encouraging_progress_widget.dart';
+import 'package:n06/features/dashboard/presentation/widgets/hopeful_schedule_widget.dart';
+import 'package:n06/features/dashboard/presentation/widgets/celebratory_report_widget.dart';
+import 'package:n06/features/dashboard/presentation/widgets/journey_timeline_widget.dart';
+import 'package:n06/features/dashboard/presentation/widgets/celebratory_badge_widget.dart';
 
 class HomeDashboardScreen extends ConsumerWidget {
   const HomeDashboardScreen({super.key});
@@ -101,28 +101,28 @@ class HomeDashboardScreen extends ConsumerWidget {
               children: [
                 SizedBox(height: 24), // lg spacing from top
 
-                // Greeting Widget
-                GreetingWidget(dashboardData: dashboardData),
+                // Emotional Greeting Widget
+                EmotionalGreetingWidget(dashboardData: dashboardData),
                 SizedBox(height: 24), // lg spacing between sections
 
-                // Weekly Progress Widget
-                WeeklyProgressWidget(weeklyProgress: dashboardData.weeklyProgress),
+                // Encouraging Progress Widget
+                EncouragingProgressWidget(weeklyProgress: dashboardData.weeklyProgress),
                 SizedBox(height: 24),
 
-                // Next Schedule Widget
-                NextScheduleWidget(schedule: dashboardData.nextSchedule),
+                // Hopeful Schedule Widget
+                HopefulScheduleWidget(schedule: dashboardData.nextSchedule),
                 SizedBox(height: 24),
 
-                // Weekly Report Widget (tappable)
-                WeeklyReportWidget(summary: dashboardData.weeklySummary),
+                // Celebratory Report Widget (tappable)
+                CelebratoryReportWidget(summary: dashboardData.weeklySummary),
                 SizedBox(height: 24),
 
-                // Timeline Widget
-                TimelineWidget(events: dashboardData.timeline),
+                // Journey Timeline Widget
+                JourneyTimelineWidget(events: dashboardData.timeline),
                 SizedBox(height: 24),
 
-                // Badge Widget
-                BadgeWidget(badges: dashboardData.badges),
+                // Celebratory Badge Widget
+                CelebratoryBadgeWidget(badges: dashboardData.badges),
                 SizedBox(height: 24), // Bottom padding
               ],
             ),
