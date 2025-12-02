@@ -235,7 +235,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
             if (context.canPop()) {
               context.pop();
             } else {
-              context.go('/');
+              context.go('/login');
             }
           },
         ),

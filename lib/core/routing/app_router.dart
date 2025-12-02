@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:n06/core/presentation/widgets/scaffold_with_bottom_nav.dart';
 import 'package:n06/features/authentication/presentation/screens/login_screen.dart';
 import 'package:n06/features/dashboard/presentation/screens/home_dashboard_screen.dart';
@@ -22,9 +24,104 @@ import 'package:n06/features/tracking/presentation/screens/trend_dashboard_scree
 import 'package:n06/features/daily_checkin/presentation/screens/daily_checkin_screen.dart';
 import 'package:n06/features/daily_checkin/presentation/screens/share_report_screen.dart';
 
+/// Listenable that notifies when auth state changes
+/// Used by GoRouter to re-evaluate redirect logic
+class GoRouterAuthRefreshStream extends ChangeNotifier {
+  late final StreamSubscription<AuthState> _subscription;
+
+  GoRouterAuthRefreshStream() {
+    _subscription = Supabase.instance.client.auth.onAuthStateChange.listen(
+      (AuthState data) {
+        if (kDebugMode) {
+          developer.log(
+            'Auth state changed: ${data.event}, notifying GoRouter',
+            name: 'GoRouterAuthRefreshStream',
+          );
+        }
+        notifyListeners();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
+/// Routes that don't require authentication
+const _publicRoutes = <String>{
+  '/login',
+  '/email-signup',
+  '/email-signin',
+  '/password-reset',
+  '/reset-password',
+  '/email-confirmation',
+};
+
+/// Check if a route requires authentication
+bool _isProtectedRoute(String location) {
+  // Check exact match first
+  if (_publicRoutes.contains(location)) {
+    return false;
+  }
+
+  // Check prefix match (for routes with query params)
+  for (final publicRoute in _publicRoutes) {
+    if (location.startsWith('$publicRoute?') || location.startsWith('$publicRoute/')) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/// Auth refresh stream instance (singleton)
+final _authRefreshStream = GoRouterAuthRefreshStream();
+
 /// GoRouter configuration for the application
 final appRouter = GoRouter(
   initialLocation: '/login',
+  refreshListenable: _authRefreshStream,
+  redirect: (BuildContext context, GoRouterState state) {
+    final session = Supabase.instance.client.auth.currentSession;
+    final isLoggedIn = session != null;
+    final location = state.uri.path;
+
+    if (kDebugMode) {
+      developer.log(
+        'Router redirect check: location=$location, isLoggedIn=$isLoggedIn',
+        name: 'AppRouter',
+      );
+    }
+
+    // Case 1: Not logged in, trying to access protected route
+    if (!isLoggedIn && _isProtectedRoute(location)) {
+      if (kDebugMode) {
+        developer.log(
+          'Redirecting to /login: not authenticated',
+          name: 'AppRouter',
+        );
+      }
+      return '/login';
+    }
+
+    // Case 2: Logged in, on login page → redirect to home
+    // This handles the case where user opens app while already logged in
+    if (isLoggedIn && location == '/login') {
+      if (kDebugMode) {
+        developer.log(
+          'Redirecting to /home: already authenticated',
+          name: 'AppRouter',
+        );
+      }
+      return '/home';
+    }
+
+    // No redirect needed
+    return null;
+  },
   // Handle errors from Kakao OAuth callbacks gracefully
   onException: (context, state, router) {
     final uri = state.uri;

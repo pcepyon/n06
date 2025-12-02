@@ -21,6 +21,15 @@
 
 ## 2025-12-03
 
+- [feat] GoRouter 인증 guard 추가로 라우팅 보안 강화
+  - 로그아웃 상태에서 보호 라우트 접근 시 자동으로 /login redirect
+  - 로그인 상태에서 앱 시작 시 자동으로 /home redirect (로그인 화면 스킵)
+  - refreshListenable로 인증 상태 변화 실시간 감지
+  - 이메일 로그인/회원가입 뒤로가기 경로 수정 (/로 이동하던 버그 → /login)
+  - `lib/core/routing/app_router.dart`
+  - `lib/features/authentication/presentation/screens/email_signin_screen.dart`
+  - `lib/features/authentication/presentation/screens/email_signup_screen.dart`
+
 - [fix] 이메일 로그인 화면에 뒤로 가기 버튼 추가
   - 이메일 회원가입 화면과 동일한 패턴 적용
   - `lib/features/authentication/presentation/screens/email_signin_screen.dart`
