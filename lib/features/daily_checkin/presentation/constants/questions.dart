@@ -340,4 +340,231 @@ class DerivedQuestions {
       ),
     ],
   );
+
+  /// Q1-1a. 메스꺼움 상세
+  static const nauseaSeverity = DerivedQuestion(
+    parentQuestionId: 'meal',
+    emoji: MealQuestionStrings.emoji,
+    question: MealQuestionStrings.derivedNauseaSeverityQuestion,
+    options: [
+      AnswerOption(
+        emoji: MealQuestionStrings.nauseaMildEmoji,
+        text: MealQuestionStrings.nauseaMild,
+        value: 'mild',
+        feedback: MealQuestionStrings.feedbackNauseaMild,
+      ),
+      AnswerOption(
+        emoji: MealQuestionStrings.nauseaModerateEmoji,
+        text: MealQuestionStrings.nauseaModerate,
+        value: 'moderate',
+        triggersDerived: true, // Q1-1b로 (구토 여부)
+      ),
+      AnswerOption(
+        emoji: MealQuestionStrings.nauseaSevereEmoji,
+        text: MealQuestionStrings.nauseaSevere,
+        value: 'severe',
+        triggersDerived: true, // Q1-1b로 (구토 여부)
+      ),
+    ],
+  );
+
+  /// Q1-1b. 구토 여부
+  static const vomitingCheck = DerivedQuestion(
+    parentQuestionId: 'meal',
+    emoji: MealQuestionStrings.emoji,
+    question: MealQuestionStrings.derivedVomitingQuestion,
+    options: [
+      AnswerOption(
+        emoji: MealQuestionStrings.vomitingNoneEmoji,
+        text: MealQuestionStrings.vomitingNone,
+        value: 'none',
+      ),
+      AnswerOption(
+        emoji: MealQuestionStrings.vomitingOnceEmoji,
+        text: MealQuestionStrings.vomitingOnce,
+        value: 'once',
+        feedback: MealQuestionStrings.feedbackVomitingOnce,
+      ),
+      AnswerOption(
+        emoji: MealQuestionStrings.vomitingSevereEmoji,
+        text: MealQuestionStrings.vomitingSevere,
+        value: 'severe',
+      ),
+    ],
+  );
+
+  /// Q2-1. 수분 섭취 어려움
+  static const hydrationDifficulty = DerivedQuestion(
+    parentQuestionId: 'hydration',
+    emoji: HydrationQuestionStrings.emoji,
+    question: HydrationQuestionStrings.derivedQuestion,
+    options: [
+      AnswerOption(
+        emoji: HydrationQuestionStrings.derivedForgotEmoji,
+        text: HydrationQuestionStrings.derivedForgot,
+        value: 'forgot',
+        feedback: HydrationQuestionStrings.feedbackForgot,
+      ),
+      AnswerOption(
+        emoji: HydrationQuestionStrings.derivedNauseaEmoji,
+        text: HydrationQuestionStrings.derivedNausea,
+        value: 'nausea',
+        feedback: HydrationQuestionStrings.feedbackNausea,
+      ),
+      AnswerOption(
+        emoji: HydrationQuestionStrings.derivedCannotKeepEmoji,
+        text: HydrationQuestionStrings.derivedCannotKeep,
+        value: 'cannot_keep',
+      ),
+    ],
+  );
+
+  /// Q3-2. 복통 위치
+  static const painLocation = DerivedQuestion(
+    parentQuestionId: 'gi_comfort',
+    emoji: GiComfortQuestionStrings.emoji,
+    question: GiComfortQuestionStrings.derivedPainLocationQuestion,
+    options: [
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.painUpperAbdomenEmoji,
+        text: GiComfortQuestionStrings.painUpperAbdomen,
+        value: 'upper_abdomen',
+        triggersDerived: true, // Q3-3으로 (췌장염 체크)
+      ),
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.painRightUpperEmoji,
+        text: GiComfortQuestionStrings.painRightUpper,
+        value: 'right_upper_quadrant',
+      ),
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.painPeriumbilicalEmoji,
+        text: GiComfortQuestionStrings.painPeriumbilical,
+        value: 'periumbilical',
+        triggersDerived: true, // Q3-3으로 (췌장염 체크)
+      ),
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.painLowerEmoji,
+        text: GiComfortQuestionStrings.painLower,
+        value: 'lower_abdomen',
+        feedback: GiComfortQuestionStrings.feedbackPainLower,
+      ),
+    ],
+  );
+
+  /// Q3-3. 상복부/배꼽 주변 통증 상세 (췌장염 체크)
+  static const upperPainSeverity = DerivedQuestion(
+    parentQuestionId: 'gi_comfort',
+    emoji: GiComfortQuestionStrings.emoji,
+    question: GiComfortQuestionStrings.derivedUpperPainSeverityQuestion,
+    options: [
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.painMildEmoji,
+        text: GiComfortQuestionStrings.painMild,
+        value: 'mild',
+      ),
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.painModerateEmoji,
+        text: GiComfortQuestionStrings.painModerate,
+        value: 'moderate',
+      ),
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.painSevereEmoji,
+        text: GiComfortQuestionStrings.painSevere,
+        value: 'severe',
+      ),
+    ],
+  );
+
+  /// Q4-1a. 변비 상세
+  static const constipationDays = DerivedQuestion(
+    parentQuestionId: 'bowel',
+    emoji: BowelQuestionStrings.emoji,
+    question: BowelQuestionStrings.derivedConstipationDaysQuestion,
+    options: [
+      AnswerOption(
+        emoji: BowelQuestionStrings.constipation1to2DaysEmoji,
+        text: BowelQuestionStrings.constipation1to2Days,
+        value: '1-2',
+      ),
+      AnswerOption(
+        emoji: BowelQuestionStrings.constipation3to4DaysEmoji,
+        text: BowelQuestionStrings.constipation3to4Days,
+        value: '3-4',
+      ),
+      AnswerOption(
+        emoji: BowelQuestionStrings.constipation5PlusDaysEmoji,
+        text: BowelQuestionStrings.constipation5PlusDays,
+        value: '5+',
+      ),
+    ],
+  );
+
+  /// Q4-1b. 설사 상세
+  static const diarrheaFrequency = DerivedQuestion(
+    parentQuestionId: 'bowel',
+    emoji: BowelQuestionStrings.emoji,
+    question: BowelQuestionStrings.derivedDiarrheaFrequencyQuestion,
+    options: [
+      AnswerOption(
+        emoji: BowelQuestionStrings.diarrhea2to3TimesEmoji,
+        text: BowelQuestionStrings.diarrhea2to3Times,
+        value: '2-3',
+        feedback: BowelQuestionStrings.feedbackDiarrheaMild,
+      ),
+      AnswerOption(
+        emoji: BowelQuestionStrings.diarrhea4to5TimesEmoji,
+        text: BowelQuestionStrings.diarrhea4to5Times,
+        value: '4-5',
+        feedback: BowelQuestionStrings.feedbackDiarrheaModerate,
+      ),
+      AnswerOption(
+        emoji: BowelQuestionStrings.diarrhea6PlusTimesEmoji,
+        text: BowelQuestionStrings.diarrhea6PlusTimes,
+        value: '6+',
+      ),
+    ],
+  );
+
+  /// Q5-2. 저혈당 체크
+  static const hypoglycemiaCheck = DerivedQuestion(
+    parentQuestionId: 'energy',
+    emoji: EnergyQuestionStrings.emoji,
+    question: EnergyQuestionStrings.derivedHypoglycemiaQuestion,
+    options: [
+      AnswerOption(
+        emoji: EnergyQuestionStrings.hypoglycemiaNoEmoji,
+        text: EnergyQuestionStrings.hypoglycemiaNo,
+        value: 'no',
+      ),
+      AnswerOption(
+        emoji: EnergyQuestionStrings.hypoglycemiaYesEmoji,
+        text: EnergyQuestionStrings.hypoglycemiaYes,
+        value: 'yes',
+      ),
+    ],
+  );
+
+  /// Q5-3. 신부전 체크
+  static const renalCheck = DerivedQuestion(
+    parentQuestionId: 'energy',
+    emoji: EnergyQuestionStrings.emoji,
+    question: EnergyQuestionStrings.derivedRenalCheckQuestion,
+    options: [
+      AnswerOption(
+        emoji: EnergyQuestionStrings.urineNormalEmoji,
+        text: EnergyQuestionStrings.urineNormal,
+        value: 'normal',
+      ),
+      AnswerOption(
+        emoji: EnergyQuestionStrings.urineDecreasedEmoji,
+        text: EnergyQuestionStrings.urineDecreased,
+        value: 'decreased',
+      ),
+      AnswerOption(
+        emoji: EnergyQuestionStrings.urineSeverelyDecreasedEmoji,
+        text: EnergyQuestionStrings.urineSeverelyDecreased,
+        value: 'severely_decreased',
+      ),
+    ],
+  );
 }

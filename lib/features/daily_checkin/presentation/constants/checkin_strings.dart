@@ -74,6 +74,30 @@ class MealQuestionStrings {
   // 파생 피드백
   static const feedbackLowAppetite = '입맛이 없는 건 약이 작용하고 있다는 신호일 수 있어요';
   static const feedbackEarlySatiety = '포만감이 빨리 오는 건 약이 잘 작용하고 있는 거예요';
+
+  // Q1-1a: 메스꺼움 상세
+  static const derivedNauseaSeverityQuestion = '메스꺼움이 어느 정도였나요?';
+  static const nauseaMild = '살짝 느꼈어요';
+  static const nauseaMildEmoji = '😐';
+  static const nauseaModerate = '식사하기 힘들 정도';
+  static const nauseaModerateEmoji = '😣';
+  static const nauseaSevere = '물도 힘들었어요';
+  static const nauseaSevereEmoji = '🤮';
+
+  // Q1-1a 피드백
+  static const feedbackNauseaMild = '가벼운 메스꺼움은 흔히 있어요. 며칠 내에 나아질 거예요';
+
+  // Q1-1b: 구토 여부
+  static const derivedVomitingQuestion = '혹시 토하신 적도 있으셨나요?';
+  static const vomitingNone = '아니요';
+  static const vomitingNoneEmoji = '😌';
+  static const vomitingOnce = '1-2번 있었어요';
+  static const vomitingOnceEmoji = '😣';
+  static const vomitingSevere = '여러 번 (3번 이상)';
+  static const vomitingSevereEmoji = '🤮';
+
+  // Q1-1b 피드백
+  static const feedbackVomitingOnce = '힘드셨죠. 물을 조금씩 자주 마셔보세요';
 }
 
 /// Q2. 수분 질문
@@ -92,6 +116,19 @@ class HydrationQuestionStrings {
   // 피드백
   static const feedbackGood = '잘하셨어요! 수분 섭취가 정말 중요해요 💧';
   static const feedbackModerate = '내일은 조금 더 챙겨보세요';
+
+  // Q2-1: 수분 섭취 어려움
+  static const derivedQuestion = '물 마시기가 힘드셨나요?';
+  static const derivedForgot = '그냥 깜빡했어요';
+  static const derivedForgotEmoji = '😶';
+  static const derivedNausea = '마시면 속이 안좋아서';
+  static const derivedNauseaEmoji = '🤢';
+  static const derivedCannotKeep = '마셔도 다 토해요';
+  static const derivedCannotKeepEmoji = '🤮';
+
+  // Q2-1 피드백
+  static const feedbackForgot = '내일은 알람을 맞춰보는 건 어떨까요?';
+  static const feedbackNausea = '조금씩 자주 마셔보세요. 이온음료도 좋아요';
 }
 
 /// Q3. 속 편안함 질문
@@ -121,6 +158,29 @@ class GiComfortQuestionStrings {
 
   // 파생 피드백
   static const feedbackHeartburn = '식후 바로 눕지 않는 게 도움이 돼요';
+
+  // Q3-2: 복통 위치
+  static const derivedPainLocationQuestion = '어디가 아프셨어요?';
+  static const painUpperAbdomen = '명치/윗배';
+  static const painUpperAbdomenEmoji = '😣';
+  static const painRightUpper = '오른쪽 윗배';
+  static const painRightUpperEmoji = '😣';
+  static const painPeriumbilical = '배꼽 주변';
+  static const painPeriumbilicalEmoji = '😣';
+  static const painLower = '아랫배';
+  static const painLowerEmoji = '😣';
+
+  // Q3-2 피드백
+  static const feedbackPainLower = '아랫배 불편함은 장이 적응하는 과정일 수 있어요';
+
+  // Q3-3: 상복부/배꼽 주변 통증 상세 (췌장염 체크)
+  static const derivedUpperPainSeverityQuestion = '통증이 어느 정도였나요?';
+  static const painMild = '약간 거북했어요';
+  static const painMildEmoji = '😐';
+  static const painModerate = '꽤 신경쓰였어요';
+  static const painModerateEmoji = '😣';
+  static const painSevere = '많이 아팠어요';
+  static const painSevereEmoji = '😰';
 }
 
 /// Q4. 화장실 질문
@@ -145,6 +205,28 @@ class BowelQuestionStrings {
   static const derivedConstipationEmoji = '😣';
   static const derivedDiarrhea = '설사를 했어요';
   static const derivedDiarrheaEmoji = '💨';
+
+  // Q4-1a: 변비 상세
+  static const derivedConstipationDaysQuestion = '며칠째 배변이 없으셨어요?';
+  static const constipation1to2Days = '1-2일';
+  static const constipation1to2DaysEmoji = '😐';
+  static const constipation3to4Days = '3-4일';
+  static const constipation3to4DaysEmoji = '😣';
+  static const constipation5PlusDays = '5일 이상';
+  static const constipation5PlusDaysEmoji = '😰';
+
+  // Q4-1b: 설사 상세
+  static const derivedDiarrheaFrequencyQuestion = '하루에 몇 번 정도 다녀오셨어요?';
+  static const diarrhea2to3Times = '2-3회';
+  static const diarrhea2to3TimesEmoji = '😐';
+  static const diarrhea4to5Times = '4-5회';
+  static const diarrhea4to5TimesEmoji = '😣';
+  static const diarrhea6PlusTimes = '6회 이상';
+  static const diarrhea6PlusTimesEmoji = '😰';
+
+  // Q4-1b 피드백
+  static const feedbackDiarrheaMild = '수분 섭취를 충분히 해주세요';
+  static const feedbackDiarrheaModerate = '수분과 전해질 보충이 중요해요. 이온음료 추천해요';
 }
 
 /// Q5. 에너지 질문
@@ -179,6 +261,22 @@ class EnergyQuestionStrings {
 
   // 파생 피드백
   static const feedbackFatigue = '충분히 쉬어주세요. 몸이 적응 중이에요';
+
+  // Q5-2: 저혈당 체크
+  static const derivedHypoglycemiaQuestion = '혹시 손이 떨리거나, 심장이 빨리 뛰었나요?';
+  static const hypoglycemiaNo = '아니요';
+  static const hypoglycemiaNoEmoji = '😌';
+  static const hypoglycemiaYes = '네, 그랬어요';
+  static const hypoglycemiaYesEmoji = '😰';
+
+  // Q5-3: 신부전 체크
+  static const derivedRenalCheckQuestion = '소변량이 평소보다 줄었나요?';
+  static const urineNormal = '아니요';
+  static const urineNormalEmoji = '😌';
+  static const urineDecreased = '좀 그런 것 같아요';
+  static const urineDecreasedEmoji = '🤔';
+  static const urineSeverelyDecreased = '많이 줄었어요';
+  static const urineSeverelyDecreasedEmoji = '😰';
 }
 
 /// Q6. 기분 질문
