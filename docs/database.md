@@ -23,15 +23,10 @@ dosage_plans → dose_schedules → dose_records
 dosage_plans → plan_change_history
 ```
 
-### 3. Symptom & Weight Tracking
+### 3. Weight Tracking & Daily Check-in
 ```
-symptom_logs → symptom_context_tags
 weight_logs
-```
-
-### 4. Emergency Checks
-```
-emergency_symptom_checks
+daily_checkins
 ```
 
 ### 5. Achievement & Badges
@@ -52,7 +47,7 @@ audit_logs
 
 ### 8. Dashboard Aggregation (Read)
 ```
-dose_records + weight_logs + symptom_logs + user_badges
+dose_records + weight_logs + daily_checkins + user_badges
 → weekly statistics, insights, badges, timeline
 ```
 
@@ -185,7 +180,7 @@ dose_records + weight_logs + symptom_logs + user_badges
 ---
 
 ### weight_logs
-체중 기록
+체중 기록 (순수 체중 수치만 저장)
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -193,8 +188,9 @@ dose_records + weight_logs + symptom_logs + user_badges
 | user_id | TEXT | FK(users.id), NOT NULL | |
 | log_date | date | NOT NULL | 기록 날짜 |
 | weight_kg | numeric(5,2) | NOT NULL | 체중 (kg) |
-| appetite_score | integer | NULL, CHECK (1-5) | GLP-1 식욕 조절 점수: 1=아예없음, 2=매우감소, 3=약간감소, 4=보통, 5=폭발 |
 | created_at | timestamptz | NOT NULL, DEFAULT now() | 기록 시간 |
+
+**Note**: `appetite_score`는 `daily_checkins` 테이블로 이동됨 (데이터 정합성 개선)
 
 **Indexes**
 - UNIQUE: (user_id, log_date)
@@ -202,53 +198,72 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 ---
 
-### symptom_logs
-부작용 기록
+### daily_checkins
+데일리 체크인 (6개 일상 질문 + 식욕 점수 + 파생 증상)
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | uuid | PK, DEFAULT uuid_generate_v4() | |
 | user_id | TEXT | FK(users.id), NOT NULL | |
-| log_date | date | NOT NULL | 기록 날짜 |
-| symptom_name | varchar(50) | NOT NULL | 메스꺼움/구토/변비/설사/복통/두통/피로 |
-| severity | integer | NOT NULL, CHECK (severity >= 1 AND severity <= 10) | 심각도 (1-10) |
-| days_since_escalation | integer | NULL | 용량 증량 후 경과일 |
-| is_persistent_24h | boolean | NULL | 24시간 이상 지속 여부 |
-| note | text | NULL | 메모 |
+| checkin_date | date | NOT NULL | 체크인 날짜 |
+| meal_condition | varchar(20) | NOT NULL | good/moderate/difficult |
+| hydration_level | varchar(20) | NOT NULL | good/moderate/poor |
+| gi_comfort | varchar(20) | NOT NULL | good/uncomfortable/very_uncomfortable |
+| bowel_condition | varchar(20) | NOT NULL | normal/irregular/difficult |
+| energy_level | varchar(20) | NOT NULL | good/normal/tired |
+| mood | varchar(20) | NOT NULL | good/neutral/low |
+| appetite_score | integer | NULL, CHECK (1-5) | GLP-1 식욕 조절 점수 (weight_logs에서 이동) |
+| symptom_details | jsonb | NULL | 파생 증상 상세 |
+| context | jsonb | NULL | 컨텍스트 정보 (주사 다음날, 연속일수, 체중 스킵 여부 등) |
+| red_flag_detected | jsonb | NULL | Red Flag 감지 결과 |
 | created_at | timestamptz | NOT NULL, DEFAULT now() | 기록 시간 |
 
 **Indexes**
-- INDEX: (user_id, log_date DESC)
+- UNIQUE: (user_id, checkin_date)
+- INDEX: (user_id, checkin_date DESC)
+- PARTIAL INDEX: (user_id) WHERE red_flag_detected IS NOT NULL
+- GIN INDEX: (symptom_details jsonb_path_ops) - JSONB 쿼리 최적화
 
----
+**JSONB 구조 정의**
 
-### symptom_context_tags
-부작용 컨텍스트 태그
+```json
+// symptom_details - 스키마 정의
+[
+  {
+    "type": "nausea",           // enum: nausea, vomiting, abdominal_pain, ...
+    "severity": 2,              // int: 1(mild), 2(moderate), 3(severe)
+    "details": {                // nullable, 증상별 추가 필드
+      "duration_hours": 4
+    }
+  },
+  {
+    "type": "abdominal_pain",
+    "severity": 2,
+    "details": {
+      "location": "upper",      // upper, right_upper, lower, around_navel
+      "radiates_to_back": false // 췌장염 지표
+    }
+  }
+]
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT uuid_generate_v4() | |
-| symptom_log_id | uuid | FK(symptom_logs.id), NOT NULL | |
-| tag_name | varchar(50) | NOT NULL | 기름진음식/과식/음주/공복/스트레스/수면부족 등 |
+// context
+{
+  "is_post_injection": true,
+  "days_since_last_checkin": 1,
+  "consecutive_days": 5,
+  "greeting_type": "morning",
+  "weight_skipped": false       // 체중 입력 건너뛰기 여부
+}
 
-**Indexes**
-- INDEX: (symptom_log_id)
-- INDEX: (tag_name)
-
----
-
-### emergency_symptom_checks
-증상 체크 기록
-
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT uuid_generate_v4() | |
-| user_id | TEXT | FK(users.id), NOT NULL | |
-| checked_at | timestamptz | NOT NULL, DEFAULT now() | 체크 날짜시간 |
-| checked_symptoms | jsonb | NOT NULL | 선택한 증상 목록 |
-
-**Indexes**
-- INDEX: (user_id, checked_at DESC)
+// red_flag_detected
+{
+  "type": "pancreatitis",
+  "severity": "warning",
+  "symptoms": ["severe_abdominal_pain", "radiates_to_back"],
+  "notified_at": "2025-12-02T10:30:00Z",
+  "user_action": "dismissed"    // dismissed, hospital_search, null
+}
+```
 
 ---
 
@@ -404,9 +419,7 @@ USING (auth.role() = 'authenticated');
 - dose_schedules
 - dose_records
 - weight_logs
-- symptom_logs
-- symptom_context_tags
-- emergency_symptom_checks
+- daily_checkins
 - badge_definitions
 - user_badges
 - notification_settings
@@ -423,13 +436,11 @@ USING (auth.role() = 'authenticated');
 2. **dose_schedules**: (dosage_plan_id, scheduled_date)
 3. **dose_records**: (dosage_plan_id, administered_at), (injection_site, administered_at DESC)
 4. **weight_logs**: (user_id, log_date) UNIQUE, (user_id, log_date DESC)
-5. **symptom_logs**: (user_id, log_date DESC)
-6. **symptom_context_tags**: (symptom_log_id), (tag_name)
-7. **emergency_symptom_checks**: (user_id, checked_at DESC)
-8. **badge_definitions**: (category, display_order)
-9. **user_badges**: (user_id, badge_id) UNIQUE, (user_id, status), (user_id, achieved_at DESC)
-10. **audit_logs**: (user_id, created_at DESC), (entity_type, entity_id)
-11. **guide_feedback**: (user_id, created_at DESC)
+5. **daily_checkins**: (user_id, checkin_date) UNIQUE, (user_id, checkin_date DESC), PARTIAL (user_id) WHERE red_flag_detected IS NOT NULL, GIN (symptom_details)
+6. **badge_definitions**: (category, display_order)
+7. **user_badges**: (user_id, badge_id) UNIQUE, (user_id, status), (user_id, achieved_at DESC)
+8. **audit_logs**: (user_id, created_at DESC), (entity_type, entity_id)
+9. **guide_feedback**: (user_id, created_at DESC)
 
 ---
 
@@ -551,7 +562,7 @@ final repo = ref.watch(tracking_providers.trackingRepositoryProvider);
 | 테이블 | 구현 위치 | 사용 기능 | 비고 |
 |--------|----------|----------|------|
 | weight_logs | `features/tracking/` | onboarding, tracking, dashboard | TrackingRepository 제공 |
-| symptom_logs | `features/tracking/` | tracking, dashboard | TrackingRepository 제공 |
+| daily_checkins | `features/daily_checkin/` | daily_checkin, dashboard | DailyCheckinRepository 제공 |
 | user_profiles | `features/onboarding/` | onboarding, dashboard, profile | ProfileRepository 제공 |
 | dosage_plans | `features/tracking/` | onboarding, tracking | MedicationRepository 제공 |
 | dose_schedules | `features/tracking/` | onboarding, tracking | ScheduleRepository 제공 |

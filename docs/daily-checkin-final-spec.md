@@ -277,10 +277,35 @@
 
 ### 6.2 주사 다음날 컨텍스트
 
+**기존 데이터 활용**: `dose_records` 테이블의 `administered_at` 필드 확인
+
 ```dart
-if (isAfterInjectionDay) {
+/// 주사 다음날 여부 확인
+/// dose_records 테이블에서 가장 최근 투여일 확인
+Future<bool> isPostInjectionDay(String userId) async {
+  final today = DateTime.now();
+  final todayDate = DateTime(today.year, today.month, today.day);
+  final yesterday = todayDate.subtract(const Duration(days: 1));
+
+  // 최근 투여 기록 조회
+  final latestDose = await doseRecordRepository.getLatestRecord(userId);
+
+  if (latestDose == null) return false;
+
+  final doseDate = DateTime(
+    latestDose.administeredAt.year,
+    latestDose.administeredAt.month,
+    latestDose.administeredAt.day,
+  );
+
+  return doseDate == yesterday;
+}
+
+// 인사말 적용
+if (await isPostInjectionDay(userId)) {
   greeting = "어제 주사 맞으셨죠? 오늘 컨디션은 어떠세요?";
-  // 부작용 질문에 더 세심한 주의
+  context.isPostInjection = true;
+  // Q1, Q3, Q5에서 "힘들었어요" 선택 시 더 세심한 파생 질문
 }
 ```
 
@@ -310,11 +335,50 @@ if (daysSinceLastCheckin >= 3) {
 | 21일 | "3주! 이제 습관이 되셨을 거예요" | 뱃지 부여 |
 | 30일 | "한 달 완주! 정말 대단해요 🏆" | 특별 뱃지 |
 
-### 7.2 구현 로직
+### 7.2 연속 기록 판정 정책
+
+**정책 결정**: 체크인 완료 기준 (체중은 선택)
+
+| 시나리오 | 연속 기록 인정 |
+|----------|--------------|
+| 체중 ✅ + 체크인 ✅ | ✅ 인정 |
+| 체중 ❌ + 체크인 ✅ | ✅ 인정 |
+| 체중 ✅ + 체크인 ❌ | ❌ 불인정 |
+| 체중 ❌ + 체크인 ❌ | ❌ 불인정 |
+
+**이유**:
+- 체중 입력은 저울이 없는 등의 이유로 건너뛸 수 있음
+- 6개 질문 체크인이 핵심 목표이므로 이를 기준으로 연속성 판정
+
+### 7.3 구현 로직
 
 ```dart
-int consecutiveDays = calculateConsecutiveDays(userId);
+/// 연속 체크인 일수 계산
+/// daily_checkins 테이블 기준 (weight_logs는 포함하지 않음)
+int calculateConsecutiveDays(String userId, List<DailyCheckin> checkins) {
+  final today = DateTime.now();
+  final todayDate = DateTime(today.year, today.month, today.day);
 
+  // 체크인 날짜들을 정렬
+  final checkinDates = checkins
+      .map((c) => DateTime(c.checkinDate.year, c.checkinDate.month, c.checkinDate.day))
+      .toSet()
+      .toList()
+    ..sort((a, b) => b.compareTo(a)); // 내림차순
+
+  int consecutiveDays = 0;
+  for (var i = 0; i < checkinDates.length; i++) {
+    final expectedDate = todayDate.subtract(Duration(days: i));
+    if (checkinDates.contains(expectedDate)) {
+      consecutiveDays++;
+    } else {
+      break;
+    }
+  }
+  return consecutiveDays;
+}
+
+// 마일스톤 체크
 if (consecutiveDays in [3, 7, 14, 21, 30, 60, 90]) {
   showMilestoneAnimation();
   showCelebrationMessage(consecutiveDays);
@@ -461,59 +525,588 @@ showFeedback(
 
 ## XII. 데이터 모델
 
-### 12.1 DB 스키마 변경
+### 12.1 설계 결정
+
+#### 12.1.1 분석 배경
+
+기존 코드베이스와의 정합성을 검토한 결과, 다음과 같은 구조적 변경이 필요합니다:
+
+| 기존 구조 | 문제점 | 결정 |
+|----------|--------|------|
+| `symptom_logs` 테이블 | 단일 증상 + 심각도(1-10) 구조가 새 6개 질문 모델과 완전히 다름 | **삭제** |
+| `symptom_context_tags` 테이블 | `symptom_logs`에 FK 의존 | **삭제** |
+| `emergency_symptom_checks` 테이블 | Red Flag 체크 이력 (사용자 직접 선택 방식) | **삭제** (daily_checkins로 통합) |
+| `weight_logs` 테이블 | 체중 + 식욕 점수, 독립적 기능 | **유지** |
+
+#### 12.1.2 설계 옵션 분석
+
+| 옵션 | 설명 | 장점 | 단점 | 채택 |
+|------|------|------|------|------|
+| A. weight_logs 확장 | condition_data JSONB 추가 | 기존 코드 활용 | 체중 없이 체크인 불가, WeightLog 대폭 수정 | ❌ |
+| **B. daily_checkins 신규** | 독립 테이블 생성 | 명확한 책임 분리, 기존 코드 최소 수정 | 신규 코드 필요 | ✅ |
+| C. symptom_logs 재활용 | 스키마 변경 | 테이블 유지 | 의미론적 혼란, 구조 완전히 다름 | ❌ |
+
+**채택: 옵션 B** - 앱 미출시이므로 깔끔한 신규 설계 가능
+
+#### 12.1.3 체중 기록과 체크인의 관계
+
+```
+[체중 기록 (선택)] → [데일리 체크인 (필수)]
+       ↓                    ↓
+  weight_logs          daily_checkins
+  (순수 체중만)        (컨디션 + 식욕점수)
+```
+
+**핵심 원칙:**
+- **체중 입력은 선택적**: 체크인 플로우 시작 시 체중 입력 UI 표시, "건너뛰기" 버튼으로 스킵 가능
+- **식욕 점수는 daily_checkins 소유**: `appetite_score`는 체크인의 `meal_condition`과 함께 저장
+- **weight_logs는 순수 체중만**: `appetite_score` 컬럼 제거, 체중(kg) 수치만 저장
+- **날짜 기준 연결**: 같은 날짜(log_date = checkin_date)로 조인 가능
+
+**UI 플로우:**
+```
+1. 체중 입력 화면
+   - [체중 입력 필드]
+   - [다음] 버튼
+   - [건너뛰기] 링크 (하단, 덜 강조)
+
+2. 건너뛰기 선택 시
+   - 체중 저장 없이 바로 6개 질문으로 이동
+   - "나중에 기록해도 괜찮아요" 메시지
+```
+
+### 12.2 신규 테이블: daily_checkins
 
 ```sql
--- weight_logs 확장
-ALTER TABLE weight_logs ADD COLUMN condition_data jsonb;
+-- 데일리 체크인 테이블
+CREATE TABLE public.daily_checkins (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id TEXT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  checkin_date DATE NOT NULL,
 
--- condition_data 구조 예시
-{
-  "meal": "good",           -- good/moderate/difficult
-  "hydration": "good",      -- good/moderate/poor
-  "gi_comfort": "good",     -- good/uncomfortable/very_uncomfortable
-  "bowel": "normal",        -- normal/irregular/difficult
-  "energy": "good",         -- good/normal/tired
-  "mood": "good",           -- good/neutral/low
-  "symptoms": [             -- 파생된 증상 상세
-    {
-      "type": "nausea",
-      "severity": "mild",
-      "details": {...}
-    }
-  ],
-  "context": {
-    "is_post_injection": false,
-    "days_since_last_checkin": 1,
-    "consecutive_days": 5
+  -- 6개 일상 질문 응답
+  meal_condition VARCHAR(20) NOT NULL,        -- good / moderate / difficult
+  hydration_level VARCHAR(20) NOT NULL,       -- good / moderate / poor
+  gi_comfort VARCHAR(20) NOT NULL,            -- good / uncomfortable / very_uncomfortable
+  bowel_condition VARCHAR(20) NOT NULL,       -- normal / irregular / difficult
+  energy_level VARCHAR(20) NOT NULL,          -- good / normal / tired
+  mood VARCHAR(20) NOT NULL,                  -- good / neutral / low
+
+  -- 식욕 점수 (weight_logs에서 이동)
+  appetite_score INTEGER CHECK (appetite_score >= 1 AND appetite_score <= 5),
+  -- 1: 아예 없음, 2: 매우 감소, 3: 약간 감소, 4: 보통, 5: 폭발
+  -- meal_condition이 'difficult'면 파생 질문에서 정확한 점수 결정
+  -- meal_condition이 'good'면 4-5, 'moderate'면 3-4
+
+  -- 파생 증상 상세 (JSONB) - "힘들었어요" 선택 시 추가 정보
+  symptom_details JSONB,
+  -- 스키마: [{"type": string, "severity": 1-3, "details": {...}}]
+  -- 상세 타입 정의는 12.4절 참조
+
+  -- 컨텍스트 정보 (JSONB)
+  context JSONB,
+  -- 예: {
+  --   "is_post_injection": true,
+  --   "days_since_last_checkin": 1,
+  --   "consecutive_days": 5,
+  --   "greeting_type": "morning"
+  -- }
+
+  -- Red Flag 감지 결과 (JSONB) - 시스템 자동 감지
+  red_flag_detected JSONB,
+  -- 예: {
+  --   "type": "pancreatitis",
+  --   "severity": "warning",
+  --   "symptoms": ["severe_abdominal_pain", "radiates_to_back"],
+  --   "notified_at": "2025-12-02T10:30:00Z"
+  -- }
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  UNIQUE(user_id, checkin_date)
+);
+
+-- 인덱스
+CREATE INDEX idx_daily_checkins_user_date ON public.daily_checkins(user_id, checkin_date DESC);
+CREATE INDEX idx_daily_checkins_red_flag ON public.daily_checkins(user_id)
+  WHERE red_flag_detected IS NOT NULL;
+CREATE INDEX idx_daily_checkins_symptom_gin ON public.daily_checkins
+  USING GIN (symptom_details jsonb_path_ops);
+
+-- RLS 정책
+ALTER TABLE public.daily_checkins ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only access their own checkins"
+ON public.daily_checkins FOR ALL
+USING (auth.uid()::TEXT = user_id);
+```
+
+### 12.3 삭제할 테이블
+
+```sql
+-- 마이그레이션 순서 (FK 의존성 고려)
+-- 1. 자식 테이블 먼저 삭제
+DROP TABLE IF EXISTS public.symptom_context_tags CASCADE;
+
+-- 2. 부모 테이블 삭제
+DROP TABLE IF EXISTS public.symptom_logs CASCADE;
+
+-- 3. emergency_symptom_checks 삭제 (daily_checkins로 통합)
+DROP TABLE IF EXISTS public.emergency_symptom_checks CASCADE;
+```
+
+### 12.4 엔티티 구조 (Dart)
+
+```dart
+// lib/features/daily_checkin/domain/entities/daily_checkin.dart
+
+/// 6개 일상 질문 응답 값
+enum ConditionLevel {
+  good,       // 좋음
+  moderate,   // 보통
+  difficult;  // 힘듦/어려움
+}
+
+/// 수분 섭취 수준
+enum HydrationLevel {
+  good,       // 충분히
+  moderate,   // 적당히
+  poor;       // 부족
+}
+
+/// GI 편안함 수준
+enum GiComfortLevel {
+  good,             // 편안함
+  uncomfortable,    // 불편함
+  veryUncomfortable; // 매우 불편함
+}
+
+/// 배변 상태
+enum BowelCondition {
+  normal,     // 정상
+  irregular,  // 불규칙
+  difficult;  // 힘듦
+}
+
+/// 에너지 수준
+enum EnergyLevel {
+  good,    // 활기참
+  normal,  // 보통
+  tired;   // 피곤함
+}
+
+/// 기분 상태
+enum MoodLevel {
+  good,    // 좋음
+  neutral, // 그저 그럼
+  low;     // 우울함
+}
+
+/// 데일리 체크인 엔티티
+class DailyCheckin extends Equatable {
+  final String id;
+  final String userId;
+  final DateTime checkinDate;
+
+  // 6개 일상 질문 응답
+  final ConditionLevel mealCondition;
+  final HydrationLevel hydrationLevel;
+  final GiComfortLevel giComfort;
+  final BowelCondition bowelCondition;
+  final EnergyLevel energyLevel;
+  final MoodLevel mood;
+
+  // 식욕 점수 (1-5, weight_logs에서 이동)
+  // - meal_condition이 'good'이면 4-5
+  // - meal_condition이 'moderate'이면 3-4
+  // - meal_condition이 'difficult'이면 파생 질문에서 결정 (1-3)
+  final int? appetiteScore;
+
+  // 파생 정보
+  final List<SymptomDetail>? symptomDetails;
+  final CheckinContext? context;
+  final RedFlagDetection? redFlagDetected;
+
+  final DateTime createdAt;
+
+  // ... 생성자, copyWith, props
+}
+```
+
+### 12.5 JSONB 스키마 정의
+
+#### 12.5.1 symptom_details 스키마
+
+```dart
+/// 증상 타입 (정규화된 값)
+enum SymptomType {
+  nausea,           // 메스꺼움
+  vomiting,         // 구토
+  lowAppetite,      // 입맛 없음
+  earlySatiety,     // 조기 포만감
+  heartburn,        // 속쓰림
+  abdominalPain,    // 복통
+  bloating,         // 복부 팽만
+  constipation,     // 변비
+  diarrhea,         // 설사
+  fatigue,          // 피로
+  dizziness,        // 어지러움
+  coldSweat,        // 식은땀
+  swelling,         // 부종
+}
+
+/// 파생 증상 상세
+///
+/// JSONB 구조:
+/// ```json
+/// [
+///   {
+///     "type": "nausea",        // SymptomType enum 값
+///     "severity": 2,           // 1(mild), 2(moderate), 3(severe) - 숫자 필수
+///     "details": {             // 증상별 추가 필드 (nullable)
+///       "vomit_count": 2,
+///       "duration_hours": 4
+///     }
+///   }
+/// ]
+/// ```
+class SymptomDetail {
+  final SymptomType type;
+  final int severity;  // 1-3 (mild/moderate/severe)
+  final Map<String, dynamic>? details;
+
+  /// 복통 전용 details 필드
+  /// - location: "upper" | "right_upper" | "lower" | "around_navel"
+  /// - radiates_to_back: bool (췌장염 지표)
+  /// - duration_hours: int
+
+  /// 구토 전용 details 필드
+  /// - vomit_count: int (횟수)
+  /// - can_keep_water: bool (물 마실 수 있는지)
+
+  /// 변비 전용 details 필드
+  /// - days_without: int (변비 일수)
+  /// - has_gas: bool (가스 배출 여부)
+
+  /// JSON 검증
+  static bool isValid(Map<String, dynamic> json) {
+    return json.containsKey('type') &&
+           json.containsKey('severity') &&
+           json['severity'] is int &&
+           json['severity'] >= 1 &&
+           json['severity'] <= 3;
   }
 }
+```
+
+#### 12.5.2 context 스키마
+
+```dart
+/// 체크인 컨텍스트 정보
+///
+/// JSONB 구조:
+/// ```json
+/// {
+///   "is_post_injection": true,
+///   "days_since_last_checkin": 1,
+///   "consecutive_days": 5,
+///   "greeting_type": "morning",
+///   "weight_skipped": true
+/// }
+/// ```
+class CheckinContext {
+  final bool isPostInjection;      // 주사 다음날 여부
+  final int daysSinceLastCheckin;  // 마지막 체크인 이후 일수
+  final int consecutiveDays;       // 연속 체크인 일수
+  final String? greetingType;      // morning/afternoon/evening/night
+  final bool weightSkipped;        // 체중 입력 건너뛰기 여부
+}
+```
+
+#### 12.5.3 red_flag_detected 스키마
+
+```dart
+/// Red Flag 타입
+enum RedFlagType {
+  pancreatitis,       // 급성 췌장염
+  cholecystitis,      // 담낭염
+  severeDehydration,  // 심한 탈수
+  bowelObstruction,   // 장폐색
+  hypoglycemia,       // 저혈당
+  renalImpairment,    // 신부전
+}
+
+/// Red Flag 감지 결과
+///
+/// JSONB 구조:
+/// ```json
+/// {
+///   "type": "pancreatitis",
+///   "severity": "warning",
+///   "symptoms": ["severe_abdominal_pain", "radiates_to_back"],
+///   "notified_at": "2025-12-02T10:30:00Z",
+///   "user_action": "dismissed"
+/// }
+/// ```
+class RedFlagDetection {
+  final RedFlagType type;
+  final String severity;       // "warning" | "urgent"
+  final List<String> symptoms; // 감지된 증상 목록
+  final DateTime? notifiedAt;  // 사용자에게 안내한 시간
+  final String? userAction;    // "dismissed" | "hospital_search" | null
+}
+```
+
+### 12.6 CopingGuide 활용
+
+기존 `CopingGuide` 엔티티를 피드백 시스템에 직접 활용:
+
+```dart
+// SymptomType → CopingGuide symptomName 매핑
+String _mapSymptomTypeToName(SymptomType type) {
+  switch (type) {
+    case SymptomType.nausea: return '메스꺼움';
+    case SymptomType.vomiting: return '구토';
+    case SymptomType.lowAppetite: return '식욕 감소';
+    case SymptomType.earlySatiety: return '조기 포만감';
+    case SymptomType.heartburn: return '속쓰림';
+    case SymptomType.abdominalPain: return '복통';
+    case SymptomType.bloating: return '복부 팽만';
+    case SymptomType.constipation: return '변비';
+    case SymptomType.diarrhea: return '설사';
+    case SymptomType.fatigue: return '피로';
+    case SymptomType.dizziness: return '어지러움';
+    case SymptomType.coldSweat: return '식은땀';
+    case SymptomType.swelling: return '부종';
+  }
+}
+
+// 피드백 생성 로직 예시
+class CheckinFeedbackService {
+  final CopingGuideRepository _copingGuideRepository;
+
+  /// 증상 선택 시 피드백 생성
+  Future<CheckinFeedback> getFeedbackForSymptom(SymptomType symptomType) async {
+    final guide = await _copingGuideRepository.getGuideBySymptom(
+      _mapSymptomTypeToName(symptomType),
+    );
+
+    if (guide != null) {
+      return CheckinFeedback(
+        message: guide.reassuranceMessage,
+        stat: guide.reassuranceStat,
+        action: guide.immediateAction,
+        tone: FeedbackTone.supportive,
+      );
+    }
+
+    return CheckinFeedback.defaultSupportive();
+  }
+
+  /// 긍정 응답 시 피드백 (신규)
+  CheckinFeedback getPositiveFeedback(String questionType) {
+    return _positiveFeedbacks[questionType] ??
+           CheckinFeedback(message: "좋아요! 💚", tone: FeedbackTone.positive);
+  }
+}
+```
+
+### 12.7 주간 통계 집계 쿼리
+
+```sql
+-- 주간 체크인 통계 (대시보드용)
+SELECT
+  user_id,
+  COUNT(*) as checkin_count,
+  COUNT(*) FILTER (WHERE meal_condition = 'good') as good_meal_days,
+  COUNT(*) FILTER (WHERE hydration_level = 'good') as good_hydration_days,
+  COUNT(*) FILTER (WHERE symptom_details IS NOT NULL) as symptom_days,
+  COUNT(*) FILTER (WHERE red_flag_detected IS NOT NULL) as red_flag_days
+FROM daily_checkins
+WHERE checkin_date >= CURRENT_DATE - INTERVAL '7 days'
+  AND user_id = :userId
+GROUP BY user_id;
 ```
 
 ---
 
 ## XIII. 구현 우선순위
 
+### Phase 0: 레거시 정리 (P0) ⚠️ 선행 필수
+
+#### 0.1 데이터베이스 마이그레이션
+```
+- [ ] daily_checkins 테이블 생성 마이그레이션 작성 (appetite_score 포함)
+- [ ] weight_logs에서 appetite_score 컬럼 제거
+- [ ] symptom_context_tags 테이블 삭제
+- [ ] symptom_logs 테이블 삭제
+- [ ] emergency_symptom_checks 테이블 삭제
+- [ ] docs/database.md 동기화 ✅ 완료
+```
+
+#### 0.2 레거시 코드 삭제
+```
+삭제할 파일:
+- [ ] lib/features/tracking/domain/entities/symptom_log.dart
+- [ ] lib/features/tracking/infrastructure/dtos/symptom_log_dto.dart
+- [ ] lib/features/tracking/domain/entities/emergency_symptom_check.dart
+- [ ] lib/features/tracking/infrastructure/dtos/emergency_symptom_check_dto.dart
+- [ ] lib/features/tracking/domain/repositories/emergency_check_repository.dart
+- [ ] lib/features/tracking/infrastructure/repositories/supabase_emergency_check_repository.dart
+- [ ] lib/features/tracking/application/notifiers/emergency_check_notifier.dart
+- [ ] lib/features/tracking/application/notifiers/emergency_check_notifier.g.dart
+- [ ] lib/features/tracking/application/notifiers/symptom_record_edit_notifier.dart
+- [ ] lib/features/tracking/application/notifiers/symptom_guide_notifier.dart
+- [ ] lib/features/tracking/application/notifiers/symptom_guide_notifier.g.dart
+- [ ] lib/features/tracking/application/notifiers/symptom_pattern_notifier.dart
+- [ ] lib/features/tracking/application/notifiers/symptom_pattern_notifier.g.dart
+```
+
+#### 0.3 기존 코드 수정
+```
+수정할 파일:
+- [ ] lib/features/tracking/domain/entities/weight_log.dart
+      → appetiteScore 필드 제거
+- [ ] lib/features/tracking/infrastructure/dtos/weight_log_dto.dart
+      → appetite_score 컬럼 매핑 제거
+- [ ] lib/features/tracking/domain/repositories/tracking_repository.dart
+      → symptom 관련 메서드 제거 (saveSymptomLog, getSymptomLogs 등)
+- [ ] lib/features/tracking/infrastructure/repositories/supabase_tracking_repository.dart
+      → symptom 관련 메서드 구현 제거
+- [ ] lib/features/tracking/application/providers.dart
+      → symptom/emergency 관련 provider 제거
+- [ ] lib/features/dashboard/** (대시보드)
+      → symptom_logs 참조 제거, daily_checkins로 교체
+      → 식욕 점수 조회 로직 daily_checkins로 변경
+- [ ] lib/features/dashboard/domain/usecases/calculate_continuous_record_days_usecase.dart
+      → symptom_logs 기반 → daily_checkins 기반으로 변경
+      → weight_logs만으로는 연속 기록 인정 안 함 (7.2절 정책 참조)
+```
+
 ### Phase 1: 핵심 플로우 (P0)
-- [ ] 질문 6개 UI 구현
-- [ ] 파생 질문 로직
-- [ ] 기본 피드백 시스템
-- [ ] 데이터 저장
+
+#### 1.1 신규 기능 생성
+```
+신규 생성할 파일:
+- [ ] lib/features/daily_checkin/domain/entities/daily_checkin.dart
+- [ ] lib/features/daily_checkin/domain/entities/symptom_detail.dart
+- [ ] lib/features/daily_checkin/domain/entities/checkin_context.dart
+- [ ] lib/features/daily_checkin/domain/entities/red_flag_detection.dart
+- [ ] lib/features/daily_checkin/domain/entities/checkin_feedback.dart
+- [ ] lib/features/daily_checkin/infrastructure/dtos/daily_checkin_dto.dart
+- [ ] lib/features/daily_checkin/domain/repositories/daily_checkin_repository.dart
+- [ ] lib/features/daily_checkin/infrastructure/repositories/supabase_daily_checkin_repository.dart
+- [ ] lib/features/daily_checkin/application/notifiers/daily_checkin_notifier.dart
+- [ ] lib/features/daily_checkin/application/notifiers/checkin_feedback_notifier.dart
+- [ ] lib/features/daily_checkin/application/providers.dart
+```
+
+#### 1.2 UI 구현
+
+**기존 위젯 재사용/신규 생성 결정**:
+
+| 위젯 | 기존 코드 | 결정 | 이유 |
+|------|----------|------|------|
+| **답변 버튼** | `appeal_score_chip.dart` | ✅ 확장 재사용 | 선택/미선택 상태, 터치 44px 보장 로직 이미 있음. 이모지+텍스트 지원으로 확장 |
+| **피드백 카드** | `contextual_guide_card.dart` | 🆕 신규 생성 | CopingGuide용 구조와 다름. 더 심플한 구조 필요 |
+| **질문 카드** | 없음 | 🆕 신규 생성 | 질문+설명+선택지 레이아웃 필요 |
+| **진행률 표시** | 없음 | 🆕 신규 생성 | 6개 질문 진행 상태 표시 |
+| **심각도 선택** | `severity_level_indicator.dart` | ⚠️ 수정 재사용 | 1-10 → 1-3 범위로 변경 필요 |
+
+```
+신규 생성:
+- [ ] lib/features/daily_checkin/presentation/screens/daily_checkin_screen.dart
+- [ ] lib/features/daily_checkin/presentation/widgets/question_card.dart
+- [ ] lib/features/daily_checkin/presentation/widgets/feedback_card.dart
+- [ ] lib/features/daily_checkin/presentation/widgets/checkin_progress_indicator.dart
+
+기존 코드 수정/확장:
+- [ ] lib/features/tracking/presentation/widgets/appeal_score_chip.dart
+      → 이모지+텍스트 지원하도록 확장 (answer_button으로 활용)
+- [ ] lib/features/tracking/presentation/widgets/severity_level_indicator.dart
+      → 1-3 범위 지원 추가 (심각도 선택용)
+```
+
+#### 1.3 핵심 로직
+```
+- [ ] 질문 6개 순차 플로우
+- [ ] 파생 질문 분기 로직 (힘들었어요 → 상세 질문)
+- [ ] 기본 피드백 시스템 (CopingGuide 연동)
+- [ ] 데이터 저장 (daily_checkins 테이블)
+```
 
 ### Phase 2: 감정적 UX (P1)
-- [ ] 시간대별 인사
-- [ ] 연속 체크인 축하
-- [ ] 복귀 사용자 환영
-- [ ] 변화 감지 피드백
+```
+- [ ] 시간대별 인사 (GreetingService)
+- [ ] 연속 체크인 축하 (ConsecutiveDaysCalculator)
+- [ ] 복귀 사용자 환영 (3일+ 공백 감지)
+- [ ] 변화 감지 피드백 (WeeklyComparisonService)
+```
 
 ### Phase 3: 안전 시스템 (P1)
-- [ ] Red Flag 감지 로직
-- [ ] 안내 메시지 UI
-- [ ] 주사 다음날 컨텍스트
+```
+- [ ] Red Flag 감지 로직 (RedFlagDetector)
+- [ ] 안내 메시지 UI (RedFlagAlertDialog)
+- [ ] 주사 다음날 컨텍스트 (PostInjectionDetector)
+- [ ] red_flag_detected JSONB 저장
+```
 
 ### Phase 4: 의료진 공유 (P2)
-- [ ] 주간 리포트 생성
+```
+- [ ] 주간 리포트 생성 (WeeklyReportGenerator)
 - [ ] 공유 모드 UI
+- [ ] 텍스트 복사/공유 기능
+```
+
+### 파일 구조 최종 형태
+
+```
+lib/features/
+├── daily_checkin/                    # [신규]
+│   ├── domain/
+│   │   ├── entities/
+│   │   │   ├── daily_checkin.dart
+│   │   │   ├── symptom_detail.dart
+│   │   │   ├── checkin_context.dart
+│   │   │   ├── red_flag_detection.dart
+│   │   │   └── checkin_feedback.dart
+│   │   └── repositories/
+│   │       └── daily_checkin_repository.dart
+│   ├── infrastructure/
+│   │   ├── dtos/
+│   │   │   └── daily_checkin_dto.dart
+│   │   └── repositories/
+│   │       └── supabase_daily_checkin_repository.dart
+│   ├── application/
+│   │   ├── notifiers/
+│   │   │   ├── daily_checkin_notifier.dart
+│   │   │   └── checkin_feedback_notifier.dart
+│   │   ├── services/
+│   │   │   ├── greeting_service.dart
+│   │   │   ├── red_flag_detector.dart
+│   │   │   └── weekly_comparison_service.dart
+│   │   └── providers.dart
+│   └── presentation/
+│       ├── screens/
+│       │   └── daily_checkin_screen.dart
+│       └── widgets/
+│           ├── question_card.dart
+│           ├── answer_button.dart
+│           └── feedback_card.dart
+├── tracking/                          # [수정]
+│   ├── domain/
+│   │   ├── entities/
+│   │   │   └── weight_log.dart        # 유지
+│   │   └── repositories/
+│   │       └── tracking_repository.dart  # symptom 메서드 제거
+│   └── infrastructure/
+│       ├── dtos/
+│       │   └── weight_log_dto.dart    # 유지
+│       └── repositories/
+│           └── supabase_tracking_repository.dart  # symptom 메서드 제거
+└── coping_guide/                      # [유지] - 피드백에 활용
+    └── ...
+```
 
 ---
 

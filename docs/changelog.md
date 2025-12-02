@@ -21,6 +21,14 @@
 
 ## 2025-12-02
 
+- [docs] 데일리 체크인 명세서 구현 준비 보완
+  - SymptomType → CopingGuide symptomName 매핑 함수 추가 (12.6절)
+  - 연속 기록 판정 정책 명확화: 체크인 기준, 체중은 선택 (7.2절)
+  - 주사 다음날 감지 로직 상세화: dose_records 활용 (6.2절)
+  - 위젯 재사용/신규 생성 결정 테이블 추가 (1.2절)
+  - Q0 체중 입력 섹션 신규 추가: UI 구조, 입력 사양, 피드백
+  - database.md: daily_checkins 테이블 스키마 반영, symptom_logs/emergency_symptom_checks 제거
+
 - [docs] database.md 마이그레이션/코드와 일치하도록 동기화
   - users 테이블: id TEXT 타입, 불필요 컬럼 제거 (auth_type, password_hash 등)
   - weight_logs: appetite_score 컬럼 추가
