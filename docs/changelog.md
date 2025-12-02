@@ -21,6 +21,11 @@
 
 ## 2025-12-02
 
+- [fix] 체크인 완료 페이지 네비게이션 오류 및 중앙 정렬 수정
+  - GoError 수정: ShellRoute 내부이므로 pop() 대신 go('/home') 사용
+  - 중앙 정렬: Center + SingleChildScrollView로 화면 중앙 배치
+  - `lib/features/daily_checkin/presentation/screens/daily_checkin_screen.dart`
+
 - [feat] 트렌드 대시보드 데일리 체크인 기반으로 전체 재구성 (B. 상세화)
   - TrendInsight 엔티티: 6개 질문별 트렌드, 일별 컨디션 요약, 패턴 인사이트 구조로 재설계
   - TrendInsightAnalyzer: 데일리 체크인 데이터 분석, 이전 기간 대비 비교 로직 추가

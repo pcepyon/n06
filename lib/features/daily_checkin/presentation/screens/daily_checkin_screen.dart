@@ -528,72 +528,75 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
       }
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            CompletionStrings.emoji,
-            style: const TextStyle(fontSize: 64),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            CompletionStrings.title,
-            textAlign: TextAlign.center,
-            style: AppTypography.heading1.copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppColors.neutral900,
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              CompletionStrings.emoji,
+              style: const TextStyle(fontSize: 64),
             ),
-          ),
-          const SizedBox(height: 24),
-          // 연속 일수 표시
-          if (consecutiveDays > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
+            const SizedBox(height: 24),
+            Text(
+              CompletionStrings.title,
+              textAlign: TextAlign.center,
+              style: AppTypography.heading1.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.neutral900,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // 연속 일수 표시
+            if (consecutiveDays > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '$consecutiveDays일째 연속 기록 중!',
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 24),
+            // 피드백 메시지
+            Text(
+              feedbackMessage,
+              textAlign: TextAlign.center,
+              style: AppTypography.bodyLarge.copyWith(
+                color: AppColors.neutral700,
+                height: 1.6,
+              ),
+            ),
+            const SizedBox(height: 48),
+            FilledButton(
+              onPressed: () {
+                // ShellRoute 내부이므로 pop() 대신 go() 사용 (GoError 방지)
+                context.go('/home');
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                minimumSize: const Size(200, 56),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: Text(
-                '$consecutiveDays일째 연속 기록 중!',
+                CompletionStrings.doneButton,
                 style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.primary,
                   fontWeight: FontWeight.w600,
+                  color: Colors.white,
                 ),
               ),
             ),
-          const SizedBox(height: 24),
-          // 피드백 메시지
-          Text(
-            feedbackMessage,
-            textAlign: TextAlign.center,
-            style: AppTypography.bodyLarge.copyWith(
-              color: AppColors.neutral700,
-              height: 1.6,
-            ),
-          ),
-          const SizedBox(height: 48),
-          FilledButton(
-            onPressed: () {
-              context.pop();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              minimumSize: const Size(200, 56),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(
-              CompletionStrings.doneButton,
-              style: AppTypography.bodyLarge.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
