@@ -35,10 +35,10 @@ class ScaffoldWithBottomNav extends StatelessWidget {
       route: '/home',
     ),
     GabiumBottomNavItem(
-      label: '기록',
-      icon: Icons.edit_note_outlined,
-      activeIcon: Icons.edit_note,
-      route: '/tracking/daily',
+      label: '체크인',
+      icon: Icons.check_circle_outline,
+      activeIcon: Icons.check_circle,
+      route: '/daily-checkin',
     ),
     GabiumBottomNavItem(
       label: '일정',

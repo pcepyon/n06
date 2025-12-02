@@ -12,7 +12,6 @@ import 'package:n06/features/tracking/presentation/screens/edit_dosage_plan_scre
 import 'package:n06/features/tracking/presentation/screens/dose_calendar_screen.dart';
 import 'package:n06/features/notification/presentation/screens/notification_settings_screen.dart';
 import 'package:n06/features/tracking/presentation/screens/emergency_check_screen.dart';
-import 'package:n06/features/tracking/presentation/screens/daily_tracking_screen.dart';
 import 'package:n06/features/coping_guide/presentation/screens/coping_guide_screen.dart';
 import 'package:n06/features/data_sharing/presentation/screens/data_sharing_screen.dart';
 import 'package:n06/features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -156,11 +155,11 @@ final appRouter = GoRouter(
           builder: (context, state) => const HomeDashboardScreen(),
         ),
 
-        /// Tracking - Daily Log (F002) - 통합 데일리 기록 화면
+        /// Daily Check-in (F007) - 데일리 체크인 (체중 + 6개 질문)
         GoRoute(
-          path: '/tracking/daily',
-          name: 'daily_tracking',
-          builder: (context, state) => const DailyTrackingScreen(),
+          path: '/daily-checkin',
+          name: 'daily_checkin',
+          builder: (context, state) => const DailyCheckinScreen(),
         ),
 
         /// Dose Schedule Management (003)
@@ -235,11 +234,10 @@ final appRouter = GoRouter(
       builder: (context, state) => const TrendDashboardScreen(),
     ),
 
-    /// Daily Check-in (F007)
+    /// Legacy redirect: /tracking/daily → /daily-checkin
     GoRoute(
-      path: '/daily-checkin',
-      name: 'daily_checkin',
-      builder: (context, state) => const DailyCheckinScreen(),
+      path: '/tracking/daily',
+      redirect: (context, state) => '/daily-checkin',
     ),
 
     /// Share Report (주간 리포트 공유)
