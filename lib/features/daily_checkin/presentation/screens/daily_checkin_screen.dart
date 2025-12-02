@@ -33,6 +33,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
   final PageController _pageController = PageController();
 
   bool _isInitialized = false;
+  bool _isDerivedSheetOpen = false;
 
   @override
   void initState() {
@@ -67,10 +68,11 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
   }
 
   void _handleAnswerSelected(int questionIndex, AnswerOption option) async {
-    // Notifier에 답변 제출
+    // Notifier에 답변 제출 (피드백 포함, BUG-20251202-175417)
     await ref.read(dailyCheckinProvider.notifier).submitAnswer(
           questionIndex,
           option.value,
+          feedback: option.feedback,
         );
   }
 
@@ -81,6 +83,11 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
   }
 
   void _handleGoBack() {
+    // 바텀시트가 열려있으면 먼저 닫기 (BUG-20251202-175417)
+    if (_isDerivedSheetOpen) {
+      Navigator.of(context).pop();
+      _isDerivedSheetOpen = false;
+    }
     ref.read(dailyCheckinProvider.notifier).goBack();
   }
 
@@ -254,6 +261,15 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     final question = Questions.all[questionIndex];
     final selectedAnswer = state.answers[questionIndex + 1];
 
+    // 피드백이 표시 대기 중이면 자동 전환 (BUG-20251202-175417)
+    if (state.pendingFeedback != null) {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          ref.read(dailyCheckinProvider.notifier).dismissFeedbackAndProceed();
+        }
+      });
+    }
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -284,8 +300,13 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
             }).toList(),
           ),
           const SizedBox(height: 24),
-          // 피드백 카드 (선택된 답변에 피드백이 있으면 표시)
-          if (selectedAnswer != null)
+          // 피드백 카드 (pendingFeedback 우선, BUG-20251202-175417)
+          if (state.pendingFeedback != null)
+            FeedbackCard(
+              message: state.pendingFeedback!,
+              tone: FeedbackTone.positive,
+            )
+          else if (selectedAnswer != null)
             Builder(
               builder: (context) {
                 final selectedOption = question.options.firstWhere(
@@ -308,16 +329,29 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
   }
 
   Widget _buildDerivedQuestionPage(String path) {
-    // 파생 질문을 바텀시트로 표시
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      showDerivedQuestionSheet(
-        context: context,
-        path: path,
-        onAnswerSelected: (answer) {
-          _handleDerivedAnswer(path, answer);
-        },
-      );
-    });
+    // 파생 질문을 바텀시트로 표시 (중복 열기 방지, BUG-20251202-175417)
+    if (!_isDerivedSheetOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        _isDerivedSheetOpen = true;
+        await showDerivedQuestionSheet(
+          context: context,
+          path: path,
+          onAnswerSelected: (answer) {
+            _handleDerivedAnswer(path, answer);
+          },
+        );
+        // 바텀시트가 닫힌 후
+        if (mounted) {
+          _isDerivedSheetOpen = false;
+          // 바텀시트가 닫혔는데 상태가 여전히 derived path면 동기화
+          final currentPath = ref.read(dailyCheckinProvider).value?.currentDerivedPath;
+          if (currentPath != null) {
+            ref.read(dailyCheckinProvider.notifier).goBack();
+          }
+        }
+      });
+    }
 
     // 이전 질문 화면 유지 (백그라운드)
     final currentQuestion = _getQuestionIndexFromPath(path);

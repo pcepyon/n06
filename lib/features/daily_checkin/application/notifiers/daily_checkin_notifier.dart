@@ -41,6 +41,9 @@ class DailyCheckinState {
   /// 컨텍스트 정보
   final CheckinContext? context;
 
+  /// 표시 대기 중인 피드백 메시지 (BUG-20251202-175417)
+  final String? pendingFeedback;
+
   const DailyCheckinState({
     this.currentStep = 0,
     this.weight,
@@ -51,6 +54,7 @@ class DailyCheckinState {
     this.isComplete = false,
     this.savedCheckin,
     this.context,
+    this.pendingFeedback,
   });
 
   DailyCheckinState copyWith({
@@ -63,6 +67,7 @@ class DailyCheckinState {
     bool? isComplete,
     DailyCheckin? savedCheckin,
     CheckinContext? context,
+    String? pendingFeedback,
   }) {
     return DailyCheckinState(
       currentStep: currentStep ?? this.currentStep,
@@ -74,6 +79,7 @@ class DailyCheckinState {
       isComplete: isComplete ?? this.isComplete,
       savedCheckin: savedCheckin ?? this.savedCheckin,
       context: context ?? this.context,
+      pendingFeedback: pendingFeedback,
     );
   }
 }
@@ -127,7 +133,12 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
   }
 
   /// 메인 질문 답변
-  Future<void> submitAnswer(int questionIndex, String answer) async {
+  /// [feedback] 파라미터는 Presentation Layer에서 전달 (BUG-20251202-175417)
+  Future<void> submitAnswer(
+    int questionIndex,
+    String answer, {
+    String? feedback,
+  }) async {
     final currentState = state.value ?? const DailyCheckinState();
 
     final newAnswers = Map<int, String>.from(currentState.answers);
@@ -145,8 +156,16 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
           currentDerivedPath: derivedPath,
         ),
       );
+    } else if (feedback != null) {
+      // 피드백이 있으면 표시 대기 상태로 (BUG-20251202-175417)
+      state = AsyncValue.data(
+        currentState.copyWith(
+          answers: newAnswers,
+          pendingFeedback: feedback,
+        ),
+      );
     } else {
-      // 다음 질문으로
+      // 다음 질문으로 즉시 이동 (피드백 없음)
       final nextStep = questionIndex < 6 ? questionIndex + 1 : questionIndex;
       state = AsyncValue.data(
         currentState.copyWith(
@@ -199,6 +218,21 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
         ),
       );
     }
+  }
+
+  /// 피드백 확인 후 다음 질문으로 진행 (BUG-20251202-175417)
+  Future<void> dismissFeedbackAndProceed() async {
+    final currentState = state.value ?? const DailyCheckinState();
+    final nextStep = currentState.currentStep < 6
+        ? currentState.currentStep + 1
+        : currentState.currentStep;
+
+    state = AsyncValue.data(
+      currentState.copyWith(
+        currentStep: nextStep,
+        pendingFeedback: null,
+      ),
+    );
   }
 
   /// 이전 질문으로 이동
