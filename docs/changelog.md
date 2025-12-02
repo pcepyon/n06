@@ -21,6 +21,11 @@
 
 ## 2025-12-03
 
+- [fix] 데일리 체크인 중복 다이얼로그 "나가기" 버튼 GoError 수정
+  - "오늘 이미 기록했어요" 팝업에서 나가기 시 "There is nothing to pop" 에러 해결
+  - ShellRoute 내부이므로 context.pop() 대신 context.go('/home') 사용
+  - `lib/features/daily_checkin/presentation/screens/daily_checkin_screen.dart:312`
+
 - [feat] 설정 화면에 부작용 대처 가이드 메뉴 추가
   - 설정 페이지에서 부작용 증상별 대처법과 피드백 기능 접근 가능
   - `lib/features/settings/presentation/screens/settings_screen.dart:143-147`

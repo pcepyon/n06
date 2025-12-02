@@ -309,7 +309,8 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
       if (confirmed == true) {
         ref.read(dailyCheckinProvider.notifier).confirmDuplicateCheckin();
       } else {
-        context.pop();
+        // ShellRoute 내부이므로 pop() 대신 go() 사용 (GoError 방지)
+        context.go('/home');
       }
     });
   }
