@@ -21,6 +21,12 @@
 
 ## 2025-12-02
 
+- [docs] database.md 마이그레이션/코드와 일치하도록 동기화
+  - users 테이블: id TEXT 타입, 불필요 컬럼 제거 (auth_type, password_hash 등)
+  - weight_logs: appetite_score 컬럼 추가
+  - 신규 테이블 추가: notification_settings, audit_logs, guide_feedback
+  - password_reset_tokens 제거, RLS 정책 업데이트, Trigger 섹션 추가
+
 - [chore] 미사용 코드 18개 파일 정리
   - authentication: datasources(kakao/naver), dtos(user/consent_record), email_auth_exceptions
   - onboarding: user_dto

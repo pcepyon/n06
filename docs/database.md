@@ -13,7 +13,6 @@ related: [techstack, code-structure]
 
 ### 1. Authentication & Onboarding
 ```
-users → oauth_tokens
 users → consent_records
 users → user_profiles
 ```
@@ -41,7 +40,17 @@ badge_definitions (static)
 user_badges ← computed from user activity
 ```
 
-### 6. Dashboard Aggregation (Read)
+### 6. Notification
+```
+notification_settings
+```
+
+### 7. Audit
+```
+audit_logs
+```
+
+### 8. Dashboard Aggregation (Read)
 ```
 dose_records + weight_logs + symptom_logs + user_badges
 → weekly statistics, insights, badges, timeline
@@ -52,32 +61,20 @@ dose_records + weight_logs + symptom_logs + user_badges
 ## Tables
 
 ### users
-사용자 계정 정보
+사용자 계정 정보 (Supabase Auth 연동)
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT gen_random_uuid() | 내부 고유 식별자 |
-| auth_type | varchar(20) | NOT NULL | 'social' 또는 'email' |
-| oauth_provider | varchar(20) | NULL | naver/kakao (social인 경우만) |
-| oauth_user_id | varchar(255) | NULL | 소셜 제공자 사용자 ID (social인 경우만) |
-| email | varchar(255) | NOT NULL, UNIQUE | 이메일 |
-| password_hash | text | NULL | 비밀번호 해시 (email 인증인 경우만) |
-| email_verified | boolean | NOT NULL, DEFAULT false | 이메일 인증 여부 |
+| id | TEXT | PK | 내부 고유 식별자 (Supabase Auth UUID) |
+| oauth_provider | varchar(20) | NOT NULL | kakao/naver/email |
+| oauth_user_id | varchar(255) | NOT NULL | OAuth 제공자 사용자 ID |
 | name | varchar(100) | NOT NULL | 사용자 이름 |
+| email | varchar(255) | NULL | 이메일 (선택) |
 | profile_image_url | text | NULL | 프로필 이미지 URL |
-| login_attempts | integer | NOT NULL, DEFAULT 0 | 로그인 시도 횟수 |
-| locked_until | timestamptz | NULL | 계정 잠금 해제 시간 |
 | created_at | timestamptz | NOT NULL, DEFAULT now() | 가입일시 |
 | last_login_at | timestamptz | NOT NULL, DEFAULT now() | 마지막 로그인 일시 |
 
-**Indexes**
-- UNIQUE: email
-- UNIQUE: (oauth_provider, oauth_user_id) WHERE oauth_provider IS NOT NULL
-- INDEX: (email, auth_type)
-
-**Constraints**
-- CHECK: auth_type IN ('social', 'email')
-- CHECK: (auth_type = 'social' AND oauth_provider IS NOT NULL) OR (auth_type = 'email' AND password_hash IS NOT NULL)
+**Note**: 비밀번호는 Supabase Auth (auth.users)에서 관리. public.users에 저장하지 않음.
 
 ---
 
@@ -86,8 +83,8 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT gen_random_uuid() | |
-| user_id | uuid | FK(users.id), NOT NULL | |
+| id | uuid | PK, DEFAULT uuid_generate_v4() | |
+| user_id | TEXT | FK(users.id), NOT NULL | |
 | terms_of_service | boolean | NOT NULL | 이용약관 동의 |
 | privacy_policy | boolean | NOT NULL | 개인정보처리방침 동의 |
 | agreed_at | timestamptz | NOT NULL, DEFAULT now() | 동의 일시 |
@@ -99,8 +96,8 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT gen_random_uuid() | |
-| user_id | uuid | FK(users.id), UNIQUE, NOT NULL | |
+| id | uuid | PK, DEFAULT uuid_generate_v4() | |
+| user_id | TEXT | FK(users.id), UNIQUE, NOT NULL | |
 | target_weight_kg | numeric(5,2) | NOT NULL | 목표 체중 |
 | target_period_weeks | integer | NULL | 목표 기간 (주) |
 | weekly_loss_goal_kg | numeric(4,2) | NULL | 주간 감량 목표 (자동 계산) |
@@ -118,8 +115,8 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT gen_random_uuid() | |
-| user_id | uuid | FK(users.id), NOT NULL | |
+| id | uuid | PK, DEFAULT uuid_generate_v4() | |
+| user_id | TEXT | FK(users.id), NOT NULL | |
 | medication_name | varchar(100) | NOT NULL | 약물명 |
 | start_date | date | NOT NULL | 시작일 |
 | cycle_days | integer | NOT NULL | 투여 주기 (일) |
@@ -139,7 +136,7 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT gen_random_uuid() | |
+| id | uuid | PK, DEFAULT uuid_generate_v4() | |
 | dosage_plan_id | uuid | FK(dosage_plans.id), NOT NULL | |
 | changed_at | timestamptz | NOT NULL, DEFAULT now() | 변경일시 |
 | old_plan | jsonb | NOT NULL | 변경 전 계획 |
@@ -152,7 +149,7 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT gen_random_uuid() | |
+| id | uuid | PK, DEFAULT uuid_generate_v4() | |
 | dosage_plan_id | uuid | FK(dosage_plans.id), NOT NULL | |
 | scheduled_date | date | NOT NULL | 투여 예정일 |
 | scheduled_dose_mg | numeric(6,2) | NOT NULL | 예정 용량 (mg) |
@@ -169,7 +166,7 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT gen_random_uuid() | |
+| id | uuid | PK, DEFAULT uuid_generate_v4() | |
 | dose_schedule_id | uuid | FK(dose_schedules.id), NULL | 연관 스케줄 (수동 기록 시 NULL) |
 | dosage_plan_id | uuid | FK(dosage_plans.id), NOT NULL | |
 | administered_at | timestamptz | NOT NULL | 투여일시 |
@@ -192,10 +189,11 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT gen_random_uuid() | |
-| user_id | uuid | FK(users.id), NOT NULL | |
+| id | uuid | PK, DEFAULT uuid_generate_v4() | |
+| user_id | TEXT | FK(users.id), NOT NULL | |
 | log_date | date | NOT NULL | 기록 날짜 |
 | weight_kg | numeric(5,2) | NOT NULL | 체중 (kg) |
+| appetite_score | integer | NULL, CHECK (1-5) | GLP-1 식욕 조절 점수: 1=아예없음, 2=매우감소, 3=약간감소, 4=보통, 5=폭발 |
 | created_at | timestamptz | NOT NULL, DEFAULT now() | 기록 시간 |
 
 **Indexes**
@@ -209,8 +207,8 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT gen_random_uuid() | |
-| user_id | uuid | FK(users.id), NOT NULL | |
+| id | uuid | PK, DEFAULT uuid_generate_v4() | |
+| user_id | TEXT | FK(users.id), NOT NULL | |
 | log_date | date | NOT NULL | 기록 날짜 |
 | symptom_name | varchar(50) | NOT NULL | 메스꺼움/구토/변비/설사/복통/두통/피로 |
 | severity | integer | NOT NULL, CHECK (severity >= 1 AND severity <= 10) | 심각도 (1-10) |
@@ -229,7 +227,7 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT gen_random_uuid() | |
+| id | uuid | PK, DEFAULT uuid_generate_v4() | |
 | symptom_log_id | uuid | FK(symptom_logs.id), NOT NULL | |
 | tag_name | varchar(50) | NOT NULL | 기름진음식/과식/음주/공복/스트레스/수면부족 등 |
 
@@ -244,8 +242,8 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT gen_random_uuid() | |
-| user_id | uuid | FK(users.id), NOT NULL | |
+| id | uuid | PK, DEFAULT uuid_generate_v4() | |
+| user_id | TEXT | FK(users.id), NOT NULL | |
 | checked_at | timestamptz | NOT NULL, DEFAULT now() | 체크 날짜시간 |
 | checked_symptoms | jsonb | NOT NULL | 선택한 증상 목록 |
 
@@ -278,8 +276,8 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT gen_random_uuid() | |
-| user_id | uuid | FK(users.id), NOT NULL | |
+| id | uuid | PK, DEFAULT uuid_generate_v4() | |
+| user_id | TEXT | FK(users.id), NOT NULL | |
 | badge_id | varchar(50) | FK(badge_definitions.id), NOT NULL | |
 | status | varchar(20) | NOT NULL | 미획득(locked)/진행중(in_progress)/획득(achieved) |
 | progress_percentage | integer | NOT NULL, DEFAULT 0 | 진행도 (0-100) |
@@ -298,24 +296,54 @@ dose_records + weight_logs + symptom_logs + user_badges
 
 ---
 
-### password_reset_tokens
-비밀번호 재설정 토큰
+### notification_settings
+알림 설정
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK, DEFAULT gen_random_uuid() | |
-| user_id | uuid | FK(users.id), NOT NULL | |
-| token | varchar(255) | NOT NULL, UNIQUE | 재설정 토큰 (UUID) |
-| expires_at | timestamptz | NOT NULL | 토큰 만료 시간 (24시간) |
-| used | boolean | NOT NULL, DEFAULT false | 사용 여부 |
+| id | uuid | PK, DEFAULT uuid_generate_v4() | |
+| user_id | TEXT | FK(users.id), UNIQUE, NOT NULL | |
+| notification_hour | integer | NOT NULL, CHECK (0-23) | 알림 시간 |
+| notification_minute | integer | NOT NULL, CHECK (0-59) | 알림 분 |
+| notification_enabled | boolean | NOT NULL, DEFAULT true | 알림 활성화 |
+| created_at | timestamptz | NOT NULL, DEFAULT now() | |
+| updated_at | timestamptz | NOT NULL, DEFAULT now() | |
+
+---
+
+### audit_logs
+기록 수정 이력
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK, DEFAULT uuid_generate_v4() | |
+| user_id | TEXT | FK(users.id), NOT NULL | |
+| entity_type | varchar(50) | NOT NULL | 엔티티 타입 |
+| entity_id | uuid | NOT NULL | 엔티티 ID |
+| action | varchar(20) | NOT NULL | 액션 (create/update/delete) |
+| old_data | jsonb | NULL | 변경 전 데이터 |
+| new_data | jsonb | NULL | 변경 후 데이터 |
 | created_at | timestamptz | NOT NULL, DEFAULT now() | |
 
 **Indexes**
-- INDEX: (token, used, expires_at)
 - INDEX: (user_id, created_at DESC)
+- INDEX: (entity_type, entity_id)
 
-**Constraints**
-- CHECK: expires_at > created_at
+---
+
+### guide_feedback (미사용)
+대처 가이드 피드백 (마이그레이션에 정의됨, 코드에서 미사용)
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK, DEFAULT uuid_generate_v4() | |
+| user_id | TEXT | FK(users.id), NOT NULL | |
+| symptom_name | varchar(50) | NOT NULL | 증상명 |
+| helpful | boolean | NOT NULL | 도움 여부 |
+| created_at | timestamptz | NOT NULL, DEFAULT now() | |
+
+**Indexes**
+- INDEX: (user_id, created_at DESC)
 
 ---
 
@@ -330,29 +358,60 @@ ALTER TABLE {table_name} ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can only access their own data"
 ON {table_name}
 FOR ALL
-USING (user_id = auth.uid());
+USING (auth.uid()::TEXT = user_id);
 ```
 
 **users 테이블 정책:**
 ```sql
-CREATE POLICY "Users can only access their own profile"
-ON users
-FOR ALL
-USING (id = auth.uid());
+CREATE POLICY "Users can view own profile"
+ON users FOR SELECT
+USING (auth.uid()::TEXT = id);
+
+CREATE POLICY "Users can update own profile"
+ON users FOR UPDATE
+USING (auth.uid()::TEXT = id);
+
+CREATE POLICY "Users can insert own profile on signup"
+ON users FOR INSERT
+WITH CHECK (auth.uid()::TEXT = id);
 ```
 
-**적용된 테이블:**
+**Parent 소유권 기반 정책 (dose_schedules, dose_records, plan_change_history, symptom_context_tags):**
+```sql
+CREATE POLICY "Users can access own dose schedules"
+ON dose_schedules FOR ALL
+USING (
+  EXISTS (
+    SELECT 1 FROM dosage_plans
+    WHERE id = dosage_plan_id AND user_id = auth.uid()::TEXT
+  )
+);
+```
+
+**badge_definitions 정책 (모든 인증된 사용자 읽기 가능):**
+```sql
+CREATE POLICY "Badge definitions are readable by all authenticated users"
+ON badge_definitions FOR SELECT
+USING (auth.role() = 'authenticated');
+```
+
+**RLS 적용 테이블:**
 - users
+- consent_records
 - user_profiles
 - dosage_plans
+- plan_change_history
 - dose_schedules
 - dose_records
 - weight_logs
 - symptom_logs
 - symptom_context_tags
 - emergency_symptom_checks
+- badge_definitions
 - user_badges
-- password_reset_tokens (user_id 기반)
+- notification_settings
+- guide_feedback
+- audit_logs
 
 ---
 
@@ -360,17 +419,55 @@ USING (id = auth.uid());
 
 성능 최적화를 위한 주요 인덱스:
 
-1. **users**: email UNIQUE, (oauth_provider, oauth_user_id) UNIQUE WHERE oauth_provider IS NOT NULL, (email, auth_type)
-2. **dosage_plans**: (user_id, is_active)
-3. **dose_schedules**: (dosage_plan_id, scheduled_date)
-4. **dose_records**: (dosage_plan_id, administered_at), (injection_site, administered_at DESC)
-5. **weight_logs**: (user_id, log_date) UNIQUE, (user_id, log_date DESC)
-6. **symptom_logs**: (user_id, log_date DESC)
-7. **symptom_context_tags**: (symptom_log_id), (tag_name)
-8. **emergency_symptom_checks**: (user_id, checked_at DESC)
-9. **badge_definitions**: (category, display_order)
-10. **user_badges**: (user_id, badge_id) UNIQUE, (user_id, status), (user_id, achieved_at DESC)
-11. **password_reset_tokens**: (token, used, expires_at), (user_id, created_at DESC)
+1. **dosage_plans**: (user_id, is_active)
+2. **dose_schedules**: (dosage_plan_id, scheduled_date)
+3. **dose_records**: (dosage_plan_id, administered_at), (injection_site, administered_at DESC)
+4. **weight_logs**: (user_id, log_date) UNIQUE, (user_id, log_date DESC)
+5. **symptom_logs**: (user_id, log_date DESC)
+6. **symptom_context_tags**: (symptom_log_id), (tag_name)
+7. **emergency_symptom_checks**: (user_id, checked_at DESC)
+8. **badge_definitions**: (category, display_order)
+9. **user_badges**: (user_id, badge_id) UNIQUE, (user_id, status), (user_id, achieved_at DESC)
+10. **audit_logs**: (user_id, created_at DESC), (entity_type, entity_id)
+11. **guide_feedback**: (user_id, created_at DESC)
+
+---
+
+## Trigger Functions
+
+### handle_new_user
+신규 사용자 등록 시 public.users 자동 생성
+
+```sql
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  INSERT INTO public.users (
+    id, oauth_provider, oauth_user_id, name, email,
+    profile_image_url, created_at, last_login_at
+  ) VALUES (
+    NEW.id::TEXT,
+    COALESCE(NEW.raw_app_meta_data->>'provider', 'email'),
+    NEW.id::TEXT,
+    COALESCE(NEW.raw_user_meta_data->>'name', 'Unknown'),
+    NEW.email,
+    NEW.raw_user_meta_data->>'avatar_url',
+    NOW(),
+    NOW()
+  );
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
+```
 
 ---
 
@@ -388,6 +485,19 @@ Phase 2 이후 GDPR 준수를 위해 데이터 보관 정책 수립 필요.
 - Supabase PostgreSQL 사용 중
 - Repository Pattern으로 Infrastructure Layer 구현
 - RLS(Row Level Security)로 데이터 접근 제어 적용
+- **users.id는 TEXT 타입** (Supabase Auth UUID를 TEXT로 저장)
+- **모든 user_id FK는 TEXT 타입**
+
+### 인증 방식
+
+| Provider | 방식 |
+|----------|------|
+| Kakao | Native SDK + Supabase Auth (signInWithIdToken) |
+| Naver | Native SDK + Edge Function + Supabase Auth |
+| Email | Supabase Auth (signUp/signInWithPassword) |
+
+- 비밀번호 저장: Supabase Auth (auth.users) - public.users에 저장 안함
+- 비밀번호 재설정: Supabase Auth의 `resetPasswordForEmail()` 사용
 
 ### 설계 결정 사항
 
