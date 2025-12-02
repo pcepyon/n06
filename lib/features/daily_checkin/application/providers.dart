@@ -119,3 +119,17 @@ Future<WeeklyComparison?> weeklyComparison(Ref ref) async {
   final service = ref.watch(weeklyComparisonServiceProvider);
   return await service.compare(userId);
 }
+
+/// 전체 체크인 기록 조회 (기록 관리용)
+@riverpod
+Future<List<DailyCheckin>> allCheckins(Ref ref) async {
+  final userId = ref.watch(authNotifierProvider).value?.id;
+  if (userId == null) return [];
+
+  final repository = ref.watch(dailyCheckinRepositoryProvider);
+  // 충분히 넓은 범위로 조회 (서비스 시작일 ~ 오늘)
+  final start = DateTime(2024, 1, 1);
+  final end = DateTime.now();
+
+  return await repository.getByDateRange(userId, start, end);
+}

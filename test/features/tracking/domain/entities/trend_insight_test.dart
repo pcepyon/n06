@@ -5,7 +5,6 @@ void main() {
   group('TrendInsight Entity', () {
     // TC-TI-01: TrendPeriod enum 값 검증
     test('should have all TrendPeriod enum values', () {
-      // Assert
       expect(TrendPeriod.values.length, 2);
       expect(TrendPeriod.values, contains(TrendPeriod.weekly));
       expect(TrendPeriod.values, contains(TrendPeriod.monthly));
@@ -13,7 +12,6 @@ void main() {
 
     // TC-TI-02: TrendDirection enum 값 검증
     test('should have all TrendDirection enum values', () {
-      // Assert
       expect(TrendDirection.values.length, 3);
       expect(TrendDirection.values, contains(TrendDirection.improving));
       expect(TrendDirection.values, contains(TrendDirection.stable));
@@ -22,251 +20,198 @@ void main() {
 
     // TC-TI-03: TrendInsight 정상 생성
     test('should create TrendInsight with required fields', () {
-      // Arrange
-      final frequencies = [
-        SymptomFrequency(
-          symptomName: '메스꺼움',
-          count: 10,
-          percentageOfTotal: 50.0,
-        ),
-      ];
-      final severityTrends = [
-        SeverityTrend(
-          symptomName: '메스꺼움',
-          dailyAverages: const [5.0, 4.5, 4.0],
+      final questionTrends = [
+        QuestionTrend(
+          questionType: QuestionType.meal,
+          label: '식사',
+          goodRate: 80.0,
           direction: TrendDirection.improving,
+          dailyStatuses: const [],
         ),
       ];
 
-      // Act
       final insight = TrendInsight(
         period: TrendPeriod.weekly,
-        frequencies: frequencies,
-        severityTrends: severityTrends,
-        summaryMessage: '이번 주에는 메스꺼움이(가) 가장 많이 기록되었어요',
+        dailyConditions: const [],
+        questionTrends: questionTrends,
+        patternInsight: const WeeklyPatternInsight(
+          hasPostInjectionPattern: false,
+          recommendations: [],
+        ),
         overallDirection: TrendDirection.stable,
+        summaryMessage: '이번 주 컨디션이 안정적이에요',
+        redFlagCount: 0,
+        consecutiveDays: 5,
+        completionRate: 71.4,
       );
 
-      // Assert
       expect(insight.period, TrendPeriod.weekly);
-      expect(insight.frequencies, frequencies);
-      expect(insight.severityTrends, severityTrends);
-      expect(insight.summaryMessage, '이번 주에는 메스꺼움이(가) 가장 많이 기록되었어요');
+      expect(insight.questionTrends, questionTrends);
+      expect(insight.summaryMessage, '이번 주 컨디션이 안정적이에요');
       expect(insight.overallDirection, TrendDirection.stable);
+      expect(insight.consecutiveDays, 5);
+      expect(insight.completionRate, 71.4);
     });
 
-    // TC-TI-04: Equality 비교 (동일한 값)
-    test('should compare two TrendInsight entities correctly when equal', () {
-      // Arrange
-      final frequencies = [
-        SymptomFrequency(symptomName: '메스꺼움', count: 10, percentageOfTotal: 50.0),
-      ];
-      final severityTrends = [
-        SeverityTrend(
-          symptomName: '메스꺼움',
-          dailyAverages: const [5.0, 4.5],
-          direction: TrendDirection.improving,
-        ),
-      ];
+    // TC-TI-04: TrendInsight.empty 팩토리
+    test('should create empty TrendInsight', () {
+      final insight = TrendInsight.empty(TrendPeriod.weekly);
 
-      final insight1 = TrendInsight(
-        period: TrendPeriod.weekly,
-        frequencies: frequencies,
-        severityTrends: severityTrends,
-        summaryMessage: '테스트',
-        overallDirection: TrendDirection.stable,
-      );
-      final insight2 = TrendInsight(
-        period: TrendPeriod.weekly,
-        frequencies: frequencies,
-        severityTrends: severityTrends,
-        summaryMessage: '테스트',
-        overallDirection: TrendDirection.stable,
-      );
+      expect(insight.period, TrendPeriod.weekly);
+      expect(insight.dailyConditions, isEmpty);
+      expect(insight.questionTrends, isEmpty);
+      expect(insight.overallDirection, TrendDirection.stable);
+      expect(insight.redFlagCount, 0);
+      expect(insight.consecutiveDays, 0);
+      expect(insight.completionRate, 0);
+    });
 
-      // Act & Assert
+    // TC-TI-05: Equality 비교
+    test('should compare two TrendInsight entities correctly', () {
+      final insight1 = TrendInsight.empty(TrendPeriod.weekly);
+      final insight2 = TrendInsight.empty(TrendPeriod.weekly);
+
       expect(insight1 == insight2, isTrue);
       expect(insight1.hashCode, insight2.hashCode);
     });
-
-    // TC-TI-05: toString 메서드 존재
-    test('should have toString method', () {
-      // Arrange
-      final insight = TrendInsight(
-        period: TrendPeriod.weekly,
-        frequencies: const [],
-        severityTrends: const [],
-        summaryMessage: '테스트',
-        overallDirection: TrendDirection.stable,
-      );
-
-      // Act
-      final str = insight.toString();
-
-      // Assert
-      expect(str, isNotEmpty);
-      expect(str, contains('TrendInsight'));
-      expect(str, contains('weekly'));
-    });
   });
 
-  group('SymptomFrequency Entity', () {
-    // TC-SF-01: SymptomFrequency 정상 생성
-    test('should create SymptomFrequency', () {
-      // Arrange & Act
-      final frequency = SymptomFrequency(
-        symptomName: '메스꺼움',
-        count: 15,
-        percentageOfTotal: 75.0,
-      );
-
-      // Assert
-      expect(frequency.symptomName, '메스꺼움');
-      expect(frequency.count, 15);
-      expect(frequency.percentageOfTotal, 75.0);
-    });
-
-    // TC-SF-02: Equality 비교
-    test('should compare two SymptomFrequency entities correctly', () {
-      // Arrange
-      final freq1 = SymptomFrequency(
-        symptomName: '메스꺼움',
-        count: 10,
-        percentageOfTotal: 50.0,
-      );
-      final freq2 = SymptomFrequency(
-        symptomName: '메스꺼움',
-        count: 10,
-        percentageOfTotal: 50.0,
-      );
-
-      // Act & Assert
-      expect(freq1 == freq2, isTrue);
-      expect(freq1.hashCode, freq2.hashCode);
-    });
-
-    // TC-SF-03: toString 메서드 존재
-    test('should have toString method', () {
-      // Arrange
-      final frequency = SymptomFrequency(
-        symptomName: '메스꺼움',
-        count: 10,
-        percentageOfTotal: 50.0,
-      );
-
-      // Act
-      final str = frequency.toString();
-
-      // Assert
-      expect(str, isNotEmpty);
-      expect(str, contains('SymptomFrequency'));
-      expect(str, contains('메스꺼움'));
-    });
-  });
-
-  group('SeverityTrend Entity', () {
-    // TC-ST-01: SeverityTrend 정상 생성
-    test('should create SeverityTrend', () {
-      // Arrange & Act
-      final trend = SeverityTrend(
-        symptomName: '메스꺼움',
-        dailyAverages: const [5.0, 4.5, 4.0, 3.5],
+  group('QuestionTrend Entity', () {
+    // TC-QT-01: QuestionTrend 정상 생성
+    test('should create QuestionTrend', () {
+      final trend = QuestionTrend(
+        questionType: QuestionType.meal,
+        label: '식사',
+        goodRate: 75.0,
         direction: TrendDirection.improving,
+        dailyStatuses: const [],
       );
 
-      // Assert
-      expect(trend.symptomName, '메스꺼움');
-      expect(trend.dailyAverages, const [5.0, 4.5, 4.0, 3.5]);
+      expect(trend.questionType, QuestionType.meal);
+      expect(trend.label, '식사');
+      expect(trend.goodRate, 75.0);
       expect(trend.direction, TrendDirection.improving);
     });
 
-    // TC-ST-02: dailyAverages 빈 리스트 허용
-    test('should allow empty dailyAverages', () {
-      // Arrange & Act
-      final trend = SeverityTrend(
-        symptomName: '메스꺼움',
-        dailyAverages: const [],
-        direction: TrendDirection.stable,
-      );
-
-      // Assert
-      expect(trend.dailyAverages, isEmpty);
+    // TC-QT-02: QuestionType enum 값 검증
+    test('should have all QuestionType enum values', () {
+      expect(QuestionType.values.length, 6);
+      expect(QuestionType.values, contains(QuestionType.meal));
+      expect(QuestionType.values, contains(QuestionType.hydration));
+      expect(QuestionType.values, contains(QuestionType.giComfort));
+      expect(QuestionType.values, contains(QuestionType.bowel));
+      expect(QuestionType.values, contains(QuestionType.energy));
+      expect(QuestionType.values, contains(QuestionType.mood));
     });
 
-    // TC-ST-03: Equality 비교
-    test('should compare two SeverityTrend entities correctly', () {
-      // Arrange
-      final trend1 = SeverityTrend(
-        symptomName: '메스꺼움',
-        dailyAverages: const [5.0, 4.0],
-        direction: TrendDirection.improving,
+    // TC-QT-03: Equality 비교
+    test('should compare two QuestionTrend entities correctly', () {
+      final trend1 = QuestionTrend(
+        questionType: QuestionType.meal,
+        label: '식사',
+        goodRate: 80.0,
+        direction: TrendDirection.stable,
+        dailyStatuses: const [],
       );
-      final trend2 = SeverityTrend(
-        symptomName: '메스꺼움',
-        dailyAverages: const [5.0, 4.0],
-        direction: TrendDirection.improving,
+      final trend2 = QuestionTrend(
+        questionType: QuestionType.meal,
+        label: '식사',
+        goodRate: 80.0,
+        direction: TrendDirection.stable,
+        dailyStatuses: const [],
       );
 
-      // Act & Assert
       expect(trend1 == trend2, isTrue);
       expect(trend1.hashCode, trend2.hashCode);
     });
+  });
 
-    // TC-ST-04: toString 메서드 존재
-    test('should have toString method', () {
-      // Arrange
-      final trend = SeverityTrend(
-        symptomName: '메스꺼움',
-        dailyAverages: const [5.0, 4.0],
-        direction: TrendDirection.improving,
+  group('DailyConditionSummary Entity', () {
+    // TC-DCS-01: DailyConditionSummary 정상 생성
+    test('should create DailyConditionSummary', () {
+      final summary = DailyConditionSummary(
+        date: DateTime(2024, 1, 15),
+        overallScore: 85,
+        grade: ConditionGrade.good,
+        hasRedFlag: false,
+        hasCheckin: true,
+        isPostInjection: false,
       );
 
-      // Act
-      final str = trend.toString();
-
-      // Assert
-      expect(str, isNotEmpty);
-      expect(str, contains('SeverityTrend'));
-      expect(str, contains('메스꺼움'));
+      expect(summary.date, DateTime(2024, 1, 15));
+      expect(summary.overallScore, 85);
+      expect(summary.grade, ConditionGrade.good);
+      expect(summary.hasRedFlag, isFalse);
+      expect(summary.hasCheckin, isTrue);
     });
 
-    // TC-ST-05: TrendDirection별 생성 검증 (improving)
-    test('should create SeverityTrend with improving direction', () {
-      // Arrange & Act
-      final trend = SeverityTrend(
-        symptomName: '메스꺼움',
-        dailyAverages: const [5.0, 4.0, 3.0],
-        direction: TrendDirection.improving,
+    // TC-DCS-02: ConditionGrade enum 값 검증
+    test('should have all ConditionGrade enum values', () {
+      expect(ConditionGrade.values.length, 5);
+      expect(ConditionGrade.values, contains(ConditionGrade.excellent));
+      expect(ConditionGrade.values, contains(ConditionGrade.good));
+      expect(ConditionGrade.values, contains(ConditionGrade.fair));
+      expect(ConditionGrade.values, contains(ConditionGrade.poor));
+      expect(ConditionGrade.values, contains(ConditionGrade.bad));
+    });
+  });
+
+  group('WeeklyPatternInsight Entity', () {
+    // TC-WPI-01: WeeklyPatternInsight 정상 생성
+    test('should create WeeklyPatternInsight', () {
+      final pattern = WeeklyPatternInsight(
+        hasPostInjectionPattern: true,
+        postInjectionInsight: '주사 다음날 속이 불편한 경향이 있어요',
+        topConcernArea: QuestionType.giComfort,
+        improvementArea: QuestionType.meal,
+        recommendations: ['소화가 잘 되는 음식을 드세요'],
       );
 
-      // Assert
-      expect(trend.direction, TrendDirection.improving);
+      expect(pattern.hasPostInjectionPattern, isTrue);
+      expect(pattern.postInjectionInsight, isNotNull);
+      expect(pattern.topConcernArea, QuestionType.giComfort);
+      expect(pattern.improvementArea, QuestionType.meal);
+      expect(pattern.recommendations, hasLength(1));
     });
 
-    // TC-ST-06: TrendDirection별 생성 검증 (stable)
-    test('should create SeverityTrend with stable direction', () {
-      // Arrange & Act
-      final trend = SeverityTrend(
-        symptomName: '메스꺼움',
-        dailyAverages: const [5.0, 5.0, 5.0],
-        direction: TrendDirection.stable,
+    // TC-WPI-02: Equality 비교
+    test('should compare two WeeklyPatternInsight entities correctly', () {
+      final pattern1 = WeeklyPatternInsight(
+        hasPostInjectionPattern: false,
+        recommendations: const [],
+      );
+      final pattern2 = WeeklyPatternInsight(
+        hasPostInjectionPattern: false,
+        recommendations: const [],
       );
 
-      // Assert
-      expect(trend.direction, TrendDirection.stable);
+      expect(pattern1 == pattern2, isTrue);
+      expect(pattern1.hashCode, pattern2.hashCode);
+    });
+  });
+
+  group('DailyQuestionStatus Entity', () {
+    // TC-DQS-01: DailyQuestionStatus 정상 생성
+    test('should create DailyQuestionStatus', () {
+      final status = DailyQuestionStatus(
+        date: DateTime(2024, 1, 15),
+        statusValue: 2,
+        noData: false,
+      );
+
+      expect(status.date, DateTime(2024, 1, 15));
+      expect(status.statusValue, 2);
+      expect(status.noData, isFalse);
     });
 
-    // TC-ST-07: TrendDirection별 생성 검증 (worsening)
-    test('should create SeverityTrend with worsening direction', () {
-      // Arrange & Act
-      final trend = SeverityTrend(
-        symptomName: '메스꺼움',
-        dailyAverages: const [3.0, 4.0, 5.0],
-        direction: TrendDirection.worsening,
+    // TC-DQS-02: noData 기본값 확인
+    test('should have noData default to false', () {
+      final status = DailyQuestionStatus(
+        date: DateTime(2024, 1, 15),
+        statusValue: 1,
       );
 
-      // Assert
-      expect(trend.direction, TrendDirection.worsening);
+      expect(status.noData, isFalse);
     });
   });
 }

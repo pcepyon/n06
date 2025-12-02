@@ -5,158 +5,180 @@ import 'package:n06/features/tracking/presentation/widgets/trend_insight_card.da
 
 void main() {
   group('TrendInsightCard', () {
+    TrendInsight _createTestInsight({
+      TrendDirection direction = TrendDirection.stable,
+      List<QuestionTrend> questionTrends = const [],
+      String summaryMessage = '테스트 메시지',
+      int redFlagCount = 0,
+      int consecutiveDays = 5,
+      double completionRate = 70.0,
+    }) {
+      return TrendInsight(
+        period: TrendPeriod.weekly,
+        dailyConditions: const [],
+        questionTrends: questionTrends,
+        patternInsight: const WeeklyPatternInsight(
+          hasPostInjectionPattern: false,
+          recommendations: [],
+        ),
+        overallDirection: direction,
+        summaryMessage: summaryMessage,
+        redFlagCount: redFlagCount,
+        consecutiveDays: consecutiveDays,
+        completionRate: completionRate,
+      );
+    }
+
     // TC-TIC-01: 요약 메시지 렌더링
     testWidgets('should render summary message', (WidgetTester tester) async {
-      // Arrange
-      final insight = TrendInsight(
-        period: TrendPeriod.weekly,
-        frequencies: [
-          SymptomFrequency(symptomName: '메스꺼움', count: 10, percentageOfTotal: 50.0),
-        ],
-        severityTrends: const [],
-        summaryMessage: '이번 주에는 증상이 개선되고 있어요! 잘하고 계세요',
-        overallDirection: TrendDirection.improving,
+      final insight = _createTestInsight(
+        summaryMessage: '이번 주 컨디션이 좋아지고 있어요!',
       );
 
-      // Act
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TrendInsightCard(insight: insight),
+            body: SingleChildScrollView(
+              child: TrendInsightCard(insight: insight),
+            ),
           ),
         ),
       );
 
-      // Assert
-      expect(find.text('이번 주에는 증상이 개선되고 있어요! 잘하고 계세요'), findsOneWidget);
+      expect(find.text('이번 주 컨디션이 좋아지고 있어요!'), findsOneWidget);
     });
 
     // TC-TIC-02: 방향 아이콘 렌더링 (improving)
     testWidgets('should render improving direction icon', (WidgetTester tester) async {
-      // Arrange
-      final insight = TrendInsight(
-        period: TrendPeriod.weekly,
-        frequencies: const [],
-        severityTrends: const [],
-        summaryMessage: '테스트',
-        overallDirection: TrendDirection.improving,
+      final insight = _createTestInsight(
+        direction: TrendDirection.improving,
       );
 
-      // Act
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TrendInsightCard(insight: insight),
+            body: SingleChildScrollView(
+              child: TrendInsightCard(insight: insight),
+            ),
           ),
         ),
       );
 
-      // Assert
-      expect(find.text('📉'), findsOneWidget); // improving icon
+      expect(find.text('📈'), findsOneWidget);
+      expect(find.text('좋아지고 있어요'), findsOneWidget);
     });
 
     // TC-TIC-03: 방향 아이콘 렌더링 (worsening)
     testWidgets('should render worsening direction icon', (WidgetTester tester) async {
-      // Arrange
-      final insight = TrendInsight(
-        period: TrendPeriod.weekly,
-        frequencies: const [],
-        severityTrends: const [],
-        summaryMessage: '테스트',
-        overallDirection: TrendDirection.worsening,
+      final insight = _createTestInsight(
+        direction: TrendDirection.worsening,
       );
 
-      // Act
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TrendInsightCard(insight: insight),
+            body: SingleChildScrollView(
+              child: TrendInsightCard(insight: insight),
+            ),
           ),
         ),
       );
 
-      // Assert
-      expect(find.text('📈'), findsOneWidget); // worsening icon
+      expect(find.text('📉'), findsOneWidget);
+      expect(find.text('관리가 필요해요'), findsOneWidget);
     });
 
-    // TC-TIC-04: TOP 3 증상 리스트 렌더링
-    testWidgets('should render top 3 symptoms list', (WidgetTester tester) async {
-      // Arrange
-      final insight = TrendInsight(
-        period: TrendPeriod.weekly,
-        frequencies: [
-          SymptomFrequency(symptomName: '메스꺼움', count: 10, percentageOfTotal: 50.0),
-          SymptomFrequency(symptomName: '변비', count: 6, percentageOfTotal: 30.0),
-          SymptomFrequency(symptomName: '피로', count: 4, percentageOfTotal: 20.0),
+    // TC-TIC-04: 주요 지표 렌더링
+    testWidgets('should render key metrics', (WidgetTester tester) async {
+      final insight = _createTestInsight(
+        consecutiveDays: 7,
+        redFlagCount: 2,
+        completionRate: 85.0,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: TrendInsightCard(insight: insight),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('7일'), findsOneWidget);
+      expect(find.text('연속 기록'), findsOneWidget);
+      expect(find.text('2회'), findsOneWidget);
+      expect(find.text('주의 신호'), findsOneWidget);
+      expect(find.text('기록률 85%'), findsOneWidget);
+    });
+
+    // TC-TIC-05: 질문 트렌드 칩 렌더링
+    testWidgets('should render question trend chips', (WidgetTester tester) async {
+      final insight = _createTestInsight(
+        questionTrends: [
+          QuestionTrend(
+            questionType: QuestionType.meal,
+            label: '식사',
+            goodRate: 80.0,
+            direction: TrendDirection.improving,
+            dailyStatuses: const [],
+          ),
+          QuestionTrend(
+            questionType: QuestionType.hydration,
+            label: '수분',
+            goodRate: 60.0,
+            direction: TrendDirection.stable,
+            dailyStatuses: const [],
+          ),
         ],
-        severityTrends: const [],
-        summaryMessage: '테스트',
-        overallDirection: TrendDirection.stable,
       );
 
-      // Act
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TrendInsightCard(insight: insight),
+            body: SingleChildScrollView(
+              child: TrendInsightCard(insight: insight),
+            ),
           ),
         ),
       );
 
-      // Assert
-      expect(find.text('많이 기록된 증상'), findsOneWidget);
-      expect(find.text('메스꺼움'), findsOneWidget);
-      expect(find.text('10회'), findsOneWidget);
-      expect(find.text('(50%)'), findsOneWidget);
-      expect(find.text('변비'), findsOneWidget);
-      expect(find.text('6회'), findsOneWidget);
-      expect(find.text('피로'), findsOneWidget);
-      expect(find.text('4회'), findsOneWidget);
+      expect(find.text('컨디션 요약'), findsOneWidget);
+      expect(find.text('식사'), findsOneWidget);
+      expect(find.text('80%'), findsOneWidget);
     });
 
-    // TC-TIC-05: 주간/월간 기간 표시
+    // TC-TIC-06: 주간/월간 기간 표시
     testWidgets('should display period text correctly', (WidgetTester tester) async {
-      // Arrange
-      final weeklyInsight = TrendInsight(
-        period: TrendPeriod.weekly,
-        frequencies: const [],
-        severityTrends: const [],
-        summaryMessage: '테스트',
-        overallDirection: TrendDirection.stable,
-      );
+      final insight = _createTestInsight();
 
-      // Act
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TrendInsightCard(insight: weeklyInsight),
+            body: SingleChildScrollView(
+              child: TrendInsightCard(insight: insight),
+            ),
           ),
         ),
       );
 
-      // Assert
       expect(find.text('이번 주'), findsOneWidget);
     });
 
-    // TC-TIC-06: onViewDetails 콜백 검증
+    // TC-TIC-07: onViewDetails 콜백 검증
     testWidgets('should call onViewDetails when tapped', (WidgetTester tester) async {
-      // Arrange
-      final insight = TrendInsight(
-        period: TrendPeriod.weekly,
-        frequencies: const [],
-        severityTrends: const [],
-        summaryMessage: '테스트',
-        overallDirection: TrendDirection.stable,
-      );
+      final insight = _createTestInsight();
       bool tapped = false;
 
-      // Act
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TrendInsightCard(
-              insight: insight,
-              onViewDetails: () => tapped = true,
+            body: SingleChildScrollView(
+              child: TrendInsightCard(
+                insight: insight,
+                onViewDetails: () => tapped = true,
+              ),
             ),
           ),
         ),
@@ -164,31 +186,23 @@ void main() {
       await tester.tap(find.text('상세 보기'));
       await tester.pumpAndSettle();
 
-      // Assert
       expect(tapped, isTrue);
     });
 
-    // TC-TIC-07: onViewDetails 없을 때 버튼 미표시
+    // TC-TIC-08: onViewDetails 없을 때 버튼 미표시
     testWidgets('should not show details button when onViewDetails is null', (WidgetTester tester) async {
-      // Arrange
-      final insight = TrendInsight(
-        period: TrendPeriod.weekly,
-        frequencies: const [],
-        severityTrends: const [],
-        summaryMessage: '테스트',
-        overallDirection: TrendDirection.stable,
-      );
+      final insight = _createTestInsight();
 
-      // Act
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TrendInsightCard(insight: insight),
+            body: SingleChildScrollView(
+              child: TrendInsightCard(insight: insight),
+            ),
           ),
         ),
       );
 
-      // Assert
       expect(find.text('상세 보기'), findsNothing);
     });
   });

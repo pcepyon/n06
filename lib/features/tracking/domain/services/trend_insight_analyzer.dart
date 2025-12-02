@@ -1,96 +1,590 @@
+import 'package:n06/features/daily_checkin/domain/entities/daily_checkin.dart';
 import '../entities/trend_insight.dart';
 
 /// 트렌드 인사이트 분석 서비스
 ///
-/// Phase 3: 트렌드 대시보드
-/// 주간/월간 증상 빈도 집계, 심각도 변화 추이 계산, 최다 발생 증상 추출, 개선/악화 종합 평가
+/// 데일리 체크인 데이터를 분석하여 트렌드 인사이트 생성
 class TrendInsightAnalyzer {
-  /// 트렌드 인사이트 생성
-  ///
-  /// [logs]: 분석 대상 증상 기록 (주간: 최근 7일, 월간: 최근 30일)
-  /// [period]: 트렌드 기간 (주간/월간)
-  ///
-  /// 반환: 종합 트렌드 인사이트
-  TrendInsight analyzeTrend({
-    required List<dynamic> logs,
+  /// 데일리 체크인 기반 트렌드 인사이트 생성
+  TrendInsight analyze({
+    required List<DailyCheckin> checkins,
+    required List<DailyCheckin>? previousPeriodCheckins,
     required TrendPeriod period,
+    required int consecutiveDays,
   }) {
-    if (logs.isEmpty) {
-      return TrendInsight(
-        period: period,
-        frequencies: const [],
-        severityTrends: const [],
-        summaryMessage: '기록된 증상이 없어요',
-        overallDirection: TrendDirection.stable,
-      );
+    if (checkins.isEmpty) {
+      return TrendInsight.empty(period);
     }
 
-    // 1. 증상 빈도 집계
-    final frequencies = _calculateSymptomFrequencies(logs);
+    final periodDays = period == TrendPeriod.weekly ? 7 : 30;
 
-    // 2. 심각도 추이 계산 (TOP 3 증상)
-    final severityTrends = _calculateSeverityTrends(logs, frequencies);
+    // 1. 일별 컨디션 요약 생성
+    final dailyConditions = _buildDailyConditions(checkins, period);
 
-    // 3. 전체 방향 평가
-    final overallDirection = _evaluateOverallDirection(logs);
+    // 2. 6개 질문별 트렌드 계산
+    final questionTrends = _calculateQuestionTrends(
+      checkins,
+      previousPeriodCheckins,
+      period,
+    );
 
-    // 4. 요약 메시지 생성
+    // 3. 패턴 인사이트 생성
+    final patternInsight = _generatePatternInsight(checkins, questionTrends);
+
+    // 4. 전체 방향 평가
+    final overallDirection = _evaluateOverallDirection(questionTrends);
+
+    // 5. Red Flag 카운트
+    final redFlagCount =
+        checkins.where((c) => c.redFlagDetected != null).length;
+
+    // 6. 평균 식욕 점수
+    final appetiteScores =
+        checkins.where((c) => c.appetiteScore != null).map((c) => c.appetiteScore!).toList();
+    final averageAppetiteScore = appetiteScores.isEmpty
+        ? null
+        : appetiteScores.reduce((a, b) => a + b) / appetiteScores.length;
+
+    // 7. 기록률 계산
+    final completionRate = checkins.length / periodDays * 100;
+
+    // 8. 요약 메시지 생성
     final summaryMessage = _generateSummaryMessage(
-      frequencies: frequencies,
+      questionTrends: questionTrends,
       overallDirection: overallDirection,
       period: period,
+      redFlagCount: redFlagCount,
+      completionRate: completionRate,
     );
 
     return TrendInsight(
       period: period,
-      frequencies: frequencies,
-      severityTrends: severityTrends,
-      summaryMessage: summaryMessage,
+      dailyConditions: dailyConditions,
+      questionTrends: questionTrends,
+      patternInsight: patternInsight,
       overallDirection: overallDirection,
+      summaryMessage: summaryMessage,
+      redFlagCount: redFlagCount,
+      averageAppetiteScore: averageAppetiteScore,
+      consecutiveDays: consecutiveDays,
+      completionRate: completionRate.clamp(0, 100),
     );
   }
 
-  /// 증상별 빈도 집계 (빈도 높은 순 정렬)
-  List<SymptomFrequency> _calculateSymptomFrequencies(List<dynamic> logs) {
-    // 증상 로그는 제거되었으므로 빈 리스트 반환
-    return [];
-  }
-
-  /// 심각도 추이 계산 (TOP 3 증상)
-  List<SeverityTrend> _calculateSeverityTrends(
-    List<dynamic> logs,
-    List<SymptomFrequency> frequencies,
+  /// 일별 컨디션 요약 생성
+  List<DailyConditionSummary> _buildDailyConditions(
+    List<DailyCheckin> checkins,
+    TrendPeriod period,
   ) {
-    // 증상 로그는 제거되었으므로 빈 리스트 반환
-    return [];
+    final periodDays = period == TrendPeriod.weekly ? 7 : 30;
+    final today = DateTime.now();
+    final startDate = today.subtract(Duration(days: periodDays - 1));
+
+    final checkinMap = <String, DailyCheckin>{};
+    for (final checkin in checkins) {
+      final key = _dateKey(checkin.checkinDate);
+      checkinMap[key] = checkin;
+    }
+
+    final conditions = <DailyConditionSummary>[];
+    for (var i = 0; i < periodDays; i++) {
+      final date = startDate.add(Duration(days: i));
+      final key = _dateKey(date);
+      final checkin = checkinMap[key];
+
+      if (checkin != null) {
+        final score = _calculateOverallScore(checkin);
+        conditions.add(DailyConditionSummary(
+          date: date,
+          overallScore: score,
+          grade: _scoreToGrade(score),
+          hasRedFlag: checkin.redFlagDetected != null,
+          redFlagType: checkin.redFlagDetected?.type,
+          hasCheckin: true,
+          isPostInjection: checkin.context?.isPostInjection ?? false,
+        ));
+      } else {
+        conditions.add(DailyConditionSummary(
+          date: date,
+          overallScore: 0,
+          grade: ConditionGrade.bad,
+          hasRedFlag: false,
+          hasCheckin: false,
+          isPostInjection: false,
+        ));
+      }
+    }
+
+    return conditions;
   }
 
-  /// 전체 방향 평가 (모든 증상의 평균 심각도 추세)
-  TrendDirection _evaluateOverallDirection(List<dynamic> logs) {
-    // 증상 로그는 제거되었으므로 안정 상태 반환
+  /// 체크인에서 전체 점수 계산 (0-100)
+  int _calculateOverallScore(DailyCheckin checkin) {
+    var score = 0;
+
+    // 각 질문별 점수 (최대 ~16.67점씩)
+    score += _conditionLevelToScore(checkin.mealCondition);
+    score += _hydrationLevelToScore(checkin.hydrationLevel);
+    score += _giComfortLevelToScore(checkin.giComfort);
+    score += _bowelConditionToScore(checkin.bowelCondition);
+    score += _energyLevelToScore(checkin.energyLevel);
+    score += _moodLevelToScore(checkin.mood);
+
+    // Red Flag 감점
+    if (checkin.redFlagDetected != null) {
+      score -= 20;
+    }
+
+    return score.clamp(0, 100);
+  }
+
+  int _conditionLevelToScore(ConditionLevel level) {
+    switch (level) {
+      case ConditionLevel.good:
+        return 17;
+      case ConditionLevel.moderate:
+        return 10;
+      case ConditionLevel.difficult:
+        return 3;
+    }
+  }
+
+  int _hydrationLevelToScore(HydrationLevel level) {
+    switch (level) {
+      case HydrationLevel.good:
+        return 17;
+      case HydrationLevel.moderate:
+        return 10;
+      case HydrationLevel.poor:
+        return 3;
+    }
+  }
+
+  int _giComfortLevelToScore(GiComfortLevel level) {
+    switch (level) {
+      case GiComfortLevel.good:
+        return 17;
+      case GiComfortLevel.uncomfortable:
+        return 10;
+      case GiComfortLevel.veryUncomfortable:
+        return 3;
+    }
+  }
+
+  int _bowelConditionToScore(BowelCondition level) {
+    switch (level) {
+      case BowelCondition.normal:
+        return 17;
+      case BowelCondition.irregular:
+        return 10;
+      case BowelCondition.difficult:
+        return 3;
+    }
+  }
+
+  int _energyLevelToScore(EnergyLevel level) {
+    switch (level) {
+      case EnergyLevel.good:
+        return 17;
+      case EnergyLevel.normal:
+        return 10;
+      case EnergyLevel.tired:
+        return 3;
+    }
+  }
+
+  int _moodLevelToScore(MoodLevel level) {
+    switch (level) {
+      case MoodLevel.good:
+        return 15;
+      case MoodLevel.neutral:
+        return 10;
+      case MoodLevel.low:
+        return 3;
+    }
+  }
+
+  ConditionGrade _scoreToGrade(int score) {
+    if (score >= 90) return ConditionGrade.excellent;
+    if (score >= 70) return ConditionGrade.good;
+    if (score >= 50) return ConditionGrade.fair;
+    if (score >= 30) return ConditionGrade.poor;
+    return ConditionGrade.bad;
+  }
+
+  /// 6개 질문별 트렌드 계산
+  List<QuestionTrend> _calculateQuestionTrends(
+    List<DailyCheckin> checkins,
+    List<DailyCheckin>? previousCheckins,
+    TrendPeriod period,
+  ) {
+    final periodDays = period == TrendPeriod.weekly ? 7 : 30;
+    final today = DateTime.now();
+    final startDate = today.subtract(Duration(days: periodDays - 1));
+
+    final checkinMap = <String, DailyCheckin>{};
+    for (final checkin in checkins) {
+      checkinMap[_dateKey(checkin.checkinDate)] = checkin;
+    }
+
+    final previousMap = <String, DailyCheckin>{};
+    if (previousCheckins != null) {
+      for (final checkin in previousCheckins) {
+        previousMap[_dateKey(checkin.checkinDate)] = checkin;
+      }
+    }
+
+    return [
+      _buildQuestionTrend(
+        QuestionType.meal,
+        '식사',
+        checkins,
+        previousCheckins,
+        (c) => c.mealCondition == ConditionLevel.good,
+        (c) => _conditionToValue(c.mealCondition),
+        startDate,
+        periodDays,
+        checkinMap,
+      ),
+      _buildQuestionTrend(
+        QuestionType.hydration,
+        '수분',
+        checkins,
+        previousCheckins,
+        (c) => c.hydrationLevel == HydrationLevel.good,
+        (c) => _hydrationToValue(c.hydrationLevel),
+        startDate,
+        periodDays,
+        checkinMap,
+      ),
+      _buildQuestionTrend(
+        QuestionType.giComfort,
+        '속 편안함',
+        checkins,
+        previousCheckins,
+        (c) => c.giComfort == GiComfortLevel.good,
+        (c) => _giComfortToValue(c.giComfort),
+        startDate,
+        periodDays,
+        checkinMap,
+      ),
+      _buildQuestionTrend(
+        QuestionType.bowel,
+        '배변',
+        checkins,
+        previousCheckins,
+        (c) => c.bowelCondition == BowelCondition.normal,
+        (c) => _bowelToValue(c.bowelCondition),
+        startDate,
+        periodDays,
+        checkinMap,
+      ),
+      _buildQuestionTrend(
+        QuestionType.energy,
+        '에너지',
+        checkins,
+        previousCheckins,
+        (c) => c.energyLevel == EnergyLevel.good,
+        (c) => _energyToValue(c.energyLevel),
+        startDate,
+        periodDays,
+        checkinMap,
+      ),
+      _buildQuestionTrend(
+        QuestionType.mood,
+        '기분',
+        checkins,
+        previousCheckins,
+        (c) => c.mood == MoodLevel.good,
+        (c) => _moodToValue(c.mood),
+        startDate,
+        periodDays,
+        checkinMap,
+      ),
+    ];
+  }
+
+  QuestionTrend _buildQuestionTrend(
+    QuestionType type,
+    String label,
+    List<DailyCheckin> checkins,
+    List<DailyCheckin>? previousCheckins,
+    bool Function(DailyCheckin) isGood,
+    int Function(DailyCheckin) getValue,
+    DateTime startDate,
+    int periodDays,
+    Map<String, DailyCheckin> checkinMap,
+  ) {
+    // Good rate 계산
+    final goodCount = checkins.where(isGood).length;
+    final goodRate = checkins.isEmpty ? 0.0 : goodCount / checkins.length * 100;
+
+    // 이전 기간 대비 방향
+    TrendDirection direction = TrendDirection.stable;
+    if (previousCheckins != null && previousCheckins.isNotEmpty) {
+      final prevGoodCount = previousCheckins.where(isGood).length;
+      final prevGoodRate = prevGoodCount / previousCheckins.length * 100;
+      final diff = goodRate - prevGoodRate;
+
+      if (diff > 10) {
+        direction = TrendDirection.improving;
+      } else if (diff < -10) {
+        direction = TrendDirection.worsening;
+      }
+    }
+
+    // 일별 상태
+    final dailyStatuses = <DailyQuestionStatus>[];
+    for (var i = 0; i < periodDays; i++) {
+      final date = startDate.add(Duration(days: i));
+      final key = _dateKey(date);
+      final checkin = checkinMap[key];
+
+      if (checkin != null) {
+        dailyStatuses.add(DailyQuestionStatus(
+          date: date,
+          statusValue: getValue(checkin),
+          noData: false,
+        ));
+      } else {
+        dailyStatuses.add(DailyQuestionStatus(
+          date: date,
+          statusValue: 0,
+          noData: true,
+        ));
+      }
+    }
+
+    return QuestionTrend(
+      questionType: type,
+      label: label,
+      goodRate: goodRate,
+      direction: direction,
+      dailyStatuses: dailyStatuses,
+    );
+  }
+
+  int _conditionToValue(ConditionLevel level) {
+    switch (level) {
+      case ConditionLevel.good:
+        return 2;
+      case ConditionLevel.moderate:
+        return 1;
+      case ConditionLevel.difficult:
+        return 0;
+    }
+  }
+
+  int _hydrationToValue(HydrationLevel level) {
+    switch (level) {
+      case HydrationLevel.good:
+        return 2;
+      case HydrationLevel.moderate:
+        return 1;
+      case HydrationLevel.poor:
+        return 0;
+    }
+  }
+
+  int _giComfortToValue(GiComfortLevel level) {
+    switch (level) {
+      case GiComfortLevel.good:
+        return 2;
+      case GiComfortLevel.uncomfortable:
+        return 1;
+      case GiComfortLevel.veryUncomfortable:
+        return 0;
+    }
+  }
+
+  int _bowelToValue(BowelCondition level) {
+    switch (level) {
+      case BowelCondition.normal:
+        return 2;
+      case BowelCondition.irregular:
+        return 1;
+      case BowelCondition.difficult:
+        return 0;
+    }
+  }
+
+  int _energyToValue(EnergyLevel level) {
+    switch (level) {
+      case EnergyLevel.good:
+        return 2;
+      case EnergyLevel.normal:
+        return 1;
+      case EnergyLevel.tired:
+        return 0;
+    }
+  }
+
+  int _moodToValue(MoodLevel level) {
+    switch (level) {
+      case MoodLevel.good:
+        return 2;
+      case MoodLevel.neutral:
+        return 1;
+      case MoodLevel.low:
+        return 0;
+    }
+  }
+
+  /// 패턴 인사이트 생성
+  WeeklyPatternInsight _generatePatternInsight(
+    List<DailyCheckin> checkins,
+    List<QuestionTrend> questionTrends,
+  ) {
+    // 주사 후 패턴 분석
+    final postInjectionCheckins =
+        checkins.where((c) => c.context?.isPostInjection == true).toList();
+    final hasPostInjectionPattern = postInjectionCheckins.length >= 2;
+
+    String? postInjectionInsight;
+    if (hasPostInjectionPattern) {
+      // 주사 후 가장 흔한 문제 찾기
+      final giIssues = postInjectionCheckins
+          .where((c) => c.giComfort != GiComfortLevel.good)
+          .length;
+      final mealIssues = postInjectionCheckins
+          .where((c) => c.mealCondition != ConditionLevel.good)
+          .length;
+
+      if (giIssues > mealIssues && giIssues >= 2) {
+        postInjectionInsight =
+            '주사 다음날 속이 불편한 경향이 있어요. 소화가 잘 되는 음식으로 드셔보세요.';
+      } else if (mealIssues >= 2) {
+        postInjectionInsight =
+            '주사 후에는 식사가 어려운 경향이 있어요. 조금씩 나눠 드셔보세요.';
+      }
+    }
+
+    // 가장 신경써야 할 영역 (good rate가 가장 낮은 것)
+    QuestionType? topConcernArea;
+    QuestionType? improvementArea;
+
+    if (questionTrends.isNotEmpty) {
+      final sorted = List<QuestionTrend>.from(questionTrends)
+        ..sort((a, b) => a.goodRate.compareTo(b.goodRate));
+      if (sorted.first.goodRate < 50) {
+        topConcernArea = sorted.first.questionType;
+      }
+
+      // 개선된 영역
+      final improving =
+          questionTrends.where((t) => t.direction == TrendDirection.improving);
+      if (improving.isNotEmpty) {
+        improvementArea = improving.first.questionType;
+      }
+    }
+
+    // 추천 사항
+    final recommendations = <String>[];
+
+    if (topConcernArea != null) {
+      switch (topConcernArea) {
+        case QuestionType.meal:
+          recommendations.add('식사가 어려울 때는 조금씩 자주 드셔보세요');
+          break;
+        case QuestionType.hydration:
+          recommendations.add('수분 섭취를 늘려보세요. 탈수 예방이 중요해요');
+          break;
+        case QuestionType.giComfort:
+          recommendations.add('소화가 잘 되는 부드러운 음식을 드셔보세요');
+          break;
+        case QuestionType.bowel:
+          recommendations.add('식이섬유와 충분한 수분 섭취를 해보세요');
+          break;
+        case QuestionType.energy:
+          recommendations.add('충분한 휴식과 가벼운 산책을 추천드려요');
+          break;
+        case QuestionType.mood:
+          recommendations.add('기분이 나아지지 않으면 전문가와 상담해보세요');
+          break;
+      }
+    }
+
+    if (improvementArea != null) {
+      final label = questionTrends
+          .firstWhere((t) => t.questionType == improvementArea)
+          .label;
+      recommendations.add('$label 상태가 좋아지고 있어요! 계속 유지해주세요');
+    }
+
+    return WeeklyPatternInsight(
+      hasPostInjectionPattern: hasPostInjectionPattern,
+      postInjectionInsight: postInjectionInsight,
+      topConcernArea: topConcernArea,
+      improvementArea: improvementArea,
+      recommendations: recommendations,
+    );
+  }
+
+  /// 전체 방향 평가
+  TrendDirection _evaluateOverallDirection(List<QuestionTrend> questionTrends) {
+    if (questionTrends.isEmpty) return TrendDirection.stable;
+
+    int improvingCount = 0;
+    int worseningCount = 0;
+
+    for (final trend in questionTrends) {
+      if (trend.direction == TrendDirection.improving) {
+        improvingCount++;
+      } else if (trend.direction == TrendDirection.worsening) {
+        worseningCount++;
+      }
+    }
+
+    if (improvingCount > worseningCount && improvingCount >= 2) {
+      return TrendDirection.improving;
+    } else if (worseningCount > improvingCount && worseningCount >= 2) {
+      return TrendDirection.worsening;
+    }
+
     return TrendDirection.stable;
   }
 
   /// 요약 메시지 생성
   String _generateSummaryMessage({
-    required List<SymptomFrequency> frequencies,
+    required List<QuestionTrend> questionTrends,
     required TrendDirection overallDirection,
     required TrendPeriod period,
+    required int redFlagCount,
+    required double completionRate,
   }) {
-    if (frequencies.isEmpty) {
-      return '기록된 증상이 없어요';
+    final periodText = period == TrendPeriod.weekly ? '이번 주' : '이번 달';
+
+    if (completionRate < 30) {
+      return '$periodText 기록이 부족해요. 매일 체크인으로 컨디션을 관리해보세요!';
     }
 
-    final periodText = period == TrendPeriod.weekly ? '이번 주' : '이번 달';
-    final topSymptom = frequencies.first.symptomName;
+    if (redFlagCount > 0) {
+      return '$periodText 주의가 필요한 증상이 ${redFlagCount}회 있었어요. 상태를 확인해주세요.';
+    }
+
+    // 가장 좋은 영역과 나쁜 영역 찾기
+    final sorted = List<QuestionTrend>.from(questionTrends)
+      ..sort((a, b) => b.goodRate.compareTo(a.goodRate));
+    final best = sorted.isNotEmpty ? sorted.first : null;
+    final worst = sorted.isNotEmpty ? sorted.last : null;
 
     switch (overallDirection) {
       case TrendDirection.improving:
-        return '$periodText에는 증상이 개선되고 있어요! 잘하고 계세요';
-      case TrendDirection.stable:
-        return '$periodText에는 $topSymptom이(가) 가장 많이 기록되었어요';
+        return '$periodText 컨디션이 좋아지고 있어요! 잘하고 계세요.';
       case TrendDirection.worsening:
-        return '$periodText에는 증상이 조금 증가했어요. 패턴을 살펴보세요';
+        if (worst != null && worst.goodRate < 50) {
+          return '$periodText ${worst.label} 상태가 조금 걱정되네요. 관리가 필요해요.';
+        }
+        return '$periodText 컨디션이 조금 떨어졌어요. 몸 관리에 신경써주세요.';
+      case TrendDirection.stable:
+        if (best != null && best.goodRate >= 80) {
+          return '$periodText ${best.label} 상태가 특히 좋았어요! 유지해주세요.';
+        }
+        return '$periodText 컨디션이 안정적이에요. 계속 유지해주세요!';
     }
+  }
+
+  String _dateKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 }

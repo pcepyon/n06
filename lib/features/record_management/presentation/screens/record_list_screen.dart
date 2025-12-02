@@ -9,6 +9,9 @@ import 'package:n06/features/record_management/presentation/widgets/record_list_
 import 'package:n06/core/presentation/widgets/record_type_icon.dart';
 import 'package:n06/core/presentation/widgets/empty_state_widget.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_toast.dart';
+import 'package:n06/features/daily_checkin/application/providers.dart';
+import 'package:n06/features/daily_checkin/domain/entities/daily_checkin.dart';
+import 'package:n06/features/daily_checkin/domain/entities/symptom_detail.dart';
 import 'package:intl/intl.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
@@ -59,7 +62,7 @@ class RecordListScreen extends ConsumerWidget {
                     indicatorSize: TabBarIndicatorSize.tab,
                     tabs: [
                       Tab(text: '체중'),
-                      Tab(text: '증상'),
+                      Tab(text: '체크인'),
                       Tab(text: '투여'),
                     ],
                   ),
@@ -79,7 +82,7 @@ class RecordListScreen extends ConsumerWidget {
           child: const TabBarView(
             children: [
               _WeightRecordsTab(),
-              _SymptomRecordsTab(),
+              _CheckinRecordsTab(),
               _DoseRecordsTab(),
             ],
           ),
@@ -304,14 +307,14 @@ class _WeightRecordTile extends ConsumerWidget {
   }
 }
 
-/// 증상 기록 탭
-class _SymptomRecordsTab extends ConsumerWidget {
-  const _SymptomRecordsTab();
+/// 체크인 기록 탭
+class _CheckinRecordsTab extends ConsumerWidget {
+  const _CheckinRecordsTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
-    final trackingState = ref.watch(trackingProvider);
+    final checkinsAsync = ref.watch(allCheckinsProvider);
 
     return authState.when(
       loading: () => _buildLoadingState(),
@@ -335,28 +338,260 @@ class _SymptomRecordsTab extends ConsumerWidget {
           );
         }
 
-        return trackingState.when(
+        return checkinsAsync.when(
           loading: () => _buildLoadingState(),
           error: (err, stack) => Center(
             child: Text(
               '오류: $err',
-              style: const TextStyle(
-                fontSize: 16,
-                color: Color(0xFFEF4444),
+              style: AppTypography.bodyLarge.copyWith(
+                color: AppColors.error,
               ),
             ),
           ),
-          data: (state) {
-            // 증상 로그는 제거되었으므로 빈 상태 표시
-            return const EmptyStateWidget(
-              icon: Icons.warning_amber_outlined,
-              title: '증상 기록 기능이 변경되었습니다',
-              description: '증상 기록 기능은 데일리 체크인으로 통합되었습니다.',
+          data: (checkins) {
+            if (checkins.isEmpty) {
+              return const EmptyStateWidget(
+                icon: Icons.check_circle_outline,
+                title: '체크인 기록이 없습니다',
+                description: '아직 데일리 체크인 기록이 없습니다.\n첫 번째 체크인을 완료해보세요.',
+              );
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              itemCount: checkins.length,
+              itemBuilder: (context, index) {
+                final checkin = checkins[index];
+                return _CheckinRecordTile(checkin: checkin);
+              },
             );
           },
         );
       },
     );
+  }
+}
+
+/// 체크인 기록 항목
+class _CheckinRecordTile extends ConsumerWidget {
+  final DailyCheckin checkin;
+
+  const _CheckinRecordTile({required this.checkin});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dateStr = DateFormat('yyyy년 MM월 dd일 (E)', 'ko_KR').format(checkin.checkinDate);
+    final summary = _buildSummary();
+    final symptoms = _buildSymptomSummary();
+
+    return RecordListCard(
+      recordType: RecordType.checkin,
+      onDelete: () => _showDeleteDialog(context, ref),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 날짜
+          Text(
+            dateStr,
+            style: AppTypography.heading3,
+          ),
+          const SizedBox(height: 8),
+          // 컨디션 요약
+          Text(
+            summary,
+            style: AppTypography.bodyLarge.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          // 증상 정보 (있는 경우)
+          if (symptoms.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              symptoms,
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textTertiary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _buildSummary() {
+    final parts = <String>[];
+
+    // 식사 상태
+    switch (checkin.mealCondition) {
+      case ConditionLevel.good:
+        parts.add('식사 양호');
+        break;
+      case ConditionLevel.moderate:
+        parts.add('식사 보통');
+        break;
+      case ConditionLevel.difficult:
+        parts.add('식사 어려움');
+        break;
+    }
+
+    // 에너지 수준
+    switch (checkin.energyLevel) {
+      case EnergyLevel.good:
+        parts.add('활력 있음');
+        break;
+      case EnergyLevel.normal:
+        parts.add('보통');
+        break;
+      case EnergyLevel.tired:
+        parts.add('피로함');
+        break;
+    }
+
+    return parts.join(' | ');
+  }
+
+  String _buildSymptomSummary() {
+    final symptoms = checkin.symptomDetails;
+    if (symptoms == null || symptoms.isEmpty) return '';
+
+    final symptomNames = symptoms.map((s) => _getSymptomName(s.type)).take(3).toList();
+    final suffix = symptoms.length > 3 ? ' 외 ${symptoms.length - 3}개' : '';
+    return '증상: ${symptomNames.join(', ')}$suffix';
+  }
+
+  String _getSymptomName(SymptomType type) {
+    switch (type) {
+      case SymptomType.nausea:
+        return '메스꺼움';
+      case SymptomType.vomiting:
+        return '구토';
+      case SymptomType.lowAppetite:
+        return '입맛 없음';
+      case SymptomType.earlySatiety:
+        return '조기 포만감';
+      case SymptomType.heartburn:
+        return '속쓰림';
+      case SymptomType.abdominalPain:
+        return '복통';
+      case SymptomType.bloating:
+        return '복부 팽만';
+      case SymptomType.constipation:
+        return '변비';
+      case SymptomType.diarrhea:
+        return '설사';
+      case SymptomType.fatigue:
+        return '피로';
+      case SymptomType.dizziness:
+        return '어지러움';
+      case SymptomType.coldSweat:
+        return '식은땀';
+      case SymptomType.swelling:
+        return '부종';
+    }
+  }
+
+  void _showDeleteDialog(BuildContext context, WidgetRef ref) {
+    final dateStr = DateFormat('yyyy년 MM월 dd일').format(checkin.checkinDate);
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '체크인 기록을 삭제하시겠습니까?',
+                style: AppTypography.heading2,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '$dateStr의 체크인 기록과 수집된 증상이 모두 삭제됩니다.\n삭제된 기록은 복구할 수 없습니다.',
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      child: const Text(
+                        '취소',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => _deleteCheckin(dialogContext, ref),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        foregroundColor: AppColors.surface,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        '삭제',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteCheckin(BuildContext context, WidgetRef ref) async {
+    try {
+      final repository = ref.read(dailyCheckinRepositoryProvider);
+      await repository.delete(checkin.id);
+
+      // Provider 갱신
+      ref.invalidate(allCheckinsProvider);
+
+      if (context.mounted) {
+        Navigator.pop(context);
+        GabiumToast.showSuccess(context, '체크인 기록이 삭제되었습니다');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        GabiumToast.showError(context, '기록 삭제 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
+    }
   }
 }
 

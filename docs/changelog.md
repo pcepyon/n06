@@ -21,6 +21,20 @@
 
 ## 2025-12-02
 
+- [feat] 트렌드 대시보드 데일리 체크인 기반으로 전체 재구성 (B. 상세화)
+  - TrendInsight 엔티티: 6개 질문별 트렌드, 일별 컨디션 요약, 패턴 인사이트 구조로 재설계
+  - TrendInsightAnalyzer: 데일리 체크인 데이터 분석, 이전 기간 대비 비교 로직 추가
+  - ConditionCalendar: 날짜별 컨디션 점수 캘린더 (주간/월간 뷰, Red Flag 표시)
+  - WeeklyConditionChart: 6개 질문별 good 비율 막대그래프 + 트렌드 방향 표시
+  - QuestionDetailChart: 질문별 일간 변화 라인 차트 (탭으로 질문 선택)
+  - WeeklyPatternInsightCard: 주사 후 패턴, 개선/주의 영역, 추천 사항 표시
+  - TrendInsightCard: 전반적 컨디션, 기록률, 연속일수, Red Flag 등 요약 카드
+  - `lib/features/tracking/domain/entities/trend_insight.dart`
+  - `lib/features/tracking/domain/services/trend_insight_analyzer.dart`
+  - `lib/features/tracking/application/notifiers/trend_insight_notifier.dart`
+  - `lib/features/tracking/presentation/screens/trend_dashboard_screen.dart`
+  - `lib/features/tracking/presentation/widgets/` (5개 위젯)
+
 - [feat] debug-pipeline 근본 원인 분석에 확신도 기반 분기 로직 추가
   - Step 2.5: 초기 확신도 평가 (4가지 기준, 100점 만점)
   - Step 2.6: 다중 가설 병렬 검증 (확신도 < 85% 시)

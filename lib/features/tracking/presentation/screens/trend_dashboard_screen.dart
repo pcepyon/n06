@@ -1,27 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
-import 'package:n06/features/tracking/domain/entities/trend_insight.dart';
-import 'package:n06/features/tracking/presentation/widgets/trend_insight_card.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/trend_insight_notifier.dart';
+import 'package:n06/features/tracking/domain/entities/trend_insight.dart';
+
+// Provider는 generated 파일에서 생성됨
+import 'package:n06/features/tracking/presentation/widgets/condition_calendar.dart';
+import 'package:n06/features/tracking/presentation/widgets/question_detail_chart.dart';
+import 'package:n06/features/tracking/presentation/widgets/trend_insight_card.dart';
+import 'package:n06/features/tracking/presentation/widgets/weekly_condition_chart.dart';
+import 'package:n06/features/tracking/presentation/widgets/weekly_pattern_insight_card.dart';
 
 /// 트렌드 대시보드 화면
 ///
-/// Phase 3: 트렌드 대시보드
+/// 데일리 체크인 기반 트렌드 분석 표시
 ///
 /// 화면 구조:
 /// 1. 기간 선택 탭 (주간 | 월간)
 /// 2. TrendInsightCard (요약)
-/// 3. SymptomHeatmapCalendar
-/// 4. SymptomTrendChart
-/// 5. PatternInsightCard 리스트 (Phase 2 재사용)
+/// 3. ConditionCalendar (일상 상태 캘린더)
+/// 4. WeeklyConditionChart (주간 컨디션 막대그래프)
+/// 5. QuestionDetailChart (개별 질문 상세 차트)
+/// 6. WeeklyPatternInsightCard (주간 패턴 인사이트)
 class TrendDashboardScreen extends ConsumerStatefulWidget {
   const TrendDashboardScreen({super.key});
 
   @override
-  ConsumerState<TrendDashboardScreen> createState() => _TrendDashboardScreenState();
+  ConsumerState<TrendDashboardScreen> createState() =>
+      _TrendDashboardScreenState();
 }
 
 class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
@@ -63,9 +72,13 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          await ref.read(
-            trendInsightProvider(userId: userId, period: _selectedPeriod).notifier,
-          ).refresh();
+          await ref
+              .read(
+                trendInsightProvider(
+                        userId: userId, period: _selectedPeriod)
+                    .notifier,
+              )
+              .refresh();
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -76,7 +89,7 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
               _buildPeriodTabs(),
 
               trendState.when(
-                data: (insight) => _buildContent(insight, userId),
+                data: (insight) => _buildContent(insight),
                 loading: () => _buildLoading(),
                 error: (error, stack) => _buildError(error),
               ),
@@ -143,56 +156,63 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
     );
   }
 
-  Widget _buildContent(TrendInsight insight, String userId) {
+  Widget _buildContent(TrendInsight insight) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. TrendInsightCard (요약)
+          // 1. 요약 카드
           TrendInsightCard(insight: insight),
 
           const SizedBox(height: 24),
 
-          // 2. 히트맵 캘린더
+          // 2. 일상 상태 캘린더
           _buildSection(
-            title: '증상 빈도 캘린더',
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: AppColors.neutral200),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Center(child: Text('Symptom tracking removed')),
+            title: '일상 상태 캘린더',
+            subtitle: '날짜별 컨디션을 확인하세요',
+            child: ConditionCalendar(
+              dailyConditions: insight.dailyConditions,
+              period: _selectedPeriod,
+              onDayTap: (condition) {
+                _showDayDetail(condition);
+              },
             ),
           ),
 
           const SizedBox(height: 24),
 
-          // 3. 트렌드 차트
-          _buildSection(
-            title: '심각도 추이',
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: AppColors.neutral200),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Center(child: Text('Symptom tracking removed')),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // 4. PatternInsightCard 리스트 (Phase 2 재사용)
-          if (insight.frequencies.isNotEmpty) ...[
+          // 3. 주간 컨디션 차트
+          if (insight.questionTrends.isNotEmpty) ...[
             _buildSection(
-              title: '패턴 인사이트',
-              child: _buildPatternInsights(userId, insight),
+              title: '컨디션 추이',
+              subtitle: '6가지 영역별 상태를 확인하세요',
+              child: WeeklyConditionChart(
+                questionTrends: insight.questionTrends,
+                onTrendTap: (trend) {
+                  // 해당 질문 상세로 스크롤
+                },
+              ),
             ),
+            const SizedBox(height: 24),
           ],
+
+          // 4. 개별 질문 상세 차트
+          if (insight.questionTrends.isNotEmpty) ...[
+            _buildSection(
+              title: '일별 상세 차트',
+              subtitle: '영역별 일간 변화를 확인하세요',
+              child: QuestionDetailChart(
+                questionTrends: insight.questionTrends,
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+
+          // 5. 주간 패턴 인사이트
+          WeeklyPatternInsightCard(insight: insight),
+
+          const SizedBox(height: 32),
         ],
       ),
     );
@@ -200,6 +220,7 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
 
   Widget _buildSection({
     required String title,
+    String? subtitle,
     required Widget child,
   }) {
     return Column(
@@ -212,15 +233,194 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
             fontWeight: FontWeight.w700,
           ),
         ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.neutral500,
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         child,
       ],
     );
   }
 
-  Widget _buildPatternInsights(String userId, TrendInsight insight) {
-    // Symptom pattern provider is removed
-    return const SizedBox.shrink();
+  void _showDayDetail(DailyConditionSummary condition) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 날짜 헤더
+            Row(
+              children: [
+                Text(
+                  '${condition.date.month}월 ${condition.date.day}일',
+                  style: AppTypography.heading2.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // 컨디션 정보
+            _buildDetailRow(
+              label: '전반적 컨디션',
+              value: '${condition.overallScore}점',
+              icon: _getGradeEmoji(condition.grade),
+            ),
+            const SizedBox(height: 12),
+            _buildDetailRow(
+              label: '컨디션 등급',
+              value: _getGradeLabel(condition.grade),
+              color: _getGradeColor(condition.grade),
+            ),
+            if (condition.hasRedFlag) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded,
+                        color: AppColors.error, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '주의가 필요한 증상이 기록되었습니다',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (condition.isPostInjection) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.vaccines, color: AppColors.primary, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '주사 다음날이에요',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow({
+    required String label,
+    required String value,
+    String? icon,
+    Color? color,
+  }) {
+    return Row(
+      children: [
+        if (icon != null) ...[
+          Text(icon, style: const TextStyle(fontSize: 20)),
+          const SizedBox(width: 8),
+        ],
+        Text(
+          label,
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.neutral600,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: AppTypography.bodyMedium.copyWith(
+            color: color ?? AppColors.neutral800,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getGradeEmoji(ConditionGrade grade) {
+    switch (grade) {
+      case ConditionGrade.excellent:
+        return '😊';
+      case ConditionGrade.good:
+        return '🙂';
+      case ConditionGrade.fair:
+        return '😐';
+      case ConditionGrade.poor:
+        return '😕';
+      case ConditionGrade.bad:
+        return '😢';
+    }
+  }
+
+  String _getGradeLabel(ConditionGrade grade) {
+    switch (grade) {
+      case ConditionGrade.excellent:
+        return '아주 좋음';
+      case ConditionGrade.good:
+        return '좋음';
+      case ConditionGrade.fair:
+        return '보통';
+      case ConditionGrade.poor:
+        return '주의';
+      case ConditionGrade.bad:
+        return '나쁨';
+    }
+  }
+
+  Color _getGradeColor(ConditionGrade grade) {
+    switch (grade) {
+      case ConditionGrade.excellent:
+        return const Color(0xFF4CAF50);
+      case ConditionGrade.good:
+        return const Color(0xFF8BC34A);
+      case ConditionGrade.fair:
+        return const Color(0xFFFFC107);
+      case ConditionGrade.poor:
+        return const Color(0xFFFF9800);
+      case ConditionGrade.bad:
+        return const Color(0xFFF44336);
+    }
   }
 
   Widget _buildLoading() {
