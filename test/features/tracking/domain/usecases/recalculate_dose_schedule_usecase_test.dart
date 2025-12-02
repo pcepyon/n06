@@ -117,5 +117,44 @@ void main() {
       final ids = schedules.map((s) => s.id).toList();
       expect(ids.length, ids.toSet().length, reason: 'All IDs should be unique');
     });
+
+    test('should align schedules with plan start date when start date changes', () {
+      // Arrange: Start date is a Tuesday (Dec 3, 2024)
+      // fromDate is Thursday (Dec 5, 2024)
+      // Schedules should fall on Tuesdays, not Thursdays
+      final startDate = DateTime(2024, 12, 3); // Tuesday (weekday = 2)
+      final fromDate = DateTime(2024, 12, 5);  // Thursday (weekday = 4)
+
+      final plan = DosagePlan(
+        id: 'plan-1',
+        userId: 'user-1',
+        medicationName: 'Ozempic',
+        startDate: startDate,
+        cycleDays: 7,
+        initialDoseMg: 0.25,
+      );
+
+      // Act
+      final schedules = useCase.execute(plan, fromDate: fromDate, generationDays: 30);
+
+      // Assert: All schedules should be on Tuesday (weekday = 2), aligned with startDate
+      final expectedWeekday = startDate.weekday; // 2 = Tuesday
+      for (final schedule in schedules) {
+        expect(
+          schedule.scheduledDate.weekday,
+          expectedWeekday,
+          reason: 'Schedule ${schedule.scheduledDate} should be on Tuesday (weekday $expectedWeekday), '
+              'but got weekday ${schedule.scheduledDate.weekday}',
+        );
+      }
+
+      // Also verify first schedule is after fromDate
+      expect(
+        schedules.first.scheduledDate.isAfter(fromDate) ||
+            schedules.first.scheduledDate.isAtSameMomentAs(fromDate),
+        true,
+        reason: 'First schedule should be on or after fromDate',
+      );
+    });
   });
 }

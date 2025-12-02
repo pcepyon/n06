@@ -9,22 +9,26 @@ class RecalculateDoseScheduleUseCase {
 
   /// Execute schedule recalculation
   /// Returns list of DoseSchedule for the future (after current date)
+  /// Schedules are always aligned with plan.startDate
   List<DoseSchedule> execute(
     DosagePlan plan, {
     DateTime? fromDate,
     int? generationDays = 365,
   }) {
-    final startDate = fromDate ?? DateTime.now();
+    final referenceDate = fromDate ?? DateTime.now();
     final schedules = <DoseSchedule>[];
 
-    // Generate schedules starting from startDate
-    DateTime currentDate = DateTime(startDate.year, startDate.month, startDate.day);
-    DateTime endDate = currentDate.add(Duration(days: generationDays ?? 365));
+    // Normalize dates to midnight
+    final normalizedFromDate = DateTime(referenceDate.year, referenceDate.month, referenceDate.day);
+    final normalizedPlanStart = DateTime(plan.startDate.year, plan.startDate.month, plan.startDate.day);
+    final endDate = normalizedFromDate.add(Duration(days: generationDays ?? 365));
 
-    // Align to first dose date if plan start is in the future
-    if (plan.startDate.isAfter(currentDate)) {
-      currentDate = DateTime(plan.startDate.year, plan.startDate.month, plan.startDate.day);
-    }
+    // Find the first schedule date on or after fromDate, aligned with plan.startDate
+    DateTime currentDate = _findFirstAlignedDate(
+      planStartDate: normalizedPlanStart,
+      fromDate: normalizedFromDate,
+      cycleDays: plan.cycleDays,
+    );
 
     // Generate schedules
     while (currentDate.isBefore(endDate) || currentDate.isAtSameMomentAs(endDate)) {
@@ -45,6 +49,32 @@ class RecalculateDoseScheduleUseCase {
     }
 
     return schedules;
+  }
+
+  /// Find the first schedule date on or after fromDate, aligned with planStartDate
+  DateTime _findFirstAlignedDate({
+    required DateTime planStartDate,
+    required DateTime fromDate,
+    required int cycleDays,
+  }) {
+    // If plan starts on or after fromDate, use plan start date
+    if (!planStartDate.isBefore(fromDate)) {
+      return planStartDate;
+    }
+
+    // Calculate how many cycles have passed since plan start
+    final daysDiff = fromDate.difference(planStartDate).inDays;
+    final cyclesPassed = daysDiff ~/ cycleDays;
+
+    // Calculate the next aligned date
+    DateTime alignedDate = planStartDate.add(Duration(days: cyclesPassed * cycleDays));
+
+    // If alignedDate is before fromDate, move to next cycle
+    if (alignedDate.isBefore(fromDate)) {
+      alignedDate = alignedDate.add(Duration(days: cycleDays));
+    }
+
+    return alignedDate;
   }
 
   /// Calculate weeks elapsed since plan start date

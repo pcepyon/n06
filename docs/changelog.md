@@ -21,6 +21,11 @@
 
 ## 2025-12-03
 
+- [fix] 투여 계획 시작일 변경 시 스케줄이 시작일과 정렬되지 않는 버그 수정
+  - 시작일을 화요일로 변경해도 스케줄이 변경 당일(목요일)부터 생성되던 문제 해결
+  - _findFirstAlignedDate() 메서드 추가로 plan.startDate 기준 정렬 보장
+  - `lib/features/tracking/domain/usecases/recalculate_dose_schedule_usecase.dart`
+
 - [feat] 투여 스케줄 개별 삭제 기능 추가
   - 연체/미래 예정 스케줄을 사용자가 직접 삭제 가능
   - 투여 기록이 연결된 스케줄은 삭제 불가 (데이터 무결성 보호)
