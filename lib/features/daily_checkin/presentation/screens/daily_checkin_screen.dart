@@ -146,10 +146,13 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
                   !state.isComplete) {
                 return Padding(
                   padding: const EdgeInsets.only(right: 16),
-                  child: Center(
-                    child: CheckinProgressIndicator(
-                      currentStep: state.currentStep,
-                      totalSteps: 6,
+                  child: SizedBox(
+                    width: 120,
+                    child: Center(
+                      child: CheckinProgressIndicator(
+                        currentStep: state.currentStep,
+                        totalSteps: 6,
+                      ),
                     ),
                   ),
                 );
