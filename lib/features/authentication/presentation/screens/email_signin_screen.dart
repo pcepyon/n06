@@ -225,10 +225,19 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 0,
-        iconTheme: IconThemeData(color: AppColors.neutral700),
         title: Text(
           '이메일로 로그인',
           style: AppTypography.heading2,
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: AppColors.neutral700),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

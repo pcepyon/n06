@@ -21,6 +21,10 @@
 
 ## 2025-12-03
 
+- [fix] 이메일 로그인 화면에 뒤로 가기 버튼 추가
+  - 이메일 회원가입 화면과 동일한 패턴 적용
+  - `lib/features/authentication/presentation/screens/email_signin_screen.dart`
+
 - [docs] 커밋 규칙을 Critical Rules로 이동
   - Commit Process 섹션 제거, changelog 필수 규칙 강화
   - `claude.md`
