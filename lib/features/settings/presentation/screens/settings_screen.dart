@@ -137,8 +137,8 @@ class SettingsScreen extends ConsumerWidget {
             ),
             SettingsMenuItemImproved(
               title: '의료진 데이터 공유',
-              subtitle: '담당 의료진에게 기록 데이터를 공유합니다',
-              onTap: () => context.push('/data-sharing'),
+              subtitle: '주간 리포트를 의료진에게 공유합니다',
+              onTap: () => context.push('/share-report'),
             ),
             SettingsMenuItemImproved(
               title: '온보딩 다시 보기',

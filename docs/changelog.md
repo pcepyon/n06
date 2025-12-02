@@ -21,6 +21,12 @@
 
 ## 2025-12-02
 
+- [refactor] 레거시 data_sharing 모듈 제거 및 주간 리포트로 교체
+  - 설정 화면의 "의료진 데이터 공유" 메뉴를 `/share-report`로 연결
+  - 기존 `/data-sharing` 라우트 및 data_sharing 폴더 전체 삭제 (12개 파일)
+  - `lib/features/settings/presentation/screens/settings_screen.dart`
+  - `lib/core/routing/app_router.dart`
+
 - [fix] flutter analyze 경고 및 미사용 코드 정리 (38개 → 4개 info)
   - dead code 제거, 미사용 함수/변수/import 제거
   - super parameter 적용, BuildContext async gap 수정

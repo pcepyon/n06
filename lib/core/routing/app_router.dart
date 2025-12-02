@@ -13,7 +13,6 @@ import 'package:n06/features/tracking/presentation/screens/dose_calendar_screen.
 import 'package:n06/features/notification/presentation/screens/notification_settings_screen.dart';
 import 'package:n06/features/tracking/presentation/screens/emergency_check_screen.dart';
 import 'package:n06/features/coping_guide/presentation/screens/coping_guide_screen.dart';
-import 'package:n06/features/data_sharing/presentation/screens/data_sharing_screen.dart';
 import 'package:n06/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:n06/features/record_management/presentation/screens/record_list_screen.dart';
 import 'package:n06/features/authentication/presentation/screens/email_signup_screen.dart';
@@ -186,12 +185,6 @@ final appRouter = GoRouter(
     ),
 
     /// Detail routes without Bottom Nav
-    GoRoute(
-      path: '/data-sharing',
-      name: 'data_sharing',
-      builder: (context, state) => const DataSharingScreen(),
-    ),
-
     GoRoute(
       path: '/profile/edit',
       name: 'profile_edit',
