@@ -21,6 +21,12 @@
 
 ## 2025-12-02
 
+- [feat] debug-pipeline 근본 원인 분석에 확신도 기반 분기 로직 추가
+  - Step 2.5: 초기 확신도 평가 (4가지 기준, 100점 만점)
+  - Step 2.6: 다중 가설 병렬 검증 (확신도 < 85% 시)
+  - Step 2.7: 사용자 선택 요청 (보정 확신도 < 85% 시)
+  - `.claude/agents/root-cause-analyzer.md`
+
 - [fix] 데일리 체크인 Q6 완료 처리, 체중 저장, 타이머 누수, enum 방어 로직 수정
   - Q6 답변 후 finishCheckin 자동 호출 추가 (BUG-20251202-Q6FINISH)
   - 체중 입력 시 weight_logs 테이블에 저장 연동 (BUG-20251202-WEIGHT)
