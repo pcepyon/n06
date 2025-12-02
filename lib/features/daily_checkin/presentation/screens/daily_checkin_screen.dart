@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,13 +32,12 @@ class DailyCheckinScreen extends ConsumerStatefulWidget {
 }
 
 class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
-  final PageController _pageController = PageController();
-
   bool _isInitialized = false;
   bool _isDerivedSheetOpen = false;
-  bool _isFeedbackTimerActive = false;
+  Timer? _feedbackTimer; // 피드백 타이머 (BUG-20251202-TIMER)
   String? _lastPendingFeedback;
   bool _isRedFlagDialogShown = false; // Red Flag 다이얼로그 중복 표시 방지
+  bool _isDuplicateDialogShown = false; // 중복 체크인 다이얼로그 중복 표시 방지
 
   @override
   void initState() {
@@ -58,7 +59,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _feedbackTimer?.cancel(); // 타이머 정리 (BUG-20251202-TIMER)
     super.dispose();
   }
 
@@ -185,6 +186,17 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
   }
 
   Widget _buildContent(BuildContext context, DailyCheckinState state) {
+    // 중복 체크인 확인 다이얼로그
+    if (state.hasExistingCheckinToday &&
+        !state.duplicateCheckConfirmed &&
+        !_isDuplicateDialogShown) {
+      _isDuplicateDialogShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _showDuplicateCheckinDialog();
+      });
+    }
+
     // 파생 질문이 활성화된 경우
     if (state.currentDerivedPath != null) {
       return _buildDerivedQuestionPage(state.currentDerivedPath!);
@@ -208,6 +220,98 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
 
     // 기본 인사 화면
     return _buildGreetingPage(state);
+  }
+
+  void _showDuplicateCheckinDialog() {
+    showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '📝',
+                style: TextStyle(fontSize: 48),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '오늘 이미 기록했어요',
+                style: AppTypography.heading2.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.neutral900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '기록을 수정할까요?',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.neutral600,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop(false);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        '나가기',
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop(true);
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        minimumSize: const Size(0, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        '수정하기',
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).then((confirmed) {
+      if (!mounted) return;
+      if (confirmed == true) {
+        ref.read(dailyCheckinProvider.notifier).confirmDuplicateCheckin();
+      } else {
+        context.pop();
+      }
+    });
   }
 
   Widget _buildGreetingPage(DailyCheckinState state) {
@@ -264,21 +368,21 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     final question = Questions.all[questionIndex];
     final selectedAnswer = state.answers[questionIndex + 1];
 
-    // 피드백이 표시 대기 중이면 자동 전환 (BUG-20251202-175417)
+    // 피드백이 표시 대기 중이면 자동 전환 (BUG-20251202-175417, BUG-20251202-TIMER)
     // 매 빌드마다 타이머가 생성되지 않도록 플래그로 제어
     if (state.pendingFeedback != null &&
-        !_isFeedbackTimerActive &&
+        _feedbackTimer == null &&
         _lastPendingFeedback != state.pendingFeedback) {
-      _isFeedbackTimerActive = true;
       _lastPendingFeedback = state.pendingFeedback;
-      Future.delayed(const Duration(seconds: 2), () {
+      _feedbackTimer = Timer(const Duration(seconds: 2), () {
         if (mounted) {
-          _isFeedbackTimerActive = false;
+          _feedbackTimer = null;
           ref.read(dailyCheckinProvider.notifier).dismissFeedbackAndProceed();
         }
       });
     } else if (state.pendingFeedback == null) {
-      _isFeedbackTimerActive = false;
+      _feedbackTimer?.cancel();
+      _feedbackTimer = null;
       _lastPendingFeedback = null;
     }
 

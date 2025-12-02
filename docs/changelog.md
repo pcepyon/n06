@@ -21,6 +21,15 @@
 
 ## 2025-12-02
 
+- [fix] 데일리 체크인 Q6 완료 처리, 체중 저장, 타이머 누수, enum 방어 로직 수정
+  - Q6 답변 후 finishCheckin 자동 호출 추가 (BUG-20251202-Q6FINISH)
+  - 체중 입력 시 weight_logs 테이블에 저장 연동 (BUG-20251202-WEIGHT)
+  - 피드백 타이머 Future.delayed → Timer 교체 및 dispose cancel (BUG-20251202-TIMER)
+  - DTO enum 파싱 시 ArgumentError 대신 기본값 반환 (BUG-20251202-ENUMDEFENSE)
+  - `lib/features/daily_checkin/application/notifiers/daily_checkin_notifier.dart`
+  - `lib/features/daily_checkin/presentation/screens/daily_checkin_screen.dart`
+  - `lib/features/daily_checkin/infrastructure/dtos/daily_checkin_dto.dart`
+
 - [fix] 데일리 체크인 AppBar.actions 진행률 표시기 레이아웃 예외 수정 (BUG-20251202-173205)
   - 원인: AppBar.actions의 unbounded width constraint에서 Row+Expanded 사용
   - 수정: SizedBox(width: 120)로 고정 너비 제공

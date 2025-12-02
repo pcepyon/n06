@@ -151,7 +151,8 @@ class DailyCheckinDto {
       case 'difficult':
         return ConditionLevel.difficult;
       default:
-        throw ArgumentError('Invalid ConditionLevel: $value');
+        // 방어 로직: 알 수 없는 값은 기본값 반환 (BUG-20251202-ENUMDEFENSE)
+        return ConditionLevel.good;
     }
   }
 
@@ -175,7 +176,7 @@ class DailyCheckinDto {
       case 'poor':
         return HydrationLevel.poor;
       default:
-        throw ArgumentError('Invalid HydrationLevel: $value');
+        return HydrationLevel.good;
     }
   }
 
@@ -199,7 +200,7 @@ class DailyCheckinDto {
       case 'very_uncomfortable':
         return GiComfortLevel.veryUncomfortable;
       default:
-        throw ArgumentError('Invalid GiComfortLevel: $value');
+        return GiComfortLevel.good;
     }
   }
 
@@ -223,7 +224,7 @@ class DailyCheckinDto {
       case 'difficult':
         return BowelCondition.difficult;
       default:
-        throw ArgumentError('Invalid BowelCondition: $value');
+        return BowelCondition.normal;
     }
   }
 
@@ -247,7 +248,7 @@ class DailyCheckinDto {
       case 'tired':
         return EnergyLevel.tired;
       default:
-        throw ArgumentError('Invalid EnergyLevel: $value');
+        return EnergyLevel.good;
     }
   }
 
@@ -271,7 +272,7 @@ class DailyCheckinDto {
       case 'low':
         return MoodLevel.low;
       default:
-        throw ArgumentError('Invalid MoodLevel: $value');
+        return MoodLevel.good;
     }
   }
 
@@ -352,7 +353,7 @@ class DailyCheckinDto {
       case 'swelling':
         return SymptomType.swelling;
       default:
-        throw ArgumentError('Invalid SymptomType: $value');
+        return SymptomType.nausea; // 기본값
     }
   }
 
@@ -449,7 +450,7 @@ class DailyCheckinDto {
       case 'renal_impairment':
         return RedFlagType.renalImpairment;
       default:
-        throw ArgumentError('Invalid RedFlagType: $value');
+        return RedFlagType.pancreatitis; // 기본값 (안전한 side)
     }
   }
 
@@ -477,7 +478,7 @@ class DailyCheckinDto {
       case 'urgent':
         return RedFlagSeverity.urgent;
       default:
-        throw ArgumentError('Invalid RedFlagSeverity: $value');
+        return RedFlagSeverity.warning; // 기본값
     }
   }
 

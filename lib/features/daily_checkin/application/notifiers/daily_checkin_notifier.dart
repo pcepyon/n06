@@ -7,6 +7,8 @@ import 'package:n06/features/daily_checkin/domain/entities/checkin_context.dart'
 import 'package:n06/features/daily_checkin/domain/entities/red_flag_detection.dart';
 import 'package:n06/features/daily_checkin/domain/repositories/daily_checkin_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/medication_repository.dart';
+import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
+import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:uuid/uuid.dart';
 
@@ -44,6 +46,12 @@ class DailyCheckinState {
   /// 표시 대기 중인 피드백 메시지 (BUG-20251202-175417)
   final String? pendingFeedback;
 
+  /// 오늘 이미 체크인이 존재하는지 여부 (수정 확인용)
+  final bool hasExistingCheckinToday;
+
+  /// 중복 체크인 확인 완료 여부
+  final bool duplicateCheckConfirmed;
+
   const DailyCheckinState({
     this.currentStep = 0,
     this.weight,
@@ -55,6 +63,8 @@ class DailyCheckinState {
     this.savedCheckin,
     this.context,
     this.pendingFeedback,
+    this.hasExistingCheckinToday = false,
+    this.duplicateCheckConfirmed = false,
   });
 
   DailyCheckinState copyWith({
@@ -68,6 +78,8 @@ class DailyCheckinState {
     DailyCheckin? savedCheckin,
     CheckinContext? context,
     String? pendingFeedback,
+    bool? hasExistingCheckinToday,
+    bool? duplicateCheckConfirmed,
   }) {
     return DailyCheckinState(
       currentStep: currentStep ?? this.currentStep,
@@ -80,6 +92,8 @@ class DailyCheckinState {
       savedCheckin: savedCheckin ?? this.savedCheckin,
       context: context ?? this.context,
       pendingFeedback: pendingFeedback,
+      hasExistingCheckinToday: hasExistingCheckinToday ?? this.hasExistingCheckinToday,
+      duplicateCheckConfirmed: duplicateCheckConfirmed ?? this.duplicateCheckConfirmed,
     );
   }
 }
@@ -90,6 +104,8 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
       ref.read(dailyCheckinRepositoryProvider);
   MedicationRepository get _medicationRepository =>
       ref.read(medicationRepositoryProvider);
+  TrackingRepository get _trackingRepository =>
+      ref.read(trackingRepositoryProvider);
 
   @override
   Future<DailyCheckinState> build() async {
@@ -106,6 +122,11 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     try {
       state = const AsyncValue.loading();
       state = await AsyncValue.guard(() async {
+        // 오늘 체크인 존재 여부 확인
+        final today = DateTime.now();
+        final existingCheckin = await _repository.getByDate(userId, today);
+        final hasExisting = existingCheckin != null;
+
         // 컨텍스트 로드
         final context = await _loadContext(userId);
 
@@ -113,11 +134,22 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
           return const DailyCheckinState();
         }
 
-        return DailyCheckinState(context: context);
+        return DailyCheckinState(
+          context: context,
+          hasExistingCheckinToday: hasExisting,
+        );
       });
     } finally {
       link.close();
     }
+  }
+
+  /// 중복 체크인 확인 완료
+  void confirmDuplicateCheckin() {
+    final currentState = state.value ?? const DailyCheckinState();
+    state = AsyncValue.data(
+      currentState.copyWith(duplicateCheckConfirmed: true),
+    );
   }
 
   /// 체중 입력 (null이면 스킵)
@@ -164,13 +196,21 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
           pendingFeedback: feedback,
         ),
       );
-    } else {
-      // 다음 질문으로 즉시 이동 (피드백 없음)
-      final nextStep = questionIndex < 6 ? questionIndex + 1 : questionIndex;
+    } else if (questionIndex == 6) {
+      // Q6 완료 (피드백 없음) → 바로 체크인 완료 (BUG-20251202-Q6FINISH)
       state = AsyncValue.data(
         currentState.copyWith(
           answers: newAnswers,
-          currentStep: nextStep,
+          currentDerivedPath: null,
+        ),
+      );
+      await finishCheckin();
+    } else {
+      // 다음 질문으로 즉시 이동 (피드백 없음)
+      state = AsyncValue.data(
+        currentState.copyWith(
+          answers: newAnswers,
+          currentStep: questionIndex + 1,
           currentDerivedPath: null,
         ),
       );
@@ -223,13 +263,20 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
   /// 피드백 확인 후 다음 질문으로 진행 (BUG-20251202-175417)
   Future<void> dismissFeedbackAndProceed() async {
     final currentState = state.value ?? const DailyCheckinState();
-    final nextStep = currentState.currentStep < 6
-        ? currentState.currentStep + 1
-        : currentState.currentStep;
 
+    // Q6 피드백 후에는 체크인 완료 (BUG-20251202-Q6FINISH)
+    if (currentState.currentStep == 6) {
+      state = AsyncValue.data(
+        currentState.copyWith(pendingFeedback: null),
+      );
+      await finishCheckin();
+      return;
+    }
+
+    // 다음 질문으로 이동
     state = AsyncValue.data(
       currentState.copyWith(
-        currentStep: nextStep,
+        currentStep: currentState.currentStep + 1,
         pendingFeedback: null,
       ),
     );
@@ -270,13 +317,34 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
         // 저장
         await _repository.save(checkin);
 
+        // 체중 저장 (입력된 경우만, BUG-20251202-WEIGHT)
+        if (currentState.weight != null) {
+          final weightLog = WeightLog(
+            id: const Uuid().v4(),
+            userId: userId,
+            logDate: DateTime.now(),
+            weightKg: currentState.weight!,
+            createdAt: DateTime.now(),
+          );
+          await _trackingRepository.saveWeightLog(weightLog);
+        }
+
         if (!ref.mounted) {
           return currentState;
         }
 
+        // 저장 후 연속 일수 다시 조회 (오늘 체크인 포함)
+        final updatedConsecutiveDays = await _repository.getConsecutiveDays(userId);
+
+        // context 업데이트
+        final updatedContext = currentState.context?.copyWith(
+          consecutiveDays: updatedConsecutiveDays,
+        );
+
         return currentState.copyWith(
           isComplete: true,
           savedCheckin: checkin,
+          context: updatedContext,
         );
       });
     } finally {
