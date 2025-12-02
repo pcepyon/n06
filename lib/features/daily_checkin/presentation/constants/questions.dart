@@ -123,7 +123,7 @@ class Questions {
         emoji: GiComfortQuestionStrings.answerUncomfortableEmoji,
         text: GiComfortQuestionStrings.answerUncomfortable,
         value: 'uncomfortable',
-        triggersDerived: true,
+        feedback: GiComfortQuestionStrings.feedbackUncomfortable,
       ),
       AnswerOption(
         emoji: GiComfortQuestionStrings.answerVeryUncomfortableEmoji,
@@ -150,7 +150,7 @@ class Questions {
         emoji: BowelQuestionStrings.answerIrregularEmoji,
         text: BowelQuestionStrings.answerIrregular,
         value: 'irregular',
-        triggersDerived: true,
+        feedback: BowelQuestionStrings.feedbackIrregular,
       ),
       AnswerOption(
         emoji: BowelQuestionStrings.answerDifficultEmoji,

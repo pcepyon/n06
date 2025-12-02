@@ -146,6 +146,7 @@ class GiComfortQuestionStrings {
 
   // 피드백
   static const feedbackGood = '다행이에요! 💚';
+  static const feedbackUncomfortable = '약간의 불편함은 몸이 적응하는 과정이에요';
 
   // 파생 질문
   static const derivedQuestion = '어떤 불편함이 있으셨어요?';
@@ -228,6 +229,7 @@ class BowelQuestionStrings {
 
   // 피드백
   static const feedbackNormal = '좋아요! 규칙적인 게 중요해요';
+  static const feedbackIrregular = '수분 섭취와 식이섬유가 도움이 돼요';
 
   // 파생 질문
   static const derivedQuestion = '어떤 상황이었어요?';

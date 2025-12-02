@@ -19,6 +19,17 @@
 
 ---
 
+## 2025-12-03
+
+- [fix] 데일리 체크인 파생 질문 분기 로직 일관성 개선
+  - Q3(속 편안함), Q4(화장실)에서 보통 선택 시에도 파생 질문이 나오던 문제 수정
+  - 다른 질문들과 동일하게 나쁨 선택 시에만 파생 질문 표시
+  - Q3: uncomfortable → 피드백만 표시, veryUncomfortable만 파생 질문
+  - Q4: irregular → 피드백만 표시, difficult만 파생 질문
+  - `lib/features/daily_checkin/presentation/constants/questions.dart`
+  - `lib/features/daily_checkin/application/notifiers/daily_checkin_notifier.dart`
+  - `lib/features/daily_checkin/presentation/constants/checkin_strings.dart`
+
 ## 2025-12-02
 
 - [fix] 체크인 완료 페이지 네비게이션 오류 및 중앙 정렬 수정

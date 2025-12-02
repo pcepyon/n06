@@ -436,10 +436,10 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
         return answer == 'difficult';
       case 2: // Q2 수분
         return answer == 'poor';
-      case 3: // Q3 속 편안함
-        return answer == 'uncomfortable' || answer == 'veryUncomfortable';
-      case 4: // Q4 화장실
-        return answer == 'irregular' || answer == 'difficult';
+      case 3: // Q3 속 편안함 (veryUncomfortable만 파생 질문)
+        return answer == 'veryUncomfortable';
+      case 4: // Q4 화장실 (difficult만 파생 질문)
+        return answer == 'difficult';
       case 5: // Q5 에너지
         return answer == 'tired';
       default:
