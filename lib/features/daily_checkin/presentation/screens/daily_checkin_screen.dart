@@ -71,7 +71,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     ref.read(dailyCheckinProvider.notifier).submitWeight(null);
   }
 
-  void _handleAnswerSelected(int questionIndex, AnswerOption option) async {
+  Future<void> _handleAnswerSelected(int questionIndex, AnswerOption option) async {
     // Notifier에 답변 제출 (피드백 포함, BUG-20251202-175417)
     await ref.read(dailyCheckinProvider.notifier).submitAnswer(
           questionIndex,
@@ -80,7 +80,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
         );
   }
 
-  void _handleDerivedAnswer(String path, String answer) async {
+  Future<void> _handleDerivedAnswer(String path, String answer) async {
     await ref
         .read(dailyCheckinProvider.notifier)
         .submitDerivedAnswer(path, answer);
@@ -411,7 +411,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
                 text: option.text,
                 isSelected: isSelected,
                 isPositive: isPositive,
-                onTap: () => _handleAnswerSelected(questionIndex + 1, option),
+                onTap: () async => await _handleAnswerSelected(questionIndex + 1, option),
               );
             }).toList(),
           ),
@@ -467,7 +467,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
 
           if (selectedAnswer != null) {
             // 답변이 선택된 경우: 바텀시트가 완전히 닫힌 후에만 상태 업데이트
-            _handleDerivedAnswer(openedPath, selectedAnswer);
+            await _handleDerivedAnswer(openedPath, selectedAnswer);
           } else {
             // 답변 없이 닫힌 경우 (스와이프 다운 등): 동기화
             final currentPath = ref.read(dailyCheckinProvider).value?.currentDerivedPath;
