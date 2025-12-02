@@ -66,8 +66,7 @@ class DerivedQuestionSheet extends StatelessWidget {
                 isSelected: false,
                 isPositive: false,
                 onTap: () {
-                  onAnswerSelected(option.value);
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(option.value);
                 },
               );
             }).toList(),
@@ -132,12 +131,15 @@ class DerivedQuestionSheet extends StatelessWidget {
 }
 
 /// 파생 질문 바텀시트 표시 헬퍼 함수
-Future<void> showDerivedQuestionSheet({
+///
+/// 바텀시트가 닫힐 때 선택한 답변을 반환합니다.
+/// 답변 선택 없이 닫은 경우 null을 반환합니다.
+Future<String?> showDerivedQuestionSheet({
   required BuildContext context,
   required String path,
   required Function(String answer) onAnswerSelected,
 }) {
-  return showModalBottomSheet(
+  return showModalBottomSheet<String>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,

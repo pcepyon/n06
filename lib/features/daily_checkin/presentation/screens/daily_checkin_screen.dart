@@ -451,21 +451,29 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
         if (!mounted) return;
         _isDerivedSheetOpen = true;
         final openedPath = path; // 바텀시트 열 때의 경로 저장
-        await showDerivedQuestionSheet(
+
+        // 바텀시트가 완전히 닫힌 후 답변을 반환받음 (BUG-20251202-224803)
+        final selectedAnswer = await showDerivedQuestionSheet(
           context: context,
           path: path,
           onAnswerSelected: (answer) {
-            _handleDerivedAnswer(path, answer);
+            Navigator.of(context).pop(answer);
           },
         );
+
         // 바텀시트가 닫힌 후
         if (mounted) {
           _isDerivedSheetOpen = false;
-          // 바텀시트가 닫혔는데 경로가 같으면 (답변 없이 닫은 경우) 동기화
-          // 경로가 바뀌었으면 (다음 파생 질문으로 이동) 정상 동작
-          final currentPath = ref.read(dailyCheckinProvider).value?.currentDerivedPath;
-          if (currentPath == openedPath) {
-            ref.read(dailyCheckinProvider.notifier).goBack();
+
+          if (selectedAnswer != null) {
+            // 답변이 선택된 경우: 바텀시트가 완전히 닫힌 후에만 상태 업데이트
+            _handleDerivedAnswer(openedPath, selectedAnswer);
+          } else {
+            // 답변 없이 닫힌 경우 (스와이프 다운 등): 동기화
+            final currentPath = ref.read(dailyCheckinProvider).value?.currentDerivedPath;
+            if (currentPath == openedPath) {
+              ref.read(dailyCheckinProvider.notifier).goBack();
+            }
           }
         }
       });
