@@ -63,6 +63,13 @@ initState/didChangeDependencies/build 내에서 Provider 수정 시:
 ✅ WidgetsBinding.instance.addPostFrameCallback((_) { ... })
 ```
 
+### AppBar.actions 레이아웃 (BUG-20251202-173205)
+```
+AppBar.actions는 unbounded width constraint 제공
+❌ AppBar.actions 내 Expanded/Flexible 포함 Row 직접 배치
+✅ SizedBox(width: N)로 감싸서 고정 너비 제공
+```
+
 ---
 
 ## Decision Trees

@@ -21,6 +21,15 @@
 
 ## 2025-12-02
 
+- [fix] 데일리 체크인 AppBar.actions 진행률 표시기 레이아웃 예외 수정 (BUG-20251202-173205)
+  - 원인: AppBar.actions의 unbounded width constraint에서 Row+Expanded 사용
+  - 수정: SizedBox(width: 120)로 고정 너비 제공
+  - `lib/features/daily_checkin/presentation/screens/daily_checkin_screen.dart`
+
+- [docs] CLAUDE.md에 AppBar.actions 레이아웃 규칙 추가 (BUG-20251202-173205)
+  - AppBar.actions 내 Expanded/Flexible 포함 Row 직접 배치 금지
+  - SizedBox로 고정 너비 제공 필수
+
 - [fix] 데일리 체크인 화면 진입 시 Riverpod Provider 수정 에러 수정 (BUG-20251202-153023)
   - 원인: `didChangeDependencies`에서 `Future.microtask()` 없이 Provider 직접 수정
   - 수정: `Future.microtask()` 패턴 적용하여 위젯 트리 빌드 후 실행되도록 변경
