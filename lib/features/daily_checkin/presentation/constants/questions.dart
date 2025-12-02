@@ -128,7 +128,7 @@ class Questions {
       AnswerOption(
         emoji: GiComfortQuestionStrings.answerVeryUncomfortableEmoji,
         text: GiComfortQuestionStrings.answerVeryUncomfortable,
-        value: 'very_uncomfortable',
+        value: 'veryUncomfortable',
         triggersDerived: true,
       ),
     ],
@@ -382,13 +382,13 @@ class DerivedQuestions {
       AnswerOption(
         emoji: MealQuestionStrings.vomitingOnceEmoji,
         text: MealQuestionStrings.vomitingOnce,
-        value: 'once',
+        value: 'once_twice',
         feedback: MealQuestionStrings.feedbackVomitingOnce,
       ),
       AnswerOption(
         emoji: MealQuestionStrings.vomitingSevereEmoji,
         text: MealQuestionStrings.vomitingSevere,
-        value: 'severe',
+        value: 'multiple',
       ),
     ],
   );
@@ -435,6 +435,7 @@ class DerivedQuestions {
         emoji: GiComfortQuestionStrings.painRightUpperEmoji,
         text: GiComfortQuestionStrings.painRightUpper,
         value: 'right_upper_quadrant',
+        triggersDerived: true, // Q3-4로 (담낭염 체크)
       ),
       AnswerOption(
         emoji: GiComfortQuestionStrings.painPeriumbilicalEmoji,
@@ -456,6 +457,30 @@ class DerivedQuestions {
     parentQuestionId: 'gi_comfort',
     emoji: GiComfortQuestionStrings.emoji,
     question: GiComfortQuestionStrings.derivedUpperPainSeverityQuestion,
+    options: [
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.painMildEmoji,
+        text: GiComfortQuestionStrings.painMild,
+        value: 'mild',
+      ),
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.painModerateEmoji,
+        text: GiComfortQuestionStrings.painModerate,
+        value: 'moderate',
+      ),
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.painSevereEmoji,
+        text: GiComfortQuestionStrings.painSevere,
+        value: 'severe',
+      ),
+    ],
+  );
+
+  /// Q3-4. 오른쪽 윗배 통증 상세 (담낭염 체크)
+  static const rightUpperPainSeverity = DerivedQuestion(
+    parentQuestionId: 'gi_comfort',
+    emoji: GiComfortQuestionStrings.emoji,
+    question: GiComfortQuestionStrings.derivedRightUpperPainSeverityQuestion,
     options: [
       AnswerOption(
         emoji: GiComfortQuestionStrings.painMildEmoji,

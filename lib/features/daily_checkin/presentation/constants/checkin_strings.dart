@@ -181,6 +181,9 @@ class GiComfortQuestionStrings {
   static const painModerateEmoji = '😣';
   static const painSevere = '많이 아팠어요';
   static const painSevereEmoji = '😰';
+
+  // Q3-4: 오른쪽 윗배 통증 상세 (담낭염 체크)
+  static const derivedRightUpperPainSeverityQuestion = '통증이 어느 정도였나요?';
 }
 
 /// Q4. 화장실 질문

@@ -95,6 +95,8 @@ class DerivedQuestionSheet extends StatelessWidget {
         return DerivedQuestions.painLocation;
       case 'Q3-3':
         return DerivedQuestions.upperPainSeverity;
+      case 'Q3-4':
+        return DerivedQuestions.rightUpperPainSeverity;
       case 'Q4-1':
         return DerivedQuestions.bowelIssueType;
       case 'Q4-1a':
