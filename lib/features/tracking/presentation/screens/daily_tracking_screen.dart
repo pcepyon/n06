@@ -59,7 +59,6 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
   final Map<String, int> _symptomSeverities = {};
   final Map<String, bool?> _symptomPersistent = {};
   final Map<String, List<String>> _symptomTags = {};
-  String _note = '';
 
   bool _isLoading = false;
 
@@ -418,7 +417,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
             maxLines: 4,
             minLines: 4,
             style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
-            onChanged: (value) => setState(() => _note = value),
+            onChanged: (value) {}, // DEPRECATED - 노트 기능 제거됨
           ),
         ],
       ),

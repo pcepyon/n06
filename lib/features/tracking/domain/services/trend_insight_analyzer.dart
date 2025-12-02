@@ -61,48 +61,8 @@ class TrendInsightAnalyzer {
     List<dynamic> logs,
     List<SymptomFrequency> frequencies,
   ) {
-    final trends = <SeverityTrend>[];
-
-    // TOP 3 증상만 분석
-    final topSymptoms = frequencies.take(3).map((f) => f.symptomName).toList();
-
-    // 증상 로그는 제거되었으므로 빈 리스트 반환
-    return trends;
-  }
-
-  /// 날짜별 평균 심각도 계산
-  List<double> _calculateDailyAverages(List<dynamic> logs) {
     // 증상 로그는 제거되었으므로 빈 리스트 반환
     return [];
-  }
-
-  /// 추세 방향 결정 (선형 회귀 기울기 기반)
-  TrendDirection _determineTrendDirection(List<double> dailyAverages) {
-    if (dailyAverages.length < 2) return TrendDirection.stable;
-
-    // 간단한 선형 회귀 기울기 계산
-    final n = dailyAverages.length;
-    double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
-
-    for (int i = 0; i < n; i++) {
-      final x = i.toDouble();
-      final y = dailyAverages[i];
-      sumX += x;
-      sumY += y;
-      sumXY += x * y;
-      sumX2 += x * x;
-    }
-
-    final slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-
-    // 기울기 기준으로 방향 결정
-    if (slope < -0.3) {
-      return TrendDirection.improving; // 심각도 감소
-    } else if (slope > 0.3) {
-      return TrendDirection.worsening; // 심각도 증가
-    } else {
-      return TrendDirection.stable;
-    }
   }
 
   /// 전체 방향 평가 (모든 증상의 평균 심각도 추세)

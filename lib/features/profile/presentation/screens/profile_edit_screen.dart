@@ -146,7 +146,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
-      GabiumToast.showError(context, '저장 실패: $e');
+      if (mounted) {
+        GabiumToast.showError(context, '저장 실패: $e');
+      }
     }
   }
 }

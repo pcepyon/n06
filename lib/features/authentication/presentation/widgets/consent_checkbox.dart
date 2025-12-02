@@ -30,12 +30,12 @@ class ConsentCheckbox extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   const ConsentCheckbox({
-    Key? key,
+    super.key,
     required this.label,
     this.isRequired = false,
     required this.value,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

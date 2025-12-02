@@ -8,7 +8,6 @@ void main() {
   group('InjectionSiteSelectorV2 - AlertDialog intrinsic dimension issue', () {
     testWidgets('should render without error inside AlertDialog', (tester) async {
       // Arrange
-      String? selectedSite;
       final recentRecords = <DoseRecord>[
         DoseRecord(
           id: '1',
@@ -40,9 +39,7 @@ void main() {
                               InjectionSiteSelectorV2(
                                 initialSite: null,
                                 recentRecords: recentRecords,
-                                onSiteSelected: (site) {
-                                  selectedSite = site;
-                                },
+                                onSiteSelected: (site) {},
                               ),
                             ],
                           ),
@@ -124,7 +121,6 @@ void main() {
 
     testWidgets('should show rotation warning for recently used site', (tester) async {
       // Arrange
-      String? selectedSite;
       final recentRecords = <DoseRecord>[
         DoseRecord(
           id: '1',
@@ -145,9 +141,7 @@ void main() {
               body: InjectionSiteSelectorV2(
                 initialSite: null,
                 recentRecords: recentRecords,
-                onSiteSelected: (site) {
-                  selectedSite = site;
-                },
+                onSiteSelected: (site) {},
               ),
             ),
           ),

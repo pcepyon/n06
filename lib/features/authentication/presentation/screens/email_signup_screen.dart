@@ -264,21 +264,21 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
                   children: [
                     ConsentCheckbox(
                       value: _agreeToTerms,
-                      onChanged: (value) => setState(() => _agreeToTerms = value ?? false),
+                      onChanged: (value) => setState(() => _agreeToTerms = value),
                       label: '이용약관에 동의합니다',
                       isRequired: true,
                     ),
                     const SizedBox(height: 16),
                     ConsentCheckbox(
                       value: _agreeToPrivacy,
-                      onChanged: (value) => setState(() => _agreeToPrivacy = value ?? false),
+                      onChanged: (value) => setState(() => _agreeToPrivacy = value),
                       label: '개인정보 처리방침에 동의합니다',
                       isRequired: true,
                     ),
                     const SizedBox(height: 16),
                     ConsentCheckbox(
                       value: _agreeToMarketing,
-                      onChanged: (value) => setState(() => _agreeToMarketing = value ?? false),
+                      onChanged: (value) => setState(() => _agreeToMarketing = value),
                       label: '마케팅 정보 수신에 동의합니다',
                       isRequired: false,
                     ),

@@ -4,12 +4,8 @@ import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/tracking/domain/entities/trend_insight.dart';
 import 'package:n06/features/tracking/presentation/widgets/trend_insight_card.dart';
-// import 'package:n06/features/tracking/presentation/widgets/symptom_heatmap_calendar.dart'; // DEPRECATED - removed
-// import 'package:n06/features/tracking/presentation/widgets/symptom_trend_chart.dart'; // DEPRECATED - removed
-import 'package:n06/features/tracking/presentation/widgets/pattern_insight_card.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/trend_insight_notifier.dart';
-// import 'package:n06/features/tracking/application/notifiers/symptom_pattern_notifier.dart'; // DEPRECATED - removed
 
 /// 트렌드 대시보드 화면
 ///
@@ -223,51 +219,8 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
   }
 
   Widget _buildPatternInsights(String userId, TrendInsight insight) {
-    // TOP 증상에 대한 패턴 분석 표시
-    final topSymptom = insight.frequencies.first.symptomName;
-
     // Symptom pattern provider is removed
     return const SizedBox.shrink();
-
-    /*
-    final patternState = ref.watch(
-      // symptomPatternProvider(userId: userId, symptomName: topSymptom), // DEPRECATED
-    );
-
-    return patternState.when(
-      data: (patterns) {
-        if (patterns.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: AppColors.neutral200),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Text(
-                '패턴을 찾기 위해서는 더 많은 기록이 필요해요',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.neutral500,
-                ),
-              ),
-            ),
-          );
-        }
-
-        return Column(
-          children: patterns.map((pattern) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: PatternInsightCard(insight: pattern),
-            );
-          }).toList(),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => const SizedBox.shrink(),
-    );
-    */
   }
 
   Widget _buildLoading() {
@@ -314,30 +267,5 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
         ),
       ),
     );
-  }
-
-  DateTime _getStartDate() {
-    final now = DateTime.now();
-    return _selectedPeriod == TrendPeriod.weekly
-        ? now.subtract(const Duration(days: 7))
-        : now.subtract(const Duration(days: 30));
-  }
-
-  Map<DateTime, int> _buildSymptomCountMap(TrendInsight insight) {
-    // 간단한 예시: 빈도 데이터를 날짜별로 분산
-    // 실제로는 일별 증상 개수를 정확히 집계해야 함
-    final map = <DateTime, int>{};
-    final now = DateTime.now();
-
-    for (int i = 0; i < (_selectedPeriod == TrendPeriod.weekly ? 7 : 30); i++) {
-      final date = now.subtract(Duration(days: i));
-      final normalizedDate = DateTime(date.year, date.month, date.day);
-
-      // 임시: 랜덤 개수 대신 빈도 기반으로 예측
-      final count = insight.frequencies.isEmpty ? 0 : (insight.frequencies.first.count / 7).round();
-      map[normalizedDate] = count;
-    }
-
-    return map;
   }
 }

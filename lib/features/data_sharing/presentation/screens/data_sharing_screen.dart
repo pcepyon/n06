@@ -425,65 +425,6 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
     );
   }
 
-  Widget _buildSymptomLogsSection(dynamic report) {
-    final logs = report.getSymptomLogsSorted();
-    return Column(
-      children: logs.map<Widget>((log) {
-        return Card(
-          color: AppColors.historyBackground,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12), // md
-            side: const BorderSide(
-              color: AppColors.border,
-              width: 1,
-            ),
-          ),
-          elevation: 2, // sm shadow
-          margin: const EdgeInsets.only(bottom: 12), // md
-          child: Padding(
-            padding: const EdgeInsets.all(16), // md
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.history,
-                    borderRadius: BorderRadius.circular(8), // sm
-                  ),
-                  child: const Icon(Icons.warning, color: AppColors.surface, size: 20),
-                ),
-                const SizedBox(width: 16), // md
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        log.symptomName,
-                        style: AppTypography.bodyLarge,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '심각도: ${log.severity}/10',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  log.logDate.toString().split(' ')[0],
-                  style: AppTypography.caption,
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
   void _showExitDialog(BuildContext context) {
     showDialog(
       context: context,

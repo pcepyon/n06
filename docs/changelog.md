@@ -21,6 +21,11 @@
 
 ## 2025-12-02
 
+- [fix] flutter analyze 경고 및 미사용 코드 정리 (38개 → 4개 info)
+  - dead code 제거, 미사용 함수/변수/import 제거
+  - super parameter 적용, BuildContext async gap 수정
+  - `lib/features/authentication/`, `lib/features/tracking/`, `test/` (14개 파일)
+
 - [feat] 데일리 체크인 기능 Phase 0-4 전체 구현 완료
   - **Phase 0: 레거시 정리**
     - DB 마이그레이션: daily_checkins 테이블 생성 (`supabase/migrations/06.daily_checkins.sql`)

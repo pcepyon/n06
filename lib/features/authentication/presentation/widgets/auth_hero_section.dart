@@ -28,12 +28,12 @@ class AuthHeroSection extends StatelessWidget {
   final double logoSize;
 
   const AuthHeroSection({
-    Key? key,
+    super.key,
     this.title = '가비움',
     this.subtitle = '체계적으로 관리하세요',
     this.logoAssetPath = 'assets/logos/gabium-logo-192.png',
     this.logoSize = 192,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -5,17 +5,13 @@ import 'package:n06/features/onboarding/presentation/widgets/education/how_it_wo
 void main() {
   group('HowItWorksScreen', () {
     testWidgets('위젯 초기 렌더링 시 에러가 발생하지 않는다', (tester) async {
-      // Arrange
-      bool nextCalled = false;
-      bool skipCalled = false;
-
       // Act - 위젯 빌드
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: HowItWorksScreen(
-              onNext: () => nextCalled = true,
-              onSkip: () => skipCalled = true,
+              onNext: () {},
+              onSkip: () {},
             ),
           ),
         ),
@@ -59,12 +55,11 @@ void main() {
 
     testWidgets('모든 항목을 확장하면 다음 버튼이 활성화된다', (tester) async {
       // Arrange
-      bool nextCalled = false;
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: HowItWorksScreen(
-              onNext: () => nextCalled = true,
+              onNext: () {},
             ),
           ),
         ),
