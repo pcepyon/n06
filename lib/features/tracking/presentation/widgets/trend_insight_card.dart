@@ -223,7 +223,7 @@ class TrendInsightCard extends StatelessWidget {
   Widget _buildQuestionSummary() {
     // 상위 3개 (가장 좋은 것과 가장 나쁜 것)
     final sorted = List<QuestionTrend>.from(insight.questionTrends)
-      ..sort((a, b) => b.goodRate.compareTo(a.goodRate));
+      ..sort((a, b) => b.averageScore.compareTo(a.averageScore));
 
     final best = sorted.take(2).toList();
     final worst = sorted.reversed.take(1).toList();
@@ -265,7 +265,7 @@ class TrendInsightCard extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            '${trend.goodRate.toInt()}%',
+            '${trend.averageScore.toInt()}%',
             style: AppTypography.caption.copyWith(
               color: color,
               fontWeight: FontWeight.w700,

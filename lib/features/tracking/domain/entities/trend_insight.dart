@@ -162,8 +162,9 @@ class QuestionTrend {
   /// 질문 라벨
   final String label;
 
-  /// "good" 비율 (0-100)
-  final double goodRate;
+  /// 평균 점수 (0-100)
+  /// good=100, moderate=50, bad=0 기준
+  final double averageScore;
 
   /// 지난 기간 대비 변화
   final TrendDirection direction;
@@ -174,7 +175,7 @@ class QuestionTrend {
   const QuestionTrend({
     required this.questionType,
     required this.label,
-    required this.goodRate,
+    required this.averageScore,
     required this.direction,
     required this.dailyStatuses,
   });
@@ -185,12 +186,12 @@ class QuestionTrend {
       other is QuestionTrend &&
           runtimeType == other.runtimeType &&
           questionType == other.questionType &&
-          goodRate == other.goodRate &&
+          averageScore == other.averageScore &&
           direction == other.direction;
 
   @override
   int get hashCode =>
-      questionType.hashCode ^ goodRate.hashCode ^ direction.hashCode;
+      questionType.hashCode ^ averageScore.hashCode ^ direction.hashCode;
 }
 
 /// 질문 타입
@@ -208,15 +209,15 @@ enum QuestionType {
 class DailyQuestionStatus {
   final DateTime date;
 
-  /// 상태 값 (0: bad, 1: moderate, 2: good)
-  final int statusValue;
+  /// 상태 점수 (0: bad, 50: moderate, 100: good)
+  final int score;
 
   /// 체크인 없음
   final bool noData;
 
   const DailyQuestionStatus({
     required this.date,
-    required this.statusValue,
+    required this.score,
     this.noData = false,
   });
 }

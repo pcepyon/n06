@@ -120,14 +120,14 @@ void main() {
           QuestionTrend(
             questionType: QuestionType.meal,
             label: '식사',
-            goodRate: 80.0,
+            averageScore: 80.0,
             direction: TrendDirection.improving,
             dailyStatuses: const [],
           ),
           QuestionTrend(
             questionType: QuestionType.hydration,
             label: '수분',
-            goodRate: 60.0,
+            averageScore: 60.0,
             direction: TrendDirection.stable,
             dailyStatuses: const [],
           ),

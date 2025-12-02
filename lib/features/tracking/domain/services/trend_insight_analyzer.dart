@@ -119,16 +119,17 @@ class TrendInsightAnalyzer {
   }
 
   /// 체크인에서 전체 점수 계산 (0-100)
+  /// 6개 항목의 평균 점수 (각 항목: good=100, moderate=50, bad=0)
   int _calculateOverallScore(DailyCheckin checkin) {
-    var score = 0;
+    final totalScore = _conditionLevelToScore(checkin.mealCondition) +
+        _hydrationLevelToScore(checkin.hydrationLevel) +
+        _giComfortLevelToScore(checkin.giComfort) +
+        _bowelConditionToScore(checkin.bowelCondition) +
+        _energyLevelToScore(checkin.energyLevel) +
+        _moodLevelToScore(checkin.mood);
 
-    // 각 질문별 점수 (최대 ~16.67점씩)
-    score += _conditionLevelToScore(checkin.mealCondition);
-    score += _hydrationLevelToScore(checkin.hydrationLevel);
-    score += _giComfortLevelToScore(checkin.giComfort);
-    score += _bowelConditionToScore(checkin.bowelCondition);
-    score += _energyLevelToScore(checkin.energyLevel);
-    score += _moodLevelToScore(checkin.mood);
+    // 6개 항목 평균
+    var score = (totalScore / 6).round();
 
     // Red Flag 감점
     if (checkin.redFlagDetected != null) {
@@ -138,69 +139,70 @@ class TrendInsightAnalyzer {
     return score.clamp(0, 100);
   }
 
+  /// 통일된 점수 체계: good=100, moderate=50, bad=0
   int _conditionLevelToScore(ConditionLevel level) {
     switch (level) {
       case ConditionLevel.good:
-        return 17;
+        return 100;
       case ConditionLevel.moderate:
-        return 10;
+        return 50;
       case ConditionLevel.difficult:
-        return 3;
+        return 0;
     }
   }
 
   int _hydrationLevelToScore(HydrationLevel level) {
     switch (level) {
       case HydrationLevel.good:
-        return 17;
+        return 100;
       case HydrationLevel.moderate:
-        return 10;
+        return 50;
       case HydrationLevel.poor:
-        return 3;
+        return 0;
     }
   }
 
   int _giComfortLevelToScore(GiComfortLevel level) {
     switch (level) {
       case GiComfortLevel.good:
-        return 17;
+        return 100;
       case GiComfortLevel.uncomfortable:
-        return 10;
+        return 50;
       case GiComfortLevel.veryUncomfortable:
-        return 3;
+        return 0;
     }
   }
 
   int _bowelConditionToScore(BowelCondition level) {
     switch (level) {
       case BowelCondition.normal:
-        return 17;
+        return 100;
       case BowelCondition.irregular:
-        return 10;
+        return 50;
       case BowelCondition.difficult:
-        return 3;
+        return 0;
     }
   }
 
   int _energyLevelToScore(EnergyLevel level) {
     switch (level) {
       case EnergyLevel.good:
-        return 17;
+        return 100;
       case EnergyLevel.normal:
-        return 10;
+        return 50;
       case EnergyLevel.tired:
-        return 3;
+        return 0;
     }
   }
 
   int _moodLevelToScore(MoodLevel level) {
     switch (level) {
       case MoodLevel.good:
-        return 15;
+        return 100;
       case MoodLevel.neutral:
-        return 10;
+        return 50;
       case MoodLevel.low:
-        return 3;
+        return 0;
     }
   }
 
@@ -227,21 +229,13 @@ class TrendInsightAnalyzer {
       checkinMap[_dateKey(checkin.checkinDate)] = checkin;
     }
 
-    final previousMap = <String, DailyCheckin>{};
-    if (previousCheckins != null) {
-      for (final checkin in previousCheckins) {
-        previousMap[_dateKey(checkin.checkinDate)] = checkin;
-      }
-    }
-
     return [
       _buildQuestionTrend(
         QuestionType.meal,
         '식사',
         checkins,
         previousCheckins,
-        (c) => c.mealCondition == ConditionLevel.good,
-        (c) => _conditionToValue(c.mealCondition),
+        (c) => _conditionLevelToScore(c.mealCondition),
         startDate,
         periodDays,
         checkinMap,
@@ -251,8 +245,7 @@ class TrendInsightAnalyzer {
         '수분',
         checkins,
         previousCheckins,
-        (c) => c.hydrationLevel == HydrationLevel.good,
-        (c) => _hydrationToValue(c.hydrationLevel),
+        (c) => _hydrationLevelToScore(c.hydrationLevel),
         startDate,
         periodDays,
         checkinMap,
@@ -262,8 +255,7 @@ class TrendInsightAnalyzer {
         '속 편안함',
         checkins,
         previousCheckins,
-        (c) => c.giComfort == GiComfortLevel.good,
-        (c) => _giComfortToValue(c.giComfort),
+        (c) => _giComfortLevelToScore(c.giComfort),
         startDate,
         periodDays,
         checkinMap,
@@ -273,8 +265,7 @@ class TrendInsightAnalyzer {
         '배변',
         checkins,
         previousCheckins,
-        (c) => c.bowelCondition == BowelCondition.normal,
-        (c) => _bowelToValue(c.bowelCondition),
+        (c) => _bowelConditionToScore(c.bowelCondition),
         startDate,
         periodDays,
         checkinMap,
@@ -284,8 +275,7 @@ class TrendInsightAnalyzer {
         '에너지',
         checkins,
         previousCheckins,
-        (c) => c.energyLevel == EnergyLevel.good,
-        (c) => _energyToValue(c.energyLevel),
+        (c) => _energyLevelToScore(c.energyLevel),
         startDate,
         periodDays,
         checkinMap,
@@ -295,8 +285,7 @@ class TrendInsightAnalyzer {
         '기분',
         checkins,
         previousCheckins,
-        (c) => c.mood == MoodLevel.good,
-        (c) => _moodToValue(c.mood),
+        (c) => _moodLevelToScore(c.mood),
         startDate,
         periodDays,
         checkinMap,
@@ -309,22 +298,22 @@ class TrendInsightAnalyzer {
     String label,
     List<DailyCheckin> checkins,
     List<DailyCheckin>? previousCheckins,
-    bool Function(DailyCheckin) isGood,
-    int Function(DailyCheckin) getValue,
+    int Function(DailyCheckin) getScore,
     DateTime startDate,
     int periodDays,
     Map<String, DailyCheckin> checkinMap,
   ) {
-    // Good rate 계산
-    final goodCount = checkins.where(isGood).length;
-    final goodRate = checkins.isEmpty ? 0.0 : goodCount / checkins.length * 100;
+    // 평균 점수 계산 (good=100, moderate=50, bad=0)
+    final totalScore = checkins.fold<int>(0, (sum, c) => sum + getScore(c));
+    final averageScore = checkins.isEmpty ? 0.0 : totalScore / checkins.length;
 
     // 이전 기간 대비 방향
     TrendDirection direction = TrendDirection.stable;
     if (previousCheckins != null && previousCheckins.isNotEmpty) {
-      final prevGoodCount = previousCheckins.where(isGood).length;
-      final prevGoodRate = prevGoodCount / previousCheckins.length * 100;
-      final diff = goodRate - prevGoodRate;
+      final prevTotalScore =
+          previousCheckins.fold<int>(0, (sum, c) => sum + getScore(c));
+      final prevAverageScore = prevTotalScore / previousCheckins.length;
+      final diff = averageScore - prevAverageScore;
 
       if (diff > 10) {
         direction = TrendDirection.improving;
@@ -343,13 +332,13 @@ class TrendInsightAnalyzer {
       if (checkin != null) {
         dailyStatuses.add(DailyQuestionStatus(
           date: date,
-          statusValue: getValue(checkin),
+          score: getScore(checkin),
           noData: false,
         ));
       } else {
         dailyStatuses.add(DailyQuestionStatus(
           date: date,
-          statusValue: 0,
+          score: 0,
           noData: true,
         ));
       }
@@ -358,76 +347,10 @@ class TrendInsightAnalyzer {
     return QuestionTrend(
       questionType: type,
       label: label,
-      goodRate: goodRate,
+      averageScore: averageScore,
       direction: direction,
       dailyStatuses: dailyStatuses,
     );
-  }
-
-  int _conditionToValue(ConditionLevel level) {
-    switch (level) {
-      case ConditionLevel.good:
-        return 2;
-      case ConditionLevel.moderate:
-        return 1;
-      case ConditionLevel.difficult:
-        return 0;
-    }
-  }
-
-  int _hydrationToValue(HydrationLevel level) {
-    switch (level) {
-      case HydrationLevel.good:
-        return 2;
-      case HydrationLevel.moderate:
-        return 1;
-      case HydrationLevel.poor:
-        return 0;
-    }
-  }
-
-  int _giComfortToValue(GiComfortLevel level) {
-    switch (level) {
-      case GiComfortLevel.good:
-        return 2;
-      case GiComfortLevel.uncomfortable:
-        return 1;
-      case GiComfortLevel.veryUncomfortable:
-        return 0;
-    }
-  }
-
-  int _bowelToValue(BowelCondition level) {
-    switch (level) {
-      case BowelCondition.normal:
-        return 2;
-      case BowelCondition.irregular:
-        return 1;
-      case BowelCondition.difficult:
-        return 0;
-    }
-  }
-
-  int _energyToValue(EnergyLevel level) {
-    switch (level) {
-      case EnergyLevel.good:
-        return 2;
-      case EnergyLevel.normal:
-        return 1;
-      case EnergyLevel.tired:
-        return 0;
-    }
-  }
-
-  int _moodToValue(MoodLevel level) {
-    switch (level) {
-      case MoodLevel.good:
-        return 2;
-      case MoodLevel.neutral:
-        return 1;
-      case MoodLevel.low:
-        return 0;
-    }
   }
 
   /// 패턴 인사이트 생성
@@ -459,14 +382,14 @@ class TrendInsightAnalyzer {
       }
     }
 
-    // 가장 신경써야 할 영역 (good rate가 가장 낮은 것)
+    // 가장 신경써야 할 영역 (평균 점수가 가장 낮은 것)
     QuestionType? topConcernArea;
     QuestionType? improvementArea;
 
     if (questionTrends.isNotEmpty) {
       final sorted = List<QuestionTrend>.from(questionTrends)
-        ..sort((a, b) => a.goodRate.compareTo(b.goodRate));
-      if (sorted.first.goodRate < 50) {
+        ..sort((a, b) => a.averageScore.compareTo(b.averageScore));
+      if (sorted.first.averageScore < 50) {
         topConcernArea = sorted.first.questionType;
       }
 
@@ -564,7 +487,7 @@ class TrendInsightAnalyzer {
 
     // 가장 좋은 영역과 나쁜 영역 찾기
     final sorted = List<QuestionTrend>.from(questionTrends)
-      ..sort((a, b) => b.goodRate.compareTo(a.goodRate));
+      ..sort((a, b) => b.averageScore.compareTo(a.averageScore));
     final best = sorted.isNotEmpty ? sorted.first : null;
     final worst = sorted.isNotEmpty ? sorted.last : null;
 
@@ -572,12 +495,12 @@ class TrendInsightAnalyzer {
       case TrendDirection.improving:
         return '$periodText 컨디션이 좋아지고 있어요! 잘하고 계세요.';
       case TrendDirection.worsening:
-        if (worst != null && worst.goodRate < 50) {
+        if (worst != null && worst.averageScore < 50) {
           return '$periodText ${worst.label} 상태가 조금 걱정되네요. 관리가 필요해요.';
         }
         return '$periodText 컨디션이 조금 떨어졌어요. 몸 관리에 신경써주세요.';
       case TrendDirection.stable:
-        if (best != null && best.goodRate >= 80) {
+        if (best != null && best.averageScore >= 80) {
           return '$periodText ${best.label} 상태가 특히 좋았어요! 유지해주세요.';
         }
         return '$periodText 컨디션이 안정적이에요. 계속 유지해주세요!';

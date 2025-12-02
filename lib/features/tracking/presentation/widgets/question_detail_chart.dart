@@ -265,8 +265,8 @@ class _LineChartPainter extends CustomPainter {
       if (status.noData) {
         y = chartHeight; // 기록 없음은 최하단
       } else {
-        // statusValue: 0 = bad, 1 = moderate, 2 = good
-        y = chartHeight - (status.statusValue * chartHeight / 2);
+        // score: 0 = bad, 50 = moderate, 100 = good
+        y = chartHeight - (status.score * chartHeight / 100);
       }
 
       points.add(Offset(x, y));
@@ -306,15 +306,13 @@ class _LineChartPainter extends CustomPainter {
       if (status.noData) {
         pointColor = AppColors.neutral300;
       } else {
-        switch (status.statusValue) {
-          case 2:
-            pointColor = const Color(0xFF4CAF50);
-            break;
-          case 1:
-            pointColor = const Color(0xFFFFC107);
-            break;
-          default:
-            pointColor = const Color(0xFFF44336);
+        // score: 0 = bad, 50 = moderate, 100 = good
+        if (status.score >= 100) {
+          pointColor = const Color(0xFF4CAF50); // good
+        } else if (status.score >= 50) {
+          pointColor = const Color(0xFFFFC107); // moderate
+        } else {
+          pointColor = const Color(0xFFF44336); // bad
         }
       }
 

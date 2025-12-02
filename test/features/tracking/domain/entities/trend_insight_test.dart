@@ -24,7 +24,7 @@ void main() {
         QuestionTrend(
           questionType: QuestionType.meal,
           label: '식사',
-          goodRate: 80.0,
+          averageScore: 80.0,
           direction: TrendDirection.improving,
           dailyStatuses: const [],
         ),
@@ -82,14 +82,14 @@ void main() {
       final trend = QuestionTrend(
         questionType: QuestionType.meal,
         label: '식사',
-        goodRate: 75.0,
+        averageScore: 75.0,
         direction: TrendDirection.improving,
         dailyStatuses: const [],
       );
 
       expect(trend.questionType, QuestionType.meal);
       expect(trend.label, '식사');
-      expect(trend.goodRate, 75.0);
+      expect(trend.averageScore, 75.0);
       expect(trend.direction, TrendDirection.improving);
     });
 
@@ -109,14 +109,14 @@ void main() {
       final trend1 = QuestionTrend(
         questionType: QuestionType.meal,
         label: '식사',
-        goodRate: 80.0,
+        averageScore: 80.0,
         direction: TrendDirection.stable,
         dailyStatuses: const [],
       );
       final trend2 = QuestionTrend(
         questionType: QuestionType.meal,
         label: '식사',
-        goodRate: 80.0,
+        averageScore: 80.0,
         direction: TrendDirection.stable,
         dailyStatuses: const [],
       );
@@ -195,12 +195,12 @@ void main() {
     test('should create DailyQuestionStatus', () {
       final status = DailyQuestionStatus(
         date: DateTime(2024, 1, 15),
-        statusValue: 2,
+        score: 100,
         noData: false,
       );
 
       expect(status.date, DateTime(2024, 1, 15));
-      expect(status.statusValue, 2);
+      expect(status.score, 100);
       expect(status.noData, isFalse);
     });
 
@@ -208,7 +208,7 @@ void main() {
     test('should have noData default to false', () {
       final status = DailyQuestionStatus(
         date: DateTime(2024, 1, 15),
-        statusValue: 1,
+        score: 50,
       );
 
       expect(status.noData, isFalse);

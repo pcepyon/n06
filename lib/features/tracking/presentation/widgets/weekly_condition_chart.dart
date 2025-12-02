@@ -76,11 +76,11 @@ class WeeklyConditionChart extends StatelessWidget {
               // 방향 아이콘
               _buildDirectionIndicator(trend.direction),
               const SizedBox(width: 8),
-              // 비율
+              // 점수
               Text(
-                '${trend.goodRate.toInt()}%',
+                '${trend.averageScore.toInt()}%',
                 style: AppTypography.bodyMedium.copyWith(
-                  color: _getRateColor(trend.goodRate),
+                  color: _getRateColor(trend.averageScore),
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -110,7 +110,7 @@ class WeeklyConditionChart extends StatelessWidget {
           builder: (context, constraints) {
             return Container(
               height: 12,
-              width: constraints.maxWidth * (trend.goodRate / 100),
+              width: constraints.maxWidth * (trend.averageScore / 100),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [

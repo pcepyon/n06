@@ -47,10 +47,10 @@ class ScaffoldWithBottomNav extends StatelessWidget {
       route: '/dose-schedule',
     ),
     GabiumBottomNavItem(
-      label: '가이드',
-      icon: Icons.menu_book_outlined,
-      activeIcon: Icons.menu_book,
-      route: '/coping-guide',
+      label: '트렌드',
+      icon: Icons.insights_outlined,
+      activeIcon: Icons.insights,
+      route: '/trend-dashboard',
     ),
     GabiumBottomNavItem(
       label: '설정',

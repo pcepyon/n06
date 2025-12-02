@@ -21,6 +21,14 @@
 
 ## 2025-12-03
 
+- [feat] 하단 네비 바에 트렌드 대시보드 추가
+  - 가이드 탭을 트렌드 탭으로 교체 (아이콘: insights)
+  - trend-dashboard 라우트를 ShellRoute 내로 이동하여 하단 네비 표시
+  - 트렌드 점수 체계 통일 (goodRate → averageScore, 0-100 스케일)
+  - `lib/core/presentation/widgets/scaffold_with_bottom_nav.dart`
+  - `lib/core/routing/app_router.dart`
+  - `lib/features/tracking/domain/entities/trend_insight.dart`
+
 - [fix] 데일리 체크인 파생 질문 분기 로직 일관성 개선
   - Q3(속 편안함), Q4(화장실)에서 보통 선택 시에도 파생 질문이 나오던 문제 수정
   - 다른 질문들과 동일하게 나쁨 선택 시에만 파생 질문 표시

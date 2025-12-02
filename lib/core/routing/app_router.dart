@@ -168,11 +168,11 @@ final appRouter = GoRouter(
           builder: (context, state) => const DoseCalendarScreen(),
         ),
 
-        /// Coping Guide (F004)
+        /// Trend Dashboard (트렌드 대시보드)
         GoRoute(
-          path: '/coping-guide',
-          name: 'coping_guide',
-          builder: (context, state) => const CopingGuideScreen(),
+          path: '/trend-dashboard',
+          name: 'trend_dashboard',
+          builder: (context, state) => const TrendDashboardScreen(),
         ),
 
         /// Settings (UF-SETTINGS / 009)
@@ -221,10 +221,11 @@ final appRouter = GoRouter(
       builder: (context, state) => const RecordListScreen(),
     ),
 
+    /// Coping Guide (F004) - without Bottom Nav
     GoRoute(
-      path: '/trend-dashboard',
-      name: 'trend_dashboard',
-      builder: (context, state) => const TrendDashboardScreen(),
+      path: '/coping-guide',
+      name: 'coping_guide',
+      builder: (context, state) => const CopingGuideScreen(),
     ),
 
     /// Legacy redirect: /tracking/daily → /daily-checkin
