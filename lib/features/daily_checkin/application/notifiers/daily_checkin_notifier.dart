@@ -74,6 +74,7 @@ class DailyCheckinState {
     Map<String, dynamic>? derivedAnswers,
     List<SymptomDetail>? symptomDetails,
     String? currentDerivedPath,
+    bool clearCurrentDerivedPath = false, // BUG-20251202-231014: null 설정 지원
     bool? isComplete,
     DailyCheckin? savedCheckin,
     CheckinContext? context,
@@ -87,7 +88,10 @@ class DailyCheckinState {
       answers: answers ?? this.answers,
       derivedAnswers: derivedAnswers ?? this.derivedAnswers,
       symptomDetails: symptomDetails ?? this.symptomDetails,
-      currentDerivedPath: currentDerivedPath ?? this.currentDerivedPath,
+      // BUG-20251202-231014: clearCurrentDerivedPath가 true면 null로 설정
+      currentDerivedPath: clearCurrentDerivedPath
+          ? null
+          : (currentDerivedPath ?? this.currentDerivedPath),
       isComplete: isComplete ?? this.isComplete,
       savedCheckin: savedCheckin ?? this.savedCheckin,
       context: context ?? this.context,
@@ -201,7 +205,7 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
       state = AsyncValue.data(
         currentState.copyWith(
           answers: newAnswers,
-          currentDerivedPath: null,
+          clearCurrentDerivedPath: true, // BUG-20251202-231014
         ),
       );
       await finishCheckin();
@@ -211,7 +215,7 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
         currentState.copyWith(
           answers: newAnswers,
           currentStep: questionIndex + 1,
-          currentDerivedPath: null,
+          clearCurrentDerivedPath: true, // BUG-20251202-231014
         ),
       );
     }
@@ -253,7 +257,7 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
         currentState.copyWith(
           derivedAnswers: newDerivedAnswers,
           symptomDetails: newSymptomDetails,
-          currentDerivedPath: null,
+          clearCurrentDerivedPath: true, // BUG-20251202-231014
           currentStep: nextStep,
         ),
       );
@@ -289,7 +293,7 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     if (currentState.currentDerivedPath != null) {
       // 파생 질문에서 메인 질문으로
       state = AsyncValue.data(
-        currentState.copyWith(currentDerivedPath: null),
+        currentState.copyWith(clearCurrentDerivedPath: true), // BUG-20251202-231014
       );
     } else if (currentState.currentStep > 0) {
       // 이전 메인 질문으로
