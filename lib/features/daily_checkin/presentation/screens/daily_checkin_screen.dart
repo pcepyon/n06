@@ -45,8 +45,10 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     super.didChangeDependencies();
     if (!_isInitialized) {
       _isInitialized = true;
-      // 체크인 시작
-      ref.read(dailyCheckinProvider.notifier).startCheckin();
+      // 체크인 시작 - 위젯 트리 빌드 후 실행 (BUG-20251202-153023)
+      Future.microtask(() {
+        ref.read(dailyCheckinProvider.notifier).startCheckin();
+      });
     }
   }
 
