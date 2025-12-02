@@ -19,6 +19,17 @@
 
 ---
 
+## 2025-12-02
+
+- [chore] 미사용 코드 18개 파일 정리
+  - authentication: datasources(kakao/naver), dtos(user/consent_record), email_auth_exceptions
+  - onboarding: user_dto
+  - tracking: validate_weight_create_usecase, symptom_context_tag_dto, record_detail_sheet, coping_guide_widget, dose_schedule_card
+  - dashboard: calculate_adherence_usecase
+  - data_sharing: data_sharing_aggregator
+  - coping_guide: guide_feedback_dto
+  - barrel exports: 4개 index.dart 파일
+
 ## 2025-12-01
 
 - [fix] 지난 주 요약 위젯 체중 변화 계산 버그 수정
