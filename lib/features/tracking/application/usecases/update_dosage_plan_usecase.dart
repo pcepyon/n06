@@ -43,9 +43,13 @@ class UpdateDosagePlanUseCase {
   });
 
   /// Execute the complete update workflow
+  ///
+  /// [isRestart] - If true, regenerates schedules from new start date (restart mode).
+  ///               If false, preserves past records and regenerates from current date (normal mode).
   Future<UpdateDosagePlanResult> execute({
     required DosagePlan oldPlan,
     required DosagePlan newPlan,
+    bool isRestart = false,
   }) async {
     try {
       // Step 1: Analyze impact
@@ -72,28 +76,34 @@ class UpdateDosagePlanUseCase {
       );
 
       // Step 4: Determine schedule generation start date
-      // If startDate changed, generate from new startDate (past or future)
-      // Otherwise, generate from current date (preserve past records)
+      // Restart mode: Generate from new start date (delete past pending schedules)
+      // Normal mode: Preserve past records, generate from max(now, new start date)
       final now = DateTime.now();
       final normalizedNow = DateTime(now.year, now.month, now.day);
-      final normalizedOldStart = DateTime(
-        oldPlan.startDate.year,
-        oldPlan.startDate.month,
-        oldPlan.startDate.day,
-      );
       final normalizedNewStart = DateTime(
         newPlan.startDate.year,
         newPlan.startDate.month,
         newPlan.startDate.day,
       );
 
-      final startDateChanged = normalizedOldStart != normalizedNewStart;
-      final scheduleStartDate = startDateChanged ? normalizedNewStart : normalizedNow;
+      final scheduleStartDate = isRestart
+          ? normalizedNewStart  // Restart: from new start date
+          : DateTime.fromMillisecondsSinceEpoch(
+              normalizedNow.millisecondsSinceEpoch > normalizedNewStart.millisecondsSinceEpoch
+                  ? normalizedNow.millisecondsSinceEpoch
+                  : normalizedNewStart.millisecondsSinceEpoch,
+            );  // Normal: from max(now, new start date)
 
-      // Delete schedules from schedule start date onwards
+      // Delete schedules
+      // Restart mode: delete all past schedules (from far past date)
+      // Normal mode: delete from schedule start date only
+      final deleteFromDate = isRestart
+          ? DateTime(2020, 1, 1)  // Delete all schedules from the beginning
+          : scheduleStartDate;
+
       await medicationRepository.deleteDoseSchedulesFrom(
         newPlan.id,
-        scheduleStartDate,
+        deleteFromDate,
       );
 
       // Recalculate and save new schedules

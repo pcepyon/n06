@@ -21,6 +21,29 @@
 
 ## 2025-12-03
 
+- [fix] DosagePlan 엔티티에서 미래 시작일 검증 로직 완화
+  - 미래 시작일 설정 시 "Start date cannot be in the future" 에러 수정
+  - 1년 이내 미래 시작일 허용 (케이스 2: 미래 계획 변경 지원)
+  - `lib/features/tracking/domain/entities/dosage_plan.dart:45-49`
+  - `test/features/tracking/domain/entities/dosage_plan_test.dart:25-51`
+
+- [fix] 재시작 모드에서 과거 예정 스케줄이 삭제되지 않는 버그 수정
+  - 재시작 모드 시 새 시작일 이전의 과거 예정 스케줄도 모두 삭제되도록 수정
+  - deleteFromDate를 2020-01-01부터 설정하여 모든 과거 스케줄 삭제
+  - `lib/features/tracking/application/usecases/update_dosage_plan_usecase.dart:100-102`
+
+- [feat] 투여 계획 수정/재시작 모드 분리로 유저 플로우 개선
+  - 일반 모드: 과거 기록 보존, 현재/미래 스케줄만 재생성 (설정 메뉴 진입)
+  - 재시작 모드: 과거 예정 스케줄 삭제, 새 시작일부터 전체 재생성 (RestartScheduleDialog 진입)
+  - URL 쿼리 파라미터로 모드 구분 (/dose-plan/edit?restart=true)
+  - 케이스 1: 과거 시작일 설정 시 수동 기록 필요 (자동 생성 안 함)
+  - 케이스 2: 미래 계획 변경 시 과거 기록 보존 (일반 모드)
+  - 케이스 3: 장기 중단 후 재시작 시 과거 예정 스케줄 삭제 (재시작 모드)
+  - `lib/features/tracking/application/usecases/update_dosage_plan_usecase.dart`
+  - `lib/features/tracking/presentation/screens/edit_dosage_plan_screen.dart`
+  - `lib/features/tracking/presentation/dialogs/restart_schedule_dialog.dart`
+  - `lib/core/routing/app_router.dart`
+
 - [feat] 투여 계획 시작일을 미래로 설정 가능하도록 개선
   - 시작일 선택 범위를 현재부터 1년 후까지 확장 (기존: 과거만 가능)
   - 다음 주부터 용량 증량 등 미래 계획을 미리 등록 가능

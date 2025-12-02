@@ -42,9 +42,10 @@ class DosagePlan extends Equatable {
   }
 
   void _validate() {
-    // Validate start date is not in the future
-    if (startDate.isAfter(DateTime.now())) {
-      throw ArgumentError('Start date cannot be in the future');
+    // Validate start date is not too far in the future (max 1 year)
+    final oneYearFromNow = DateTime.now().add(const Duration(days: 365));
+    if (startDate.isAfter(oneYearFromNow)) {
+      throw ArgumentError('Start date cannot be more than 1 year in the future');
     }
 
     // Validate cycle days

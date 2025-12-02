@@ -13,8 +13,11 @@ import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 
 class EditDosagePlanScreen extends ConsumerWidget {
+  final bool isRestart;
+
   const EditDosagePlanScreen({
     super.key,
+    this.isRestart = false,
   });
 
   @override
@@ -23,7 +26,7 @@ class EditDosagePlanScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('투여 계획 수정'),
+        title: Text(isRestart ? '투여 계획 재설정' : '투여 계획 수정'),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -99,7 +102,10 @@ class EditDosagePlanScreen extends ConsumerWidget {
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: _EditDosagePlanForm(initialPlan: plan),
+              child: _EditDosagePlanForm(
+                initialPlan: plan,
+                isRestart: isRestart,
+              ),
             );
           },
         ),
@@ -110,11 +116,13 @@ class EditDosagePlanScreen extends ConsumerWidget {
 
 class _EditDosagePlanForm extends ConsumerStatefulWidget {
   final DosagePlan initialPlan;
+  final bool isRestart;
 
   const _EditDosagePlanForm({
     // ignore: unused_element_parameter
     super.key,
     required this.initialPlan,
+    this.isRestart = false,
   });
 
   @override
@@ -189,6 +197,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
       final result = await updateUseCase.execute(
         oldPlan: plan,
         newPlan: updatedPlan,
+        isRestart: widget.isRestart,
       );
 
       if (result.isSuccess) {

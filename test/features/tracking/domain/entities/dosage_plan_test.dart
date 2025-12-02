@@ -22,13 +22,27 @@ void main() {
         expect(plan.escalationPlan, null);
       });
 
-      test('should throw exception when start date is in future', () {
+      test('should allow future start date within 1 year', () {
+        final futureDate = DateTime.now().add(Duration(days: 30));
+        final plan = DosagePlan(
+          id: 'plan-1',
+          userId: 'user-1',
+          medicationName: 'Ozempic',
+          startDate: futureDate,
+          cycleDays: 7,
+          initialDoseMg: 0.25,
+        );
+
+        expect(plan.startDate, futureDate);
+      });
+
+      test('should throw exception when start date is more than 1 year in future', () {
         expect(
           () => DosagePlan(
             id: 'plan-1',
             userId: 'user-1',
             medicationName: 'Ozempic',
-            startDate: DateTime.now().add(Duration(days: 1)),
+            startDate: DateTime.now().add(Duration(days: 366)),
             cycleDays: 7,
             initialDoseMg: 0.25,
           ),

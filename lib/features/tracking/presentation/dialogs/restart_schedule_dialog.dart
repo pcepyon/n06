@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
-import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
@@ -25,8 +24,6 @@ class RestartScheduleDialog extends ConsumerStatefulWidget {
 }
 
 class _RestartScheduleDialogState extends ConsumerState<RestartScheduleDialog> {
-  bool isLoading = false;
-
   String _getWeekday(DateTime date) {
     const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
     return weekdays[date.weekday - 1];
@@ -189,10 +186,9 @@ class _RestartScheduleDialogState extends ConsumerState<RestartScheduleDialog> {
                 width: double.infinity,
                 child: GabiumButton(
                   text: '스케줄 재설정하기',
-                  onPressed: isLoading ? null : _handleRestart,
+                  onPressed: _handleRestart,
                   variant: GabiumButtonVariant.primary,
                   size: GabiumButtonSize.medium,
-                  isLoading: isLoading,
                 ),
               ),
               const SizedBox(height: 12),
@@ -200,7 +196,7 @@ class _RestartScheduleDialogState extends ConsumerState<RestartScheduleDialog> {
                 width: double.infinity,
                 child: GabiumButton(
                   text: '나중에 하기',
-                  onPressed: isLoading ? null : () => Navigator.of(context).pop(),
+                  onPressed: () => Navigator.of(context).pop(),
                   variant: GabiumButtonVariant.secondary,
                   size: GabiumButtonSize.medium,
                 ),
@@ -244,32 +240,10 @@ class _RestartScheduleDialogState extends ConsumerState<RestartScheduleDialog> {
     );
   }
 
-  Future<void> _handleRestart() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      // 미완료 스케줄 일괄 건너뛰기 처리
-      final medicationNotifier = ref.read(medicationNotifierProvider.notifier);
-      final scheduleIds = widget.skippedSchedules.map((s) => s.id).toList();
-
-      await medicationNotifier.skipDoseSchedules(scheduleIds);
-
-      if (mounted) {
-        Navigator.of(context).pop();
-        // 투여 계획 재설정 화면으로 이동
-        context.push('/dosage-plan/edit');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('오류가 발생했습니다: $e')),
-        );
-        setState(() {
-          isLoading = false;
-        });
-      }
-    }
+  void _handleRestart() {
+    // 다이얼로그 닫기
+    Navigator.of(context).pop();
+    // 투여 계획 재설정 화면으로 이동 (재시작 모드)
+    context.push('/dose-plan/edit?restart=true');
   }
 }

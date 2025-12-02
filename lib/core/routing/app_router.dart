@@ -291,7 +291,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/dose-plan/edit',
       name: 'dose_plan_edit',
-      builder: (context, state) => const EditDosagePlanScreen(),
+      builder: (context, state) {
+        final isRestart = state.uri.queryParameters['restart'] == 'true';
+        return EditDosagePlanScreen(isRestart: isRestart);
+      },
     ),
 
     GoRoute(
