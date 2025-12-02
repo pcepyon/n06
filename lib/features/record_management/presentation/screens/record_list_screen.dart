@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
-import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/record_management/presentation/widgets/record_list_card.dart';
@@ -348,173 +347,15 @@ class _SymptomRecordsTab extends ConsumerWidget {
             ),
           ),
           data: (state) {
-            final symptoms = state.symptoms;
-
-            if (symptoms.isEmpty) {
-              return const EmptyStateWidget(
-                icon: Icons.warning_amber_outlined,
-                title: '증상 기록이 없습니다',
-                description: '아직 증상 기록이 없습니다.\n첫 번째 기록을 추가해보세요.',
-              );
-            }
-
-            final sortedSymptoms = List<SymptomLog>.from(symptoms)
-              ..sort((a, b) => b.logDate.compareTo(a.logDate));
-
-            return ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              itemCount: sortedSymptoms.length,
-              itemBuilder: (context, index) {
-                final record = sortedSymptoms[index];
-                return _SymptomRecordTile(
-                  record: record,
-                  userId: user.id,
-                );
-              },
+            // 증상 로그는 제거되었으므로 빈 상태 표시
+            return const EmptyStateWidget(
+              icon: Icons.warning_amber_outlined,
+              title: '증상 기록 기능이 변경되었습니다',
+              description: '증상 기록 기능은 데일리 체크인으로 통합되었습니다.',
             );
           },
         );
       },
-    );
-  }
-}
-
-/// 증상 기록 항목
-class _SymptomRecordTile extends ConsumerWidget {
-  final SymptomLog record;
-  final String userId;
-
-  const _SymptomRecordTile({
-    required this.record,
-    required this.userId,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final dateStr = DateFormat('yyyy년 MM월 dd일').format(record.logDate);
-    final timeStr =
-        DateFormat('HH:mm').format(record.createdAt ?? DateTime.now());
-
-    return RecordListCard(
-      recordType: RecordType.symptom,
-      onDelete: () => _showDeleteDialog(
-        context,
-        ref,
-        '${record.symptomName} (심각도: ${record.severity})',
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 기본 정보
-          Text(
-            record.symptomName,
-            style: AppTypography.heading3,
-          ),
-          const SizedBox(height: 4),
-          // 보조 정보
-          Text(
-            '심각도: ${record.severity}/10',
-            style: AppTypography.bodyLarge.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          // 메타데이터
-          Text(
-            '$dateStr $timeStr',
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textTertiary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _deleteSymptom(BuildContext context, WidgetRef ref) async {
-    try {
-      await ref.read(trackingProvider.notifier).deleteSymptomLog(record.id);
-
-      if (context.mounted) {
-        Navigator.pop(context);
-        GabiumToast.showSuccess(context, '기록이 삭제되었습니다');
-      }
-    } catch (e) {
-      if (context.mounted) {
-        Navigator.pop(context);
-        GabiumToast.showError(
-            context, '기록 삭제 중 오류가 발생했습니다. 다시 시도해주세요.');
-      }
-    }
-  }
-
-  void _showDeleteDialog(
-    BuildContext context,
-    WidgetRef ref,
-    String info,
-  ) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        elevation: 4,
-        title: const Text(
-          '기록을 삭제하시겠습니까?',
-          style: AppTypography.heading1,
-        ),
-        content: Text(
-          '삭제된 기록은 복구할 수 없습니다.',
-          style: AppTypography.bodyLarge.copyWith(
-            color: AppColors.textTertiary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: const BorderSide(
-                  color: AppColors.primary,
-                  width: 2,
-                ),
-              ),
-            ),
-            child: const Text(
-              '취소',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            onPressed: () => _deleteSymptom(dialogContext, ref),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: AppColors.surface,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              elevation: 0,
-            ),
-            child: const Text(
-              '삭제',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

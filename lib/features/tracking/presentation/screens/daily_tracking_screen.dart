@@ -6,28 +6,18 @@ import 'package:n06/features/authentication/application/notifiers/auth_notifier.
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_toast.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
-import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/application/notifiers/tracking_notifier.dart';
 import 'package:n06/features/tracking/presentation/widgets/date_selection_widget.dart';
 import 'package:n06/features/tracking/presentation/widgets/input_validation_widget.dart';
-import 'package:n06/features/tracking/presentation/widgets/appeal_score_chip.dart';
 import 'package:n06/features/tracking/presentation/widgets/severity_level_indicator.dart';
 import 'package:n06/features/tracking/presentation/widgets/conditional_section.dart';
-import 'package:n06/features/tracking/presentation/widgets/inline_symptom_guide_card.dart';
-import 'package:n06/features/tracking/presentation/widgets/severity_feedback_chip.dart';
-import 'package:n06/features/tracking/presentation/widgets/expandable_guide_section.dart';
-import 'package:n06/features/tracking/presentation/widgets/contextual_guide_card.dart';
-import 'package:n06/features/tracking/application/notifiers/symptom_guide_notifier.dart';
-import 'package:n06/features/tracking/application/notifiers/symptom_pattern_notifier.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 
-/// 통합 데일리 기록 화면 (UI Renewed)
+/// 데일리 기록 화면 (체중 전용)
 ///
-/// 하나의 화면에서 체중, 식욕 조절, 부작용 증상을 모두 기록할 수 있습니다.
-/// - 체중 기록
-/// - 식욕 조절 점수 (필수)
-/// - 부작용 기록 (선택, 증상별 개별 심각도)
+/// 체중을 기록하는 화면입니다.
+/// 식욕 점수 및 컨디션 기록은 daily_checkin 기능으로 이동되었습니다.
 ///
 /// Design System: Gabium v1.0 적용
 class DailyTrackingScreen extends ConsumerStatefulWidget {
@@ -63,9 +53,8 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
   // 상태 변수
   late DateTime _selectedDate;
   String _weightInput = '';
-  int? _appetiteScore;
 
-  // 증상별 개별 상태
+  // 증상별 개별 상태 (DEPRECATED - 증상 기능 제거됨)
   final Set<String> _selectedSymptoms = {};
   final Map<String, int> _symptomSeverities = {};
   final Map<String, bool?> _symptomPersistent = {};
@@ -98,11 +87,6 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
     });
   }
 
-  void _handleAppetiteScoreSelected(int score) {
-    setState(() {
-      _appetiteScore = score;
-    });
-  }
 
   void _handleSymptomToggle(String symptom) {
     setState(() {
@@ -181,23 +165,6 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
       return;
     }
 
-    // 2. 식욕 점수 검증 (필수)
-    if (_appetiteScore == null) {
-      if (!mounted) return;
-      GabiumToast.showError(context, '식욕 조절을 선택해주세요');
-      return;
-    }
-
-    // 3. 증상별 검증 (심각도 7-10점인 경우 24시간 지속 여부 필수)
-    for (final symptom in _selectedSymptoms) {
-      final severity = _symptomSeverities[symptom] ?? 5;
-      if (severity >= 7 && _symptomPersistent[symptom] == null) {
-        if (!mounted) return;
-        GabiumToast.showError(context, '$symptom: 24시간 이상 지속 여부를 선택해주세요');
-        return;
-      }
-    }
-
     setState(() => _isLoading = true);
 
     try {
@@ -209,40 +176,17 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
         return;
       }
 
-      // 4. WeightLog 생성
+      // WeightLog 생성 및 저장
       final weightLog = WeightLog(
         id: const Uuid().v4(),
         userId: userId,
         logDate: _selectedDate,
         weightKg: weight,
-        appetiteScore: _appetiteScore,
         createdAt: DateTime.now(),
       );
 
-      // 5. SymptomLog 리스트 생성 (각 증상마다 개별 심각도)
-      final symptomLogs = _selectedSymptoms.map((symptom) {
-        final severity = _symptomSeverities[symptom] ?? 5;
-        final isPersistent = _symptomPersistent[symptom];
-        final tags = _symptomTags[symptom] ?? [];
-
-        return SymptomLog(
-          id: const Uuid().v4(),
-          userId: userId,
-          logDate: _selectedDate,
-          symptomName: symptom,
-          severity: severity,
-          isPersistent24h: isPersistent,
-          note: _note.isEmpty ? null : _note,
-          createdAt: DateTime.now(),
-          tags: tags,
-        );
-      }).toList();
-
-      // 6. 저장
-      await ref.read(trackingProvider.notifier).saveDailyLog(
-            weightLog: weightLog,
-            symptomLogs: symptomLogs,
-          );
+      // 저장
+      await ref.read(trackingProvider.notifier).saveWeightLog(weightLog);
 
       // 7. 저장 성공 시 대시보드로 이동 (Presentation Layer 책임)
       if (!mounted) return;
@@ -351,44 +295,8 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
             hint: '예: 75.5',
             onChanged: _handleWeightChanged,
           ),
-          const SizedBox(height: 16.0), // md
-
-          // 식욕 조절 점수 (필수)
-          Text(
-            '식욕 조절 *',
-            style: AppTypography.heading3.copyWith(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 12.0), // sm + xs
-          _buildAppetiteButtons(),
         ],
       ),
-    );
-  }
-
-  Widget _buildAppetiteButtons() {
-    // Change 2: 식욕 조절 칩 스타일 개선 (AppealScoreChip 사용)
-    const appetiteLabels = {
-      5: '폭발',
-      4: '보통',
-      3: '약간↓',
-      2: '많이↓',
-      1: '없음',
-    };
-
-    return Wrap(
-      spacing: 8.0, // sm
-      runSpacing: 8.0, // sm
-      children: appetiteLabels.entries.map((entry) {
-        final score = entry.key;
-        final label = entry.value;
-        final isSelected = _appetiteScore == score;
-
-        return AppealScoreChip(
-          label: label,
-          isSelected: isSelected,
-          onTap: () => _handleAppetiteScoreSelected(score),
-        );
-      }).toList(),
     );
   }
 
@@ -455,119 +363,8 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
             }).toList(),
           ),
 
-          // Phase 2: 컨텍스트 인식 가이드 카드 (최근 선택한 증상에 대해 패턴 인사이트 + 안심 메시지)
-          if (_selectedSymptoms.isNotEmpty) ...[
-            const SizedBox(height: 16.0),
-            Consumer(
-              builder: (context, ref, _) {
-                final userId = _getCurrentUserId();
-                if (userId == null) return const SizedBox.shrink();
-
-                final lastSymptom = _selectedSymptoms.last;
-                final guideAsync = ref.watch(symptomGuideProvider(lastSymptom));
-                final patternAsync = ref.watch(symptomPatternProvider(
-                  userId: userId,
-                  symptomName: lastSymptom,
-                ));
-
-                return guideAsync.when(
-                  data: (guide) {
-                    if (guide == null) return const SizedBox.shrink();
-
-                    return patternAsync.when(
-                      data: (insights) {
-                        return ContextualGuideCard(
-                          guide: guide,
-                          insights: insights,
-                          onMoreInfoTap: guide.detailedSections != null &&
-                                  guide.detailedSections!.isNotEmpty
-                              ? () {
-                                  showDetailedGuideBottomSheet(
-                                    context,
-                                    symptomName: guide.symptomName,
-                                    sections: guide.detailedSections!
-                                        .map((section) => {
-                                              'title': section.title,
-                                              'items': section.content
-                                                  .split('\n')
-                                                  .where((line) => line.trim().isNotEmpty)
-                                                  .map((line) => line.replaceFirst('- ', ''))
-                                                  .toList(),
-                                              'initiallyExpanded': false,
-                                            })
-                                        .toList(),
-                                  );
-                                }
-                              : null,
-                          onDismissInsight: () {
-                            // 인사이트 닫기 시 새로고침
-                            ref.invalidate(symptomPatternProvider(
-                              userId: userId,
-                              symptomName: lastSymptom,
-                            ));
-                          },
-                        );
-                      },
-                      loading: () => InlineSymptomGuideCard(
-                        symptomName: guide.symptomName,
-                        reassuranceMessage: guide.reassuranceMessage,
-                        reassuranceStat: guide.reassuranceStat,
-                        immediateAction: guide.immediateAction,
-                        onMoreInfoTap: guide.detailedSections != null &&
-                                guide.detailedSections!.isNotEmpty
-                            ? () {
-                                showDetailedGuideBottomSheet(
-                                  context,
-                                  symptomName: guide.symptomName,
-                                  sections: guide.detailedSections!
-                                      .map((section) => {
-                                            'title': section.title,
-                                            'items': section.content
-                                                .split('\n')
-                                                .where((line) => line.trim().isNotEmpty)
-                                                .map((line) => line.replaceFirst('- ', ''))
-                                                .toList(),
-                                            'initiallyExpanded': false,
-                                          })
-                                      .toList(),
-                                );
-                              }
-                            : null,
-                      ),
-                      error: (_, __) => InlineSymptomGuideCard(
-                        symptomName: guide.symptomName,
-                        reassuranceMessage: guide.reassuranceMessage,
-                        reassuranceStat: guide.reassuranceStat,
-                        immediateAction: guide.immediateAction,
-                        onMoreInfoTap: guide.detailedSections != null &&
-                                guide.detailedSections!.isNotEmpty
-                            ? () {
-                                showDetailedGuideBottomSheet(
-                                  context,
-                                  symptomName: guide.symptomName,
-                                  sections: guide.detailedSections!
-                                      .map((section) => {
-                                            'title': section.title,
-                                            'items': section.content
-                                                .split('\n')
-                                                .where((line) => line.trim().isNotEmpty)
-                                                .map((line) => line.replaceFirst('- ', ''))
-                                                .toList(),
-                                            'initiallyExpanded': false,
-                                          })
-                                      .toList(),
-                                );
-                              }
-                            : null,
-                      ),
-                    );
-                  },
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, __) => const SizedBox.shrink(),
-                );
-              },
-            ),
-          ],
+          // Phase 2: 컨텍스트 인식 가이드 카드 (DEPRECATED - 증상 기능 제거됨)
+          // Symptom guide UI removed
 
           const SizedBox(height: 24.0), // lg
 
@@ -677,14 +474,8 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
           ),
           const SizedBox(height: 12.0), // sm
 
-          // Phase 1: 심각도 피드백 칩
-          SeverityFeedbackChip(
-            severity: severity,
-            symptomName: symptom,
-            onEmergencyCheckTap: () {
-              context.pushNamed('emergency_check');
-            },
-          ),
+          // Phase 1: 심각도 피드백 칩 (DEPRECATED - 증상 기능 제거됨)
+          const SizedBox.shrink(),
           const SizedBox(height: 16.0), // md
 
           // Change 5: 조건부 UI 섹션 시각적 구분 강화 (ConditionalSection 사용)

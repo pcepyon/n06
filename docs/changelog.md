@@ -21,6 +21,33 @@
 
 ## 2025-12-02
 
+- [feat] 데일리 체크인 기능 Phase 0-4 전체 구현 완료
+  - **Phase 0: 레거시 정리**
+    - DB 마이그레이션: daily_checkins 테이블 생성 (`supabase/migrations/06.daily_checkins.sql`)
+    - 삭제된 파일 (18개): symptom_log, emergency_symptom_check 관련 entities/dtos/repositories/notifiers/widgets
+    - weight_logs에서 appetite_score 제거 → daily_checkins로 이동
+    - tracking_repository, dashboard, data_sharing에서 symptom 참조 제거
+  - **Phase 1: 핵심 플로우** (기존 구현)
+    - 6개 일상 질문 (식사, 수분, 속 편안함, 화장실, 에너지, 기분)
+    - 파생 질문 분기 로직, 피드백 시스템, daily_checkins 저장
+  - **Phase 2: 감정적 UX**
+    - GreetingService: 시간대별/복귀 사용자/주사 다음날 컨텍스트 인사
+    - ConsecutiveDaysService: 연속 체크인 마일스톤 축하 (3,7,14,21,30,60,90일)
+    - WeeklyComparisonService: 주간 비교 피드백 (메스꺼움↓, 식욕↑, 에너지↑)
+  - **Phase 3: 안전 시스템**
+    - RedFlagDetector: 6가지 Red Flag 조건 감지 (췌장염, 담낭염, 탈수, 장폐색, 저혈당, 신부전)
+    - RedFlagGuidanceSheet: 부드러운 안내 바텀시트 UI (두려움 최소화 톤)
+  - **Phase 4: 의료진 공유**
+    - WeeklyReport 엔티티 + WeeklyReportGenerator 서비스
+    - ShareReportScreen: 주간 리포트 조회/복사 화면
+    - 라우팅 추가: `/share-report`
+  - **빌드 에러 수정**
+    - daily_tracking_screen: 식욕 점수 섹션 제거 (daily_checkins로 이동됨)
+    - record_list_screen: 죽은 코드 _SymptomRecordTile 제거
+  - `lib/features/daily_checkin/` (32개 파일 신규)
+  - `lib/features/tracking/` (18개 파일 삭제, 13개 수정)
+  - `lib/features/dashboard/`, `lib/features/data_sharing/` (4개 수정)
+
 - [docs] 데일리 체크인 명세서 구현 준비 보완
   - SymptomType → CopingGuide symptomName 매핑 함수 추가 (12.6절)
   - 연속 기록 판정 정책 명확화: 체크인 기준, 체중은 선택 (7.2절)

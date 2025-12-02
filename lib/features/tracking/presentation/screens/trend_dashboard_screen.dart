@@ -4,12 +4,12 @@ import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/tracking/domain/entities/trend_insight.dart';
 import 'package:n06/features/tracking/presentation/widgets/trend_insight_card.dart';
-import 'package:n06/features/tracking/presentation/widgets/symptom_heatmap_calendar.dart';
-import 'package:n06/features/tracking/presentation/widgets/symptom_trend_chart.dart';
+// import 'package:n06/features/tracking/presentation/widgets/symptom_heatmap_calendar.dart'; // DEPRECATED - removed
+// import 'package:n06/features/tracking/presentation/widgets/symptom_trend_chart.dart'; // DEPRECATED - removed
 import 'package:n06/features/tracking/presentation/widgets/pattern_insight_card.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/trend_insight_notifier.dart';
-import 'package:n06/features/tracking/application/notifiers/symptom_pattern_notifier.dart';
+// import 'package:n06/features/tracking/application/notifiers/symptom_pattern_notifier.dart'; // DEPRECATED - removed
 
 /// 트렌드 대시보드 화면
 ///
@@ -168,11 +168,7 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
                 border: Border.all(color: AppColors.neutral200),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: SymptomHeatmapCalendar(
-                startDate: _getStartDate(),
-                endDate: DateTime.now(),
-                symptomCounts: _buildSymptomCountMap(insight),
-              ),
+              child: const Center(child: Text('Symptom tracking removed')),
             ),
           ),
 
@@ -188,10 +184,7 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
                 border: Border.all(color: AppColors.neutral200),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: SymptomTrendChart(
-                trends: insight.severityTrends,
-                period: insight.period,
-              ),
+              child: const Center(child: Text('Symptom tracking removed')),
             ),
           ),
 
@@ -233,8 +226,12 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
     // TOP 증상에 대한 패턴 분석 표시
     final topSymptom = insight.frequencies.first.symptomName;
 
+    // Symptom pattern provider is removed
+    return const SizedBox.shrink();
+
+    /*
     final patternState = ref.watch(
-      symptomPatternProvider(userId: userId, symptomName: topSymptom),
+      // symptomPatternProvider(userId: userId, symptomName: topSymptom), // DEPRECATED
     );
 
     return patternState.when(
@@ -270,6 +267,7 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => const SizedBox.shrink(),
     );
+    */
   }
 
   Widget _buildLoading() {

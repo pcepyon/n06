@@ -2,16 +2,12 @@ import 'package:equatable/equatable.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
-import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
-import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
 
 class SharedDataReport extends Equatable {
   final DateTime dateRangeStart;
   final DateTime dateRangeEnd;
   final List<DoseRecord> doseRecords;
   final List<WeightLog> weightLogs;
-  final List<SymptomLog> symptomLogs;
-  final List<EmergencySymptomCheck> emergencyChecks;
   final List<DoseSchedule> doseSchedules;
 
   const SharedDataReport({
@@ -19,8 +15,6 @@ class SharedDataReport extends Equatable {
     required this.dateRangeEnd,
     required this.doseRecords,
     required this.weightLogs,
-    required this.symptomLogs,
-    required this.emergencyChecks,
     required this.doseSchedules,
   });
 
@@ -88,26 +82,10 @@ class SharedDataReport extends Equatable {
     return sorted;
   }
 
-  /// Get symptom logs sorted by date
-  List<SymptomLog> getSymptomLogsSorted() {
-    final sorted = List<SymptomLog>.from(symptomLogs);
-    sorted.sort((a, b) => a.logDate.compareTo(b.logDate));
-    return sorted;
-  }
-
-  /// Get emergency checks sorted by date
-  List<EmergencySymptomCheck> getEmergencyChecksSorted() {
-    final sorted = List<EmergencySymptomCheck>.from(emergencyChecks);
-    sorted.sort((a, b) => a.checkedAt.compareTo(b.checkedAt));
-    return sorted;
-  }
-
   /// Check if report has any data
   bool hasData() {
     return doseRecords.isNotEmpty ||
-        weightLogs.isNotEmpty ||
-        symptomLogs.isNotEmpty ||
-        emergencyChecks.isNotEmpty;
+        weightLogs.isNotEmpty;
   }
 
   SharedDataReport copyWith({
@@ -115,8 +93,6 @@ class SharedDataReport extends Equatable {
     DateTime? dateRangeEnd,
     List<DoseRecord>? doseRecords,
     List<WeightLog>? weightLogs,
-    List<SymptomLog>? symptomLogs,
-    List<EmergencySymptomCheck>? emergencyChecks,
     List<DoseSchedule>? doseSchedules,
   }) {
     return SharedDataReport(
@@ -124,8 +100,6 @@ class SharedDataReport extends Equatable {
       dateRangeEnd: dateRangeEnd ?? this.dateRangeEnd,
       doseRecords: doseRecords ?? this.doseRecords,
       weightLogs: weightLogs ?? this.weightLogs,
-      symptomLogs: symptomLogs ?? this.symptomLogs,
-      emergencyChecks: emergencyChecks ?? this.emergencyChecks,
       doseSchedules: doseSchedules ?? this.doseSchedules,
     );
   }
@@ -136,12 +110,10 @@ class SharedDataReport extends Equatable {
     dateRangeEnd,
     doseRecords,
     weightLogs,
-    symptomLogs,
-    emergencyChecks,
     doseSchedules,
   ];
 
   @override
   String toString() =>
-      'SharedDataReport(dateRangeStart: $dateRangeStart, dateRangeEnd: $dateRangeEnd, doseRecords: ${doseRecords.length}, weightLogs: ${weightLogs.length}, symptomLogs: ${symptomLogs.length}, emergencyChecks: ${emergencyChecks.length}, doseSchedules: ${doseSchedules.length})';
+      'SharedDataReport(dateRangeStart: $dateRangeStart, dateRangeEnd: $dateRangeEnd, doseRecords: ${doseRecords.length}, weightLogs: ${weightLogs.length}, doseSchedules: ${doseSchedules.length})';
 }

@@ -16,7 +16,6 @@ import 'package:n06/features/tracking/domain/entities/dosage_plan.dart'
     as onboarding_dosage_plan;
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
-import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/medication_repository.dart'
     as tracking_medication_repo;
@@ -92,25 +91,23 @@ class DashboardNotifier extends _$DashboardNotifier {
       throw Exception('Active dosage plan not found - Please set up your medication plan');
     }
 
-    // 체중 기록, 부작용 기록, 투여 기록 조회
+    // 체중 기록, 투여 기록 조회
     final weights = await _trackingRepository.getWeightLogs(userId);
-    final symptoms = await _trackingRepository.getSymptomLogs(userId);
     final doseRecords = await _trackingMedicationRepository.getDoseRecords(activePlan.id);
 
-    // 연속 기록일 계산
-    final symptomLogs = symptoms.whereType<SymptomLog>().toList();
+    // 연속 기록일 계산 (증상 로그는 빈 리스트)
     final continuousRecordDays = _calculateContinuousRecordDays.execute(
-        weights, symptomLogs);
+        weights, []);
 
     // 현재 주차 계산
     final currentWeek =
         _calculateCurrentWeek.execute(activePlan.startDate);
 
-    // 주간 목표 진행도 계산
+    // 주간 목표 진행도 계산 (증상 로그는 빈 리스트)
     final weeklyProgress = _calculateWeeklyProgress.execute(
       doseRecords: doseRecords,
       weightLogs: weights,
-      symptomLogs: symptomLogs,
+      symptomLogs: [],
       doseTargetCount: 1,
       weightTargetCount: profile.weeklyWeightRecordGoal,
       symptomTargetCount: profile.weeklySymptomRecordGoal,
@@ -120,7 +117,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     final nextSchedule = _calculateNextSchedule(activePlan, weights, profile);
 
     // 주간 요약
-    final weeklySummary = _calculateWeeklySummary(weights, symptomLogs, doseRecords);
+    final weeklySummary = _calculateWeeklySummary(weights, [], doseRecords);
 
     // 뱃지 조회 및 검증
     final userBadges = await _badgeRepository.getUserBadges(userId);
@@ -195,7 +192,7 @@ class DashboardNotifier extends _$DashboardNotifier {
 
   WeeklySummary _calculateWeeklySummary(
     List<WeightLog> weights,
-    List<SymptomLog> symptoms,
+    List<dynamic> symptoms,
     List<DoseRecord> doseRecords,
   ) {
     final now = DateTime.now();

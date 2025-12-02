@@ -210,13 +210,6 @@ class _DataSharingScreenState extends ConsumerState<DataSharingScreen> {
               const SizedBox(height: 24),
             ],
 
-            // Symptom Logs Section
-            if (report.symptomLogs.isNotEmpty) ...[
-              _buildSectionTitle('부작용 기록'),
-              _buildSymptomLogsSection(report),
-              const SizedBox(height: 24),
-            ],
-
             // Exit Sharing Mode Button
             SizedBox(
               width: double.infinity,

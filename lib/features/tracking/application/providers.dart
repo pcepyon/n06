@@ -2,13 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/core/providers.dart';
 import 'package:n06/features/tracking/application/notifiers/weight_record_edit_notifier.dart';
-import 'package:n06/features/tracking/application/notifiers/symptom_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/dose_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/usecases/update_dosage_plan_usecase.dart';
 import 'package:n06/features/tracking/domain/repositories/audit_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/dosage_plan_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/dose_schedule_repository.dart';
-import 'package:n06/features/tracking/domain/repositories/emergency_check_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/medication_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
 import 'package:n06/features/tracking/domain/usecases/analyze_plan_change_impact_usecase.dart';
@@ -21,11 +19,7 @@ import 'package:n06/features/tracking/infrastructure/repositories/supabase_track
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_medication_repository.dart';
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_dosage_plan_repository.dart';
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_dose_schedule_repository.dart';
-import 'package:n06/features/tracking/infrastructure/repositories/supabase_emergency_check_repository.dart';
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_audit_repository.dart';
-
-// Re-export emergency check notifier providers
-export 'package:n06/features/tracking/application/notifiers/emergency_check_notifier.dart' show emergencyCheckProvider, emergencyCheckNotifierProvider;
 
 // Re-export tracking notifier provider (Code Generated)
 // NOTE: trackingProvider is the new Code Generated provider name
@@ -56,12 +50,6 @@ DoseScheduleRepository doseScheduleRepository(Ref ref) {
 TrackingRepository trackingRepository(Ref ref) {
   final supabase = ref.watch(supabaseProvider);
   return SupabaseTrackingRepository(supabase);
-}
-
-@riverpod
-EmergencyCheckRepository emergencyCheckRepository(Ref ref) {
-  final supabase = ref.watch(supabaseProvider);
-  return SupabaseEmergencyCheckRepository(supabase);
 }
 
 @riverpod
@@ -119,16 +107,10 @@ NotificationService notificationService(Ref ref) {
 
 // MedicationNotifier Provider는 medication_notifier.dart에서 @riverpod으로 자동 생성됨
 // TrackingNotifier Provider는 tracking_notifier.dart에서 @riverpod으로 자동 생성됨
-// Emergency Check Notifier Provider는 emergency_check_notifier.dart에서 @riverpod으로 자동 생성됨
 
 // UF-011: Weight Record Edit Notifier Provider
 final weightRecordEditNotifierProvider = AsyncNotifierProvider<WeightRecordEditNotifier, void>(
   () => WeightRecordEditNotifier(),
-);
-
-// UF-011: Symptom Record Edit Notifier Provider
-final symptomRecordEditNotifierProvider = AsyncNotifierProvider<SymptomRecordEditNotifier, void>(
-  () => SymptomRecordEditNotifier(),
 );
 
 // UF-011: Dose Record Edit Notifier Provider

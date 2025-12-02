@@ -1,10 +1,9 @@
-import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 
 class CalculateContinuousRecordDaysUseCase {
   /// 마지막 기록부터 현재까지의 연속 기록일을 계산합니다.
   /// 기록 없는 날이 발생하면 0으로 리셋됩니다.
-  int execute(List<WeightLog> weights, List<SymptomLog> symptoms) {
+  int execute(List<WeightLog> weights, List<dynamic> symptoms) {
     if (weights.isEmpty && symptoms.isEmpty) {
       return 0;
     }
@@ -14,15 +13,6 @@ class CalculateContinuousRecordDaysUseCase {
     for (final weight in weights) {
       allDates.add(
         DateTime(weight.logDate.year, weight.logDate.month, weight.logDate.day),
-      );
-    }
-    for (final symptom in symptoms) {
-      allDates.add(
-        DateTime(
-          symptom.logDate.year,
-          symptom.logDate.month,
-          symptom.logDate.day,
-        ),
       );
     }
 

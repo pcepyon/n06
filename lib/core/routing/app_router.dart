@@ -21,6 +21,8 @@ import 'package:n06/features/authentication/presentation/screens/email_signup_sc
 import 'package:n06/features/authentication/presentation/screens/email_signin_screen.dart';
 import 'package:n06/features/authentication/presentation/screens/password_reset_screen.dart';
 import 'package:n06/features/tracking/presentation/screens/trend_dashboard_screen.dart';
+import 'package:n06/features/daily_checkin/presentation/screens/daily_checkin_screen.dart';
+import 'package:n06/features/daily_checkin/presentation/screens/share_report_screen.dart';
 
 /// GoRouter configuration for the application
 final appRouter = GoRouter(
@@ -231,6 +233,20 @@ final appRouter = GoRouter(
       path: '/trend-dashboard',
       name: 'trend_dashboard',
       builder: (context, state) => const TrendDashboardScreen(),
+    ),
+
+    /// Daily Check-in (F007)
+    GoRoute(
+      path: '/daily-checkin',
+      name: 'daily_checkin',
+      builder: (context, state) => const DailyCheckinScreen(),
+    ),
+
+    /// Share Report (주간 리포트 공유)
+    GoRoute(
+      path: '/share-report',
+      name: 'share_report',
+      builder: (context, state) => const ShareReportScreen(),
     ),
   ],
 );

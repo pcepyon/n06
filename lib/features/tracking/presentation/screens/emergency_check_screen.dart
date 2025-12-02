@@ -5,7 +5,7 @@ import 'package:n06/features/authentication/application/notifiers/auth_notifier.
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_toast.dart';
 import 'package:n06/features/tracking/application/providers.dart';
-import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart';
+// import 'package:n06/features/tracking/domain/entities/emergency_symptom_check.dart'; // DEPRECATED - removed
 import 'package:n06/features/tracking/presentation/widgets/consultation_recommendation_dialog.dart';
 import 'package:n06/features/tracking/presentation/widgets/emergency_checklist_item.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
@@ -84,16 +84,17 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
     // AuthNotifier에서 현재 사용자 ID 가져오기
     final userId = ref.read(authNotifierProvider).value?.id ?? 'current-user-id';
 
-    final check = EmergencySymptomCheck(
-      id: const Uuid().v4(),
-      userId: userId,
-      checkedAt: DateTime.now(),
-      checkedSymptoms: selectedSymptoms,
-    );
+    // EmergencySymptomCheck is removed - this screen is deprecated
+    // final check = null; // EmergencySymptomCheck(
+    //   id: const Uuid().v4(),
+    //   userId: userId,
+    //   checkedAt: DateTime.now(),
+    //   checkedSymptoms: selectedSymptoms,
+    // );
 
     // Notifier를 통한 저장 (자동으로 부작용 기록도 생성)
     try {
-      await ref.read(emergencyCheckNotifierProvider.notifier).saveEmergencyCheck(userId, check);
+      // await ref.read(emergencyCheckNotifierProvider.notifier).saveEmergencyCheck(userId, check); // DEPRECATED
 
       if (mounted) {
         GabiumToast.showSuccess(context, '증상이 기록되었습니다.');
@@ -113,7 +114,7 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
   @override
   Widget build(BuildContext context) {
     // Provider를 구독하여 화면이 활성화된 동안 유지
-    ref.watch(emergencyCheckNotifierProvider);
+    // ref.watch(emergencyCheckNotifierProvider); // DEPRECATED
 
     return Scaffold(
       backgroundColor: AppColors.background,

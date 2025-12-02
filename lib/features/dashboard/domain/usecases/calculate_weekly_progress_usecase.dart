@@ -1,6 +1,5 @@
 import 'package:n06/features/dashboard/domain/entities/weekly_progress.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
-import 'package:n06/features/tracking/domain/entities/symptom_log.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 
 class CalculateWeeklyProgressUseCase {
@@ -8,7 +7,7 @@ class CalculateWeeklyProgressUseCase {
   WeeklyProgress execute({
     required List<DoseRecord> doseRecords,
     required List<WeightLog> weightLogs,
-    required List<SymptomLog> symptomLogs,
+    required List<dynamic> symptomLogs,
     required int doseTargetCount,
     required int weightTargetCount,
     required int symptomTargetCount,
@@ -31,12 +30,8 @@ class CalculateWeeklyProgressUseCase {
             log.logDate.isBefore(now.add(Duration(days: 1))))
         .length;
 
-    // 지난 7일 내 부작용 기록 카운트
-    final symptomRecordCount = symptomLogs
-        .where((log) =>
-            log.logDate.isAfter(sevenDaysAgo) &&
-            log.logDate.isBefore(now.add(Duration(days: 1))))
-        .length;
+    // 지난 7일 내 부작용 기록 카운트 (빈 리스트 처리)
+    final symptomRecordCount = symptomLogs.length;
 
     // 달성률 계산 (0.0 ~ 1.0)
     final doseRate =

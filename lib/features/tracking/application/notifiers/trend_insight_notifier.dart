@@ -1,7 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/features/tracking/domain/entities/trend_insight.dart';
 import 'package:n06/features/tracking/domain/services/trend_insight_analyzer.dart';
-import 'package:n06/features/tracking/application/providers.dart';
 
 part 'trend_insight_notifier.g.dart';
 
@@ -22,22 +21,9 @@ class TrendInsightNotifier extends _$TrendInsightNotifier {
   }) async {
     _analyzer = TrendInsightAnalyzer();
 
-    // 기간에 따라 데이터 조회
-    final repository = ref.read(trackingRepositoryProvider);
-    final now = DateTime.now();
-    final startDate = period == TrendPeriod.weekly
-        ? now.subtract(const Duration(days: 7))
-        : now.subtract(const Duration(days: 30));
-
-    final logs = await repository.getSymptomLogs(
-      userId,
-      startDate: startDate,
-      endDate: now,
-    );
-
-    // 트렌드 분석 실행
+    // 증상 로그는 제거되었으므로 빈 분석 반환
     return _analyzer.analyzeTrend(
-      logs: logs,
+      logs: [],
       period: period,
     );
   }
@@ -49,22 +35,11 @@ class TrendInsightNotifier extends _$TrendInsightNotifier {
     final link = ref.keepAlive();
     try {
       state = await AsyncValue.guard(() async {
-        final repository = ref.read(trackingRepositoryProvider);
-        final now = DateTime.now();
-        final startDate = period == TrendPeriod.weekly
-            ? now.subtract(const Duration(days: 7))
-            : now.subtract(const Duration(days: 30));
-
-        final logs = await repository.getSymptomLogs(
-          userId,
-          startDate: startDate,
-          endDate: now,
-        );
-
         if (!ref.mounted) return state.value ?? _getEmptyInsight();
 
+        // 증상 로그는 제거되었으므로 빈 분석 반환
         return _analyzer.analyzeTrend(
-          logs: logs,
+          logs: [],
           period: period,
         );
       });
@@ -79,16 +54,9 @@ class TrendInsightNotifier extends _$TrendInsightNotifier {
     required DateTime endDate,
     required TrendPeriod customPeriod,
   }) async {
-    final repository = ref.read(trackingRepositoryProvider);
-
-    final logs = await repository.getSymptomLogs(
-      userId,
-      startDate: startDate,
-      endDate: endDate,
-    );
-
+    // 증상 로그는 제거되었으므로 빈 분석 반환
     return _analyzer.analyzeTrend(
-      logs: logs,
+      logs: [],
       period: customPeriod,
     );
   }

@@ -1,5 +1,4 @@
 import '../entities/trend_insight.dart';
-import '../entities/symptom_log.dart';
 
 /// 트렌드 인사이트 분석 서비스
 ///
@@ -13,7 +12,7 @@ class TrendInsightAnalyzer {
   ///
   /// 반환: 종합 트렌드 인사이트
   TrendInsight analyzeTrend({
-    required List<SymptomLog> logs,
+    required List<dynamic> logs,
     required TrendPeriod period,
   }) {
     if (logs.isEmpty) {
@@ -52,32 +51,14 @@ class TrendInsightAnalyzer {
   }
 
   /// 증상별 빈도 집계 (빈도 높은 순 정렬)
-  List<SymptomFrequency> _calculateSymptomFrequencies(List<SymptomLog> logs) {
-    final symptomCounts = <String, int>{};
-
-    for (final log in logs) {
-      symptomCounts[log.symptomName] = (symptomCounts[log.symptomName] ?? 0) + 1;
-    }
-
-    final totalCount = logs.length;
-
-    final frequencies = symptomCounts.entries
-        .map((entry) => SymptomFrequency(
-              symptomName: entry.key,
-              count: entry.value,
-              percentageOfTotal: (entry.value / totalCount * 100),
-            ))
-        .toList();
-
-    // 빈도 높은 순 정렬
-    frequencies.sort((a, b) => b.count.compareTo(a.count));
-
-    return frequencies;
+  List<SymptomFrequency> _calculateSymptomFrequencies(List<dynamic> logs) {
+    // 증상 로그는 제거되었으므로 빈 리스트 반환
+    return [];
   }
 
   /// 심각도 추이 계산 (TOP 3 증상)
   List<SeverityTrend> _calculateSeverityTrends(
-    List<SymptomLog> logs,
+    List<dynamic> logs,
     List<SymptomFrequency> frequencies,
   ) {
     final trends = <SeverityTrend>[];
@@ -85,48 +66,14 @@ class TrendInsightAnalyzer {
     // TOP 3 증상만 분석
     final topSymptoms = frequencies.take(3).map((f) => f.symptomName).toList();
 
-    for (final symptomName in topSymptoms) {
-      final symptomLogs = logs
-          .where((log) => log.symptomName == symptomName)
-          .toList()
-        ..sort((a, b) => a.logDate.compareTo(b.logDate)); // 날짜순 정렬
-
-      if (symptomLogs.isEmpty) continue;
-
-      // 날짜별 평균 심각도 계산
-      final dailyAverages = _calculateDailyAverages(symptomLogs);
-
-      // 추세 방향 결정
-      final direction = _determineTrendDirection(dailyAverages);
-
-      trends.add(SeverityTrend(
-        symptomName: symptomName,
-        dailyAverages: dailyAverages,
-        direction: direction,
-      ));
-    }
-
+    // 증상 로그는 제거되었으므로 빈 리스트 반환
     return trends;
   }
 
   /// 날짜별 평균 심각도 계산
-  List<double> _calculateDailyAverages(List<SymptomLog> logs) {
-    if (logs.isEmpty) return [];
-
-    final dailyGroups = <String, List<int>>{};
-
-    for (final log in logs) {
-      final dateKey = '${log.logDate.year}-${log.logDate.month}-${log.logDate.day}';
-      dailyGroups[dateKey] = (dailyGroups[dateKey] ?? [])..add(log.severity);
-    }
-
-    // 날짜순 정렬 후 평균 계산
-    final sortedDates = dailyGroups.keys.toList()..sort();
-
-    return sortedDates.map((date) {
-      final severities = dailyGroups[date]!;
-      return severities.reduce((a, b) => a + b) / severities.length;
-    }).toList();
+  List<double> _calculateDailyAverages(List<dynamic> logs) {
+    // 증상 로그는 제거되었으므로 빈 리스트 반환
+    return [];
   }
 
   /// 추세 방향 결정 (선형 회귀 기울기 기반)
@@ -159,28 +106,9 @@ class TrendInsightAnalyzer {
   }
 
   /// 전체 방향 평가 (모든 증상의 평균 심각도 추세)
-  TrendDirection _evaluateOverallDirection(List<SymptomLog> logs) {
-    if (logs.length < 2) return TrendDirection.stable;
-
-    final sortedLogs = logs.toList()..sort((a, b) => a.logDate.compareTo(b.logDate));
-
-    // 전반기 vs 후반기 평균 비교
-    final half = sortedLogs.length ~/ 2;
-    final firstHalf = sortedLogs.sublist(0, half);
-    final secondHalf = sortedLogs.sublist(half);
-
-    final firstAvg = firstHalf.fold<double>(0, (sum, log) => sum + log.severity) / firstHalf.length;
-    final secondAvg = secondHalf.fold<double>(0, (sum, log) => sum + log.severity) / secondHalf.length;
-
-    final change = ((firstAvg - secondAvg) / firstAvg * 100).abs();
-
-    if (change < 10) {
-      return TrendDirection.stable;
-    } else if (secondAvg < firstAvg) {
-      return TrendDirection.improving;
-    } else {
-      return TrendDirection.worsening;
-    }
+  TrendDirection _evaluateOverallDirection(List<dynamic> logs) {
+    // 증상 로그는 제거되었으므로 안정 상태 반환
+    return TrendDirection.stable;
   }
 
   /// 요약 메시지 생성
