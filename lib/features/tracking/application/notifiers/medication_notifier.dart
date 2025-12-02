@@ -211,6 +211,41 @@ class MedicationNotifier extends _$MedicationNotifier {
     }
   }
 
+  /// Delete dose schedule (only unrecorded schedules)
+  Future<void> deleteDoseSchedule(String scheduleId) async {
+    // ✅ 작업 완료 보장을 위한 keepAlive
+    final link = ref.keepAlive();
+
+    final userId = ref.read(authNotifierProvider).value?.id;
+    if (userId == null) throw Exception('User not authenticated');
+
+    final currentState = state.asData?.value;
+    if (currentState == null) throw Exception('State not loaded');
+
+    // Check if schedule has associated record
+    final hasRecord = currentState.records.any((r) => r.doseScheduleId == scheduleId);
+    if (hasRecord) {
+      throw Exception('투여 기록이 있는 일정은 삭제할 수 없습니다.');
+    }
+
+    try {
+      await _repository.deleteDoseSchedule(scheduleId);
+
+      // ✅ async gap 후 mounted 체크
+      if (!ref.mounted) {
+        return;
+      }
+
+      // Reload state
+      state = const AsyncValue.loading();
+      state = await AsyncValue.guard(() async {
+        return await _loadMedicationData(userId);
+      });
+    } finally {
+      link.close();
+    }
+  }
+
   /// Get plan change history
   Future<List<dynamic>> getPlanHistory() async {
     final currentState = state.asData?.value;

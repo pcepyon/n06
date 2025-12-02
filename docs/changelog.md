@@ -21,6 +21,13 @@
 
 ## 2025-12-03
 
+- [feat] 투여 스케줄 개별 삭제 기능 추가
+  - 연체/미래 예정 스케줄을 사용자가 직접 삭제 가능
+  - 투여 기록이 연결된 스케줄은 삭제 불가 (데이터 무결성 보호)
+  - 삭제 확인 다이얼로그로 실수 방지
+  - `lib/features/tracking/presentation/widgets/selected_date_detail_card.dart`
+  - `lib/features/tracking/application/notifiers/medication_notifier.dart`
+
 - [feat] GoRouter 인증 guard 추가로 라우팅 보안 강화
   - 로그아웃 상태에서 보호 라우트 접근 시 자동으로 /login redirect
   - 로그인 상태에서 앱 시작 시 자동으로 /home redirect (로그인 화면 스킵)

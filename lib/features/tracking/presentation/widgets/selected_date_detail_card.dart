@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/tracking/domain/value_objects/missed_dose_guidance.dart';
@@ -178,10 +179,124 @@ class SelectedDateDetailCard extends ConsumerWidget {
               width: double.infinity,
               child: _buildActionButton(context, guidance),
             ),
+
+            // 삭제 버튼 (미완료 스케줄만)
+            if (_canDeleteSchedule(guidance, record)) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () => _showDeleteConfirmationDialog(context, ref),
+                  icon: Icon(Icons.delete_outline, size: 18, color: AppColors.error),
+                  label: Text(
+                    '이 일정 삭제',
+                    style: AppTypography.bodyMedium.copyWith(color: AppColors.error),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  /// 스케줄 삭제 가능 여부 확인
+  bool _canDeleteSchedule(MissedDoseGuidance guidance, DoseRecord? record) {
+    if (schedule == null) return false;
+    if (record != null) return false; // 기록이 있으면 삭제 불가
+
+    // 연체 또는 미래 예정만 삭제 가능 (오늘은 제외)
+    return guidance.type == MissedDoseGuidanceType.missedWithin5Days ||
+        guidance.type == MissedDoseGuidanceType.missedOver5Days ||
+        guidance.type == MissedDoseGuidanceType.upcoming;
+  }
+
+  /// 삭제 확인 다이얼로그
+  Future<void> _showDeleteConfirmationDialog(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => Dialog(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '일정을 삭제할까요?',
+                style: AppTypography.heading2,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '${selectedDate.month}월 ${selectedDate.day}일 (${_getWeekday(selectedDate)}) 예정된\n'
+                '${schedule!.scheduledDoseMg}mg 투여 일정을 삭제합니다.',
+                style: AppTypography.bodyLarge.copyWith(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 16, color: AppColors.warning),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '삭제된 일정은 복구할 수 없으며,\n투여 기록에 영향을 주지 않습니다.',
+                        style: AppTypography.bodySmall.copyWith(color: AppColors.warning),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: GabiumButton(
+                      text: '취소',
+                      onPressed: () => Navigator.of(context).pop(false),
+                      variant: GabiumButtonVariant.secondary,
+                      size: GabiumButtonSize.medium,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GabiumButton(
+                      text: '삭제',
+                      onPressed: () => Navigator.of(context).pop(true),
+                      variant: GabiumButtonVariant.danger,
+                      size: GabiumButtonSize.medium,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        await ref.read(medicationNotifierProvider.notifier).deleteDoseSchedule(schedule!.id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('일정이 삭제되었습니다.')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('삭제 실패: $e')),
+          );
+        }
+      }
+    }
   }
 
   String _getWeekday(DateTime date) {

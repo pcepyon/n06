@@ -29,6 +29,7 @@ abstract class MedicationRepository {
   Future<List<DoseSchedule>> getDoseSchedules(String planId);
   Future<void> saveDoseSchedules(List<DoseSchedule> schedules);
   Future<void> deleteDoseSchedulesFrom(String planId, DateTime fromDate);
+  Future<void> deleteDoseSchedule(String scheduleId);
   Future<void> updateDoseSchedule(DoseSchedule schedule);
 
   // DosagePlan operations (backward compatibility)

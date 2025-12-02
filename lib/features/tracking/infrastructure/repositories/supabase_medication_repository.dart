@@ -172,6 +172,11 @@ class SupabaseMedicationRepository implements MedicationRepository {
   }
 
   @override
+  Future<void> deleteDoseSchedule(String scheduleId) async {
+    await _supabase.from('dose_schedules').delete().eq('id', scheduleId);
+  }
+
+  @override
   Future<void> updateDoseSchedule(DoseSchedule schedule) async {
     final dto = DoseScheduleDto.fromEntity(schedule);
     await _supabase
