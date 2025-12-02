@@ -21,6 +21,16 @@
 
 ## 2025-12-03
 
+- [feat] 투여 기록 로직 개선 - 날짜 기반 기록 및 2주 공백 재시작 모드
+  - 날짜 클릭 시 해당 날짜로 administeredAt 기록 (기존: 항상 현재 시간)
+  - 미래 날짜 기록 불가 - 조기 투여 안내 제공
+  - 2주 이상 투여 공백 시 스케줄 재시작 모드 자동 진입
+  - 과거 예정일 기록 시 "이 날짜에 실제로 투여하셨나요?" 확인 안내
+  - `lib/features/tracking/presentation/dialogs/dose_record_dialog_v2.dart`
+  - `lib/features/tracking/presentation/dialogs/restart_schedule_dialog.dart` (신규)
+  - `lib/features/tracking/presentation/widgets/selected_date_detail_card.dart`
+  - `lib/features/tracking/application/notifiers/medication_notifier.dart`
+
 - [fix] 투여 계획 시작일 변경 시 스케줄이 시작일과 정렬되지 않는 버그 수정
   - 시작일을 화요일로 변경해도 스케줄이 변경 당일(목요일)부터 생성되던 문제 해결
   - _findFirstAlignedDate() 메서드 추가로 plan.startDate 기준 정렬 보장

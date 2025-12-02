@@ -246,6 +246,48 @@ class MedicationNotifier extends _$MedicationNotifier {
     }
   }
 
+  /// Skip dose schedule (mark as skipped by deleting)
+  /// Used when user restarts after long break
+  Future<void> skipDoseSchedule(String scheduleId) async {
+    // 건너뛰기는 삭제와 동일하게 처리
+    // 미완료 스케줄만 건너뛸 수 있음
+    await deleteDoseSchedule(scheduleId);
+  }
+
+  /// Skip multiple dose schedules at once
+  Future<void> skipDoseSchedules(List<String> scheduleIds) async {
+    final link = ref.keepAlive();
+
+    final userId = ref.read(authNotifierProvider).value?.id;
+    if (userId == null) throw Exception('User not authenticated');
+
+    final currentState = state.asData?.value;
+    if (currentState == null) throw Exception('State not loaded');
+
+    try {
+      for (final scheduleId in scheduleIds) {
+        // Check if schedule has associated record
+        final hasRecord =
+            currentState.records.any((r) => r.doseScheduleId == scheduleId);
+        if (!hasRecord) {
+          await _repository.deleteDoseSchedule(scheduleId);
+        }
+      }
+
+      if (!ref.mounted) {
+        return;
+      }
+
+      // Reload state once after all deletions
+      state = const AsyncValue.loading();
+      state = await AsyncValue.guard(() async {
+        return await _loadMedicationData(userId);
+      });
+    } finally {
+      link.close();
+    }
+  }
+
   /// Get plan change history
   Future<List<dynamic>> getPlanHistory() async {
     final currentState = state.asData?.value;

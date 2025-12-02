@@ -6,6 +6,7 @@ import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/tracking/domain/value_objects/missed_dose_guidance.dart';
 import 'package:n06/features/tracking/presentation/dialogs/dose_record_dialog_v2.dart';
 import 'package:n06/features/tracking/presentation/dialogs/off_schedule_dose_dialog.dart';
+import 'package:n06/features/tracking/presentation/dialogs/restart_schedule_dialog.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/core/presentation/widgets/status_badge.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
@@ -31,6 +32,21 @@ class SelectedDateDetailCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
+    final selectedDateOnly = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+    );
+    final isInFuture = selectedDateOnly.isAfter(todayOnly);
+
+    // 2주 이상 공백 체크
+    final longBreakInfo = _checkLongBreak();
+    if (longBreakInfo != null) {
+      return _buildLongBreakCard(context, longBreakInfo);
+    }
+
     // 이 날짜에 기록된 투여가 있는지 확인 (스케줄 없이 임의 투여된 경우)
     final recordOnThisDate = _getRecordOnDate(selectedDate);
 
@@ -41,9 +57,10 @@ class SelectedDateDetailCard extends ConsumerWidget {
         return _buildRecordedOnDateCard(context, recordOnThisDate);
       }
 
-      // 미래 날짜는 투여 불가
-      final today = DateTime.now();
-      final isInFuture = selectedDate.isAfter(DateTime(today.year, today.month, today.day));
+      // 미래 비예정일: 기록 불가 안내
+      if (isInFuture) {
+        return _buildFutureNonScheduledCard(context);
+      }
 
       return Card(
         child: Padding(
@@ -67,7 +84,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                   color: AppColors.textTertiary,
                 ),
               ),
-              if (!isInFuture && _canRecordOffSchedule()) ...[
+              if (_canRecordOffSchedule()) ...[
                 const SizedBox(height: 16),
                 _buildOffScheduleInfo(context),
                 const SizedBox(height: 16),
@@ -106,6 +123,11 @@ class SelectedDateDetailCard extends ConsumerWidget {
         context,
         recordForSchedule,
       );
+    }
+
+    // 미래 예정일: 기록 불가, 조기 투여 안내
+    if (isInFuture && !isCompleted) {
+      return _buildFutureScheduledCard(context, guidance);
     }
 
     return Card(
@@ -417,6 +439,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
       builder: (context) => DoseRecordDialogV2(
         schedule: schedule!,
         recentRecords: recentRecords,
+        selectedDate: selectedDate,
       ),
     );
   }
@@ -779,6 +802,332 @@ class SelectedDateDetailCard extends ConsumerWidget {
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 2주 이상 공백 체크
+  /// 반환: (마지막 기록, 건너뛴 스케줄 목록) 또는 null
+  ({DoseRecord? lastRecord, List<DoseSchedule> skippedSchedules})? _checkLongBreak() {
+    if (allRecords.isEmpty && allSchedules.isEmpty) return null;
+
+    // 완료된 스케줄 ID 목록
+    final completedScheduleIds = allRecords
+        .where((r) => r.doseScheduleId != null)
+        .map((r) => r.doseScheduleId)
+        .toSet();
+
+    // 미완료 과거 스케줄 찾기
+    final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
+
+    final incompleteOverdueSchedules = allSchedules
+        .where((s) {
+          final scheduleDate = DateTime(
+            s.scheduledDate.year,
+            s.scheduledDate.month,
+            s.scheduledDate.day,
+          );
+          return scheduleDate.isBefore(todayOnly) &&
+              !completedScheduleIds.contains(s.id);
+        })
+        .toList()
+      ..sort((a, b) => a.scheduledDate.compareTo(b.scheduledDate));
+
+    if (incompleteOverdueSchedules.isEmpty) return null;
+
+    // 마지막 투여 기록
+    DoseRecord? lastRecord;
+    if (allRecords.isNotEmpty) {
+      final sortedRecords = List<DoseRecord>.from(allRecords)
+        ..sort((a, b) => b.administeredAt.compareTo(a.administeredAt));
+      lastRecord = sortedRecords.first;
+    }
+
+    // 마지막 투여로부터 경과일 계산
+    int daysSinceLastDose;
+    if (lastRecord != null) {
+      daysSinceLastDose = todayOnly.difference(
+        DateTime(
+          lastRecord.administeredAt.year,
+          lastRecord.administeredAt.month,
+          lastRecord.administeredAt.day,
+        ),
+      ).inDays;
+    } else {
+      // 기록이 없으면 가장 오래된 미완료 스케줄로부터 계산
+      final oldestSchedule = incompleteOverdueSchedules.first;
+      daysSinceLastDose = todayOnly.difference(
+        DateTime(
+          oldestSchedule.scheduledDate.year,
+          oldestSchedule.scheduledDate.month,
+          oldestSchedule.scheduledDate.day,
+        ),
+      ).inDays;
+    }
+
+    // 2주(14일) 이상 공백이면 재시작 모드
+    if (daysSinceLastDose >= 14) {
+      return (
+        lastRecord: lastRecord,
+        skippedSchedules: incompleteOverdueSchedules,
+      );
+    }
+
+    return null;
+  }
+
+  /// 2주 이상 공백 카드
+  Widget _buildLongBreakCard(
+    BuildContext context,
+    ({DoseRecord? lastRecord, List<DoseSchedule> skippedSchedules}) info,
+  ) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.schedule,
+                size: 48,
+                color: AppColors.warning,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '투여가 오랫동안 중단되었습니다',
+              style: AppTypography.heading2.copyWith(
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${info.skippedSchedules.length}건의 미완료 스케줄이 있습니다.\n스케줄을 재설정하고 다시 시작하세요.',
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.info.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.info.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.medical_services_outlined,
+                    size: 18,
+                    color: AppColors.info,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '오랜 중단 후 재시작 시\n의료진과 상담하여 용량을 확인하세요',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.info,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: GabiumButton(
+                text: '스케줄 재설정하기',
+                onPressed: () => _showRestartDialog(context, info),
+                variant: GabiumButtonVariant.primary,
+                size: GabiumButtonSize.medium,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 재시작 다이얼로그 표시
+  void _showRestartDialog(
+    BuildContext context,
+    ({DoseRecord? lastRecord, List<DoseSchedule> skippedSchedules}) info,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => RestartScheduleDialog(
+        lastRecord: info.lastRecord,
+        skippedSchedules: info.skippedSchedules,
+      ),
+    );
+  }
+
+  /// 미래 비예정일 카드
+  Widget _buildFutureNonScheduledCard(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Icon(
+              Icons.event_busy_outlined,
+              size: 48,
+              color: AppColors.textDisabled,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '${selectedDate.month}월 ${selectedDate.day}일 (${_getWeekday(selectedDate)})',
+              style: AppTypography.heading2,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '투여 예정이 없는 날입니다',
+              style: AppTypography.bodyLarge.copyWith(
+                color: AppColors.textTertiary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.info.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.info.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 18,
+                    color: AppColors.info,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '미래 날짜에는 기록할 수 없습니다.\n투여 후 해당 날짜에 기록해주세요.',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.info,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 미래 예정일 카드 (기록 불가, 조기 투여 안내)
+  Widget _buildFutureScheduledCard(
+    BuildContext context,
+    MissedDoseGuidance guidance,
+  ) {
+    final today = DateTime.now();
+    final daysUntil = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+    ).difference(DateTime(today.year, today.month, today.day)).inDays;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 날짜
+            Text(
+              '${selectedDate.month}월 ${selectedDate.day}일 (${_getWeekday(selectedDate)})',
+              style: AppTypography.heading2.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 투여 정보
+            Row(
+              children: [
+                const Text(
+                  '💉 ',
+                  style: TextStyle(fontSize: 24),
+                ),
+                Text(
+                  '${schedule!.scheduledDoseMg} mg',
+                  style: AppTypography.display.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                StatusBadge(
+                  type: StatusBadgeType.info,
+                  text: '$daysUntil일 후 예정',
+                  icon: Icons.schedule,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // 미래 날짜 기록 불가 안내
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.info.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.info.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 18,
+                        color: AppColors.info,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '미래 날짜에는 기록할 수 없습니다',
+                          style: AppTypography.labelMedium.copyWith(
+                            color: AppColors.info,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '조기 투여가 필요하시면 오늘 날짜를 선택해서 기록해주세요.\n'
+                    '해당 예정일 스케줄에 자동으로 연결됩니다.',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.info,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

@@ -12,10 +12,12 @@ import 'package:n06/core/presentation/theme/app_typography.dart';
 class DoseRecordDialogV2 extends ConsumerStatefulWidget {
   final DoseSchedule schedule;
   final List<DoseRecord> recentRecords;
+  final DateTime? selectedDate; // null이면 오늘 날짜 사용
 
   const DoseRecordDialogV2({
     required this.schedule,
     required this.recentRecords,
+    this.selectedDate,
     super.key,
   });
 
@@ -27,6 +29,27 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
   String? selectedSite;
   final noteController = TextEditingController();
   bool isLoading = false;
+
+  /// 기록할 날짜 (selectedDate가 없으면 예정일 사용)
+  DateTime get _recordDate =>
+      widget.selectedDate ?? widget.schedule.scheduledDate;
+
+  /// 오늘과 기록 날짜가 다른지 (과거 예정일인 경우)
+  bool get _isRecordingPastDate {
+    final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
+    final recordDateOnly = DateTime(
+      _recordDate.year,
+      _recordDate.month,
+      _recordDate.day,
+    );
+    return recordDateOnly.isBefore(todayOnly);
+  }
+
+  String _getWeekday(DateTime date) {
+    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+    return weekdays[date.weekday - 1];
+  }
 
   @override
   void dispose() {
@@ -52,11 +75,87 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
                 '투여 기록',
                 style: AppTypography.heading1.copyWith(color: AppColors.textPrimary),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+
+              // 기록 날짜 표시
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.borderDark),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      size: 20,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${_recordDate.month}월 ${_recordDate.day}일 (${_getWeekday(_recordDate)})',
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 과거 예정일 확인 안내
+              if (_isRecordingPastDate) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.info.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.info.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 18,
+                            color: AppColors.info,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '이 날짜에 실제로 투여하셨나요?',
+                              style: AppTypography.labelMedium.copyWith(
+                                color: AppColors.info,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '• 예 → 아래에서 주사 부위를 선택하고 기록하세요\n'
+                        '• 아니오 → 실제 투여한 날짜를 선택해서 기록하세요',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.info,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 16),
 
               // 콘텐츠
               Text(
-                '${widget.schedule.scheduledDoseMg} mg를 투여했습니다.',
+                '${widget.schedule.scheduledDoseMg} mg를 투여합니다.',
                 style: AppTypography.bodyLarge.copyWith(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 16),
@@ -162,11 +261,20 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
         throw Exception('활성 투여 계획이 없습니다');
       }
 
+      // 기록 날짜의 정오(12:00)로 설정
+      final administeredAt = DateTime(
+        _recordDate.year,
+        _recordDate.month,
+        _recordDate.day,
+        12,
+        0,
+      );
+
       final doseRecord = DoseRecord(
         id: const Uuid().v4(),
         doseScheduleId: widget.schedule.id,
         dosagePlanId: state!.activePlan!.id,
-        administeredAt: DateTime.now(),
+        administeredAt: administeredAt,
         actualDoseMg: widget.schedule.scheduledDoseMg,
         injectionSite: selectedSite,
         note: noteController.text.isEmpty ? null : noteController.text,
