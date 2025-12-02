@@ -105,7 +105,7 @@ ALTER TABLE public.daily_checkins ENABLE ROW LEVEL SECURITY;
 -- 사용자는 자신의 체크인만 접근 가능
 CREATE POLICY "Users can only access their own checkins"
 ON public.daily_checkins FOR ALL
-USING (auth.uid() = user_id);
+USING (auth.uid()::TEXT = user_id);
 
 -- ============================================
 -- PART 6: 컬럼 코멘트 추가
