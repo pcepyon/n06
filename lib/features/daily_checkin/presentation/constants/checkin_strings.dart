@@ -184,6 +184,33 @@ class GiComfortQuestionStrings {
 
   // Q3-4: 오른쪽 윗배 통증 상세 (담낭염 체크)
   static const derivedRightUpperPainSeverityQuestion = '통증이 어느 정도였나요?';
+
+  // Q3-3-radiation: 등 방사통 체크 (췌장염 Red Flag)
+  static const derivedRadiationToBackQuestion = '혹시 등 쪽으로도 불편함이 느껴지셨나요?';
+  static const radiationNo = '아니요';
+  static const radiationNoEmoji = '😌';
+  static const radiationSlight = '약간 그런 것 같아요';
+  static const radiationSlightEmoji = '🤔';
+  static const radiationDefinite = '확실히 느껴졌어요';
+  static const radiationDefiniteEmoji = '😣';
+
+  // Q3-3-duration: 통증 지속 시간 (췌장염 Red Flag)
+  static const derivedPainDurationQuestion = '얼마나 오래 지속되었나요?';
+  static const durationBrief = '잠깐 (30분 이내)';
+  static const durationBriefEmoji = '⏱️';
+  static const durationHours = '몇 시간';
+  static const durationHoursEmoji = '⏱️';
+  static const durationAllDay = '하루 종일';
+  static const durationAllDayEmoji = '⏱️';
+
+  // Q3-4-fever: 발열/오한 체크 (담낭염 Red Flag)
+  static const derivedFeverChillsQuestion = '혹시 열이 나거나 오한이 있으셨나요?';
+  static const feverNo = '아니요';
+  static const feverNoEmoji = '😌';
+  static const feverSlight = '약간 그런 것 같아요';
+  static const feverSlightEmoji = '🤔';
+  static const feverDefinite = '확실히 있었어요';
+  static const feverDefiniteEmoji = '🤒';
 }
 
 /// Q4. 화장실 질문
@@ -230,6 +257,15 @@ class BowelQuestionStrings {
   // Q4-1b 피드백
   static const feedbackDiarrheaMild = '수분 섭취를 충분히 해주세요';
   static const feedbackDiarrheaModerate = '수분과 전해질 보충이 중요해요. 이온음료 추천해요';
+
+  // Q4-1a-bloating: 빵빵함 정도 (장폐색 Red Flag)
+  static const derivedBloatingSeverityQuestion = '배가 많이 빵빵하셨어요?';
+  static const bloatingMild = '약간';
+  static const bloatingMildEmoji = '😐';
+  static const bloatingModerate = '꽤 빵빵했어요';
+  static const bloatingModerateEmoji = '😣';
+  static const bloatingSevere = '많이 - 가스도 안 나와요';
+  static const bloatingSevereEmoji = '😰';
 }
 
 /// Q5. 에너지 질문
@@ -272,6 +308,24 @@ class EnergyQuestionStrings {
   static const hypoglycemiaYes = '네, 그랬어요';
   static const hypoglycemiaYesEmoji = '😰';
 
+  // Q5-2-tremor: 손떨림/심계항진 (저혈당 Red Flag)
+  static const derivedTremorQuestion = '혹시 손이 떨리거나 심장이 빨리 뛰었나요?';
+  static const tremorNo = '아니요';
+  static const tremorNoEmoji = '😌';
+  static const tremorMild = '약간';
+  static const tremorMildEmoji = '🤔';
+  static const tremorSevere = '심하게';
+  static const tremorSevereEmoji = '😰';
+
+  // Q5-2-meds: 당뇨약 복용 여부 (저혈당 Red Flag)
+  static const derivedDiabetesMedsQuestion = '혹시 인슐린이나 당뇨약도 함께 드시고 계신가요?';
+  static const medsNo = '아니요';
+  static const medsNoEmoji = '😌';
+  static const medsOral = '경구약';
+  static const medsOralEmoji = '💊';
+  static const medsInsulin = '인슐린';
+  static const medsInsulinEmoji = '💉';
+
   // Q5-3: 신부전 체크
   static const derivedRenalCheckQuestion = '소변량이 평소보다 줄었나요?';
   static const urineNormal = '아니요';
@@ -280,6 +334,24 @@ class EnergyQuestionStrings {
   static const urineDecreasedEmoji = '🤔';
   static const urineSeverelyDecreased = '많이 줄었어요';
   static const urineSeverelyDecreasedEmoji = '😰';
+
+  // Q5-3-urine: 소변량 감소 (신부전 Red Flag)
+  static const derivedUrineOutputQuestion = '소변량이 줄었거나 색이 진해졌나요?';
+  static const urineOutputNormal = '정상';
+  static const urineOutputNormalEmoji = '😌';
+  static const urineOutputDecreased = '줄었음';
+  static const urineOutputDecreasedEmoji = '🤔';
+  static const urineOutputSevere = '많이 줄었음';
+  static const urineOutputSevereEmoji = '😰';
+
+  // Q5-3-weight: 체중 증가 (신부전 Red Flag)
+  static const derivedWeightGainQuestion = '최근 체중이 갑자기 늘었나요?';
+  static const weightGainNo = '아니요';
+  static const weightGainNoEmoji = '😌';
+  static const weightGainMild = '1-2kg';
+  static const weightGainMildEmoji = '🤔';
+  static const weightGainSignificant = '3kg 이상';
+  static const weightGainSignificantEmoji = '😰';
 }
 
 /// Q6. 기분 질문

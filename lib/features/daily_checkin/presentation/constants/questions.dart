@@ -569,6 +569,150 @@ class DerivedQuestions {
     ],
   );
 
+  /// Q3-3-radiation. 등 방사통 체크 (췌장염 Red Flag)
+  static const radiationToBack = DerivedQuestion(
+    parentQuestionId: 'gi_comfort',
+    emoji: GiComfortQuestionStrings.emoji,
+    question: GiComfortQuestionStrings.derivedRadiationToBackQuestion,
+    options: [
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.radiationNoEmoji,
+        text: GiComfortQuestionStrings.radiationNo,
+        value: 'no',
+      ),
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.radiationSlightEmoji,
+        text: GiComfortQuestionStrings.radiationSlight,
+        value: 'slight',
+      ),
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.radiationDefiniteEmoji,
+        text: GiComfortQuestionStrings.radiationDefinite,
+        value: 'definite',
+      ),
+    ],
+  );
+
+  /// Q3-3-duration. 통증 지속 시간 (췌장염 Red Flag)
+  static const painDuration = DerivedQuestion(
+    parentQuestionId: 'gi_comfort',
+    emoji: GiComfortQuestionStrings.emoji,
+    question: GiComfortQuestionStrings.derivedPainDurationQuestion,
+    options: [
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.durationBriefEmoji,
+        text: GiComfortQuestionStrings.durationBrief,
+        value: 'brief',
+      ),
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.durationHoursEmoji,
+        text: GiComfortQuestionStrings.durationHours,
+        value: 'hours',
+      ),
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.durationAllDayEmoji,
+        text: GiComfortQuestionStrings.durationAllDay,
+        value: 'all_day',
+      ),
+    ],
+  );
+
+  /// Q3-4-fever. 발열/오한 체크 (담낭염 Red Flag)
+  static const feverChills = DerivedQuestion(
+    parentQuestionId: 'gi_comfort',
+    emoji: GiComfortQuestionStrings.emoji,
+    question: GiComfortQuestionStrings.derivedFeverChillsQuestion,
+    options: [
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.feverNoEmoji,
+        text: GiComfortQuestionStrings.feverNo,
+        value: 'no',
+      ),
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.feverSlightEmoji,
+        text: GiComfortQuestionStrings.feverSlight,
+        value: 'slight',
+      ),
+      AnswerOption(
+        emoji: GiComfortQuestionStrings.feverDefiniteEmoji,
+        text: GiComfortQuestionStrings.feverDefinite,
+        value: 'definite',
+      ),
+    ],
+  );
+
+  /// Q4-1a-bloating. 빵빵함 정도 (장폐색 Red Flag)
+  static const bloatingSeverity = DerivedQuestion(
+    parentQuestionId: 'bowel',
+    emoji: BowelQuestionStrings.emoji,
+    question: BowelQuestionStrings.derivedBloatingSeverityQuestion,
+    options: [
+      AnswerOption(
+        emoji: BowelQuestionStrings.bloatingMildEmoji,
+        text: BowelQuestionStrings.bloatingMild,
+        value: 'mild',
+      ),
+      AnswerOption(
+        emoji: BowelQuestionStrings.bloatingModerateEmoji,
+        text: BowelQuestionStrings.bloatingModerate,
+        value: 'moderate',
+      ),
+      AnswerOption(
+        emoji: BowelQuestionStrings.bloatingSevereEmoji,
+        text: BowelQuestionStrings.bloatingSevere,
+        value: 'severe_no_gas',
+      ),
+    ],
+  );
+
+  /// Q5-2-tremor. 손떨림 체크 (저혈당 Red Flag)
+  static const tremorCheck = DerivedQuestion(
+    parentQuestionId: 'energy',
+    emoji: EnergyQuestionStrings.emoji,
+    question: EnergyQuestionStrings.derivedTremorQuestion,
+    options: [
+      AnswerOption(
+        emoji: EnergyQuestionStrings.tremorNoEmoji,
+        text: EnergyQuestionStrings.tremorNo,
+        value: 'no',
+      ),
+      AnswerOption(
+        emoji: EnergyQuestionStrings.tremorMildEmoji,
+        text: EnergyQuestionStrings.tremorMild,
+        value: 'mild',
+      ),
+      AnswerOption(
+        emoji: EnergyQuestionStrings.tremorSevereEmoji,
+        text: EnergyQuestionStrings.tremorSevere,
+        value: 'severe',
+      ),
+    ],
+  );
+
+  /// Q5-2-meds. 당뇨약 복용 여부 (저혈당 Red Flag)
+  static const diabetesMedsCheck = DerivedQuestion(
+    parentQuestionId: 'energy',
+    emoji: EnergyQuestionStrings.emoji,
+    question: EnergyQuestionStrings.derivedDiabetesMedsQuestion,
+    options: [
+      AnswerOption(
+        emoji: EnergyQuestionStrings.medsNoEmoji,
+        text: EnergyQuestionStrings.medsNo,
+        value: 'no',
+      ),
+      AnswerOption(
+        emoji: EnergyQuestionStrings.medsOralEmoji,
+        text: EnergyQuestionStrings.medsOral,
+        value: 'oral',
+      ),
+      AnswerOption(
+        emoji: EnergyQuestionStrings.medsInsulinEmoji,
+        text: EnergyQuestionStrings.medsInsulin,
+        value: 'insulin',
+      ),
+    ],
+  );
+
   /// Q5-3. 신부전 체크
   static const renalCheck = DerivedQuestion(
     parentQuestionId: 'energy',
@@ -589,6 +733,54 @@ class DerivedQuestions {
         emoji: EnergyQuestionStrings.urineSeverelyDecreasedEmoji,
         text: EnergyQuestionStrings.urineSeverelyDecreased,
         value: 'severely_decreased',
+      ),
+    ],
+  );
+
+  /// Q5-3-urine. 소변량 상세 (신부전 Red Flag)
+  static const urineOutputCheck = DerivedQuestion(
+    parentQuestionId: 'energy',
+    emoji: EnergyQuestionStrings.emoji,
+    question: EnergyQuestionStrings.derivedUrineOutputQuestion,
+    options: [
+      AnswerOption(
+        emoji: EnergyQuestionStrings.urineOutputNormalEmoji,
+        text: EnergyQuestionStrings.urineOutputNormal,
+        value: 'normal',
+      ),
+      AnswerOption(
+        emoji: EnergyQuestionStrings.urineOutputDecreasedEmoji,
+        text: EnergyQuestionStrings.urineOutputDecreased,
+        value: 'decreased',
+      ),
+      AnswerOption(
+        emoji: EnergyQuestionStrings.urineOutputSevereEmoji,
+        text: EnergyQuestionStrings.urineOutputSevere,
+        value: 'significantly_decreased',
+      ),
+    ],
+  );
+
+  /// Q5-3-weight. 체중 증가 체크 (신부전 Red Flag)
+  static const weightGainCheck = DerivedQuestion(
+    parentQuestionId: 'energy',
+    emoji: EnergyQuestionStrings.emoji,
+    question: EnergyQuestionStrings.derivedWeightGainQuestion,
+    options: [
+      AnswerOption(
+        emoji: EnergyQuestionStrings.weightGainNoEmoji,
+        text: EnergyQuestionStrings.weightGainNo,
+        value: 'no',
+      ),
+      AnswerOption(
+        emoji: EnergyQuestionStrings.weightGainMildEmoji,
+        text: EnergyQuestionStrings.weightGainMild,
+        value: 'mild',
+      ),
+      AnswerOption(
+        emoji: EnergyQuestionStrings.weightGainSignificantEmoji,
+        text: EnergyQuestionStrings.weightGainSignificant,
+        value: 'significant',
       ),
     ],
   );

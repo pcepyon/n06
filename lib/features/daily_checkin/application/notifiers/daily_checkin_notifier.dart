@@ -401,13 +401,29 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
         (answer == 'upper_abdomen' || answer == 'periumbilical')) {
       return 'Q3-3'; // 상복부 통증 상세
     }
+    // Q3-3: 췌장염 Red Flag 체크
+    if (currentPath == 'Q3-3' && (answer == 'moderate' || answer == 'severe')) {
+      return 'Q3-3-radiation'; // 등 방사통 체크
+    }
+    if (currentPath == 'Q3-3-radiation' &&
+        (answer == 'slight' || answer == 'definite')) {
+      return 'Q3-3-duration'; // 지속 시간 체크
+    }
+    // Q3-4: 담낭염 Red Flag 체크
     if (currentPath == 'Q3-2' && answer == 'right_upper_quadrant') {
       return 'Q3-4'; // 우상복부 통증 상세
+    }
+    if (currentPath == 'Q3-4' && (answer == 'moderate' || answer == 'severe')) {
+      return 'Q3-4-fever'; // 발열/오한 체크
     }
 
     // Q4-1 (변비/설사)
     if (currentPath == 'Q4-1' && answer == 'constipation') {
       return 'Q4-1a'; // 변비 상세
+    }
+    // Q4-1a: 장폐색 Red Flag 체크
+    if (currentPath == 'Q4-1a' && (answer == '3-4' || answer == '5+')) {
+      return 'Q4-1a-bloating'; // 빵빵함 정도
     }
     if (currentPath == 'Q4-1' && answer == 'diarrhea') {
       return 'Q4-1b'; // 설사 상세
@@ -418,9 +434,26 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
         (answer == 'dizziness' || answer == 'cold_sweat')) {
       return 'Q5-2'; // 저혈당 체크
     }
+    // Q5-2: 저혈당 Red Flag 체크
+    if (currentPath == 'Q5-2' && answer == 'yes') {
+      return 'Q5-2-tremor'; // 손떨림 체크
+    }
+    if (currentPath == 'Q5-2-tremor' &&
+        (answer == 'mild' || answer == 'severe')) {
+      return 'Q5-2-meds'; // 당뇨약 복용 여부
+    }
+    // Q5-3: 신부전 Red Flag 체크
     if (currentPath == 'Q5-1' &&
         (answer == 'dyspnea' || answer == 'swelling')) {
       return 'Q5-3'; // 신부전 체크
+    }
+    if (currentPath == 'Q5-3' &&
+        (answer == 'decreased' || answer == 'severely_decreased')) {
+      return 'Q5-3-urine'; // 소변량 상세
+    }
+    if (currentPath == 'Q5-3-urine' &&
+        (answer == 'decreased' || answer == 'significantly_decreased')) {
+      return 'Q5-3-weight'; // 체중 증가 체크
     }
 
     return null; // 메인 질문으로 복귀
