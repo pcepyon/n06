@@ -86,6 +86,12 @@ Dart의 ?? 연산자는 null을 "값 미전달"로 해석:
    field: clearField ? null : (field ?? this.field)
 ```
 
+### Commit (커밋 요청 시)
+```
+❌ changelog 없이 커밋 완료 금지
+✅ docs/changelog.md 항목 추가 → amend → 완료 보고
+```
+
 ---
 
 ## Decision Trees
@@ -125,16 +131,6 @@ features/{feature}/
   domain/repositories/{feature}_repository.dart
   infrastructure/repositories/supabase_{feature}_repository.dart
   infrastructure/dtos/{entity}_dto.dart
-```
-
----
-
-## Commit Process
-```
-[ ] flutter test && flutter analyze
-[ ] git commit
-[ ] changelog: `docs/changelog.md` 읽고 규칙대로 추가, amend
-[ ] git push
 ```
 
 ---

@@ -21,6 +21,10 @@
 
 ## 2025-12-03
 
+- [docs] 커밋 규칙을 Critical Rules로 이동
+  - Commit Process 섹션 제거, changelog 필수 규칙 강화
+  - `claude.md`
+
 - [feat] 하단 네비 바에 트렌드 대시보드 추가
   - 가이드 탭을 트렌드 탭으로 교체 (아이콘: insights)
   - trend-dashboard 라우트를 ShellRoute 내로 이동하여 하단 네비 표시
