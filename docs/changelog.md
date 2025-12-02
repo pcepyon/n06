@@ -26,6 +26,10 @@
   - 수정: `Future.microtask()` 패턴 적용하여 위젯 트리 빌드 후 실행되도록 변경
   - `lib/features/daily_checkin/presentation/screens/daily_checkin_screen.dart`
 
+- [docs] CLAUDE.md에 Widget Lifecycle 내 Provider 수정 규칙 추가
+  - `initState/didChangeDependencies/build` 내 Provider 직접 수정 금지
+  - `Future.microtask()` 또는 `addPostFrameCallback()` 사용 필수
+
 - [refactor] 레거시 data_sharing 모듈 제거 및 주간 리포트로 교체
   - 설정 화면의 "의료진 데이터 공유" 메뉴를 `/share-report`로 연결
   - 기존 `/data-sharing` 라우트 및 data_sharing 폴더 전체 삭제 (12개 파일)

@@ -55,6 +55,14 @@ Application/Presentation → Repository Interface (Domain)
 ✅ Container(decoration: BoxDecoration(color: X, ...))
 ```
 
+### Widget Lifecycle 내 Provider 수정 (BUG-20251202-153023)
+```
+initState/didChangeDependencies/build 내에서 Provider 수정 시:
+❌ ref.read(provider.notifier).method()  // 직접 호출 금지
+✅ Future.microtask(() { ref.read(provider.notifier).method(); })
+✅ WidgetsBinding.instance.addPostFrameCallback((_) { ... })
+```
+
 ---
 
 ## Decision Trees
