@@ -141,6 +141,11 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => context.push('/share-report'),
             ),
             SettingsMenuItemImproved(
+              title: '부작용 대처 가이드',
+              subtitle: '증상별 대처법과 관리 팁을 확인할 수 있습니다',
+              onTap: () => context.push('/coping-guide'),
+            ),
+            SettingsMenuItemImproved(
               title: '온보딩 다시 보기',
               subtitle: 'GLP-1 약물 정보, 부작용 안내 등 교육 콘텐츠를 다시 볼 수 있습니다',
               onTap: () => context.push('/onboarding/review'),

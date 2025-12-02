@@ -21,6 +21,10 @@
 
 ## 2025-12-03
 
+- [feat] 설정 화면에 부작용 대처 가이드 메뉴 추가
+  - 설정 페이지에서 부작용 증상별 대처법과 피드백 기능 접근 가능
+  - `lib/features/settings/presentation/screens/settings_screen.dart:143-147`
+
 - [fix] DosagePlan 엔티티에서 미래 시작일 검증 로직 완화
   - 미래 시작일 설정 시 "Start date cannot be in the future" 에러 수정
   - 1년 이내 미래 시작일 허용 (케이스 2: 미래 계획 변경 지원)
