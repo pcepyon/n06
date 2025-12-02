@@ -70,6 +70,22 @@ AppBar.actions는 unbounded width constraint 제공
 ✅ SizedBox(width: N)로 감싸서 고정 너비 제공
 ```
 
+### void async 안티패턴 (BUG-20251202-231014)
+```dart
+상태 업데이트 후 UI 동기화가 필요한 콜백:
+❌ void _handler() async { await updateState(); }  // 호출부에서 await 불가
+✅ Future<void> _handler() async { await updateState(); }
+✅ 호출부: await _handler();
+```
+
+### copyWith nullable 필드 (BUG-20251202-231014)
+```dart
+Dart의 ?? 연산자는 null을 "값 미전달"로 해석:
+❌ copyWith(field: null)  // 기존 값 유지됨 (버그!)
+✅ copyWith에 clearField 플래그 추가:
+   field: clearField ? null : (field ?? this.field)
+```
+
 ---
 
 ## Decision Trees
