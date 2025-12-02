@@ -168,7 +168,7 @@ class SupabaseMedicationRepository implements MedicationRepository {
         .from('dose_schedules')
         .delete()
         .eq('dosage_plan_id', planId)
-        .gt('scheduled_date', fromDate.toIso8601String());
+        .gte('scheduled_date', fromDate.toIso8601String());
   }
 
   @override

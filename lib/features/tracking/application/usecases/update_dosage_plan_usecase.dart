@@ -71,15 +71,35 @@ class UpdateDosagePlanUseCase {
         newPlanMap,
       );
 
-      // Step 4: Recalculate and update schedules
-      await medicationRepository.deleteDoseSchedulesFrom(
-        newPlan.id,
-        DateTime.now(),
+      // Step 4: Determine schedule generation start date
+      // If startDate changed, generate from new startDate (past or future)
+      // Otherwise, generate from current date (preserve past records)
+      final now = DateTime.now();
+      final normalizedNow = DateTime(now.year, now.month, now.day);
+      final normalizedOldStart = DateTime(
+        oldPlan.startDate.year,
+        oldPlan.startDate.month,
+        oldPlan.startDate.day,
+      );
+      final normalizedNewStart = DateTime(
+        newPlan.startDate.year,
+        newPlan.startDate.month,
+        newPlan.startDate.day,
       );
 
+      final startDateChanged = normalizedOldStart != normalizedNewStart;
+      final scheduleStartDate = startDateChanged ? normalizedNewStart : normalizedNow;
+
+      // Delete schedules from schedule start date onwards
+      await medicationRepository.deleteDoseSchedulesFrom(
+        newPlan.id,
+        scheduleStartDate,
+      );
+
+      // Recalculate and save new schedules
       final newSchedules = recalculateScheduleUseCase.execute(
         newPlan,
-        fromDate: DateTime.now(),
+        fromDate: scheduleStartDate,
       );
 
       await medicationRepository.saveDoseSchedules(newSchedules);

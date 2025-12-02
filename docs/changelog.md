@@ -21,6 +21,22 @@
 
 ## 2025-12-03
 
+- [feat] 투여 계획 시작일을 미래로 설정 가능하도록 개선
+  - 시작일 선택 범위를 현재부터 1년 후까지 확장 (기존: 과거만 가능)
+  - 다음 주부터 용량 증량 등 미래 계획을 미리 등록 가능
+  - 시작일 변경 시 새 시작일부터 스케줄 생성 (과거/미래 모두 지원)
+  - 시작일 미변경 시 현재부터 미래 스케줄만 재생성 (과거 기록 보존)
+  - `lib/features/tracking/presentation/screens/edit_dosage_plan_screen.dart:461`
+  - `lib/features/tracking/application/usecases/update_dosage_plan_usecase.dart:91`
+
+- [fix] 투여 계획 시작일을 과거로 변경 시 과거 스케줄이 생성되지 않는 버그 수정
+  - 시작일을 과거(예: 한 달 전)로 설정해도 과거 스케줄이 생성되지 않던 문제 해결
+  - 앱 설치 전부터 GLP-1 약물을 사용하던 사용자의 과거 기록 추가 가능
+  - UpdateDosagePlanUseCase에서 시작일 변경 감지 후 과거 스케줄 생성 로직 추가
+  - deleteDoseSchedulesFrom()을 .gt()에서 .gte()로 변경하여 중복 방지
+  - `lib/features/tracking/application/usecases/update_dosage_plan_usecase.dart`
+  - `lib/features/tracking/infrastructure/repositories/supabase_medication_repository.dart`
+
 - [feat] 투여 기록 로직 개선 - 날짜 기반 기록 및 2주 공백 재시작 모드
   - 날짜 클릭 시 해당 날짜로 administeredAt 기록 (기존: 항상 현재 시간)
   - 미래 날짜 기록 불가 - 조기 투여 안내 제공

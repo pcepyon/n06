@@ -458,7 +458,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
             setState(() => _selectedStartDate = newDate);
           },
           firstDate: DateTime(2020),
-          lastDate: DateTime.now(),
+          lastDate: DateTime.now().add(const Duration(days: 365)),
         ),
         const SizedBox(height: 32), // xl spacing
 
