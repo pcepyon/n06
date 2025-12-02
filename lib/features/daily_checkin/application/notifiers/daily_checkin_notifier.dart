@@ -524,9 +524,9 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
 
     // Q4-1a: 변비 상세
     if (path == 'Q4-1a') {
-      final days = answer == '1_2_days'
+      final days = answer == '1-2'
           ? 2
-          : answer == '3_4_days'
+          : answer == '3-4'
               ? 4
               : 6;
       details.add(SymptomDetail(
@@ -538,9 +538,9 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
 
     // Q4-1b: 설사 상세
     if (path == 'Q4-1b') {
-      final frequency = answer == '2_3_times'
+      final frequency = answer == '2-3'
           ? 3
-          : answer == '4_5_times'
+          : answer == '4-5'
               ? 5
               : 7;
       details.add(SymptomDetail(
@@ -688,7 +688,7 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     final constipationDays = state.derivedAnswers['Q4-1a'] as String?;
     final bloatingSeverity = state.derivedAnswers['Q4-1a-bloating'] as String?;
 
-    if ((constipationDays == '5_plus') &&
+    if ((constipationDays == '5+') &&
         bloatingSeverity == 'severe_no_gas') {
       return RedFlagDetection(
         type: RedFlagType.bowelObstruction,
@@ -707,8 +707,8 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     final onDiabetesMeds = state.derivedAnswers['Q5-2-meds'] as String?;
 
     if ((symptoms == 'dizziness' || symptoms == 'cold_sweat') &&
-        tremor == 'yes' &&
-        onDiabetesMeds == 'yes') {
+        (tremor == 'mild' || tremor == 'severe') &&
+        (onDiabetesMeds == 'oral' || onDiabetesMeds == 'insulin')) {
       return RedFlagDetection(
         type: RedFlagType.hypoglycemia,
         severity: RedFlagSeverity.urgent,
@@ -727,8 +727,8 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     final diarrhea = state.derivedAnswers['Q4-1b'] as String?;
 
     if ((symptoms == 'dyspnea' || symptoms == 'swelling') &&
-        (decreasedUrine == 'slight' || decreasedUrine == 'severe') &&
-        (vomiting == 'multiple' || diarrhea == '6_plus')) {
+        (decreasedUrine == 'decreased' || decreasedUrine == 'significantly_decreased') &&
+        (vomiting == 'multiple' || diarrhea == '6+')) {
       return RedFlagDetection(
         type: RedFlagType.renalImpairment,
         severity: RedFlagSeverity.warning,

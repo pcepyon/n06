@@ -34,6 +34,9 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
 
   bool _isInitialized = false;
   bool _isDerivedSheetOpen = false;
+  bool _isFeedbackTimerActive = false;
+  String? _lastPendingFeedback;
+  bool _isRedFlagDialogShown = false; // Red Flag 다이얼로그 중복 표시 방지
 
   @override
   void initState() {
@@ -262,12 +265,21 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     final selectedAnswer = state.answers[questionIndex + 1];
 
     // 피드백이 표시 대기 중이면 자동 전환 (BUG-20251202-175417)
-    if (state.pendingFeedback != null) {
+    // 매 빌드마다 타이머가 생성되지 않도록 플래그로 제어
+    if (state.pendingFeedback != null &&
+        !_isFeedbackTimerActive &&
+        _lastPendingFeedback != state.pendingFeedback) {
+      _isFeedbackTimerActive = true;
+      _lastPendingFeedback = state.pendingFeedback;
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
+          _isFeedbackTimerActive = false;
           ref.read(dailyCheckinProvider.notifier).dismissFeedbackAndProceed();
         }
       });
+    } else if (state.pendingFeedback == null) {
+      _isFeedbackTimerActive = false;
+      _lastPendingFeedback = null;
     }
 
     return Padding(
@@ -334,6 +346,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
         _isDerivedSheetOpen = true;
+        final openedPath = path; // 바텀시트 열 때의 경로 저장
         await showDerivedQuestionSheet(
           context: context,
           path: path,
@@ -344,9 +357,10 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
         // 바텀시트가 닫힌 후
         if (mounted) {
           _isDerivedSheetOpen = false;
-          // 바텀시트가 닫혔는데 상태가 여전히 derived path면 동기화
+          // 바텀시트가 닫혔는데 경로가 같으면 (답변 없이 닫은 경우) 동기화
+          // 경로가 바뀌었으면 (다음 파생 질문으로 이동) 정상 동작
           final currentPath = ref.read(dailyCheckinProvider).value?.currentDerivedPath;
-          if (currentPath != null) {
+          if (currentPath == openedPath) {
             ref.read(dailyCheckinProvider.notifier).goBack();
           }
         }
@@ -384,9 +398,11 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
       final feedback = feedbackNotifier.getCompletionFeedback(savedCheckin);
       feedbackMessage = feedback.message;
 
-      // Red Flag 안내 표시
-      if (savedCheckin.redFlagDetected != null) {
+      // Red Flag 안내 표시 (중복 방지, BUG-20251202-REDFLAG)
+      if (savedCheckin.redFlagDetected != null && !_isRedFlagDialogShown) {
+        _isRedFlagDialogShown = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
           final redFlagFeedback = feedbackNotifier.getRedFlagGuidance(
             savedCheckin.redFlagDetected!.type,
           );
