@@ -21,6 +21,25 @@
 
 ## 2025-12-03
 
+- [feat] 장기 부재 시 과거 기록 입력 모드 추가
+  - 장기 부재 카드에 "과거 기록 입력하기" 버튼 추가
+  - 과거 기록 입력 모드에서 장기 부재 체크 스킵
+  - 상단 배너 UI로 모드 표시 및 종료 버튼
+  - `lib/features/tracking/presentation/screens/dose_calendar_screen.dart`
+  - `lib/features/tracking/presentation/widgets/selected_date_detail_card.dart`
+
+- [feat] 계정 삭제 기능 구현 (Apple/Google 정책 준수)
+  - Supabase Edge Function으로 auth.admin.deleteUser 호출
+  - Flutter: AuthRepository, AuthNotifier에 deleteAccount() 추가
+  - 2단계 확인 다이얼로그: 삭제 데이터 목록 + 동의 체크박스
+  - 설정 화면에 계정 삭제 버튼 추가
+  - `supabase/functions/delete-account/index.ts`
+  - `lib/features/authentication/domain/repositories/auth_repository.dart`
+  - `lib/features/authentication/infrastructure/repositories/supabase_auth_repository.dart`
+  - `lib/features/authentication/application/notifiers/auth_notifier.dart`
+  - `lib/features/authentication/presentation/widgets/delete_account_confirm_dialog.dart`
+  - `lib/features/settings/presentation/screens/settings_screen.dart`
+
 - [fix] 체중 기록 수정/삭제 후 목록 UI 갱신 누락 수정
   - updateWeight, deleteWeight에서 trackingProvider invalidate 추가
   - `lib/features/tracking/application/notifiers/weight_record_edit_notifier.dart`

@@ -19,6 +19,7 @@ class DoseCalendarScreen extends ConsumerStatefulWidget {
 class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
+  bool _isPastRecordMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +98,52 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
 
               const Divider(height: 1),
 
+              // 과거 기록 입력 모드 배너
+              if (_isPastRecordMode)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  color: AppColors.info.withValues(alpha: 0.1),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.edit_calendar,
+                        size: 20,
+                        color: AppColors.info,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '과거 기록 입력 모드',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.info,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() => _isPastRecordMode = false);
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          '완료',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.info,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
               // 선택 날짜 상세 카드
               Expanded(
                 child: SingleChildScrollView(
@@ -111,6 +158,13 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
                         recentRecords: _getRecentRecords(records, 30),
                         allSchedules: schedules,
                         allRecords: records,
+                        isPastRecordMode: _isPastRecordMode,
+                        onEnterPastRecordMode: () {
+                          setState(() => _isPastRecordMode = true);
+                        },
+                        onExitPastRecordMode: () {
+                          setState(() => _isPastRecordMode = false);
+                        },
                       );
                     },
                   ),

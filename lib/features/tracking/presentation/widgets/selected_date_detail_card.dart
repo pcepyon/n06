@@ -19,6 +19,9 @@ class SelectedDateDetailCard extends ConsumerWidget {
   final List<DoseRecord> recentRecords;
   final List<DoseSchedule> allSchedules;
   final List<DoseRecord> allRecords;
+  final bool isPastRecordMode;
+  final VoidCallback? onEnterPastRecordMode;
+  final VoidCallback? onExitPastRecordMode;
 
   const SelectedDateDetailCard({
     required this.selectedDate,
@@ -27,6 +30,9 @@ class SelectedDateDetailCard extends ConsumerWidget {
     required this.recentRecords,
     required this.allSchedules,
     required this.allRecords,
+    this.isPastRecordMode = false,
+    this.onEnterPastRecordMode,
+    this.onExitPastRecordMode,
     super.key,
   });
 
@@ -41,10 +47,12 @@ class SelectedDateDetailCard extends ConsumerWidget {
     );
     final isInFuture = selectedDateOnly.isAfter(todayOnly);
 
-    // 2주 이상 공백 체크
-    final longBreakInfo = _checkLongBreak();
-    if (longBreakInfo != null) {
-      return _buildLongBreakCard(context, longBreakInfo);
+    // 2주 이상 공백 체크 (과거 기록 입력 모드에서는 스킵)
+    if (!isPastRecordMode) {
+      final longBreakInfo = _checkLongBreak();
+      if (longBreakInfo != null) {
+        return _buildLongBreakCard(context, longBreakInfo);
+      }
     }
 
     // 이 날짜에 기록된 투여가 있는지 확인 (스케줄 없이 임의 투여된 경우)
@@ -947,6 +955,16 @@ class SelectedDateDetailCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: GabiumButton(
+                text: '과거 기록 입력하기',
+                onPressed: onEnterPastRecordMode,
+                variant: GabiumButtonVariant.secondary,
+                size: GabiumButtonSize.medium,
+              ),
+            ),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: GabiumButton(
