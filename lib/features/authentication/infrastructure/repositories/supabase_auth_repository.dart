@@ -746,4 +746,88 @@ class SupabaseAuthRepository implements AuthRepository {
       throw Exception('Update password error: $e');
     }
   }
+
+  // ============================================
+  // Account Deletion
+  // ============================================
+
+  @override
+  Future<void> deleteAccount() async {
+    try {
+      // 1. 현재 세션 확인
+      final session = _supabase.auth.currentSession;
+      if (session == null) {
+        throw Exception('Not authenticated');
+      }
+
+      if (kDebugMode) {
+        developer.log(
+          'Calling delete-account Edge Function',
+          name: 'SupabaseAuthRepository',
+        );
+      }
+
+      // 2. Edge Function 호출 (서버 측에서 auth.admin.deleteUser 실행)
+      final response = await _supabase.functions.invoke(
+        'delete-account',
+        headers: {
+          'Authorization': 'Bearer ${session.accessToken}',
+        },
+      );
+
+      // 3. 응답 처리
+      if (response.status != 200) {
+        final errorMsg = response.data?['error'] ?? 'Unknown error';
+        throw Exception('Delete account failed: $errorMsg');
+      }
+
+      final data = response.data;
+      if (data == null || data['success'] != true) {
+        throw Exception(
+            'Delete account failed: ${data?['error'] ?? 'Unknown error'}');
+      }
+
+      if (kDebugMode) {
+        developer.log(
+          'Account deleted successfully',
+          name: 'SupabaseAuthRepository',
+        );
+      }
+
+      // 4. 로컬 세션 정리 (Kakao/Naver SDK 로그아웃 포함)
+      try {
+        await kakao.UserApi.instance.logout();
+      } catch (_) {
+        // Kakao 로그아웃 실패는 무시
+      }
+
+      try {
+        await FlutterNaverLogin.logOut();
+      } catch (_) {
+        // Naver 로그아웃 실패는 무시
+      }
+
+      // 5. Supabase 로컬 세션 정리
+      // 서버에서 이미 사용자가 삭제되었으므로 signOut은 로컬 정리만 수행
+      await _supabase.auth.signOut();
+    } on AuthException catch (e) {
+      if (kDebugMode) {
+        developer.log(
+          'Delete account AuthException: ${e.message}',
+          name: 'SupabaseAuthRepository',
+          error: e,
+        );
+      }
+      throw Exception('Delete account failed: ${e.message}');
+    } catch (e) {
+      if (kDebugMode) {
+        developer.log(
+          'Delete account error: $e',
+          name: 'SupabaseAuthRepository',
+          error: e,
+        );
+      }
+      throw Exception('Delete account failed: $e');
+    }
+  }
 }

@@ -5,6 +5,7 @@ import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/authentication/presentation/widgets/logout_confirm_dialog.dart';
+import 'package:n06/features/authentication/presentation/widgets/delete_account_confirm_dialog.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
 import 'package:n06/features/settings/presentation/widgets/user_info_card.dart';
 import 'package:n06/features/settings/presentation/widgets/settings_menu_item_improved.dart';
@@ -157,6 +158,13 @@ class SettingsScreen extends ConsumerWidget {
               text: '로그아웃',
               onPressed: () => _handleLogout(context, ref),
             ),
+            const SizedBox(height: 12.0),
+
+            // Account deletion section
+            DangerButton(
+              text: '계정 삭제',
+              onPressed: () => _handleDeleteAccount(context, ref),
+            ),
             const SizedBox(height: 16.0), // md spacing at bottom
           ],
         ),
@@ -256,6 +264,73 @@ class SettingsScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('로그아웃 중 오류가 발생했습니다: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Handle account deletion with confirmation dialog
+  Future<void> _handleDeleteAccount(BuildContext context, WidgetRef ref) async {
+    // Show delete account confirmation dialog
+    await showDialog<void>(
+      context: context,
+      builder: (context) => DeleteAccountConfirmDialog(
+        onConfirm: () {
+          // Proceed with account deletion
+          _performDeleteAccount(context, ref);
+        },
+      ),
+    );
+  }
+
+  /// Perform the actual account deletion operation
+  Future<void> _performDeleteAccount(
+      BuildContext context, WidgetRef ref) async {
+    if (!context.mounted) return;
+
+    // Show loading indicator during deletion
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('계정을 삭제하는 중...'),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      // Call deleteAccount on the notifier
+      await ref.read(authNotifierProvider.notifier).deleteAccount();
+
+      if (context.mounted) {
+        // Close loading dialog
+        Navigator.pop(context);
+        // Navigate to login screen
+        context.go('/login');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        // Close loading dialog
+        Navigator.pop(context);
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('계정 삭제 중 오류가 발생했습니다: $e'),
             backgroundColor: Colors.red,
           ),
         );

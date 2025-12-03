@@ -361,6 +361,52 @@ class AuthNotifier extends _$AuthNotifier {
       rethrow;
     }
   }
+
+  /// Delete user account permanently
+  ///
+  /// Deletes all user data and authentication.
+  /// This operation is irreversible.
+  ///
+  /// Throws exception on failure.
+  Future<void> deleteAccount() async {
+    if (kDebugMode) {
+      developer.log(
+        'deleteAccount called',
+        name: 'AuthNotifier',
+      );
+    }
+
+    state = const AsyncValue.loading();
+
+    try {
+      final repository = ref.read(authRepositoryProvider);
+      await repository.deleteAccount();
+
+      // 삭제 성공 후 상태를 null로 설정 (로그아웃 상태)
+      state = const AsyncValue.data(null);
+
+      if (kDebugMode) {
+        developer.log(
+          'Account deleted successfully',
+          name: 'AuthNotifier',
+        );
+      }
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+
+      if (kDebugMode) {
+        developer.log(
+          'Delete account failed',
+          name: 'AuthNotifier',
+          error: error,
+          stackTrace: stackTrace,
+          level: 1000,
+        );
+      }
+
+      rethrow;
+    }
+  }
 }
 
 /// Provider for AuthRepository

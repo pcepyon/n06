@@ -88,4 +88,18 @@ abstract class AuthRepository {
     required String currentPassword,
     required String newPassword,
   });
+
+  /// Delete user account permanently
+  ///
+  /// Deletes all user data including:
+  /// - Authentication data (auth.users)
+  /// - Profile data (users, user_profiles)
+  /// - Activity data (weight_logs, dose_records, daily_checkins, etc.)
+  /// - Settings (notification_settings)
+  /// - Badges (user_badges)
+  /// - Audit logs
+  ///
+  /// This operation is irreversible.
+  /// Throws exception on failure.
+  Future<void> deleteAccount();
 }
