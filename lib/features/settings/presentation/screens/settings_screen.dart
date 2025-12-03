@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:n06/core/constants/legal_urls.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
@@ -150,6 +152,30 @@ class SettingsScreen extends ConsumerWidget {
               title: '온보딩 다시 보기',
               subtitle: 'GLP-1 약물 정보, 부작용 안내 등 교육 콘텐츠를 다시 볼 수 있습니다',
               onTap: () => context.push('/onboarding/review'),
+            ),
+            const SizedBox(height: 24.0), // lg spacing
+
+            // Legal section
+            Text(
+              '약관 및 정책',
+              style: AppTypography.heading2,
+            ),
+            const SizedBox(height: 16.0), // md spacing
+
+            SettingsMenuItemImproved(
+              title: '이용약관',
+              subtitle: '서비스 이용에 관한 약관을 확인합니다',
+              onTap: () => _openUrl(LegalUrls.termsOfService),
+            ),
+            SettingsMenuItemImproved(
+              title: '개인정보 처리방침',
+              subtitle: '개인정보 수집 및 이용에 관한 정책을 확인합니다',
+              onTap: () => _openUrl(LegalUrls.privacyPolicy),
+            ),
+            SettingsMenuItemImproved(
+              title: '건강정보 면책조항',
+              subtitle: '의료 면책 및 서비스 사용에 관한 안내를 확인합니다',
+              onTap: () => _openUrl(LegalUrls.medicalDisclaimer),
             ),
             const SizedBox(height: 24.0), // lg spacing after menu items
 
@@ -335,6 +361,14 @@ class SettingsScreen extends ConsumerWidget {
           ),
         );
       }
+    }
+  }
+
+  /// Open URL in external browser
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 }

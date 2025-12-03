@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:n06/core/constants/legal_urls.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/core/utils/validators.dart';
@@ -161,6 +163,13 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
     return null;
   }
 
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -267,6 +276,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
                       onChanged: (value) => setState(() => _agreeToTerms = value),
                       label: '이용약관에 동의합니다',
                       isRequired: true,
+                      onViewTap: () => _openUrl(LegalUrls.termsOfService),
                     ),
                     const SizedBox(height: 16),
                     ConsentCheckbox(
@@ -274,6 +284,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
                       onChanged: (value) => setState(() => _agreeToPrivacy = value),
                       label: '개인정보 처리방침에 동의합니다',
                       isRequired: true,
+                      onViewTap: () => _openUrl(LegalUrls.privacyPolicy),
                     ),
                     const SizedBox(height: 16),
                     ConsentCheckbox(

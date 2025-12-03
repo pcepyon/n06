@@ -21,6 +21,15 @@
 
 ## 2025-12-03
 
+- [docs] 앱스토어 제출용 법적 문서 추가 및 앱 내 연동
+  - 개인정보 처리방침, 이용약관, 건강정보 면책조항 문서 작성
+  - 설정 화면에 "약관 및 정책" 섹션 추가 (외부 URL 연결)
+  - 회원가입 화면 동의 체크박스에 "보기" 버튼 추가
+  - `docs/legal/privacy-policy.md`, `terms-of-service.md`, `medical-disclaimer.md`
+  - `lib/core/constants/legal_urls.dart`
+  - `lib/features/settings/presentation/screens/settings_screen.dart`
+  - `lib/features/authentication/presentation/widgets/consent_checkbox.dart`
+
 - [fix] 과거 날짜 기록 로직 개선
   - 과거 날짜 선택 시 연체 제한 해제 (항상 기록 가능)
   - "과거 기록" 배지 + 안내 메시지 표시

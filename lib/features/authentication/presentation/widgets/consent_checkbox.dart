@@ -14,6 +14,7 @@ import 'package:n06/core/presentation/theme/app_typography.dart';
 ///   isRequired: true,
 ///   value: _agreedToTerms,
 ///   onChanged: (val) => setState(() => _agreedToTerms = val),
+///   onViewTap: () => _openTermsUrl(),
 /// )
 /// ```
 class ConsentCheckbox extends StatelessWidget {
@@ -29,12 +30,16 @@ class ConsentCheckbox extends StatelessWidget {
   /// 상태 변경 콜백
   final ValueChanged<bool> onChanged;
 
+  /// 약관 보기 콜백 (null이면 보기 버튼 숨김)
+  final VoidCallback? onViewTap;
+
   const ConsentCheckbox({
     super.key,
     required this.label,
     this.isRequired = false,
     required this.value,
     required this.onChanged,
+    this.onViewTap,
   });
 
   @override
@@ -96,6 +101,25 @@ class ConsentCheckbox extends StatelessWidget {
                         style: AppTypography.labelSmall.copyWith(
                           color: AppColors.error,
                           fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  if (onViewTap != null)
+                    GestureDetector(
+                      onTap: onViewTap,
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        child: Text(
+                          '보기',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.underline,
+                          ),
                         ),
                       ),
                     ),
