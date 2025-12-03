@@ -21,6 +21,10 @@
 
 ## 2025-12-03
 
+- [fix] AuditLogDto 컬럼명을 DB 스키마에 맞게 수정
+  - record_id→entity_id, record_type→entity_type, change_type→action, old_value→old_data, new_value→new_data
+  - `lib/features/tracking/infrastructure/dtos/audit_log_dto.dart`
+
 - [fix] 투여 기록 삭제 후 목록 UI가 즉시 갱신되지 않는 버그 수정
   - 삭제/수정 후 medicationNotifierProvider invalidate 추가
   - `lib/features/tracking/application/notifiers/dose_record_edit_notifier.dart`

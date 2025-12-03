@@ -25,30 +25,38 @@ class AuditLogDto {
   });
 
   /// Creates DTO from Supabase JSON.
+  /// Maps DB column names to DTO field names:
+  /// - entity_id -> recordId
+  /// - entity_type -> recordType
+  /// - action -> changeType
+  /// - old_data -> oldValue
+  /// - new_data -> newValue
+  /// - created_at -> timestamp
   factory AuditLogDto.fromJson(Map<String, dynamic> json) {
     return AuditLogDto(
       id: json['id'] as String,
       userId: json['user_id'] as String,
-      recordId: json['record_id'] as String,
-      recordType: json['record_type'] as String,
-      changeType: json['change_type'] as String,
-      oldValue: json['old_value'] as Map<String, dynamic>?,
-      newValue: json['new_value'] as Map<String, dynamic>?,
-      timestamp: DateTime.parse(json['timestamp'] as String).toLocal(),
+      recordId: json['entity_id'] as String,
+      recordType: json['entity_type'] as String,
+      changeType: json['action'] as String,
+      oldValue: json['old_data'] as Map<String, dynamic>?,
+      newValue: json['new_data'] as Map<String, dynamic>?,
+      timestamp: DateTime.parse(json['created_at'] as String).toLocal(),
     );
   }
 
   /// Converts DTO to Supabase JSON.
+  /// Maps DTO field names to DB column names.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'user_id': userId,
-      'record_id': recordId,
-      'record_type': recordType,
-      'change_type': changeType,
-      'old_value': oldValue,
-      'new_value': newValue,
-      'timestamp': timestamp.toUtc().toIso8601String(),
+      'entity_id': recordId,
+      'entity_type': recordType,
+      'action': changeType,
+      'old_data': oldValue,
+      'new_data': newValue,
+      // created_at uses DEFAULT now() in DB, no need to send
     };
   }
 
