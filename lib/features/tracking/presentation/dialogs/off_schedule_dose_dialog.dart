@@ -166,6 +166,7 @@ class _OffScheduleDoseDialogState extends ConsumerState<OffScheduleDoseDialog> {
                   });
                 },
                 recentRecords: widget.recentRecords,
+                referenceDate: widget.selectedDate,
               ),
 
               const SizedBox(height: 16),

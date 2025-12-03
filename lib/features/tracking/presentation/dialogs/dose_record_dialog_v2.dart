@@ -167,6 +167,7 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
                   });
                 },
                 recentRecords: widget.recentRecords,
+                referenceDate: _recordDate,
               ),
 
               const SizedBox(height: 16),

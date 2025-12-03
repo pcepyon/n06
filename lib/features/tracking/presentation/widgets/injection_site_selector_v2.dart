@@ -8,11 +8,13 @@ class InjectionSiteSelectorV2 extends ConsumerStatefulWidget {
   final String? initialSite;
   final List<DoseRecord> recentRecords;
   final Function(String) onSiteSelected;
+  final DateTime? referenceDate; // 기준 날짜 (null이면 오늘)
 
   const InjectionSiteSelectorV2({
     required this.onSiteSelected,
     required this.recentRecords,
     this.initialSite,
+    this.referenceDate,
     super.key,
   });
 
@@ -41,7 +43,9 @@ class _InjectionSiteSelectorV2State extends ConsumerState<InjectionSiteSelectorV
   int _getDaysAgo(String siteCode) {
     final lastUsed = _getLastUsedDate(siteCode);
     if (lastUsed == null) return 999;
-    return DateTime.now().difference(lastUsed).inDays;
+    final refDate = widget.referenceDate ?? DateTime.now();
+    final diff = refDate.difference(lastUsed).inDays;
+    return diff < 0 ? 999 : diff; // 미래 기록은 무시
   }
 
   bool _showRotationWarning() {

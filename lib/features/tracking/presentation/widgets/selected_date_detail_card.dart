@@ -376,9 +376,12 @@ class SelectedDateDetailCard extends ConsumerWidget {
   }
 
   List<Widget> _buildInjectionSiteHistory() {
+    // 과거 기록 입력 모드에서는 선택한 날짜 기준, 아니면 오늘 기준
+    final referenceDate = isPastRecordMode ? selectedDate : DateTime.now();
+
     final within7Days = recentRecords.where((r) {
-      final daysAgo = DateTime.now().difference(r.administeredAt).inDays;
-      return daysAgo <= 7 && r.injectionSite != null;
+      final daysAgo = referenceDate.difference(r.administeredAt).inDays;
+      return daysAgo >= 0 && daysAgo <= 7 && r.injectionSite != null;
     }).toList();
 
     if (within7Days.isEmpty) {
@@ -394,7 +397,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
     }
 
     return within7Days.map((r) {
-      final daysAgo = DateTime.now().difference(r.administeredAt).inDays;
+      final daysAgo = referenceDate.difference(r.administeredAt).inDays;
       final siteLabel = getInjectionSiteLabel(r.injectionSite!);
       final dateLabel = '${r.administeredAt.month}/${r.administeredAt.day}';
 
@@ -424,7 +427,8 @@ class SelectedDateDetailCard extends ConsumerWidget {
   Widget _buildActionButton(BuildContext context, MissedDoseGuidance guidance) {
     final isCompleted = record != null;
 
-    if (!guidance.canAdminister && !isCompleted) {
+    // 과거 기록 입력 모드에서는 지연 투여 제한 무시
+    if (!guidance.canAdminister && !isCompleted && !isPastRecordMode) {
       return GabiumButton(
         text: '투여 불가 (5일 이상 경과)',
         onPressed: null,
@@ -854,30 +858,18 @@ class SelectedDateDetailCard extends ConsumerWidget {
       lastRecord = sortedRecords.first;
     }
 
-    // 마지막 투여로부터 경과일 계산
-    int daysSinceLastDose;
-    if (lastRecord != null) {
-      daysSinceLastDose = todayOnly.difference(
-        DateTime(
-          lastRecord.administeredAt.year,
-          lastRecord.administeredAt.month,
-          lastRecord.administeredAt.day,
-        ),
-      ).inDays;
-    } else {
-      // 기록이 없으면 가장 오래된 미완료 스케줄로부터 계산
-      final oldestSchedule = incompleteOverdueSchedules.first;
-      daysSinceLastDose = todayOnly.difference(
-        DateTime(
-          oldestSchedule.scheduledDate.year,
-          oldestSchedule.scheduledDate.month,
-          oldestSchedule.scheduledDate.day,
-        ),
-      ).inDays;
-    }
+    // 가장 오래된 미완료 스케줄의 지연일 계산
+    // (마지막 투여 이후 첫 번째 미완료 스케줄이 14일 이상 지연되었는지)
+    final oldestIncompleteSchedule = incompleteOverdueSchedules.first;
+    final oldestScheduleDate = DateTime(
+      oldestIncompleteSchedule.scheduledDate.year,
+      oldestIncompleteSchedule.scheduledDate.month,
+      oldestIncompleteSchedule.scheduledDate.day,
+    );
+    final daysOverdueForOldest = todayOnly.difference(oldestScheduleDate).inDays;
 
-    // 2주(14일) 이상 공백이면 재시작 모드
-    if (daysSinceLastDose >= 14) {
+    // 2주(14일) 이상 지연된 미완료 스케줄이 있으면 재시작 모드
+    if (daysOverdueForOldest >= 14) {
       return (
         lastRecord: lastRecord,
         skippedSchedules: incompleteOverdueSchedules,
