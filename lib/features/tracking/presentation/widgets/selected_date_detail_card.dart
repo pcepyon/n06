@@ -46,6 +46,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
       selectedDate.day,
     );
     final isInFuture = selectedDateOnly.isAfter(todayOnly);
+    final isInPast = selectedDateOnly.isBefore(todayOnly);
 
     // 2주 이상 공백 체크 (과거 기록 입력 모드에서는 스킵)
     if (!isPastRecordMode) {
@@ -167,15 +168,33 @@ class SelectedDateDetailCard extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                StatusBadge(
-                  type: _guidanceToStatusType(guidance),
-                  text: guidance.title,
-                  icon: _guidanceToIcon(guidance.type),
-                ),
+                // 과거 날짜 + 미완료 → "과거 기록" 표시
+                if (isInPast && !isCompleted)
+                  StatusBadge(
+                    type: StatusBadgeType.info,
+                    text: '과거 기록',
+                    icon: Icons.history,
+                  )
+                else
+                  StatusBadge(
+                    type: _guidanceToStatusType(guidance),
+                    text: guidance.title,
+                    icon: _guidanceToIcon(guidance.type),
+                  ),
               ],
             ),
 
-            if (guidance.description.isNotEmpty) ...[
+            // 과거 날짜 + 미완료 → 안내 메시지
+            if (isInPast && !isCompleted) ...[
+              const SizedBox(height: 8),
+              Text(
+                '이 날짜에 투여했다면 기록하세요',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.info,
+                ),
+              ),
+            ] else if (guidance.description.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 guidance.description,
@@ -427,8 +446,15 @@ class SelectedDateDetailCard extends ConsumerWidget {
   Widget _buildActionButton(BuildContext context, MissedDoseGuidance guidance) {
     final isCompleted = record != null;
 
-    // 과거 기록 입력 모드에서는 지연 투여 제한 무시
-    if (!guidance.canAdminister && !isCompleted && !isPastRecordMode) {
+    // 선택한 날짜가 과거인지 확인
+    final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
+    final selectedDateOnly = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+    final isRecordingPastDate = selectedDateOnly.isBefore(todayOnly);
+
+    // 과거 날짜 선택 시 또는 과거 기록 입력 모드에서는 제한 무시
+    // (연체 제한은 "오늘 투여"할 때만 적용)
+    if (!guidance.canAdminister && !isCompleted && !isPastRecordMode && !isRecordingPastDate) {
       return GabiumButton(
         text: '투여 불가 (5일 이상 경과)',
         onPressed: null,
@@ -595,10 +621,15 @@ class SelectedDateDetailCard extends ConsumerWidget {
     if (incompleteSchedules.isEmpty) return null;
 
     // 선택한 날짜와 가장 가까운 스케줄 찾기
+    // 같은 거리면 과거 스케줄 우선 (밀린 스케줄 먼저 처리)
     incompleteSchedules.sort((a, b) {
       final diffA = (a.scheduledDate.difference(selectedDate).inDays).abs();
       final diffB = (b.scheduledDate.difference(selectedDate).inDays).abs();
-      return diffA.compareTo(diffB);
+      if (diffA != diffB) {
+        return diffA.compareTo(diffB);
+      }
+      // 같은 거리면 날짜 오름차순 (과거 우선)
+      return a.scheduledDate.compareTo(b.scheduledDate);
     });
 
     return incompleteSchedules.first;
