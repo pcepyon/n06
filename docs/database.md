@@ -482,6 +482,68 @@ CREATE TRIGGER on_auth_user_created
 
 ---
 
+## Account Deletion (계정 삭제)
+
+Apple App Store / Google Play Store 정책 준수를 위해 계정 삭제 기능 구현.
+
+### 중요: public.users와 auth.users 관계
+
+```
+auth.users (Supabase Auth)
+    ↓ (FK 없음 - 같은 ID 값만 사용)
+public.users
+    ↓ (FK + ON DELETE CASCADE)
+모든 관련 테이블
+```
+
+**주의**: `public.users`와 `auth.users` 사이에는 FK 제약조건이 없음.
+따라서 `auth.users` 삭제 시 `public.users`에 CASCADE가 동작하지 않음.
+
+### 삭제 순서 (필수)
+
+```
+1. public.users 삭제 (CASCADE로 모든 관련 데이터 삭제)
+   └─ consent_records
+   └─ user_profiles
+   └─ dosage_plans
+       └─ dose_schedules
+       └─ dose_records
+       └─ plan_change_history
+   └─ weight_logs
+   └─ daily_checkins
+   └─ symptom_logs
+   └─ emergency_symptom_checks
+   └─ notification_settings
+   └─ user_badges
+   └─ audit_logs
+   └─ guide_feedback
+
+2. auth.users 삭제 (Supabase Auth)
+```
+
+### 구현 방식
+
+Edge Function (`supabase/functions/delete-account/index.ts`):
+```typescript
+// 1. public.users 먼저 삭제 (CASCADE 동작)
+await supabaseAdmin.from("users").delete().eq("id", userId);
+
+// 2. auth.users 삭제
+await supabaseAdmin.auth.admin.deleteUser(userId, false);
+```
+
+### 클라이언트 호출
+
+```dart
+// Flutter에서 Edge Function 호출
+await _supabase.functions.invoke(
+  'delete-account',
+  headers: {'Authorization': 'Bearer ${session.accessToken}'},
+);
+```
+
+---
+
 ## Data Retention
 
 MVP는 무제한 보관.
