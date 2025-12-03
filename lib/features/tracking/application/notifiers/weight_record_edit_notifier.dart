@@ -111,8 +111,9 @@ class WeightRecordEditNotifier extends AsyncNotifier<void> {
           return;
         }
 
-        // Invalidate dashboard to trigger statistics recalculation
+        // Invalidate providers to trigger UI refresh
         ref.invalidate(dashboardNotifierProvider);
+        ref.invalidate(trackingProvider);
       });
     } finally {
       link.close();
@@ -161,8 +162,9 @@ class WeightRecordEditNotifier extends AsyncNotifier<void> {
           return;
         }
 
-        // Invalidate dashboard to trigger statistics recalculation
+        // Invalidate providers to trigger UI refresh
         ref.invalidate(dashboardNotifierProvider);
+        ref.invalidate(trackingProvider);
       });
     } finally {
       link.close();

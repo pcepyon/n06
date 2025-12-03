@@ -21,6 +21,10 @@
 
 ## 2025-12-03
 
+- [fix] 체중 기록 수정/삭제 후 목록 UI 갱신 누락 수정
+  - updateWeight, deleteWeight에서 trackingProvider invalidate 추가
+  - `lib/features/tracking/application/notifiers/weight_record_edit_notifier.dart`
+
 - [fix] AuditLogDto 컬럼명을 DB 스키마에 맞게 수정
   - record_id→entity_id, record_type→entity_type, change_type→action, old_value→old_data, new_value→new_data
   - `lib/features/tracking/infrastructure/dtos/audit_log_dto.dart`
