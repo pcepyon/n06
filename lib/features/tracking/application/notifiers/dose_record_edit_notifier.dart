@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/features/tracking/domain/entities/audit_log.dart';
 import 'package:n06/features/tracking/domain/usecases/log_record_change_usecase.dart';
 import 'package:n06/features/tracking/application/providers.dart';
+import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';
 import 'package:uuid/uuid.dart';
 
@@ -75,8 +76,9 @@ class DoseRecordEditNotifier extends AsyncNotifier<void> {
           return;
         }
 
-        // Invalidate dashboard to trigger statistics recalculation
+        // Invalidate providers to trigger UI refresh
         ref.invalidate(dashboardNotifierProvider);
+        ref.invalidate(medicationNotifierProvider);
       });
     } finally {
       link.close();
@@ -127,8 +129,9 @@ class DoseRecordEditNotifier extends AsyncNotifier<void> {
           return;
         }
 
-        // Invalidate dashboard to trigger statistics recalculation
+        // Invalidate providers to trigger UI refresh
         ref.invalidate(dashboardNotifierProvider);
+        ref.invalidate(medicationNotifierProvider);
       });
     } finally {
       link.close();

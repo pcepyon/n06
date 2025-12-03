@@ -21,6 +21,10 @@
 
 ## 2025-12-03
 
+- [fix] 투여 기록 삭제 후 목록 UI가 즉시 갱신되지 않는 버그 수정
+  - 삭제/수정 후 medicationNotifierProvider invalidate 추가
+  - `lib/features/tracking/application/notifiers/dose_record_edit_notifier.dart`
+
 - [fix] 데일리 체크인 중복 다이얼로그 "나가기" 버튼 GoError 수정
   - "오늘 이미 기록했어요" 팝업에서 나가기 시 "There is nothing to pop" 에러 해결
   - ShellRoute 내부이므로 context.pop() 대신 context.go('/home') 사용
