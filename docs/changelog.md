@@ -21,6 +21,9 @@
 
 ## 2025-12-05
 
+- [feat] GoRouter에 FirebaseAnalyticsObserver 추가하여 화면 추적 활성화
+  - `lib/core/routing/app_router.dart`
+
 - [fix] BUG-20251205: 세션 만료 시 무한 로딩 및 오프라인 에러 수정
   - **문제**: 만료된 세션으로 앱 재시작 시 무한 로딩, 오프라인에서 Uncaught error
   - **원인**: GoRouter와 AuthNotifier 인증 상태 불일치, SDK의 자동 세션 복구 에러

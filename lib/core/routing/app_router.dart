@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -96,10 +97,25 @@ bool _isSessionExpired(Session? session) {
   return DateTime.now().isAfter(expiryDateTime);
 }
 
+/// Firebase Analytics observer for screen tracking
+final _analyticsObserver = FirebaseAnalyticsObserver(
+  analytics: FirebaseAnalytics.instance,
+  nameExtractor: (settings) {
+    // Extract clean screen name from route
+    // e.g., '/home' → 'home', '/profile/edit' → 'profile_edit'
+    final name = settings.name;
+    if (name != null && name.isNotEmpty) {
+      return name.replaceAll('/', '_').replaceAll('-', '_');
+    }
+    return 'unknown';
+  },
+);
+
 /// GoRouter configuration for the application
 final appRouter = GoRouter(
   initialLocation: '/login',
   refreshListenable: _authRefreshStream,
+  observers: [_analyticsObserver],
   redirect: (BuildContext context, GoRouterState state) {
     final session = Supabase.instance.client.auth.currentSession;
     final location = state.uri.path;
