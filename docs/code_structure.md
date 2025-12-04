@@ -12,18 +12,25 @@ related: [state-management, techstack]
 
 ## Feature → Requirements 매핑
 
-| 기능 ID | 기능명 | 위치 | 공유 데이터 제공 |
-|---------|--------|------|-----------------|
-| F-001 | 소셜 로그인 | `features/authentication/` | - |
-| F000 | 온보딩 | `features/onboarding/` | `user_profiles` |
-| F001 | 투여 스케줄러 | `features/tracking/` | `dosage_plans`, `dose_schedules` |
-| F002 | 증상/체중 기록 | `features/tracking/` | `weight_logs`, `symptom_logs` |
-| F003 | 데이터 공유 모드 | `features/data_sharing/` | - |
-| F004 | 대처 가이드 | `features/tracking/` | - |
-| F005 | 증상 체크 | `features/tracking/` | - |
-| F006 | 홈 대시보드 | `features/dashboard/` | `badge_definitions`, `user_badges` |
+| 기능 ID | 기능명 | 위치 | 4-Layer 상태 |
+|---------|--------|------|--------------|
+| F-001 | 소셜 로그인 | `features/authentication/` | ✅ 완전 |
+| F000 | 온보딩 | `features/onboarding/` | ✅ 완전 |
+| F001 | 투여 스케줄러 | `features/tracking/` | ✅ 완전 |
+| F002 | 체중 기록 | `features/tracking/` | ✅ 완전 |
+| F004 | 대처 가이드 | `features/coping_guide/` | ✅ 완전 |
+| F005 | 증상 체크 | `features/daily_checkin/` | ✅ 완전 |
+| F006 | 홈 대시보드 | `features/dashboard/` | ✅ 완전 |
+| NEW | 알림 | `features/notification/` | ✅ 완전 |
+| NEW | 프로필 | `features/profile/` | ⚠️ 3-Layer (infra 없음) |
+| NEW | 설정 | `features/settings/` | ⚠️ 2-Layer (pres+app) |
+| NEW | 기록 관리 | `features/record_management/` | ⚠️ 1-Layer (pres만) |
 
-**공유 데이터 제공**: 다른 기능에서 import하여 사용할 수 있는 공통 데이터 소스
+**공유 데이터 제공**:
+- `tracking/`: `dosage_plans`, `dose_schedules`, `dose_records`, `weight_logs`
+- `onboarding/`: `user_profiles`
+- `dashboard/`: `badge_definitions`, `user_badges`
+- `daily_checkin/`: `daily_checkins`, `symptom_details`
 
 ---
 
@@ -33,20 +40,27 @@ related: [state-management, techstack]
 
 ```
 lib/
+├── l10n/              # 다국어 지원
+│   └── generated/     # arb → dart 생성 파일
 ├── features/          # 기능별 모듈
 │   ├── authentication/
+│   ├── coping_guide/
+│   ├── daily_checkin/
+│   ├── dashboard/
+│   ├── notification/
 │   ├── onboarding/
-│   ├── tracking/      # F001, F002, F004, F005
-│   ├── data_sharing/  # F003
-│   └── dashboard/     # F006
-│
+│   ├── profile/
+│   ├── record_management/
+│   ├── settings/
+│   └── tracking/
 ├── core/              # 전역 공통
 │   ├── constants/
 │   ├── errors/
+│   ├── extensions/
+│   ├── presentation/
+│   ├── providers/
 │   ├── routing/
-│   ├── analytics/
 │   └── utils/
-│
 └── main.dart
 ```
 
@@ -55,41 +69,62 @@ lib/
 ```
 core/
 ├── constants/
-│   ├── app_constants.dart
-│   └── ui_constants.dart
+│   └── legal_urls.dart          # 법적 문서 URL
 ├── errors/
-│   ├── domain_exception.dart
-│   └── repository_exception.dart
+│   └── domain_exception.dart    # 도메인 예외 정의
+├── extensions/                  # Dart 확장 메서드
+│   ├── coping_guide_extension.dart
+│   ├── dashboard_message_extension.dart
+│   ├── date_format_extension.dart
+│   ├── greeting_message_extension.dart
+│   ├── l10n_extension.dart
+│   ├── symptom_severity_extension.dart
+│   └── timeline_event_extension.dart
+├── presentation/                # 공유 UI 컴포넌트
+│   ├── theme/
+│   │   ├── app_colors.dart
+│   │   ├── app_theme.dart
+│   │   └── app_typography.dart
+│   └── widgets/
+│       ├── empty_state_widget.dart
+│       ├── gabium_bottom_navigation.dart
+│       ├── impact_analysis_dialog.dart
+│       ├── record_type_icon.dart
+│       ├── scaffold_with_bottom_nav.dart
+│       └── status_badge.dart
+├── providers/
+│   ├── providers.dart           # Supabase, SharedPreferences 등
+│   └── shared_preferences_provider.dart
 ├── routing/
-│   └── app_router.dart
-├── analytics/
-│   ├── analytics_service.dart
-│   ├── analytics_events.dart
-│   └── crashlytics_service.dart
+│   └── app_router.dart          # GoRouter 설정
 └── utils/
-    ├── date_utils.dart
-    ├── validators.dart
-    └── formatters.dart
+    └── validators.dart          # 입력 검증
 ```
 
 ### Feature 상세 (4-Layer)
 
 ```
-features/tracking/
-├── presentation/      # UI
+features/{feature}/
+├── presentation/           # UI Layer
 │   ├── screens/
-│   └── widgets/
-├── application/       # 상태 관리
+│   ├── widgets/
+│   ├── dialogs/           # (선택) 다이얼로그
+│   ├── sheets/            # (선택) 바텀시트
+│   ├── utils/             # (선택) UI 유틸리티
+│   └── extensions/        # (선택) UI 확장
+├── application/           # 상태 관리 Layer
 │   ├── notifiers/
 │   └── providers.dart
-├── domain/            # 비즈니스 로직
+├── domain/                # 비즈니스 로직 Layer
 │   ├── entities/
 │   ├── usecases/
-│   └── repositories/  # Interface만
-└── infrastructure/    # 데이터 접근
-    ├── repositories/  # 구현체
-    ├── datasources/
-    └── dtos/
+│   ├── repositories/      # Interface만
+│   ├── services/          # (선택) 도메인 서비스
+│   └── value_objects/     # (선택) 값 객체
+└── infrastructure/        # 데이터 접근 Layer
+    ├── repositories/      # 구현체
+    ├── dtos/
+    └── services/          # (선택) 외부 서비스
 ```
 
 ---
@@ -208,20 +243,20 @@ class RecalculateDoseScheduleUseCase {
 
 ## 규칙
 
-### DO ✅
+### DO
 - Repository Interface를 통한 데이터 접근
 - Entity에 JSON 직렬화 추가
 - 비즈니스 로직은 Domain Layer에만
 - 여러 Repository 조합은 Application Layer
 
-### DON'T ❌
+### DON'T
 - Application에서 Supabase 직접 접근
 - Presentation에서 Repository 직접 호출
 - Domain Layer에 Flutter/Supabase 의존성
 
 ---
 
-## 공통 데이터 소유권 및 공유 패턴
+## 공유 데이터 소유권 및 공유 패턴
 
 여러 기능에서 사용하는 공통 데이터(테이블)는 **한 곳에서만 구현**하고, 다른 기능은 import하여 사용합니다.
 
@@ -236,6 +271,7 @@ features/tracking/
 │   ├── entities/weight_log.dart
 │   └── repositories/tracking_repository.dart (interface)
 └── infrastructure/
+    ├── dtos/weight_log_dto.dart
     └── repositories/supabase_tracking_repository.dart (implementation)
 ```
 
@@ -254,15 +290,11 @@ final repo = ref.watch(tracking_providers.trackingRepositoryProvider);
 final weights = await repo.getWeightLogs(userId);
 ```
 
-**중복 정의 금지:**
-- ❌ `features/onboarding/domain/entities/weight_log.dart`
-- ❌ `features/dashboard/domain/entities/weight_log.dart`
+### daily_checkins, symptom_details (일일 체크인)
 
-### symptom_logs (부작용 기록)
+**구현 소유**: `features/daily_checkin/`
 
-**구현 소유**: `features/tracking/`
-
-**사용 기능**: tracking (부작용 기록 CRUD), dashboard (부작용 데이터 조회)
+**사용 기능**: daily_checkin (체크인 CRUD), dashboard (체크인 데이터 조회)
 
 ### user_profiles (사용자 프로필)
 
@@ -275,6 +307,7 @@ features/onboarding/
 │   ├── entities/user_profile.dart
 │   └── repositories/profile_repository.dart
 └── infrastructure/
+    ├── dtos/user_profile_dto.dart
     └── repositories/supabase_profile_repository.dart
 ```
 
@@ -285,6 +318,12 @@ features/onboarding/
 **구현 소유**: `features/tracking/`
 
 **사용 기능**: onboarding (초기 투여 계획 생성), tracking (투여 기록 관리)
+
+### badge_definitions, user_badges (배지)
+
+**구현 소유**: `features/dashboard/`
+
+**사용 기능**: dashboard (배지 표시 및 획득 관리)
 
 ---
 
@@ -310,20 +349,23 @@ features/onboarding/
 │  dashboard  │
 └──────┬──────┘
        │ (uses)
-       ├──→ tracking (weight_logs, symptom_logs)
-       └──→ onboarding (user_profiles)
+       ├──→ tracking (weight_logs, dose_records)
+       ├──→ onboarding (user_profiles)
+       └──→ daily_checkin (daily_checkins)
 ```
 
 **의존성 리스트:**
-- onboarding → tracking ✅ (weight_logs, dosage_plans 사용)
-- dashboard → tracking ✅ (weight_logs, symptom_logs 사용)
-- dashboard → onboarding ✅ (user_profiles 사용)
+- onboarding → tracking (weight_logs, dosage_plans 사용)
+- dashboard → tracking (weight_logs, dose_records 사용)
+- dashboard → onboarding (user_profiles 사용)
+- dashboard → daily_checkin (daily_checkins 사용)
 
 ### 금지되는 의존성
 
-- tracking → onboarding ❌
-- tracking → dashboard ❌
-- onboarding → dashboard ❌
+- tracking → onboarding
+- tracking → dashboard
+- onboarding → dashboard
+- daily_checkin → dashboard
 
 **이유:**
 - 순환 의존성 방지: A → B → A 패턴 금지
@@ -337,7 +379,7 @@ features/onboarding/
 ```dart
 // ❌ 잘못된 방법 (순환 의존성 발생)
 // features/tracking/some_file.dart
-import 'package:n06/features/onboarding/domain/repositories/profile_repository.dart';
+import 'package:n06/features/onboarding/.../profile_repository.dart';
 
 // ✅ 올바른 방법 (Application Layer에서 조합)
 class SomeNotifier {
@@ -363,7 +405,7 @@ SomeNotifier someNotifier(SomeNotifierRef ref) {
 class CalculateDashboardDataUseCase {
   Future<DashboardData> execute({
     required List<WeightLog> weights,      // tracking 제공
-    required List<SymptomLog> symptoms,    // tracking 제공
+    required List<DailyCheckin> checkins,  // daily_checkin 제공
     required UserProfile profile,          // onboarding 제공
   }) {
     // 데이터 조합 및 계산
@@ -373,12 +415,12 @@ class CalculateDashboardDataUseCase {
 // Dashboard Notifier
 Future<DashboardData> _loadDashboardData(String userId) async {
   final weights = await _trackingRepository.getWeightLogs(userId);
-  final symptoms = await _trackingRepository.getSymptomLogs(userId);
+  final checkins = await _checkinRepository.getCheckins(userId);
   final profile = await _profileRepository.getUserProfile(userId);
 
   return _calculateUseCase.execute(
     weights: weights,
-    symptoms: symptoms,
+    checkins: checkins,
     profile: profile,
   );
 }
@@ -401,7 +443,7 @@ Future<DashboardData> _loadDashboardData(String userId) async {
 
 - `docs/database.md`의 "공통 테이블의 소유권 정의" 테이블에 추가
 - `docs/code_structure.md`의 "Feature → Requirements 매핑" 테이블 업데이트
-- `docs/code_structure.md`의 "공통 데이터 소유권 및 공유 패턴" 섹션에 추가
+- `docs/code_structure.md`의 "공유 데이터 소유권 및 공유 패턴" 섹션에 추가
 
 ### 3. 중복 방지 확인
 
@@ -426,49 +468,9 @@ grep -r "abstract class YourRepository" lib/features/
 
 ---
 
-## 실전 예제
-
-**시나리오**: medication_history 테이블을 추가해야 함 (투여 약물 변경 이력)
-
-### Step 1: 구현 위치 결정
-- 질문: 어느 기능이 medication_history를 가장 직접적으로 사용하는가?
-- 답변: tracking (투여 관리)
-
-### Step 2: 파일 생성
-```
-features/tracking/
-├── domain/
-│   ├── entities/medication_history.dart (생성)
-│   └── repositories/medication_repository.dart (메서드 추가)
-└── infrastructure/
-    └── repositories/supabase_medication_repository.dart (구현 추가)
-```
-
-### Step 3: 문서 업데이트
-- `database.md`: `| medication_history | features/tracking/ | tracking, dashboard | MedicationRepository 제공 |`
-- `code_structure.md`: "공통 데이터 소유권 및 공유 패턴" 섹션에 추가
-
-### Step 4: 다른 기능에서 사용
-```dart
-// features/dashboard/application/notifiers/dashboard_notifier.dart
-import 'package:n06/features/tracking/domain/entities/medication_history.dart';
-import 'package:n06/features/tracking/application/providers.dart' as tracking_providers;
-
-final repo = ref.watch(tracking_providers.medicationRepositoryProvider);
-final history = await repo.getMedicationHistory(userId);
-```
-
-### Step 5: 중복 확인
-```bash
-grep -r "class MedicationHistory" lib/features/
-# 결과: features/tracking/domain/entities/medication_history.dart 단 하나만 출력되어야 함
-```
-
----
-
 ## DO / DON'T 요약
 
-### ✅ DO
+### DO
 
 ```dart
 // 공통 데이터는 소유 기능의 구현을 import
@@ -493,7 +495,7 @@ class DashboardNotifier {
 }
 ```
 
-### ❌ DON'T
+### DON'T
 
 ```dart
 // 같은 엔티티를 여러 곳에 정의

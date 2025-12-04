@@ -118,6 +118,8 @@ patrol_cli.log
 **/ios/Flutter/flutter_export_environment.sh
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
+**/ios/build/
+**/xcshareddata/swiftpm/
 
 # macOS
 **/macos/Flutter/GeneratedPluginRegistrant.swift
