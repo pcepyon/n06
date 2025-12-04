@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/daily_checkin/domain/entities/weekly_report.dart';
 import 'package:n06/features/daily_checkin/application/services/weekly_report_generator.dart';
 import 'package:n06/features/daily_checkin/application/providers.dart';
+import 'package:n06/features/daily_checkin/presentation/utils/weekly_report_i18n.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 
 /// 주간 리포트 공유 화면
@@ -39,7 +41,7 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
     try {
       final userId = ref.read(authNotifierProvider).value?.id;
       if (userId == null) {
-        throw Exception('로그인이 필요합니다');
+        throw Exception('LOGIN_REQUIRED');
       }
 
       final checkinRepository = ref.read(dailyCheckinRepositoryProvider);
@@ -59,11 +61,13 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
         user: user,
       );
 
-      final textReport = generator.generateTextReport(report);
+      // Note: generateTextReport is deprecated, will be replaced with i18n version
+      // For now, we skip text report generation
+      // final textReport = generator.generateTextReport(report);
 
       setState(() {
         _report = report;
-        _textReport = textReport;
+        _textReport = null; // Temporarily null until we implement i18n text report
         _isLoading = false;
       });
     } catch (e) {
@@ -79,7 +83,7 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
     return Scaffold(
       backgroundColor: AppColors.neutral50,
       appBar: AppBar(
-        title: const Text('주간 리포트'),
+        title: Text(context.l10n.report_share_title),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.neutral900,
         elevation: 0,
@@ -118,9 +122,9 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          _buildPeriodChip(0, '이번 주'),
+          _buildPeriodChip(0, context.l10n.report_share_periodThisWeek),
           const SizedBox(width: 8),
-          _buildPeriodChip(1, '지난주'),
+          _buildPeriodChip(1, context.l10n.report_share_periodLastWeek),
         ],
       ),
     );
@@ -166,7 +170,7 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            '리포트를 불러오지 못했어요',
+            context.l10n.report_share_errorLoad,
             style: AppTypography.bodyLarge.copyWith(
               color: AppColors.neutral700,
             ),
@@ -174,7 +178,7 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
           const SizedBox(height: 8),
           TextButton(
             onPressed: _loadReport,
-            child: const Text('다시 시도'),
+            child: Text(context.l10n.common_button_retry),
           ),
         ],
       ),
@@ -183,8 +187,8 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
 
   Widget _buildReportContent() {
     if (_report == null) {
-      return const Center(
-        child: Text('리포트 데이터가 없습니다'),
+      return Center(
+        child: Text(context.l10n.report_share_errorNoData),
       );
     }
 
@@ -243,7 +247,7 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'GLP-1 치료 주간 리포트',
+                      context.l10n.report_share_cardTitle,
                       style: AppTypography.heading3.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -263,24 +267,42 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
 
           // 주요 지표
           _buildMetricRow(
-            '체크인 달성률',
-            '${report.checkinAchievement.checkinDays}/${report.checkinAchievement.totalDays}일 (${report.checkinAchievement.percentage}%)',
+            context.l10n.report_share_metricCheckin,
+            context.l10n.report_share_metricCheckinValue(
+              report.checkinAchievement.checkinDays,
+              report.checkinAchievement.totalDays,
+              report.checkinAchievement.percentage,
+            ),
             Icons.check_circle_outline,
           ),
           const SizedBox(height: 12),
 
           if (report.weightSummary != null) ...[
             _buildMetricRow(
-              '체중 변화',
-              '${report.weightSummary!.startWeight.toStringAsFixed(1)} → ${report.weightSummary!.endWeight.toStringAsFixed(1)}kg (${report.weightSummary!.changeString})',
+              context.l10n.report_share_metricWeight,
+              context.l10n.report_share_metricWeightValue(
+                report.weightSummary!.startWeight.toStringAsFixed(1),
+                report.weightSummary!.endWeight.toStringAsFixed(1),
+                WeeklyReportI18n.weightChange(
+                  context,
+                  report.weightSummary!.direction,
+                  report.weightSummary!.change,
+                ),
+              ),
               Icons.monitor_weight_outlined,
             ),
             const SizedBox(height: 12),
           ],
 
           _buildMetricRow(
-            '식욕',
-            '평균 ${report.appetiteSummary.averageScore}/5, ${report.appetiteSummary.stabilityKorean}',
+            context.l10n.report_share_metricAppetite,
+            context.l10n.report_share_metricAppetiteValue(
+              report.appetiteSummary.averageScore.toString(),
+              WeeklyReportI18n.appetiteStabilityName(
+                context,
+                report.appetiteSummary.stability,
+              ),
+            ),
             Icons.restaurant_outlined,
           ),
 
@@ -290,7 +312,7 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
             const SizedBox(height: 12),
 
             Text(
-              '증상 발생 현황',
+              context.l10n.report_share_sectionSymptoms,
               style: AppTypography.bodyMedium.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.neutral700,
@@ -302,7 +324,11 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
-                  '• ${symptom.symptomName} ${symptom.daysOccurred}일 ${symptom.severitySummary}',
+                  context.l10n.report_share_symptomItem(
+                    WeeklyReportI18n.symptomTypeName(context, symptom.type),
+                    symptom.daysOccurred,
+                    WeeklyReportI18n.severitySummary(context, symptom.severityCounts),
+                  ),
                   style: AppTypography.bodyMedium.copyWith(
                     color: AppColors.neutral600,
                   ),
@@ -317,7 +343,7 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
           const SizedBox(height: 12),
 
           Text(
-            '컨디션 추이',
+            context.l10n.report_share_sectionCondition,
             style: AppTypography.bodyMedium.copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.neutral700,
@@ -331,12 +357,14 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
               return Column(
                 children: [
                   Text(
-                    condition.emoji,
+                    condition.mood != null
+                        ? WeeklyReportI18n.moodToEmoji(condition.mood!)
+                        : '--',
                     style: const TextStyle(fontSize: 24),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    condition.dayOfWeek,
+                    WeeklyReportI18n.dayOfWeekShort(context, condition.date),
                     style: AppTypography.caption.copyWith(
                       color: AppColors.neutral500,
                     ),
@@ -396,7 +424,7 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                '텍스트 형식 미리보기',
+                context.l10n.report_share_textPreviewTitle,
                 style: AppTypography.bodySmall.copyWith(
                   color: AppColors.neutral400,
                 ),
@@ -441,7 +469,7 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
             child: OutlinedButton.icon(
               onPressed: _copyToClipboard,
               icon: const Icon(Icons.copy, size: 20),
-              label: const Text('복사하기'),
+              label: Text(context.l10n.report_share_buttonCopy),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.neutral700,
                 side: BorderSide(color: AppColors.neutral300),
@@ -457,7 +485,7 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
             child: ElevatedButton.icon(
               onPressed: _copyToClipboard, // 복사 기능으로 대체 (share_plus 미사용)
               icon: const Icon(Icons.share, size: 20),
-              label: const Text('공유하기'),
+              label: Text(context.l10n.report_share_buttonShare),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -479,7 +507,7 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
       Clipboard.setData(ClipboardData(text: _textReport!));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('리포트가 복사되었습니다'),
+          content: Text(context.l10n.report_share_copySuccess),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),

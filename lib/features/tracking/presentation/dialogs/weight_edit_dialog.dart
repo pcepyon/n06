@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/domain/usecases/validate_weight_edit_usecase.dart';
@@ -42,9 +43,12 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
     super.dispose();
   }
 
+  String? _errorKey; // Store error key for l10n resolution
+
   void _validateWeight(String value) {
     setState(() {
       _errorMessage = null;
+      _errorKey = null;
       _warningMessage = null;
     });
 
@@ -63,9 +67,16 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
       });
     } on FormatException {
       setState(() {
-        _errorMessage = '숫자를 입력해주세요';
+        _errorKey = 'numberRequired';
       });
     }
+  }
+
+  String? _getLocalizedError(BuildContext context) {
+    if (_errorKey == 'numberRequired') {
+      return context.l10n.tracking_weightEdit_errorNumberRequired;
+    }
+    return _errorMessage;
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -84,9 +95,13 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
   }
 
   Future<void> _saveChanges() async {
-    if (_errorMessage != null || _weightController.text.isEmpty) {
+    final localizedError = _getLocalizedError(context);
+    if (localizedError != null || _errorKey != null || _weightController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_errorMessage ?? '유효한 값을 입력해주세요'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(localizedError ?? context.l10n.tracking_weightEdit_errorInvalidValue),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -109,7 +124,10 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('체중 기록이 수정되었습니다'), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(context.l10n.tracking_weightEdit_saveSuccess),
+            backgroundColor: Colors.green,
+          ),
         );
         widget.onSaveSuccess?.call();
         Navigator.of(context).pop();
@@ -117,7 +135,10 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('저장 실패: ${e.toString()}'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(context.l10n.tracking_weightEdit_saveFailed(e.toString())),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -140,10 +161,13 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('체중 수정', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                context.l10n.tracking_weightEdit_title,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 24),
               // 날짜 선택
-              Text('기록 날짜', style: Theme.of(context).textTheme.titleMedium),
+              Text(context.l10n.tracking_weightEdit_dateLabel, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               GestureDetector(
                 onTap: () => _selectDate(context),
@@ -167,16 +191,16 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
               ),
               const SizedBox(height: 24),
               // 체중 입력
-              Text('체중 (kg)', style: Theme.of(context).textTheme.titleMedium),
+              Text(context.l10n.tracking_weightEdit_weightLabel, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               TextField(
                 controller: _weightController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 onChanged: _validateWeight,
                 decoration: InputDecoration(
-                  hintText: '체중을 입력해주세요',
+                  hintText: context.l10n.tracking_weightEdit_weightHint,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  errorText: _errorMessage,
+                  errorText: _getLocalizedError(context),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 ),
               ),
@@ -202,18 +226,18 @@ class _WeightEditDialogState extends ConsumerState<WeightEditDialog> {
                 children: [
                   TextButton(
                     onPressed: _isLoading ? null : () => Navigator.pop(context),
-                    child: const Text('취소'),
+                    child: Text(context.l10n.common_button_cancel),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: (_isLoading || _errorMessage != null) ? null : _saveChanges,
+                    onPressed: (_isLoading || _getLocalizedError(context) != null) ? null : _saveChanges,
                     child: _isLoading
                         ? const SizedBox(
                             height: 16,
                             width: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('저장'),
+                        : Text(context.l10n.common_button_save),
                   ),
                 ],
               ),

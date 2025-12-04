@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../domain/entities/coping_guide.dart';
 import '../../domain/entities/coping_guide_state.dart';
+import '../../domain/entities/default_guide_message_type.dart';
 import '../../domain/entities/guide_feedback.dart';
 import '../providers.dart';
 
@@ -12,13 +13,18 @@ part 'coping_guide_notifier.g.dart';
 class CopingGuideNotifier extends _$CopingGuideNotifier {
   @override
   Future<CopingGuideState> build() async {
-    final defaultGuide = CopingGuide(
-      symptomName: '일반',
-      shortGuide: '전문가와 상담하여 구체적인 조언을 받으시기 바랍니다.',
-      reassuranceMessage: '전문가와 함께 관리해봐요',
-      immediateAction: '의료진에게 문의하기',
-    );
+    final defaultGuide = _createDefaultGuide();
     return CopingGuideState(guide: defaultGuide);
+  }
+
+  /// 기본 가이드 생성 (마커 문자열 사용)
+  CopingGuide _createDefaultGuide() {
+    return const CopingGuide(
+      symptomName: DefaultGuideMessageType.defaultSymptomName,
+      shortGuide: DefaultGuideMessageType.defaultShortGuide,
+      reassuranceMessage: DefaultGuideMessageType.defaultReassuranceMessage,
+      immediateAction: DefaultGuideMessageType.defaultImmediateAction,
+    );
   }
 
   /// 증상명으로 가이드 조회
@@ -30,14 +36,7 @@ class CopingGuideNotifier extends _$CopingGuideNotifier {
 
       if (guide == null) {
         // 기본 가이드 반환
-        return CopingGuideState(
-          guide: CopingGuide(
-            symptomName: '일반',
-            shortGuide: '전문가와 상담하여 구체적인 조언을 받으시기 바랍니다.',
-            reassuranceMessage: '전문가와 함께 관리해봐요',
-            immediateAction: '의료진에게 문의하기',
-          ),
-        );
+        return CopingGuideState(guide: _createDefaultGuide());
       }
 
       return CopingGuideState(guide: guide);
@@ -56,13 +55,8 @@ class CopingGuideNotifier extends _$CopingGuideNotifier {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final repository = ref.read(copingGuideRepositoryProvider);
-      final guide = await repository.getGuideBySymptom(symptomName) ??
-          CopingGuide(
-            symptomName: '일반',
-            shortGuide: '전문가와 상담하여 구체적인 조언을 받으시기 바랍니다.',
-            reassuranceMessage: '전문가와 함께 관리해봐요',
-            immediateAction: '의료진에게 문의하기',
-          );
+      final guide =
+          await repository.getGuideBySymptom(symptomName) ?? _createDefaultGuide();
 
       // 심각도 7-10점 AND 24시간 이상 지속 시 경고 활성화
       final showWarning = severity >= 7 && isPersistent24h;

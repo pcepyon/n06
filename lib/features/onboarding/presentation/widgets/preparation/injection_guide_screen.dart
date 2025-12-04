@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
 
@@ -55,8 +56,8 @@ class InjectionGuideScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return OnboardingPageTemplate(
-      title: '주사, 생각보다 간단해요',
-      subtitle: '처음엔 누구나 긴장돼요\n하지만 한 번 해보면 "이게 끝?" 할 거예요',
+      title: context.l10n.onboarding_injection_title,
+      subtitle: context.l10n.onboarding_injection_subtitle,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -65,10 +66,10 @@ class InjectionGuideScreen extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Instruction text
-          const Text(
-            '부위를 탭해서 자세히 알아보기',
+          Text(
+            context.l10n.onboarding_injection_tapInstruction,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: Color(0xFF64748B),
@@ -80,22 +81,22 @@ class InjectionGuideScreen extends StatelessWidget {
           // Injection site buttons
           _InjectionSiteButton(
             icon: Icons.account_box,
-            label: '복부',
-            description: '배꼽 주변 5cm 이상 떨어진 곳',
+            label: context.l10n.onboarding_injection_abdomenLabel,
+            description: context.l10n.onboarding_injection_abdomenDescription,
             onTap: () => _showSiteGuide(context, InjectionSite.abdomen),
           ),
           const SizedBox(height: 12),
           _InjectionSiteButton(
             icon: Icons.accessibility_new,
-            label: '허벅지',
-            description: '허벅지 앞쪽 또는 바깥쪽',
+            label: context.l10n.onboarding_injection_thighLabel,
+            description: context.l10n.onboarding_injection_thighDescription,
             onTap: () => _showSiteGuide(context, InjectionSite.thigh),
           ),
           const SizedBox(height: 12),
           _InjectionSiteButton(
             icon: Icons.back_hand,
-            label: '팔',
-            description: '윗팔 뒤쪽',
+            label: context.l10n.onboarding_injection_armLabel,
+            description: context.l10n.onboarding_injection_armDescription,
             onTap: () => _showSiteGuide(context, InjectionSite.arm),
           ),
           const SizedBox(height: 32),
@@ -111,11 +112,11 @@ class InjectionGuideScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _CheckItem('바늘이 머리카락보다 가늘어요'),
+                _CheckItem(context.l10n.onboarding_injection_check1),
                 const SizedBox(height: 8),
-                _CheckItem('대부분 거의 못 느껴요'),
+                _CheckItem(context.l10n.onboarding_injection_check2),
                 const SizedBox(height: 8),
-                _CheckItem('버튼 누르면 10초 안에 끝'),
+                _CheckItem(context.l10n.onboarding_injection_check3),
               ],
             ),
           ),
@@ -138,9 +139,9 @@ class InjectionGuideScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 20),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      '꿀팁',
-                      style: TextStyle(
+                    Text(
+                      context.l10n.onboarding_injection_tipsTitle,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF166534), // Green-800
@@ -150,21 +151,21 @@ class InjectionGuideScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                _TipItem('매주 부위를 돌아가며'),
+                _TipItem(context.l10n.onboarding_injection_tip1),
                 const SizedBox(height: 6),
-                _TipItem('주사 전 심호흡 한 번'),
+                _TipItem(context.l10n.onboarding_injection_tip2),
                 const SizedBox(height: 6),
-                _TipItem('펜의 바늘 가림막으로 안심'),
+                _TipItem(context.l10n.onboarding_injection_tip3),
               ],
             ),
           ),
           const SizedBox(height: 16),
 
           // Medical disclaimer
-          const Text(
-            '*담당 의사의 주사 지도를 최우선으로 따라주세요.',
+          Text(
+            context.l10n.onboarding_injection_disclaimer,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w400,
               color: Color(0xFF64748B),
@@ -175,7 +176,7 @@ class InjectionGuideScreen extends StatelessWidget {
         ],
       ),
       onNext: onNext,
-      nextButtonText: '다음',
+      nextButtonText: context.l10n.onboarding_common_nextButton,
       isNextEnabled: true,
       showSkip: false,
     );
@@ -330,25 +331,25 @@ class _SiteGuideSheet extends StatelessWidget {
 
   const _SiteGuideSheet({required this.site});
 
-  String get _title {
+  String _title(BuildContext context) {
     switch (site) {
       case InjectionSite.abdomen:
-        return '복부 주사 가이드';
+        return context.l10n.onboarding_injection_abdomenGuideTitle;
       case InjectionSite.thigh:
-        return '허벅지 주사 가이드';
+        return context.l10n.onboarding_injection_thighGuideTitle;
       case InjectionSite.arm:
-        return '팔 주사 가이드';
+        return context.l10n.onboarding_injection_armGuideTitle;
     }
   }
 
-  String get _detailedDescription {
+  String _detailedDescription(BuildContext context) {
     switch (site) {
       case InjectionSite.abdomen:
-        return '배꼽 주변 5cm 이상 떨어진 곳\n가장 일반적인 부위예요';
+        return context.l10n.onboarding_injection_abdomenGuideDetail;
       case InjectionSite.thigh:
-        return '허벅지 앞쪽 또는 바깥쪽\n앉아서 편하게 주사할 수 있어요';
+        return context.l10n.onboarding_injection_thighGuideDetail;
       case InjectionSite.arm:
-        return '윗팔 뒤쪽\n다른 사람 도움이 필요할 수 있어요';
+        return context.l10n.onboarding_injection_armGuideDetail;
     }
   }
 
@@ -407,7 +408,7 @@ class _SiteGuideSheet extends StatelessWidget {
 
           // Title
           Text(
-            _title,
+            _title(context),
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 20,
@@ -420,7 +421,7 @@ class _SiteGuideSheet extends StatelessWidget {
 
           // Description
           Text(
-            _detailedDescription,
+            _detailedDescription(context),
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 16,
@@ -446,9 +447,9 @@ class _SiteGuideSheet extends StatelessWidget {
               ),
               elevation: 0,
             ),
-            child: const Text(
-              '확인',
-              style: TextStyle(
+            child: Text(
+              context.l10n.onboarding_summary_confirmButton,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 height: 1.5,

@@ -1,0 +1,9 @@
+# Flutter Localization Configuration
+# https://docs.flutter.dev/ui/accessibility-and-localization/internationalization
+arb-dir: lib/l10n
+template-arb-file: app_ko.arb
+output-localization-file: app_localizations.dart
+output-class: L10n
+output-dir: lib/l10n/generated
+nullable-getter: false
+use-deferred-loading: false

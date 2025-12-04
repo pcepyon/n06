@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 인증 화면의 헤로 섹션 (로고, 제목, 부제목)
 ///
@@ -16,10 +17,10 @@ import 'package:n06/core/presentation/theme/app_typography.dart';
 /// ```
 class AuthHeroSection extends StatelessWidget {
   /// 주 제목 텍스트
-  final String title;
+  final String? title;
 
   /// 부제목 텍스트 (Primary 색상으로 강조)
-  final String subtitle;
+  final String? subtitle;
 
   /// 로고 이미지 경로 (기본값: Gabium 로고)
   final String logoAssetPath;
@@ -29,8 +30,8 @@ class AuthHeroSection extends StatelessWidget {
 
   const AuthHeroSection({
     super.key,
-    this.title = '가비움',
-    this.subtitle = '체계적으로 관리하세요',
+    this.title,
+    this.subtitle,
     this.logoAssetPath = 'assets/logos/gabium-logo-192.png',
     this.logoSize = 192,
   });
@@ -67,14 +68,14 @@ class AuthHeroSection extends StatelessWidget {
           const SizedBox(height: 24),
           // Title
           Text(
-            title,
+            title ?? context.l10n.auth_heroDefault_title,
             textAlign: TextAlign.center,
             style: AppTypography.display,
           ),
           const SizedBox(height: 8),
           // Subtitle
           Text(
-            subtitle,
+            subtitle ?? context.l10n.auth_heroDefault_subtitle,
             textAlign: TextAlign.center,
             style: AppTypography.heading3.copyWith(
               color: AppColors.primary,

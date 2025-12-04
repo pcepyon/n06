@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
+import 'package:n06/core/extensions/dashboard_message_extension.dart';
 import '../../domain/entities/timeline_event.dart';
 
 /// 여정 타임라인 위젯
@@ -46,7 +48,7 @@ class JourneyTimelineWidget extends StatelessWidget {
       children: [
         // Section Title
         Text(
-          '치료 여정',
+          context.l10n.dashboard_timeline_title,
           style: AppTypography.heading2,
         ),
 
@@ -106,10 +108,12 @@ class _JourneySummary extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              '$weeksCount주간 $milestoneCount개의 성취를 달성했어요!',
-              style: AppTypography.labelMedium.copyWith(
-                color: AppColors.history,
+            child: Builder(
+              builder: (context) => Text(
+                context.l10n.dashboard_timeline_summary(weeksCount, milestoneCount),
+                style: AppTypography.labelMedium.copyWith(
+                  color: AppColors.history,
+                ),
               ),
             ),
           ),
@@ -196,29 +200,33 @@ class _JourneyTimelineEventItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Title Row with NEW Badge
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          event.title,
-                          style: AppTypography.labelLarge.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                  Builder(
+                    builder: (context) => Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            event.getTitle(context),
+                            style: AppTypography.labelLarge.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ),
-                      ),
-                      // NEW Badge (if within 24h)
-                      if (showNewBadge) ...[
-                        const SizedBox(width: 8),
-                        _NewBadge(),
+                        // NEW Badge (if within 24h)
+                        if (showNewBadge) ...[
+                          const SizedBox(width: 8),
+                          _NewBadge(),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    event.description,
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textTertiary,
+                  Builder(
+                    builder: (context) => Text(
+                      event.getSubtitle(context, event),
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textTertiary,
+                      ),
                     ),
                   ),
                 ],

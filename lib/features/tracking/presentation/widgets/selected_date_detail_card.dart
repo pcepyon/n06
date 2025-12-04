@@ -11,6 +11,7 @@ import 'package:n06/features/authentication/presentation/widgets/gabium_button.d
 import 'package:n06/core/presentation/widgets/status_badge.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 class SelectedDateDetailCard extends ConsumerWidget {
   final DateTime selectedDate;
@@ -83,12 +84,16 @@ class SelectedDateDetailCard extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                '${selectedDate.month}월 ${selectedDate.day}일 (${_getWeekday(selectedDate)})',
+                context.l10n.tracking_dateDetail_dateMonthDay(
+                  selectedDate.month,
+                  selectedDate.day,
+                  _getWeekday(context, selectedDate),
+                ),
                 style: AppTypography.heading2,
               ),
               const SizedBox(height: 8),
               Text(
-                '투여 예정이 없는 날입니다',
+                context.l10n.tracking_dateDetail_noScheduled,
                 style: AppTypography.bodyLarge.copyWith(
                   color: AppColors.textTertiary,
                 ),
@@ -100,7 +105,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                 SizedBox(
                   width: double.infinity,
                   child: GabiumButton(
-                    text: '이 날짜에 투여 기록하기',
+                    text: context.l10n.tracking_dateDetail_recordOffSchedule,
                     onPressed: _isWithin48Hours()
                         ? null
                         : () => _showOffScheduleDialog(context),
@@ -147,7 +152,11 @@ class SelectedDateDetailCard extends ConsumerWidget {
           children: [
             // 날짜
             Text(
-              '${selectedDate.month}월 ${selectedDate.day}일 (${_getWeekday(selectedDate)})',
+              context.l10n.tracking_dateDetail_dateMonthDay(
+                selectedDate.month,
+                selectedDate.day,
+                _getWeekday(context, selectedDate),
+              ),
               style: AppTypography.heading2.copyWith(
                 color: AppColors.textPrimary,
               ),
@@ -172,7 +181,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                 if (isInPast && !isCompleted)
                   StatusBadge(
                     type: StatusBadgeType.info,
-                    text: '과거 기록',
+                    text: context.l10n.tracking_dateDetail_pastRecord,
                     icon: Icons.history,
                   )
                 else
@@ -188,7 +197,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
             if (isInPast && !isCompleted) ...[
               const SizedBox(height: 8),
               Text(
-                '이 날짜에 투여했다면 기록하세요',
+                context.l10n.tracking_dateDetail_pastRecordPrompt,
                 style: TextStyle(
                   fontSize: 14,
                   color: AppColors.info,
@@ -210,16 +219,16 @@ class SelectedDateDetailCard extends ConsumerWidget {
             const SizedBox(height: 16),
 
             // 주사 부위 이력
-            const Text(
-              '최근 주사 부위 (7일 이내)',
-              style: TextStyle(
+            Text(
+              context.l10n.tracking_dateDetail_recentSiteHistory,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF334155),
               ),
             ),
             const SizedBox(height: 12),
-            ..._buildInjectionSiteHistory(),
+            ..._buildInjectionSiteHistory(context),
 
             const SizedBox(height: 24),
 
@@ -238,7 +247,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                   onPressed: () => _showDeleteConfirmationDialog(context, ref),
                   icon: Icon(Icons.delete_outline, size: 18, color: AppColors.error),
                   label: Text(
-                    '이 일정 삭제',
+                    context.l10n.tracking_dateDetail_deleteSchedule,
                     style: AppTypography.bodyMedium.copyWith(color: AppColors.error),
                   ),
                 ),
@@ -273,13 +282,17 @@ class SelectedDateDetailCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '일정을 삭제할까요?',
+                context.l10n.tracking_dateDetail_deleteConfirmTitle,
                 style: AppTypography.heading2,
               ),
               const SizedBox(height: 16),
               Text(
-                '${selectedDate.month}월 ${selectedDate.day}일 (${_getWeekday(selectedDate)}) 예정된\n'
-                '${schedule!.scheduledDoseMg}mg 투여 일정을 삭제합니다.',
+                context.l10n.tracking_dateDetail_deleteConfirmMessage(
+                  selectedDate.month,
+                  selectedDate.day,
+                  _getWeekday(context, selectedDate),
+                  schedule!.scheduledDoseMg,
+                ),
                 style: AppTypography.bodyLarge.copyWith(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 12),
@@ -295,7 +308,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '삭제된 일정은 복구할 수 없으며,\n투여 기록에 영향을 주지 않습니다.',
+                        context.l10n.tracking_dateDetail_deleteWarning,
                         style: AppTypography.bodySmall.copyWith(color: AppColors.warning),
                       ),
                     ),
@@ -307,7 +320,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: GabiumButton(
-                      text: '취소',
+                      text: context.l10n.common_button_cancel,
                       onPressed: () => Navigator.of(context).pop(false),
                       variant: GabiumButtonVariant.secondary,
                       size: GabiumButtonSize.medium,
@@ -316,7 +329,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: GabiumButton(
-                      text: '삭제',
+                      text: context.l10n.common_button_delete,
                       onPressed: () => Navigator.of(context).pop(true),
                       variant: GabiumButtonVariant.danger,
                       size: GabiumButtonSize.medium,
@@ -335,21 +348,29 @@ class SelectedDateDetailCard extends ConsumerWidget {
         await ref.read(medicationNotifierProvider.notifier).deleteDoseSchedule(schedule!.id);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('일정이 삭제되었습니다.')),
+            SnackBar(content: Text(context.l10n.tracking_dateDetail_deleteSuccess)),
           );
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('삭제 실패: $e')),
+            SnackBar(content: Text(context.l10n.tracking_dateDetail_deleteFailed(e.toString()))),
           );
         }
       }
     }
   }
 
-  String _getWeekday(DateTime date) {
-    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+  String _getWeekday(BuildContext context, DateTime date) {
+    final weekdays = [
+      context.l10n.tracking_dateDetail_weekdayMon,
+      context.l10n.tracking_dateDetail_weekdayTue,
+      context.l10n.tracking_dateDetail_weekdayWed,
+      context.l10n.tracking_dateDetail_weekdayThu,
+      context.l10n.tracking_dateDetail_weekdayFri,
+      context.l10n.tracking_dateDetail_weekdaySat,
+      context.l10n.tracking_dateDetail_weekdaySun,
+    ];
     return weekdays[date.weekday - 1];
   }
 
@@ -394,7 +415,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
     }
   }
 
-  List<Widget> _buildInjectionSiteHistory() {
+  List<Widget> _buildInjectionSiteHistory(BuildContext context) {
     // 과거 기록 입력 모드에서는 선택한 날짜 기준, 아니면 오늘 기준
     final referenceDate = isPastRecordMode ? selectedDate : DateTime.now();
 
@@ -405,9 +426,9 @@ class SelectedDateDetailCard extends ConsumerWidget {
 
     if (within7Days.isEmpty) {
       return [
-        const Text(
-          '최근 7일 이내 기록 없음',
-          style: TextStyle(
+        Text(
+          context.l10n.tracking_dateDetail_noRecentHistory,
+          style: const TextStyle(
             fontSize: 14,
             color: Color(0xFF94A3B8),
           ),
@@ -419,6 +440,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
       final daysAgo = referenceDate.difference(r.administeredAt).inDays;
       final siteLabel = getInjectionSiteLabel(r.injectionSite!);
       final dateLabel = '${r.administeredAt.month}/${r.administeredAt.day}';
+      final daysAgoLabel = context.l10n.tracking_dateDetail_daysAgo(daysAgo);
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 8),
@@ -431,7 +453,11 @@ class SelectedDateDetailCard extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              '$siteLabel ($dateLabel, $daysAgo일 전)',
+              context.l10n.tracking_dateDetail_siteHistoryItem(
+                siteLabel,
+                dateLabel,
+                daysAgoLabel,
+              ),
               style: const TextStyle(
                 fontSize: 14,
                 color: Color(0xFF334155),
@@ -456,7 +482,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
     // (연체 제한은 "오늘 투여"할 때만 적용)
     if (!guidance.canAdminister && !isCompleted && !isPastRecordMode && !isRecordingPastDate) {
       return GabiumButton(
-        text: '투여 불가 (5일 이상 경과)',
+        text: context.l10n.tracking_dateDetail_cannotAdminister,
         onPressed: null,
         variant: GabiumButtonVariant.secondary,
         size: GabiumButtonSize.medium,
@@ -464,7 +490,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
     }
 
     return GabiumButton(
-      text: isCompleted ? '기록 수정' : '✓ 투여 완료 기록하기',
+      text: isCompleted ? context.l10n.tracking_dateDetail_recordModify : context.l10n.tracking_dateDetail_recordComplete,
       onPressed: () => _showRecordDialog(context),
       variant: GabiumButtonVariant.primary,
       size: GabiumButtonSize.medium,
@@ -508,8 +534,11 @@ class SelectedDateDetailCard extends ConsumerWidget {
     DoseRecord completedRecord,
   ) {
     final actualDate = completedRecord.administeredAt;
-    final actualDateStr =
-        '${actualDate.month}/${actualDate.day}(${_getWeekday(actualDate)})';
+    final actualDateStr = context.l10n.tracking_dateDetail_shortDateFormat(
+      actualDate.month,
+      actualDate.day,
+      _getWeekday(context, actualDate),
+    );
 
     final daysDiff = schedule!.scheduledDate.difference(actualDate).inDays;
     final isEarly = daysDiff > 0;
@@ -522,7 +551,11 @@ class SelectedDateDetailCard extends ConsumerWidget {
           children: [
             // 날짜
             Text(
-              '${selectedDate.month}월 ${selectedDate.day}일 (${_getWeekday(selectedDate)})',
+              context.l10n.tracking_dateDetail_dateMonthDay(
+                selectedDate.month,
+                selectedDate.day,
+                _getWeekday(context, selectedDate),
+              ),
               style: AppTypography.heading2.copyWith(
                 color: AppColors.textPrimary,
               ),
@@ -542,7 +575,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                 const SizedBox(width: 12),
                 StatusBadge(
                   type: StatusBadgeType.success,
-                  text: '투여 완료',
+                  text: context.l10n.tracking_dateDetail_doseCompleted,
                   icon: Icons.check_circle,
                 ),
               ],
@@ -574,8 +607,14 @@ class SelectedDateDetailCard extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           isEarly
-                              ? '$actualDateStr에 조기 투여됨 (${daysDiff.abs()}일 전)'
-                              : '$actualDateStr에 지연 투여됨 (${daysDiff.abs()}일 후)',
+                              ? context.l10n.tracking_dateDetail_completedEarly(
+                                  actualDateStr,
+                                  daysDiff.abs(),
+                                )
+                              : context.l10n.tracking_dateDetail_completedLate(
+                                  actualDateStr,
+                                  daysDiff.abs(),
+                                ),
                           style: AppTypography.bodyMedium.copyWith(
                             color: AppColors.education,
                             fontWeight: FontWeight.w600,
@@ -587,7 +626,9 @@ class SelectedDateDetailCard extends ConsumerWidget {
                   if (completedRecord.injectionSite != null) ...[
                     const SizedBox(height: 8),
                     Text(
-                      '주사 부위: ${getInjectionSiteLabel(completedRecord.injectionSite!)}',
+                      context.l10n.tracking_dateDetail_injectionSite(
+                        getInjectionSiteLabel(completedRecord.injectionSite!),
+                      ),
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -673,7 +714,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                '⚠️ 마지막 투여로부터 48시간이 지나지 않았습니다\nGLP-1 약물은 최소 48시간 간격을 권장합니다',
+                context.l10n.tracking_dateDetail_within48HoursWarning,
                 style: AppTypography.bodyMedium.copyWith(color: AppColors.error),
               ),
             ),
@@ -684,7 +725,11 @@ class SelectedDateDetailCard extends ConsumerWidget {
 
     final daysDiff = nearestSchedule.scheduledDate.difference(selectedDate).inDays;
     final scheduleDate = nearestSchedule.scheduledDate;
-    final dateStr = '${scheduleDate.month}/${scheduleDate.day}(${_getWeekday(scheduleDate)})';
+    final dateStr = context.l10n.tracking_dateDetail_shortDateFormat(
+      scheduleDate.month,
+      scheduleDate.day,
+      _getWeekday(context, scheduleDate),
+    );
 
     String message;
     Color messageColor;
@@ -692,24 +737,24 @@ class SelectedDateDetailCard extends ConsumerWidget {
     if (daysDiff > 0) {
       // 선택한 날짜가 예정일보다 이전 (조기 투여)
       if (daysDiff <= 2) {
-        message = '📅 $dateStr 예정 투여를 조기 기록합니다';
+        message = context.l10n.tracking_dateDetail_earlyDoseMessage(dateStr);
         messageColor = AppColors.education;
       } else {
-        message = '⚠️ $dateStr 예정보다 $daysDiff일 빠릅니다\n최대 2일 전까지 조기 투여를 권장합니다';
+        message = context.l10n.tracking_dateDetail_tooEarlyWarning(dateStr, daysDiff);
         messageColor = AppColors.warning;
       }
     } else if (daysDiff < 0) {
       // 선택한 날짜가 예정일보다 이후 (지연 투여)
       final daysLate = -daysDiff;
       if (daysLate <= 5) {
-        message = '📅 $dateStr 예정 투여를 지연 기록합니다 ($daysLate일 지연)';
+        message = context.l10n.tracking_dateDetail_lateDoseMessage(dateStr, daysLate);
         messageColor = AppColors.warning;
       } else {
-        message = '⚠️ $dateStr 예정보다 $daysLate일 지연되었습니다\n5일 초과 시 의사 상담을 권장합니다';
+        message = context.l10n.tracking_dateDetail_tooLateWarning(dateStr, daysLate);
         messageColor = AppColors.error;
       }
     } else {
-      message = '📅 오늘 예정된 투여입니다';
+      message = context.l10n.tracking_dateDetail_onTimeMessage;
       messageColor = AppColors.success;
     }
 
@@ -739,7 +784,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
 
     if (nearestSchedule == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('연결할 수 있는 투여 예정이 없습니다')),
+        SnackBar(content: Text(context.l10n.tracking_dateDetail_offScheduleNoSchedule)),
       );
       return;
     }
@@ -772,7 +817,11 @@ class SelectedDateDetailCard extends ConsumerWidget {
           children: [
             // 날짜
             Text(
-              '${selectedDate.month}월 ${selectedDate.day}일 (${_getWeekday(selectedDate)})',
+              context.l10n.tracking_dateDetail_dateMonthDay(
+                selectedDate.month,
+                selectedDate.day,
+                _getWeekday(context, selectedDate),
+              ),
               style: AppTypography.heading2.copyWith(
                 color: AppColors.textPrimary,
               ),
@@ -792,7 +841,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                 const SizedBox(width: 12),
                 StatusBadge(
                   type: StatusBadgeType.success,
-                  text: '투여 완료',
+                  text: context.l10n.tracking_dateDetail_doseCompleted,
                   icon: Icons.check_circle,
                 ),
               ],
@@ -813,7 +862,13 @@ class SelectedDateDetailCard extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '원래 예정: ${linkedSchedule.scheduledDate.month}/${linkedSchedule.scheduledDate.day}(${_getWeekday(linkedSchedule.scheduledDate)})',
+                        context.l10n.tracking_dateDetail_originalSchedule(
+                          context.l10n.tracking_dateDetail_shortDateFormat(
+                            linkedSchedule.scheduledDate.month,
+                            linkedSchedule.scheduledDate.day,
+                            _getWeekday(context, linkedSchedule.scheduledDate),
+                          ),
+                        ),
                         style: AppTypography.bodyMedium.copyWith(
                           color: AppColors.education,
                         ),
@@ -828,7 +883,9 @@ class SelectedDateDetailCard extends ConsumerWidget {
             if (recordOnDate.injectionSite != null) ...[
               const SizedBox(height: 16),
               Text(
-                '주사 부위: ${getInjectionSiteLabel(recordOnDate.injectionSite!)}',
+                context.l10n.tracking_dateDetail_injectionSite(
+                  getInjectionSiteLabel(recordOnDate.injectionSite!),
+                ),
                 style: AppTypography.bodyLarge.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -839,7 +896,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
             if (recordOnDate.note != null && recordOnDate.note!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                '메모: ${recordOnDate.note}',
+                context.l10n.tracking_dateDetail_note(recordOnDate.note!),
                 style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.textTertiary,
                 ),
@@ -934,7 +991,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              '투여가 오랫동안 중단되었습니다',
+              context.l10n.tracking_dateDetail_longBreakTitle,
               style: AppTypography.heading2.copyWith(
                 color: AppColors.textPrimary,
               ),
@@ -942,7 +999,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '${info.skippedSchedules.length}건의 미완료 스케줄이 있습니다.\n스케줄을 재설정하고 다시 시작하세요.',
+              context.l10n.tracking_dateDetail_longBreakMessage(info.skippedSchedules.length),
               style: AppTypography.bodyMedium.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -968,7 +1025,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '오랜 중단 후 재시작 시\n의료진과 상담하여 용량을 확인하세요',
+                      context.l10n.tracking_dateDetail_longBreakConsultation,
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.info,
                       ),
@@ -981,7 +1038,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: GabiumButton(
-                text: '과거 기록 입력하기',
+                text: context.l10n.tracking_dateDetail_enterPastRecordMode,
                 onPressed: onEnterPastRecordMode,
                 variant: GabiumButtonVariant.secondary,
                 size: GabiumButtonSize.medium,
@@ -991,7 +1048,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: GabiumButton(
-                text: '스케줄 재설정하기',
+                text: context.l10n.tracking_dateDetail_restartSchedule,
                 onPressed: () => _showRestartDialog(context, info),
                 variant: GabiumButtonVariant.primary,
                 size: GabiumButtonSize.medium,
@@ -1031,12 +1088,16 @@ class SelectedDateDetailCard extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              '${selectedDate.month}월 ${selectedDate.day}일 (${_getWeekday(selectedDate)})',
+              context.l10n.tracking_dateDetail_dateMonthDay(
+                selectedDate.month,
+                selectedDate.day,
+                _getWeekday(context, selectedDate),
+              ),
               style: AppTypography.heading2,
             ),
             const SizedBox(height: 8),
             Text(
-              '투여 예정이 없는 날입니다',
+              context.l10n.tracking_dateDetail_noScheduled,
               style: AppTypography.bodyLarge.copyWith(
                 color: AppColors.textTertiary,
               ),
@@ -1061,7 +1122,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '미래 날짜에는 기록할 수 없습니다.\n투여 후 해당 날짜에 기록해주세요.',
+                      context.l10n.tracking_dateDetail_futureCannotRecord,
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.info,
                       ),
@@ -1096,7 +1157,11 @@ class SelectedDateDetailCard extends ConsumerWidget {
           children: [
             // 날짜
             Text(
-              '${selectedDate.month}월 ${selectedDate.day}일 (${_getWeekday(selectedDate)})',
+              context.l10n.tracking_dateDetail_dateMonthDay(
+                selectedDate.month,
+                selectedDate.day,
+                _getWeekday(context, selectedDate),
+              ),
               style: AppTypography.heading2.copyWith(
                 color: AppColors.textPrimary,
               ),
@@ -1119,7 +1184,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                 const SizedBox(width: 12),
                 StatusBadge(
                   type: StatusBadgeType.info,
-                  text: '$daysUntil일 후 예정',
+                  text: context.l10n.tracking_dateDetail_daysUntil(daysUntil),
                   icon: Icons.schedule,
                 ),
               ],
@@ -1149,7 +1214,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '미래 날짜에는 기록할 수 없습니다',
+                          context.l10n.tracking_dateDetail_futureCannotRecord,
                           style: AppTypography.labelMedium.copyWith(
                             color: AppColors.info,
                             fontWeight: FontWeight.w600,
@@ -1160,8 +1225,7 @@ class SelectedDateDetailCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '조기 투여가 필요하시면 오늘 날짜를 선택해서 기록해주세요.\n'
-                    '해당 예정일 스케줄에 자동으로 연결됩니다.',
+                    context.l10n.tracking_dateDetail_earlyDoseInfo,
                     style: AppTypography.bodySmall.copyWith(
                       color: AppColors.info,
                     ),

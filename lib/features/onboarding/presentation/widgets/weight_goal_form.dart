@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
@@ -90,22 +91,22 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
 
       // 0 이하 값 방지
       if (_currentWeight! <= 0) {
-        _errorMessage = '현재 체중을 입력해주세요.';
+        _errorMessage = 'onboarding_weightGoal_errorEnterCurrent';
         return;
       }
 
       if (_targetWeight! <= 0) {
-        _errorMessage = '목표 체중을 입력해주세요.';
+        _errorMessage = 'onboarding_weightGoal_errorEnterTarget';
         return;
       }
 
       if (_currentWeight! < 20 || _currentWeight! > 300) {
-        _errorMessage = '현재 체중은 20kg 이상 300kg 이하여야 합니다.';
+        _errorMessage = 'onboarding_weightGoal_errorCurrentRange';
         return;
       }
 
       if (_targetWeight! < 20 || _targetWeight! > 300) {
-        _errorMessage = '목표 체중은 20kg 이상 300kg 이하여야 합니다.';
+        _errorMessage = 'onboarding_weightGoal_errorTargetRange';
         return;
       }
 
@@ -114,7 +115,7 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
         if (widget.isReviewMode) {
           _goalAchieved = true;
         } else {
-          _errorMessage = '목표 체중은 현재 체중보다 작아야 합니다.';
+          _errorMessage = 'onboarding_weightGoal_errorTargetTooHigh';
           return;
         }
       }
@@ -148,7 +149,18 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
            _errorMessage == null;
   }
 
-  Widget _buildPredictionCard() {
+  String _getErrorMessage(BuildContext context, String key) {
+    return switch (key) {
+      'onboarding_weightGoal_errorEnterCurrent' => context.l10n.onboarding_weightGoal_errorEnterCurrent,
+      'onboarding_weightGoal_errorEnterTarget' => context.l10n.onboarding_weightGoal_errorEnterTarget,
+      'onboarding_weightGoal_errorCurrentRange' => context.l10n.onboarding_weightGoal_errorCurrentRange,
+      'onboarding_weightGoal_errorTargetRange' => context.l10n.onboarding_weightGoal_errorTargetRange,
+      'onboarding_weightGoal_errorTargetTooHigh' => context.l10n.onboarding_weightGoal_errorTargetTooHigh,
+      _ => key,
+    };
+  }
+
+  Widget _buildPredictionCard(BuildContext context) {
     if (_currentWeight == null || _currentWeight! <= 0) {
       return const SizedBox.shrink();
     }
@@ -166,22 +178,22 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '예상 변화',
+            context.l10n.onboarding_weightGoal_predictionTitle,
             style: AppTypography.labelMedium,
           ),
           const SizedBox(height: 8),
           Text(
-            '12주 후: -${predicted12Week.toStringAsFixed(1)}kg',
+            context.l10n.onboarding_weightGoal_prediction12Weeks(predicted12Week.toStringAsFixed(1)),
             style: AppTypography.bodySmall,
           ),
           const SizedBox(height: 4),
           Text(
-            '72주 후: -${predicted72Week.toStringAsFixed(1)}kg',
+            context.l10n.onboarding_weightGoal_prediction72Weeks(predicted72Week.toStringAsFixed(1)),
             style: AppTypography.bodySmall,
           ),
           const SizedBox(height: 4),
           Text(
-            '* 임상시험 평균 기준',
+            context.l10n.onboarding_weightGoal_predictionNote,
             style: AppTypography.caption,
           ),
         ],
@@ -189,7 +201,7 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
     );
   }
 
-  Widget _buildMotivationCard() {
+  Widget _buildMotivationCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -204,7 +216,7 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '임상시험에서 72주 동안 평균 21% 감량을 달성했어요\n무리하지 않는 목표가 오히려 더 좋은 결과를 만들어요',
+              context.l10n.onboarding_weightGoal_motivationMessage,
               style: AppTypography.bodySmall.copyWith(
                 color: const Color(0xFF1E40AF),
               ),
@@ -226,8 +238,8 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
             const SizedBox(height: 16), // md
             Text(
               widget.isReviewMode
-                  ? '📊 체중 목표 확인'
-                  : '📊 목표를 함께 세워볼까요?',
+                  ? context.l10n.onboarding_weightGoal_titleReview
+                  : context.l10n.onboarding_weightGoal_title,
               style: AppTypography.heading2,
             ),
             const SizedBox(height: 16), // md
@@ -235,21 +247,21 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
             // Current Weight Input
             GabiumTextField(
               controller: _currentWeightController,
-              label: '현재 체중 (kg)',
-              hint: '현재 체중',
+              label: context.l10n.onboarding_weightGoal_currentWeightLabel,
+              hint: context.l10n.onboarding_weightGoal_currentWeightHint,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
             const SizedBox(height: 16), // md
 
             // Prediction Card
-            _buildPredictionCard(),
+            _buildPredictionCard(context),
             if (_currentWeight != null && _currentWeight! > 0) const SizedBox(height: 16), // md
 
             // Target Weight Input
             GabiumTextField(
               controller: _targetWeightController,
-              label: '목표 체중 (kg)',
-              hint: '목표 체중',
+              label: context.l10n.onboarding_weightGoal_targetWeightLabel,
+              hint: context.l10n.onboarding_weightGoal_targetWeightHint,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
             const SizedBox(height: 16), // md
@@ -257,8 +269,8 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
             // Target Period Input
             GabiumTextField(
               controller: _targetPeriodController,
-              label: '목표 기간 (주, 선택)',
-              hint: '목표 기간',
+              label: context.l10n.onboarding_weightGoal_targetPeriodLabel,
+              hint: context.l10n.onboarding_weightGoal_targetPeriodHint,
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 24), // lg
@@ -267,7 +279,7 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
             if (_errorMessage != null) ...[
               ValidationAlert(
                 type: ValidationAlertType.error,
-                message: _errorMessage!,
+                message: _getErrorMessage(context, _errorMessage!),
               ),
               const SizedBox(height: 8), // sm
             ],
@@ -276,7 +288,7 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
             if (_goalAchieved && _errorMessage == null) ...[
               ValidationAlert(
                 type: ValidationAlertType.success,
-                message: '🎉 목표를 달성하셨네요! 새로운 목표를 설정하거나 그대로 진행하세요.',
+                message: context.l10n.onboarding_weightGoal_goalAchieved,
               ),
               const SizedBox(height: 8), // sm
             ],
@@ -285,7 +297,7 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
             if (_weeklyGoal != null && _errorMessage == null) ...[
               ValidationAlert(
                 type: ValidationAlertType.info,
-                message: '주간 목표: ${_weeklyGoal!.toStringAsFixed(2)}kg/주',
+                message: context.l10n.onboarding_weightGoal_weeklyGoalInfo(_weeklyGoal!.toStringAsFixed(2)),
               ),
               const SizedBox(height: 8), // sm
             ],
@@ -294,18 +306,18 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
             if (_hasWarning && _errorMessage == null) ...[
               ValidationAlert(
                 type: ValidationAlertType.warning,
-                message: '⚠ 주간 목표가 1kg을 초과합니다. 안전한 목표를 권장합니다.',
+                message: context.l10n.onboarding_weightGoal_warningTooFast,
               ),
               const SizedBox(height: 8), // sm
             ],
 
             // Motivation Card
-            _buildMotivationCard(),
+            _buildMotivationCard(context),
             const SizedBox(height: 16), // md
 
             // Next Button
             GabiumButton(
-              text: '다음',
+              text: context.l10n.onboarding_common_nextButton,
               onPressed: _canProceed() ? widget.onNext : null,
               variant: GabiumButtonVariant.primary,
               size: GabiumButtonSize.medium,

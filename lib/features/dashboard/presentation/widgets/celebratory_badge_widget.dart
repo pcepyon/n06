@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
+import '../utils/badge_l10n.dart';
 import '../../domain/entities/user_badge.dart';
 
 /// Helper class to get badge metadata from badgeId
@@ -15,45 +17,33 @@ class _BadgeMetadata {
     required this.description,
   });
 
-  static _BadgeMetadata fromBadgeId(String badgeId) {
+  static _BadgeMetadata fromBadgeId(BuildContext context, String badgeId) {
+    IconData icon;
     switch (badgeId) {
       case 'streak_7':
-        return const _BadgeMetadata(
-          name: '7일 연속',
-          icon: Icons.local_fire_department,
-          description: '7일 연속으로 투여를 완료했습니다!',
-        );
+        icon = Icons.local_fire_department;
+        break;
       case 'streak_30':
-        return const _BadgeMetadata(
-          name: '30일 연속',
-          icon: Icons.whatshot,
-          description: '30일 연속으로 투여를 완료했습니다!',
-        );
+        icon = Icons.whatshot;
+        break;
       case 'weight_5percent':
-        return const _BadgeMetadata(
-          name: '5% 감량',
-          icon: Icons.trending_down,
-          description: '체중 5% 감량을 달성했습니다!',
-        );
+        icon = Icons.trending_down;
+        break;
       case 'weight_10percent':
-        return const _BadgeMetadata(
-          name: '10% 감량',
-          icon: Icons.scale,
-          description: '체중 10% 감량을 달성했습니다!',
-        );
+        icon = Icons.scale;
+        break;
       case 'first_dose':
-        return const _BadgeMetadata(
-          name: '첫 투여',
-          icon: Icons.check_circle,
-          description: '첫 투여를 완료했습니다!',
-        );
+        icon = Icons.check_circle;
+        break;
       default:
-        return const _BadgeMetadata(
-          name: '뱃지',
-          icon: Icons.emoji_events,
-          description: '특별한 성취를 달성했습니다!',
-        );
+        icon = Icons.emoji_events;
     }
+
+    return _BadgeMetadata(
+      name: context.getBadgeName(badgeId),
+      icon: icon,
+      description: context.getBadgeDescription(badgeId),
+    );
   }
 }
 
@@ -88,7 +78,7 @@ class CelebratoryBadgeWidget extends StatelessWidget {
       children: [
         // Section Title
         Text(
-          '성취 뱃지',
+          context.l10n.dashboard_badge_title,
           style: AppTypography.heading2,
         ),
 
@@ -161,7 +151,7 @@ class _BadgeItemState extends State<_BadgeItem> {
     final progress = widget.badge.progressPercentage / 100.0;
     final isAchieved = widget.badge.status == BadgeStatus.achieved;
     final isLocked = widget.badge.status == BadgeStatus.locked;
-    final metadata = _BadgeMetadata.fromBadgeId(widget.badge.badgeId);
+    final metadata = _BadgeMetadata.fromBadgeId(context, widget.badge.badgeId);
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -311,7 +301,7 @@ class _BadgeItemState extends State<_BadgeItem> {
   }
 
   void _showBadgeDetail(BuildContext context) {
-    final metadata = _BadgeMetadata.fromBadgeId(widget.badge.badgeId);
+    final metadata = _BadgeMetadata.fromBadgeId(context, widget.badge.badgeId);
     final progress = widget.badge.progressPercentage / 100.0;
 
     // Show modal bottom sheet with badge details
@@ -416,46 +406,48 @@ class _EmptyState extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          // celebration icon - more warm and encouraging than emoji_events
-          const Icon(
-            Icons.celebration,
-            size: 48,
-            color: AppColors.primary,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '첫 뱃지를 향해 나아가고 있어요!',
-            style: AppTypography.heading2.copyWith(
-              color: AppColors.neutral700,
+      child: Builder(
+        builder: (context) => Column(
+          children: [
+            // celebration icon - more warm and encouraging than emoji_events
+            const Icon(
+              Icons.celebration,
+              size: 48,
+              color: AppColors.primary,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '목표를 달성하면 멋진 뱃지를 받을 수 있어요.',
-            style: AppTypography.bodyLarge.copyWith(
-              color: AppColors.textTertiary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              // Navigate to achievements screen or show goal list
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.surface,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+            const SizedBox(height: 16),
+            Text(
+              context.l10n.dashboard_badge_empty_title,
+              style: AppTypography.heading2.copyWith(
+                color: AppColors.neutral700,
               ),
+              textAlign: TextAlign.center,
             ),
-            child: const Text('목표 확인하기'),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              context.l10n.dashboard_badge_empty_message,
+              style: AppTypography.bodyLarge.copyWith(
+                color: AppColors.textTertiary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to achievements screen or show goal list
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.surface,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(context.l10n.dashboard_badge_empty_button),
+            ),
+          ],
+        ),
       ),
     );
   }

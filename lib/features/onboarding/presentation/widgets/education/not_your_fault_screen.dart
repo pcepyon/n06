@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
 
@@ -17,17 +18,17 @@ class NotYourFaultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return OnboardingPageTemplate(
-      title: '의지력의 문제가 아니었어요',
-      content: _buildContent(),
+      title: context.l10n.onboarding_notYourFault_title,
+      content: _buildContent(context),
       onNext: onNext,
-      nextButtonText: '다음',
+      nextButtonText: context.l10n.onboarding_common_nextButton,
       isNextEnabled: true,
       showSkip: true,
       onSkip: onSkip,
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
     return Column(
       children: [
         // Lottie animation (뇌와 호르몬 균형)
@@ -39,14 +40,13 @@ class NotYourFaultScreen extends StatelessWidget {
 
         // Sequential text animations
         _buildSequentialText(
-          '체중 관리가 어려웠던 건\n당신의 의지가 약해서가 아니에요',
+          context.l10n.onboarding_notYourFault_message1,
           delay: 0,
         ),
         const SizedBox(height: 24), // lg
 
         _buildSequentialText(
-          '우리 몸에는 식욕을 조절하는\n호르몬 시스템이 있어요\n\n'
-          '이 시스템의 균형이 깨지면\n아무리 노력해도 힘들 수밖에 없죠',
+          context.l10n.onboarding_notYourFault_message2,
           delay: 400,
         ),
         const SizedBox(height: 24), // lg
@@ -65,7 +65,7 @@ class NotYourFaultScreen extends StatelessWidget {
             );
           },
           child: _buildInfoCard(
-            'GLP-1은 이 균형을\n다시 맞춰주는 역할을 해요',
+            context.l10n.onboarding_notYourFault_infoCard,
           ),
         ),
       ],

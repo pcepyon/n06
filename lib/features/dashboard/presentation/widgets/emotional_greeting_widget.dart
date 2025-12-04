@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
+import 'package:n06/core/extensions/dashboard_message_extension.dart';
 import 'package:n06/features/dashboard/domain/entities/dashboard_data.dart';
+import 'package:n06/features/dashboard/domain/entities/dashboard_message_type.dart';
 
 /// EmotionalGreetingWidget - 감정적으로 지지하고 동기를 부여하는 따뜻한 인사 위젯
 ///
@@ -18,48 +21,52 @@ class EmotionalGreetingWidget extends StatelessWidget {
   });
 
   /// 시간대별 따뜻한 인사 메시지 생성 (Headspace 스타일)
-  String _getTimeBasedGreeting(String userName) {
+  String _getTimeBasedGreeting(BuildContext context, String userName) {
     final hour = DateTime.now().hour;
     if (hour < 12) {
-      return '좋은 아침이에요, $userName님!';
+      return context.l10n.dashboard_greeting_morning(userName);
     } else if (hour < 18) {
-      return '좋은 오후예요, $userName님!';
+      return context.l10n.dashboard_greeting_afternoon(userName);
     } else {
-      return '좋은 저녁이에요, $userName님!';
+      return context.l10n.dashboard_greeting_evening(userName);
     }
   }
 
   /// 연속 기록일에 의미를 부여하는 텍스트 생성
-  String _getContinuousRecordLabel(int days) {
+  String _getContinuousRecordLabel(BuildContext context, int days) {
     if (days >= 30) {
-      return '한 달간 꾸준히!';
+      return context.l10n.dashboard_greeting_continuousRecord_month;
     } else if (days >= 14) {
-      return '2주째 건강한 습관!';
+      return context.l10n.dashboard_greeting_continuousRecord_twoWeeks;
     } else if (days >= 7) {
-      return '일주일 연속 달성!';
+      return context.l10n.dashboard_greeting_continuousRecord_week;
     }
-    return '연속으로 기록 중';
+    return context.l10n.dashboard_greeting_continuousRecord_default;
   }
 
   /// 연속 기록일에 따른 격려 메시지 생성
-  String? _getEncouragementMessage(int days, String? insightMessage) {
+  String? _getEncouragementMessage(BuildContext context, int days, InsightMessageData? insightMessageData) {
     // 마일스톤 달성 시 특별 메시지
     if (days >= 30) {
-      return '한 달간 꾸준히 기록하고 있어요. 대단해요!';
+      return context.l10n.dashboard_greeting_encouragement_month;
     } else if (days >= 14) {
-      return '2주 연속으로 건강한 습관을 만들어가고 있어요!';
+      return context.l10n.dashboard_greeting_encouragement_twoWeeks;
     } else if (days >= 7) {
-      return '일주일 연속으로 기록 중이에요! 멋져요!';
+      return context.l10n.dashboard_greeting_encouragement_week;
     }
-    // 마일스톤이 아니면 insightMessage 그대로 사용
-    return insightMessage;
+    // 마일스톤이 아니면 insightMessageData 타입에 따른 메시지 사용
+    if (insightMessageData != null) {
+      return insightMessageData.type.toLocalizedString(context);
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     final encouragementMessage = _getEncouragementMessage(
+      context,
       dashboardData.continuousRecordDays,
-      dashboardData.insightMessage,
+      dashboardData.insightMessageData,
     );
 
     return Container(
@@ -84,7 +91,7 @@ class EmotionalGreetingWidget extends StatelessWidget {
         children: [
           // 시간대별 따뜻한 인사
           Text(
-            _getTimeBasedGreeting(dashboardData.userName),
+            _getTimeBasedGreeting(context, dashboardData.userName),
             style: AppTypography.display,
           ),
           const SizedBox(height: 16),
@@ -94,17 +101,18 @@ class EmotionalGreetingWidget extends StatelessWidget {
               Expanded(
                 child: _EmotionalStatColumn(
                   label: _getContinuousRecordLabel(
+                    context,
                     dashboardData.continuousRecordDays,
                   ),
-                  value: '${dashboardData.continuousRecordDays}일째',
+                  value: context.l10n.dashboard_greeting_continuousDays(dashboardData.continuousRecordDays),
                   valueColor: AppColors.achievement,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _EmotionalStatColumn(
-                  label: '치료 여정',
-                  value: '${dashboardData.currentWeek}주차',
+                  label: context.l10n.dashboard_greeting_journeyWeek,
+                  value: context.l10n.dashboard_greeting_currentWeek(dashboardData.currentWeek),
                   valueColor: AppColors.textPrimary,
                 ),
               ),
@@ -177,11 +185,13 @@ class _EncouragementContainer extends StatelessWidget {
       child: Row(
         children: [
           // 스파클 아이콘으로 특별함 강조
-          Icon(
-            Icons.auto_awesome,
-            size: 20,
-            color: AppColors.warmWelcome,
-            semanticLabel: '격려 메시지',
+          Builder(
+            builder: (context) => Icon(
+              Icons.auto_awesome,
+              size: 20,
+              color: AppColors.warmWelcome,
+              semanticLabel: context.l10n.dashboard_greeting_encouragementIconLabel,
+            ),
           ),
           const SizedBox(width: 8),
           // 격려 메시지: 14px Medium, WarmWelcome

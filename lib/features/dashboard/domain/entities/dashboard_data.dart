@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:n06/features/dashboard/domain/entities/dashboard_message_type.dart';
 import 'package:n06/features/dashboard/domain/entities/next_schedule.dart';
 import 'package:n06/features/dashboard/domain/entities/timeline_event.dart';
 import 'package:n06/features/dashboard/domain/entities/user_badge.dart';
@@ -14,7 +15,7 @@ class DashboardData extends Equatable {
   final WeeklySummary weeklySummary;
   final List<UserBadge> badges;
   final List<TimelineEvent> timeline;
-  final String? insightMessage;
+  final InsightMessageData? insightMessageData;
 
   const DashboardData({
     required this.userName,
@@ -25,7 +26,7 @@ class DashboardData extends Equatable {
     required this.weeklySummary,
     required this.badges,
     required this.timeline,
-    this.insightMessage,
+    this.insightMessageData,
   });
 
   DashboardData copyWith({
@@ -37,7 +38,7 @@ class DashboardData extends Equatable {
     WeeklySummary? weeklySummary,
     List<UserBadge>? badges,
     List<TimelineEvent>? timeline,
-    String? insightMessage,
+    InsightMessageData? insightMessageData,
   }) {
     return DashboardData(
       userName: userName ?? this.userName,
@@ -48,7 +49,7 @@ class DashboardData extends Equatable {
       weeklySummary: weeklySummary ?? this.weeklySummary,
       badges: badges ?? this.badges,
       timeline: timeline ?? this.timeline,
-      insightMessage: insightMessage ?? this.insightMessage,
+      insightMessageData: insightMessageData ?? this.insightMessageData,
     );
   }
 
@@ -62,7 +63,7 @@ class DashboardData extends Equatable {
         weeklySummary,
         badges,
         timeline,
-        insightMessage,
+        insightMessageData,
       ];
 
   @override

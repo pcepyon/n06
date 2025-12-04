@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/daily_checkin/domain/entities/red_flag_detection.dart';
+import 'package:n06/features/daily_checkin/presentation/utils/red_flag_localizations.dart';
 
 /// Red Flag 안내 바텀시트
 ///
@@ -54,7 +56,7 @@ class RedFlagGuidanceSheet extends StatelessWidget {
               const SizedBox(height: 16),
 
               Text(
-                _getTitle(),
+                _getTitle(context),
                 textAlign: TextAlign.center,
                 style: AppTypography.heading2.copyWith(
                   fontWeight: FontWeight.w600,
@@ -100,7 +102,7 @@ class RedFlagGuidanceSheet extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        '나중에 확인할게요',
+                        context.l10n.checkin_redFlag_checkLaterButton,
                         style: AppTypography.bodyLarge.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -114,7 +116,7 @@ class RedFlagGuidanceSheet extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () async {
                         onFindHospital?.call();
-                        await _openHospitalSearch();
+                        await _openHospitalSearch(context);
                         if (context.mounted) {
                           Navigator.of(context).pop('hospital_search');
                         }
@@ -129,7 +131,7 @@ class RedFlagGuidanceSheet extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        '병원 찾기',
+                        context.l10n.checkin_redFlag_findHospitalButton,
                         style: AppTypography.bodyLarge.copyWith(
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -147,19 +149,14 @@ class RedFlagGuidanceSheet extends StatelessWidget {
     );
   }
 
-  String _getTitle() {
-    switch (redFlag.severity) {
-      case RedFlagSeverity.warning:
-        return '확인이 필요해 보여요';
-      case RedFlagSeverity.urgent:
-        return '조금 확인이 필요해 보여요';
-    }
+  String _getTitle(BuildContext context) {
+    return redFlag.severity.getTitle(context);
   }
 
   /// 병원 검색 열기 (네이버 지도 또는 카카오맵)
-  Future<void> _openHospitalSearch() async {
+  Future<void> _openHospitalSearch(BuildContext context) async {
     // 내과 검색 쿼리
-    const query = '내과';
+    final query = context.l10n.checkin_redFlag_hospitalSearchQuery;
 
     // 네이버 지도 앱 우선
     final naverMapUri = Uri.parse(

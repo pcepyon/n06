@@ -1,24 +1,48 @@
 import 'package:n06/features/daily_checkin/domain/repositories/daily_checkin_repository.dart';
+import 'package:n06/features/daily_checkin/domain/entities/milestone_type.dart';
+import 'package:n06/features/daily_checkin/domain/entities/encouragement_message_type.dart';
 
-/// 마일스톤 정보
+/// Milestone information
 class MilestoneInfo {
-  /// 연속 일수
+  /// Consecutive days count
   final int days;
 
-  /// 축하 메시지
-  final String message;
+  /// Milestone type
+  final MilestoneType type;
 
-  /// 마일스톤 레벨 (3, 7, 14, 21, 30, 60, 90)
+  /// Milestone level (3, 7, 14, 21, 30, 60, 90)
   final int milestone;
 
-  /// 특별 마일스톤 여부 (30일 이상)
+  /// Whether this is a special milestone (30+ days)
   final bool isSpecial;
 
   const MilestoneInfo({
     required this.days,
-    required this.message,
+    required this.type,
     required this.milestone,
     required this.isSpecial,
+  });
+}
+
+/// Encouragement message information
+class EncouragementMessage {
+  /// Message type
+  final EncouragementMessageType type;
+
+  /// Consecutive days count
+  final int days;
+
+  /// Next milestone (if almostMilestone type)
+  final int? nextMilestone;
+
+  /// Days remaining until next milestone (if almostMilestone type)
+  final int? daysRemaining;
+
+  const EncouragementMessage({
+    required this.type,
+    required this.days,
+    this.nextMilestone,
+    this.daysRemaining,
   });
 }
 
@@ -46,20 +70,20 @@ class ConsecutiveDaysService {
     return getMilestoneInfo(days);
   }
 
-  /// 특정 일수에 대한 마일스톤 정보 반환
+  /// Get milestone information for specific day count
   ///
-  /// 해당 일수가 마일스톤에 해당하면 정보 반환, 아니면 null
+  /// Returns MilestoneInfo if the day count is a milestone, otherwise null
   MilestoneInfo? getMilestoneInfo(int days) {
-    if (!_milestones.contains(days)) {
+    final milestoneType = days.toMilestoneType();
+    if (milestoneType == null) {
       return null;
     }
 
-    final message = _milestoneMessages[days] ?? '축하해요! $days일째 함께하고 있어요!';
     final isSpecial = days >= 30;
 
     return MilestoneInfo(
       days: days,
-      message: message,
+      type: milestoneType,
       milestone: days,
       isSpecial: isSpecial,
     );
@@ -85,39 +109,42 @@ class ConsecutiveDaysService {
     return null; // 모든 마일스톤 달성
   }
 
-  /// 연속 기록 격려 메시지 생성
+  /// Generate encouragement message for consecutive check-ins
   ///
-  /// 마일스톤이 아니더라도 연속 기록에 대한 격려 메시지 제공
-  String getEncouragementMessage(int days) {
+  /// Returns encouragement message type even for non-milestone days
+  EncouragementMessage getEncouragementMessage(int days) {
     if (days == 1) {
-      return '첫 체크인이에요! 앞으로도 함께해요 💚';
+      return EncouragementMessage(
+        type: EncouragementMessageType.firstDay,
+        days: days,
+      );
     }
     if (days == 2) {
-      return '이틀째 함께하고 있어요! 내일도 만나요';
+      return EncouragementMessage(
+        type: EncouragementMessageType.secondDay,
+        days: days,
+      );
     }
 
     final nextMilestone = getNextMilestone(days);
     if (nextMilestone != null) {
       final remaining = nextMilestone - days;
       if (remaining <= 2) {
-        return '$days일째 기록 중! $nextMilestone일 달성까지 $remaining일 남았어요';
+        return EncouragementMessage(
+          type: EncouragementMessageType.almostMilestone,
+          days: days,
+          nextMilestone: nextMilestone,
+          daysRemaining: remaining,
+        );
       }
     }
 
-    return '$days일째 함께하고 있어요!';
+    return EncouragementMessage(
+      type: EncouragementMessageType.generic,
+      days: days,
+    );
   }
 
-  // 마일스톤 목록 (정렬됨)
+  // Milestone list (sorted)
   static const List<int> _milestones = [3, 7, 14, 21, 30, 60, 90];
-
-  // 마일스톤별 축하 메시지
-  static const Map<int, String> _milestoneMessages = {
-    3: '벌써 3일째 함께하고 있어요! ⭐',
-    7: '일주일 완주! 대단해요 🎉',
-    14: '2주 동안 꾸준히 기록하셨네요! 👏',
-    21: '3주! 이제 습관이 되셨을 거예요 ✨',
-    30: '한 달 완주! 정말 대단해요 🏆',
-    60: '두 달 완주! 놀라운 끈기예요 🌟',
-    90: '3개월 완주! 당신은 정말 대단해요 🎖️',
-  };
 }

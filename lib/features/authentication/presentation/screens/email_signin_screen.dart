@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/core/utils/validators.dart';
@@ -61,7 +62,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
 
       if (success) {
         // SUCCESS: Show toast
-        GabiumToast.showSuccess(context, '로그인 성공!');
+        GabiumToast.showSuccess(context, context.l10n.auth_signin_success);
 
         if (!mounted) return;
 
@@ -91,23 +92,23 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      GabiumToast.showError(context, '로그인 실패: $e');
+      GabiumToast.showError(context, context.l10n.auth_signin_error_failed(e.toString()));
     }
   }
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return '이메일을 입력해주세요';
+      return context.l10n.auth_signin_validation_emailRequired;
     }
     if (!isValidEmail(value)) {
-      return '올바른 이메일 형식을 입력해주세요';
+      return context.l10n.auth_signin_validation_emailInvalid;
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return '비밀번호를 입력해주세요';
+      return context.l10n.auth_signin_validation_passwordRequired;
     }
     return null;
   }
@@ -156,14 +157,14 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
 
               // Title
               Text(
-                '로그인에 실패했습니다',
+                context.l10n.auth_signin_failedBottomSheet_title,
                 style: AppTypography.heading1,
               ),
               const SizedBox(height: 8),
 
               // Description
               Text(
-                '입력하신 이메일 또는 비밀번호가\n일치하지 않습니다.',
+                context.l10n.auth_signin_failedBottomSheet_message,
                 textAlign: TextAlign.center,
                 style: AppTypography.bodyMedium,
               ),
@@ -178,7 +179,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
 
               // Prompt
               Text(
-                '💡 혹시 계정이 없으신가요?',
+                context.l10n.auth_signin_failedBottomSheet_prompt,
                 style: AppTypography.heading3.copyWith(
                   color: AppColors.neutral700,
                 ),
@@ -188,7 +189,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
               // Primary Button
               GabiumButton(
                 key: const Key('goto_signup_button'),
-                text: '이메일로 회원가입 하러가기',
+                text: context.l10n.auth_signin_failedBottomSheet_signupButton,
                 onPressed: () => Navigator.pop(sheetContext, true),
                 variant: GabiumButtonVariant.primary,
                 size: GabiumButtonSize.large,
@@ -198,7 +199,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
               // Secondary Button
               GabiumButton(
                 key: const Key('close_bottomsheet_button'),
-                text: '닫기',
+                text: context.l10n.auth_signin_failedBottomSheet_closeButton,
                 onPressed: () => Navigator.pop(sheetContext, false),
                 variant: GabiumButtonVariant.ghost,
                 size: GabiumButtonSize.medium,
@@ -226,7 +227,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
         backgroundColor: AppColors.surface,
         elevation: 0,
         title: Text(
-          '이메일로 로그인',
+          context.l10n.auth_signin_title,
           style: AppTypography.heading2,
         ),
         leading: IconButton(
@@ -255,7 +256,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
               Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 16),
               Text(
-                '오류 발생: $error',
+                context.l10n.auth_signin_error_title(error.toString()),
                 style: TextStyle(color: AppColors.error),
               ),
             ],
@@ -273,17 +274,17 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Hero Section
-                const AuthHeroSection(
-                  title: '이메일로 로그인',
-                  subtitle: '가비움 계정으로 로그인해주세요',
+                AuthHeroSection(
+                  title: context.l10n.auth_signin_heroTitle,
+                  subtitle: context.l10n.auth_signin_heroSubtitle,
                 ),
                 const SizedBox(height: 24), // lg
 
                 // Email field
                 GabiumTextField(
                   controller: _emailController,
-                  label: '이메일',
-                  hint: 'user@example.com',
+                  label: context.l10n.auth_signin_emailLabel,
+                  hint: context.l10n.auth_signin_emailHint,
                   keyboardType: TextInputType.emailAddress,
                   validator: _validateEmail,
                 ),
@@ -292,7 +293,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
                 // Password field
                 GabiumTextField(
                   controller: _passwordController,
-                  label: '비밀번호',
+                  label: context.l10n.auth_signin_passwordLabel,
                   obscureText: !_showPassword,
                   validator: _validatePassword,
                   suffixIcon: IconButton(
@@ -309,7 +310,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: GabiumButton(
-                    text: '비밀번호를 잊으셨나요?',
+                    text: context.l10n.auth_signin_forgotPasswordLink,
                     onPressed: () => context.go('/password-reset'),
                     variant: GabiumButtonVariant.ghost,
                     size: GabiumButtonSize.medium,
@@ -319,7 +320,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
 
                 // Sign in button
                 GabiumButton(
-                  text: '로그인',
+                  text: context.l10n.auth_signin_button,
                   onPressed: _handleSignin,
                   variant: GabiumButtonVariant.primary,
                   size: GabiumButtonSize.large,
@@ -330,7 +331,7 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
                 // Sign up link
                 Center(
                   child: GabiumButton(
-                    text: '계정이 없으신가요? 회원가입',
+                    text: context.l10n.auth_signin_signupLink,
                     onPressed: () => context.go('/email-signup'),
                     variant: GabiumButtonVariant.ghost,
                     size: GabiumButtonSize.medium,

@@ -1,4 +1,5 @@
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
+import 'package:n06/features/tracking/domain/entities/update_plan_error_type.dart';
 import 'package:n06/features/tracking/domain/repositories/medication_repository.dart';
 import 'package:n06/features/tracking/domain/usecases/analyze_plan_change_impact_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/recalculate_dose_schedule_usecase.dart';
@@ -6,12 +7,14 @@ import 'package:n06/features/tracking/domain/usecases/recalculate_dose_schedule_
 /// Result of updating a dosage plan
 class UpdateDosagePlanResult {
   final bool isSuccess;
-  final String? errorMessage;
+  final UpdatePlanErrorType? errorType;
+  final String? errorDetails; // Technical error details (for logging)
   final PlanChangeImpact? impact;
 
   const UpdateDosagePlanResult({
     required this.isSuccess,
-    this.errorMessage,
+    this.errorType,
+    this.errorDetails,
     this.impact,
   });
 
@@ -19,8 +22,15 @@ class UpdateDosagePlanResult {
     return UpdateDosagePlanResult(isSuccess: true, impact: impact);
   }
 
-  factory UpdateDosagePlanResult.failure(String message) {
-    return UpdateDosagePlanResult(isSuccess: false, errorMessage: message);
+  factory UpdateDosagePlanResult.failure({
+    required UpdatePlanErrorType errorType,
+    String? errorDetails,
+  }) {
+    return UpdateDosagePlanResult(
+      isSuccess: false,
+      errorType: errorType,
+      errorDetails: errorDetails,
+    );
   }
 }
 
@@ -117,7 +127,8 @@ class UpdateDosagePlanUseCase {
       return UpdateDosagePlanResult.success(impact: impact);
     } catch (e) {
       return UpdateDosagePlanResult.failure(
-        '투여 계획 업데이트 중 오류가 발생했습니다: $e',
+        errorType: UpdatePlanErrorType.updateFailed,
+        errorDetails: e.toString(),
       );
     }
   }

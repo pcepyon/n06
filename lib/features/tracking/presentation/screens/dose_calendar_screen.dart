@@ -8,6 +8,7 @@ import 'package:n06/features/tracking/domain/value_objects/missed_dose_guidance.
 import 'package:n06/features/tracking/presentation/widgets/selected_date_detail_card.dart';
 import 'package:n06/core/presentation/widgets/empty_state_widget.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 class DoseCalendarScreen extends ConsumerStatefulWidget {
   const DoseCalendarScreen({super.key});
@@ -27,7 +28,7 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('투여 스케줄'),
+        title: Text(context.l10n.tracking_calendar_title),
         actions: [
           IconButton(
             icon: const Icon(Icons.today),
@@ -37,17 +38,17 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
                 _selectedDay = DateTime.now();
               });
             },
-            tooltip: '오늘',
+            tooltip: context.l10n.tracking_calendar_todayButton,
           ),
         ],
       ),
       body: medicationState.when(
         data: (data) {
           if (data.activePlan == null) {
-            return const EmptyStateWidget(
+            return EmptyStateWidget(
               icon: Icons.assignment_outlined,
-              title: '투여 계획이 없습니다',
-              description: '온보딩을 완료하여 투여 일정을 등록해주세요',
+              title: context.l10n.tracking_calendar_noPlan,
+              description: context.l10n.tracking_calendar_noPlanDescription,
             );
           }
 
@@ -114,7 +115,7 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '과거 기록 입력 모드',
+                          context.l10n.tracking_calendar_pastRecordMode,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -132,7 +133,7 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         child: Text(
-                          '완료',
+                          context.l10n.tracking_calendar_pastRecordModeComplete,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -184,7 +185,7 @@ class _DoseCalendarScreenState extends ConsumerState<DoseCalendarScreen> {
             children: [
               const Icon(Icons.error_outline, size: 48, color: Colors.red),
               const SizedBox(height: 16),
-              Text('오류가 발생했습니다: $error'),
+              Text(context.l10n.tracking_calendar_error(error.toString())),
             ],
           ),
         ),

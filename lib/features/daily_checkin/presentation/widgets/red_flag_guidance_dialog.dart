@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/daily_checkin/domain/entities/red_flag_detection.dart';
+import 'package:n06/features/daily_checkin/presentation/utils/red_flag_localizations.dart';
 
 /// Red Flag 안내 다이얼로그
 ///
@@ -36,7 +37,7 @@ class RedFlagGuidanceDialog extends StatelessWidget {
             const SizedBox(height: 16),
             // 제목
             Text(
-              _getTitle(),
+              _getTitle(context),
               textAlign: TextAlign.center,
               style: AppTypography.heading2.copyWith(
                 fontWeight: FontWeight.w600,
@@ -99,13 +100,8 @@ class RedFlagGuidanceDialog extends StatelessWidget {
     }
   }
 
-  String _getTitle() {
-    switch (redFlag.severity) {
-      case RedFlagSeverity.warning:
-        return '확인이 필요해 보여요';
-      case RedFlagSeverity.urgent:
-        return '조금 확인이 필요해 보여요';
-    }
+  String _getTitle(BuildContext context) {
+    return redFlag.severity.getTitle(context);
   }
 }
 

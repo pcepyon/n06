@@ -3,6 +3,7 @@ import 'package:n06/features/notification/domain/services/notification_scheduler
 import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:n06/features/notification/infrastructure/services/permission_service.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 /// flutter_local_notifications를 사용한 알림 스케줄링 구현
@@ -61,6 +62,10 @@ class LocalNotificationScheduler implements NotificationScheduler {
     required List<DoseSchedule> doseSchedules,
     required NotificationTime notificationTime,
   }) async {
+    // 백그라운드에서 사용할 locale 기반 문자열 가져오기
+    final (channelName, channelDescription, notificationTitle, notificationBody) =
+        await _getLocalizedNotificationStrings();
+
     // 같은 날짜의 중복 제거
     final uniqueDates = <DateTime>{};
     final filteredSchedules = <DoseSchedule>[];
@@ -99,11 +104,11 @@ class LocalNotificationScheduler implements NotificationScheduler {
           ? scheduledDateTime.add(const Duration(days: 1))
           : scheduledDateTime;
 
-      const AndroidNotificationDetails androidNotificationDetails =
+      final AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
         'dose_notification_channel',
-        '투여 알림',
-        channelDescription: '투여 예정일 알림',
+        channelName,
+        channelDescription: channelDescription,
         importance: Importance.max,
         priority: Priority.high,
         showWhen: true,
@@ -116,15 +121,15 @@ class LocalNotificationScheduler implements NotificationScheduler {
         presentSound: true,
       );
 
-      const NotificationDetails notificationDetails = NotificationDetails(
+      final NotificationDetails notificationDetails = NotificationDetails(
         android: androidNotificationDetails,
         iOS: iOSNotificationDetails,
       );
 
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         i,
-        '투여 예정일 알림',
-        '오늘은 투여일입니다',
+        notificationTitle,
+        notificationBody,
         tz.TZDateTime.from(notificationDateTime, tz.local),
         notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -147,5 +152,28 @@ class LocalNotificationScheduler implements NotificationScheduler {
   void _onNotificationResponse(NotificationResponse notificationResponse) {
     // 알림 탭했을 때의 처리 로직
     // 추후 Router를 통해 투여 스케줄러 화면으로 이동하도록 설정 가능
+  }
+
+  /// 백그라운드에서 locale에 따른 알림 문자열 반환
+  /// 주의: BuildContext 없이 SharedPreferences에서 locale 읽기
+  /// ARB 파일 변경 시 여기도 수동 동기화 필요
+  Future<(String channelName, String channelDescription, String title, String body)> _getLocalizedNotificationStrings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final localeCode = prefs.getString('app_locale') ?? 'ko';
+
+    return switch (localeCode) {
+      'en' => (
+        'Dose Reminders', // notification_dose_channelName
+        'Dose schedule notifications', // notification_dose_channelDescription
+        'Dose Reminder', // notification_dose_title
+        'Today is your dose day', // notification_dose_body
+      ),
+      _ => (
+        '투여 알림', // notification_dose_channelName
+        '투여 예정일 알림', // notification_dose_channelDescription
+        '투여 예정일 알림', // notification_dose_title
+        '오늘은 투여일입니다', // notification_dose_body
+      ),
+    };
   }
 }

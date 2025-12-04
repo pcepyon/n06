@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/features/dashboard/domain/entities/weekly_progress.dart';
 
 /// 진행률을 긍정적 언어로 표현하고, 높은 달성률에 시각적 축하를 제공하는 위젯
@@ -22,17 +23,17 @@ class EncouragingProgressWidget extends StatelessWidget {
   /// 심리학적 근거:
   /// - "부작용" -> "몸의 신호" : 부작용을 문제가 아닌 피드백으로 재해석
   /// - "기록" -> "체크" : 부담을 줄이고 간단한 행동으로 인식
-  static String getEncouragingLabel(String originalLabel) {
-    switch (originalLabel.toLowerCase()) {
-      case '투여':
-        return '투여 완료';
-      case '체중 기록':
-        return '변화 추적';
-      case '부작용 기록':
-        return '몸의 신호 체크';
-      default:
-        return originalLabel;
+  static String getEncouragingLabel(BuildContext context, String originalLabel) {
+    final l10n = context.l10n;
+    // Compare against localized keys to support all languages
+    if (originalLabel == l10n.dashboard_progress_dose) {
+      return l10n.dashboard_progress_doseEncouraging;
+    } else if (originalLabel == l10n.dashboard_progress_weight) {
+      return l10n.dashboard_progress_weightEncouraging;
+    } else if (originalLabel == l10n.dashboard_progress_symptom) {
+      return l10n.dashboard_progress_symptomEncouraging;
     }
+    return originalLabel;
   }
 
   @override
@@ -42,7 +43,7 @@ class EncouragingProgressWidget extends StatelessWidget {
       children: [
         // Section Title
         Text(
-          '주간 목표 진행도',
+          context.l10n.dashboard_progress_title,
           style: AppTypography.heading2,
         ),
         const SizedBox(height: 16), // md spacing
@@ -51,19 +52,19 @@ class EncouragingProgressWidget extends StatelessWidget {
         Column(
           children: [
             _EncouragingProgressItem(
-              label: '투여',
+              label: context.l10n.dashboard_progress_dose,
               current: weeklyProgress.doseCompletedCount,
               total: weeklyProgress.doseTargetCount,
             ),
             const SizedBox(height: 16),
             _EncouragingProgressItem(
-              label: '체중 기록',
+              label: context.l10n.dashboard_progress_weight,
               current: weeklyProgress.weightRecordCount,
               total: weeklyProgress.weightTargetCount,
             ),
             const SizedBox(height: 16),
             _EncouragingProgressItem(
-              label: '부작용 기록',
+              label: context.l10n.dashboard_progress_symptom,
               current: weeklyProgress.symptomRecordCount,
               total: weeklyProgress.symptomTargetCount,
             ),
@@ -143,7 +144,7 @@ class _EncouragingProgressItemState extends State<_EncouragingProgressItem>
 
     // 라벨 리프레이밍 적용
     final encouragingLabel =
-        EncouragingProgressWidget.getEncouragingLabel(widget.label);
+        EncouragingProgressWidget.getEncouragingLabel(context, widget.label);
 
     return Container(
       decoration: BoxDecoration(
@@ -245,7 +246,7 @@ class _EncouragingProgressItemState extends State<_EncouragingProgressItem>
                 Padding(
                   padding: const EdgeInsets.only(left: 4),
                   child: Text(
-                    '완료!',
+                    context.l10n.dashboard_progress_completed,
                     style: AppTypography.labelMedium.copyWith(
                       color: AppColors.success,
                     ),

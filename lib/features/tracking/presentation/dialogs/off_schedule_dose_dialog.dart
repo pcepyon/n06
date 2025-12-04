@@ -8,6 +8,7 @@ import 'package:n06/features/tracking/presentation/widgets/injection_site_select
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 예정 외 날짜에 투여를 기록하는 다이얼로그
 /// 가장 가까운 미완료 스케줄에 연결하여 기록합니다.
@@ -39,8 +40,17 @@ class _OffScheduleDoseDialogState extends ConsumerState<OffScheduleDoseDialog> {
     super.dispose();
   }
 
-  String _getWeekday(DateTime date) {
-    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+  String _getWeekday(BuildContext context, DateTime date) {
+    final l10n = context.l10n;
+    final weekdays = [
+      l10n.tracking_weekday_mon,
+      l10n.tracking_weekday_tue,
+      l10n.tracking_weekday_wed,
+      l10n.tracking_weekday_thu,
+      l10n.tracking_weekday_fri,
+      l10n.tracking_weekday_sat,
+      l10n.tracking_weekday_sun,
+    ];
     return weekdays[date.weekday - 1];
   }
 
@@ -52,11 +62,12 @@ class _OffScheduleDoseDialogState extends ConsumerState<OffScheduleDoseDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final scheduleDate = widget.schedule.scheduledDate;
     final scheduleDateStr =
-        '${scheduleDate.month}/${scheduleDate.day}(${_getWeekday(scheduleDate)})';
+        '${scheduleDate.month}/${scheduleDate.day}(${_getWeekday(context, scheduleDate)})';
     final selectedDateStr =
-        '${widget.selectedDate.month}/${widget.selectedDate.day}(${_getWeekday(widget.selectedDate)})';
+        '${widget.selectedDate.month}/${widget.selectedDate.day}(${_getWeekday(context, widget.selectedDate)})';
 
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -71,7 +82,7 @@ class _OffScheduleDoseDialogState extends ConsumerState<OffScheduleDoseDialog> {
             children: [
               // 제목
               Text(
-                '투여 기록',
+                l10n.tracking_offSchedule_title,
                 style: AppTypography.heading1.copyWith(color: AppColors.textPrimary),
               ),
               const SizedBox(height: 24),
@@ -116,10 +127,10 @@ class _OffScheduleDoseDialogState extends ConsumerState<OffScheduleDoseDialog> {
                         Expanded(
                           child: Text(
                             _isLateDose
-                                ? '지연 투여 (${(-_daysDiff)}일 후)'
+                                ? l10n.tracking_offSchedule_delayedDose(-_daysDiff)
                                 : _isEarlyDose
-                                    ? '조기 투여 ($_daysDiff일 전)'
-                                    : '정규 투여',
+                                    ? l10n.tracking_offSchedule_earlyDose(_daysDiff)
+                                    : l10n.tracking_offSchedule_regularDose,
                             style: AppTypography.labelMedium.copyWith(
                               color: _isLateDose
                                   ? AppColors.warning
@@ -134,13 +145,13 @@ class _OffScheduleDoseDialogState extends ConsumerState<OffScheduleDoseDialog> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '원래 예정: $scheduleDateStr',
+                      l10n.tracking_offSchedule_originalSchedule(scheduleDateStr),
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textTertiary,
                       ),
                     ),
                     Text(
-                      '기록 날짜: $selectedDateStr',
+                      l10n.tracking_offSchedule_recordDate(selectedDateStr),
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w600,
@@ -153,7 +164,7 @@ class _OffScheduleDoseDialogState extends ConsumerState<OffScheduleDoseDialog> {
               const SizedBox(height: 16),
 
               Text(
-                '${widget.schedule.scheduledDoseMg} mg를 투여합니다.',
+                l10n.tracking_offSchedule_doseInfo(widget.schedule.scheduledDoseMg),
                 style:
                     AppTypography.bodyLarge.copyWith(color: AppColors.textSecondary),
               ),
@@ -171,7 +182,7 @@ class _OffScheduleDoseDialogState extends ConsumerState<OffScheduleDoseDialog> {
 
               const SizedBox(height: 16),
               Text(
-                '메모 (선택사항)',
+                l10n.tracking_offSchedule_memoLabel,
                 style: AppTypography.labelMedium
                     .copyWith(color: AppColors.textSecondary),
               ),
@@ -181,7 +192,7 @@ class _OffScheduleDoseDialogState extends ConsumerState<OffScheduleDoseDialog> {
                 style:
                     AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
                 decoration: InputDecoration(
-                  hintText: '메모를 입력하세요',
+                  hintText: l10n.tracking_offSchedule_memoHint,
                   hintStyle: AppTypography.bodyLarge
                       .copyWith(color: AppColors.textDisabled),
                   filled: true,
@@ -215,7 +226,7 @@ class _OffScheduleDoseDialogState extends ConsumerState<OffScheduleDoseDialog> {
                 children: [
                   Expanded(
                     child: GabiumButton(
-                      text: '취소',
+                      text: l10n.common_button_cancel,
                       onPressed: isLoading ? null : () => Navigator.of(context).pop(),
                       variant: GabiumButtonVariant.secondary,
                       size: GabiumButtonSize.medium,
@@ -224,7 +235,7 @@ class _OffScheduleDoseDialogState extends ConsumerState<OffScheduleDoseDialog> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: GabiumButton(
-                      text: '저장',
+                      text: l10n.common_button_save,
                       onPressed:
                           isLoading || selectedSite == null ? null : _saveDoseRecord,
                       variant: GabiumButtonVariant.primary,
@@ -244,7 +255,7 @@ class _OffScheduleDoseDialogState extends ConsumerState<OffScheduleDoseDialog> {
   Future<void> _saveDoseRecord() async {
     if (selectedSite == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('주사 부위를 선택해주세요')),
+        SnackBar(content: Text(context.l10n.tracking_offSchedule_errorSiteRequired)),
       );
       return;
     }
@@ -259,7 +270,7 @@ class _OffScheduleDoseDialogState extends ConsumerState<OffScheduleDoseDialog> {
 
       final state = medicationState.asData?.value;
       if (state?.activePlan == null) {
-        throw Exception('활성 투여 계획이 없습니다');
+        throw Exception(context.l10n.tracking_offSchedule_errorNoPlan);
       }
 
       // 선택한 날짜의 정오(12:00)로 설정 (과거 날짜 일관성 유지)
@@ -286,13 +297,13 @@ class _OffScheduleDoseDialogState extends ConsumerState<OffScheduleDoseDialog> {
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('투여 기록이 저장되었습니다')),
+          SnackBar(content: Text(context.l10n.tracking_offSchedule_saveSuccess)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('오류가 발생했습니다: $e')),
+          SnackBar(content: Text(context.l10n.tracking_offSchedule_saveFailed(e.toString()))),
         );
       }
     } finally {

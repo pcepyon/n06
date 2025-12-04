@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 심각도 변경 시 실시간으로 업데이트되는 피드백 칩
 ///
@@ -34,10 +35,11 @@ class SeverityFeedbackChip extends StatelessWidget {
     return '🤝';
   }
 
-  String _getMessage() {
-    if (severity <= 3) return '가볍게 지나갈 거예요';
-    if (severity <= 6) return '몸이 적응 중이에요. 며칠 내 나아질 거예요';
-    return '불편하시죠. 함께 확인해봐요';
+  String _getMessage(BuildContext context) {
+    final l10n = context.l10n;
+    if (severity <= 3) return l10n.tracking_severity_feedbackMild;
+    if (severity <= 6) return l10n.tracking_severity_feedbackModerate;
+    return l10n.tracking_severity_feedbackSevere;
   }
 
   Color _getBackgroundColor() {
@@ -58,6 +60,8 @@ class SeverityFeedbackChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 200),
       transitionBuilder: (Widget child, Animation<double> animation) {
@@ -93,7 +97,7 @@ class SeverityFeedbackChip extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    _getMessage(),
+                    _getMessage(context),
                     style: AppTypography.bodyLarge.copyWith(
                       fontWeight: FontWeight.w500,
                       color: AppColors.neutral800,
@@ -119,7 +123,7 @@ class SeverityFeedbackChip extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        '24시간 이상 지속되나요? 긴급 증상 체크하기',
+                        l10n.tracking_severity_emergencyCheck,
                         style: AppTypography.bodySmall.copyWith(
                           color: AppColors.warning,
                           fontWeight: FontWeight.w500,

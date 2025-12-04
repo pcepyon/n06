@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 
@@ -83,7 +84,7 @@ class _CopingGuideFeedbackResultState extends State<CopingGuideFeedbackResult>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '피드백을 주셔서 감사합니다!',
+                      context.l10n.coping_feedback_thanks,
                       style: AppTypography.bodyLarge.copyWith(
                         fontWeight: FontWeight.w600,
                         color: AppColors.education,
@@ -98,9 +99,9 @@ class _CopingGuideFeedbackResultState extends State<CopingGuideFeedbackResult>
                           minimumSize: const Size(0, 0),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        child: const Text(
-                          '다시 평가하기',
-                          style: TextStyle(
+                        child: Text(
+                          context.l10n.coping_feedback_retryButton,
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: AppColors.education,

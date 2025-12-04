@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_text_field.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
@@ -123,8 +124,8 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
           // Name field
           GabiumTextField(
             controller: _nameController,
-            label: '이름',
-            hint: '예: 김철수',
+            label: context.l10n.profile_edit_field_name,
+            hint: context.l10n.profile_edit_field_nameHint,
             keyboardType: TextInputType.text,
             onChanged: (_) => _notifyProfileChanged(),
           ),
@@ -133,8 +134,8 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
           // Target weight field
           GabiumTextField(
             controller: _targetWeightController,
-            label: '목표 체중 (kg)',
-            hint: '예: 75.5',
+            label: context.l10n.profile_edit_field_targetWeight,
+            hint: context.l10n.profile_edit_field_targetWeightHint,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onChanged: (_) {
               _calculateWeeklyGoal();
@@ -146,8 +147,8 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
           // Current weight field
           GabiumTextField(
             controller: _currentWeightController,
-            label: '현재 체중 (kg)',
-            hint: '예: 85.0',
+            label: context.l10n.profile_edit_field_currentWeight,
+            hint: context.l10n.profile_edit_field_currentWeightHint,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onChanged: (_) {
               _calculateWeeklyGoal();
@@ -159,8 +160,8 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
           // Target period field
           GabiumTextField(
             controller: _targetPeriodController,
-            label: '목표 기간 (주)',
-            hint: '예: 12',
+            label: context.l10n.profile_edit_field_targetPeriod,
+            hint: context.l10n.profile_edit_field_targetPeriodHint,
             keyboardType: TextInputType.number,
             onChanged: (_) {
               _calculateWeeklyGoal();
@@ -202,13 +203,13 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
                 children: [
                   // Title
                   Text(
-                    '주간 감량 목표',
+                    context.l10n.profile_edit_weeklyGoal_title,
                     style: AppTypography.labelMedium,
                   ),
                   const SizedBox(height: 8),
                   // Goal value
                   Text(
-                    '${_calculatedWeeklyGoal!.toStringAsFixed(2)}kg',
+                    context.l10n.profile_edit_weeklyGoal_value(_calculatedWeeklyGoal!.toStringAsFixed(2)),
                     style: AppTypography.heading2,
                   ),
                   if (_showWeeklyGoalWarning) ...[
@@ -229,7 +230,7 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '주당 1kg 초과의 감량 목표는 위험할 수 있습니다.',
+                              context.l10n.profile_edit_weeklyGoal_warning,
                               style: AppTypography.caption,
                             ),
                           ),
@@ -246,7 +247,7 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
           // Save button
           GabiumButton(
             onPressed: widget.onSave ?? () {},
-            text: '저장',
+            text: context.l10n.common_button_save,
             variant: GabiumButtonVariant.primary,
             size: GabiumButtonSize.medium,
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 
@@ -22,7 +23,12 @@ class JourneyProgressIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final parts = ['공감', '이해', '설정', '준비'];
+    final parts = [
+      context.l10n.onboarding_progress_empathy,
+      context.l10n.onboarding_progress_understanding,
+      context.l10n.onboarding_progress_setup,
+      context.l10n.onboarding_progress_preparation,
+    ];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),

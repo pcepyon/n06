@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
-import 'package:n06/features/daily_checkin/application/notifiers/checkin_feedback_notifier.dart' show FeedbackTone;
+import 'package:n06/features/daily_checkin/domain/entities/checkin_feedback.dart';
+import 'package:n06/features/daily_checkin/presentation/utils/feedback_l10n_mapper.dart';
 
 /// 피드백 카드 위젯
 ///
@@ -10,16 +11,31 @@ import 'package:n06/features/daily_checkin/application/notifiers/checkin_feedbac
 /// Features:
 /// - 슬라이드인 애니메이션
 /// - 톤별 색상 (positive, supportive, cautious)
-/// - 간결한 메시지
+/// - l10n 메시지 매핑 자동 처리
+///
+/// 사용법:
+/// 1. CheckinFeedback 객체로 사용 (권장, CheckinFeedbackNotifier 사용 시):
+///    `FeedbackCard(feedback: feedback)`
+/// 2. 직접 문자열 사용 (하위 호환, 인라인 피드백용):
+///    `FeedbackCard.direct(message: "메시지", tone: FeedbackTone.positive)`
 class FeedbackCard extends StatefulWidget {
-  final String message;
-  final FeedbackTone tone;
+  final CheckinFeedback? feedback;
+  final String? directMessage;
+  final FeedbackTone? directTone;
 
   const FeedbackCard({
     super.key,
-    required this.message,
-    this.tone = FeedbackTone.positive,
-  });
+    required this.feedback,
+  })  : directMessage = null,
+        directTone = null;
+
+  const FeedbackCard.direct({
+    super.key,
+    required String message,
+    FeedbackTone tone = FeedbackTone.positive,
+  })  : feedback = null,
+        directMessage = message,
+        directTone = tone;
 
   @override
   State<FeedbackCard> createState() => _FeedbackCardState();
@@ -67,6 +83,26 @@ class _FeedbackCardState extends State<FeedbackCard>
 
   @override
   Widget build(BuildContext context) {
+    // 메시지, 통계, 액션 결정 (feedback 또는 direct 모드)
+    final String message;
+    final String? stat;
+    final String? action;
+    final FeedbackTone tone;
+
+    if (widget.feedback != null) {
+      // CheckinFeedback 객체 사용 (l10n 매핑)
+      message = FeedbackL10nMapper.getFeedbackMessage(context, widget.feedback!);
+      stat = FeedbackL10nMapper.getFeedbackStat(widget.feedback!);
+      action = FeedbackL10nMapper.getFeedbackAction(widget.feedback!);
+      tone = widget.feedback!.tone;
+    } else {
+      // 직접 문자열 사용 (하위 호환)
+      message = widget.directMessage!;
+      stat = null;
+      action = null;
+      tone = widget.directTone!;
+    }
+
     return FadeTransition(
       opacity: _fadeAnimation,
       child: SlideTransition(
@@ -82,25 +118,59 @@ class _FeedbackCardState extends State<FeedbackCard>
               width: 1,
             ),
           ),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 이모지
-              Text(
-                _getEmoji(),
-                style: const TextStyle(fontSize: 20),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 이모지
+                  Text(
+                    _getEmoji(),
+                    style: const TextStyle(fontSize: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  // 메시지
+                  Expanded(
+                    child: Text(
+                      message,
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.neutral800,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              // 메시지
-              Expanded(
-                child: Text(
-                  widget.message,
-                  style: AppTypography.bodyLarge.copyWith(
-                    color: AppColors.neutral800,
-                    height: 1.5,
+              // 통계 정보 (선택적)
+              if (stat != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  stat,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.neutral600,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
-              ),
+              ],
+              // 즉각 행동 제안 (선택적)
+              if (action != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _getActionBackgroundColor(),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    action,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.neutral700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -108,8 +178,10 @@ class _FeedbackCardState extends State<FeedbackCard>
     );
   }
 
+  FeedbackTone get _tone => widget.feedback?.tone ?? widget.directTone!;
+
   Color _getBackgroundColor() {
-    switch (widget.tone) {
+    switch (_tone) {
       case FeedbackTone.positive:
         return const Color(0xFFF0FDF4); // Green-50
       case FeedbackTone.supportive:
@@ -120,7 +192,7 @@ class _FeedbackCardState extends State<FeedbackCard>
   }
 
   Color _getBorderColor() {
-    switch (widget.tone) {
+    switch (_tone) {
       case FeedbackTone.positive:
         return const Color(0xFFBBF7D0); // Green-200
       case FeedbackTone.supportive:
@@ -130,8 +202,19 @@ class _FeedbackCardState extends State<FeedbackCard>
     }
   }
 
+  Color _getActionBackgroundColor() {
+    switch (_tone) {
+      case FeedbackTone.positive:
+        return const Color(0xFFDCFCE7); // Green-100
+      case FeedbackTone.supportive:
+        return const Color(0xFFFEF3C7); // Yellow-100
+      case FeedbackTone.cautious:
+        return const Color(0xFFFFEDD5); // Orange-100
+    }
+  }
+
   String _getEmoji() {
-    switch (widget.tone) {
+    switch (_tone) {
       case FeedbackTone.positive:
         return '💚';
       case FeedbackTone.supportive:

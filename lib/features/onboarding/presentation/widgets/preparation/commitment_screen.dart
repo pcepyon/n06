@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
 import 'package:slide_to_confirm/slide_to_confirm.dart';
-import 'package:intl/intl.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
+import 'package:n06/core/extensions/date_format_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 
@@ -69,21 +70,21 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        title: const Text(
-          '온보딩 다시 보기 완료! 📚',
-          style: TextStyle(
+        title: Text(
+          context.l10n.onboarding_commitment_dialogTitleReview,
+          style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
             color: Color(0xFF1E293B),
           ),
         ),
-        content: const Text(
-          '교육 내용을 다시 확인하셨습니다.\n언제든 설정에서 다시 볼 수 있어요.',
-          style: TextStyle(
+        content: Text(
+          context.l10n.onboarding_commitment_dialogMessageReview,
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w400,
             color: Color(0xFF64748B),
@@ -93,7 +94,7 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
           TextButton(
             onPressed: () {
               HapticFeedback.lightImpact();
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               widget.onComplete();
             },
             style: TextButton.styleFrom(
@@ -105,7 +106,7 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
               ),
             ),
             child: Text(
-              '설정으로 돌아가기',
+              context.l10n.onboarding_commitment_dialogButtonReview,
               style: AppTypography.labelLarge,
             ),
           ),
@@ -118,18 +119,18 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         title: Text(
-          '여정 시작을 축하해요! 🎉',
+          context.l10n.onboarding_commitment_dialogTitle,
           style: AppTypography.heading2.copyWith(
             color: AppColors.textPrimary,
           ),
         ),
         content: Text(
-          '첫 번째 미션: 현재 체중을 기록해보세요',
+          context.l10n.onboarding_commitment_dialogMessage,
           style: AppTypography.bodyLarge.copyWith(
             color: AppColors.textTertiary,
           ),
@@ -138,7 +139,7 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
           TextButton(
             onPressed: () {
               HapticFeedback.lightImpact();
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               widget.onComplete();
             },
             style: TextButton.styleFrom(
@@ -150,7 +151,7 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
               ),
             ),
             child: Text(
-              '기록하러 가기',
+              context.l10n.onboarding_commitment_dialogButton,
               style: AppTypography.labelLarge,
             ),
           ),
@@ -161,7 +162,7 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final formattedDate = DateFormat('yyyy년 M월 d일').format(widget.startDate);
+    final formattedDate = widget.startDate.formatFull(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -177,10 +178,10 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
                   const SizedBox(height: 40),
 
                   // Title
-                  const Text(
-                    '준비가 되셨나요?',
+                  Text(
+                    context.l10n.onboarding_commitment_title,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF1E293B),
@@ -208,7 +209,7 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
                       children: [
                         // Card title
                         Text(
-                          '${widget.name}님의 여정',
+                          context.l10n.onboarding_commitment_journeyTitle(widget.name),
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
@@ -221,7 +222,7 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
                         // Goal
                         _SummaryItem(
                           icon: '🎯',
-                          label: '목표',
+                          label: context.l10n.onboarding_commitment_goalLabel,
                           value:
                               '${widget.currentWeight.toStringAsFixed(1)}kg → ${widget.targetWeight.toStringAsFixed(1)}kg',
                         ),
@@ -230,7 +231,7 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
                         // Start date
                         _SummaryItem(
                           icon: '📅',
-                          label: '시작일',
+                          label: context.l10n.onboarding_commitment_startDateLabel,
                           value: formattedDate,
                         ),
                         const SizedBox(height: 16),
@@ -238,7 +239,7 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
                         // Medication
                         _SummaryItem(
                           icon: '💊',
-                          label: '약물',
+                          label: context.l10n.onboarding_commitment_medicationLabel,
                           value:
                               '${widget.medicationName} ${widget.initialDose.toStringAsFixed(1)}mg',
                         ),
@@ -248,23 +249,23 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
                   const Spacer(),
 
                   // Closing message
-                  const Column(
+                  Column(
                     children: [
                       Text(
-                        '더 건강한 내일을 향해',
+                        context.l10n.onboarding_commitment_closingMessage1,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           color: Color(0xFF64748B),
                           height: 1.5,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        '함께 걸어가요',
+                        context.l10n.onboarding_commitment_closingMessage2,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF334155),
@@ -287,7 +288,7 @@ class _CommitmentScreenState extends State<CommitmentScreen> {
                       offset: const Offset(0, 2),
                     ),
                     height: 64,
-                    text: widget.isReviewMode ? '다시 보기 완료 ✅' : '여정 시작하기 🚀',
+                    text: widget.isReviewMode ? context.l10n.onboarding_commitment_sliderTextReview : context.l10n.onboarding_commitment_sliderText,
                     textStyle: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

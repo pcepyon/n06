@@ -12,6 +12,8 @@ import 'package:n06/features/profile/application/notifiers/profile_notifier.dart
 import 'package:n06/features/settings/presentation/widgets/user_info_card.dart';
 import 'package:n06/features/settings/presentation/widgets/settings_menu_item_improved.dart';
 import 'package:n06/features/settings/presentation/widgets/danger_button.dart';
+import 'package:n06/features/settings/presentation/widgets/language_selector_dialog.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// Settings screen for user to manage profile, dose plan, and notifications
 class SettingsScreen extends ConsumerWidget {
@@ -25,7 +27,7 @@ class SettingsScreen extends ConsumerWidget {
     return authState.when(
       loading: () => Scaffold(
         appBar: AppBar(
-          title: const Text('설정'),
+          title: Text(context.l10n.settings_screen_title),
           elevation: 0,
           backgroundColor: AppColors.surface,
           surfaceTintColor: Colors.transparent,
@@ -59,7 +61,7 @@ class SettingsScreen extends ConsumerWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('설정'),
+            title: Text(context.l10n.settings_screen_title),
             elevation: 0,
             backgroundColor: AppColors.surface,
             surfaceTintColor: Colors.transparent,
@@ -107,88 +109,93 @@ class SettingsScreen extends ConsumerWidget {
 
             // Settings menu section
             Text(
-              '설정',
+              context.l10n.settings_screen_title,
               style: AppTypography.heading2,
             ),
             const SizedBox(height: 16.0), // md spacing
 
             // Menu items
             SettingsMenuItemImproved(
-              title: '프로필 및 목표 수정',
-              subtitle: '이름과 목표 체중을 변경할 수 있습니다',
+              title: context.l10n.settings_menu_profileEdit,
+              subtitle: context.l10n.settings_menu_profileEditSubtitle,
               onTap: () => context.push('/profile/edit'),
             ),
             SettingsMenuItemImproved(
-              title: '투여 계획 수정',
-              subtitle: '약물 투여 계획을 변경할 수 있습니다',
+              title: context.l10n.settings_menu_dosePlanEdit,
+              subtitle: context.l10n.settings_menu_dosePlanEditSubtitle,
               onTap: () => context.push('/dose-plan/edit'),
             ),
             SettingsMenuItemImproved(
-              title: '주간 기록 목표 조정',
-              subtitle: '주간 체중 및 증상 기록 목표를 설정합니다',
+              title: context.l10n.settings_menu_weeklyGoal,
+              subtitle: context.l10n.settings_menu_weeklyGoalSubtitle,
               onTap: () => context.push('/weekly-goal/edit'),
             ),
             SettingsMenuItemImproved(
-              title: '푸시 알림 설정',
-              subtitle: '알림 시간과 방식을 설정합니다',
+              title: context.l10n.settings_menu_notifications,
+              subtitle: context.l10n.settings_menu_notificationsSubtitle,
               onTap: () => context.push('/notification/settings'),
             ),
             SettingsMenuItemImproved(
-              title: '기록 관리',
-              subtitle: '저장된 기록을 확인하거나 삭제할 수 있습니다',
+              title: context.l10n.settings_language_title,
+              subtitle: context.l10n.settings_language_subtitle,
+              onTap: () => _showLanguageSelector(context),
+            ),
+            SettingsMenuItemImproved(
+              title: context.l10n.settings_menu_recordManagement,
+              subtitle: context.l10n.settings_menu_recordManagementSubtitle,
               onTap: () => context.push('/records'),
             ),
             SettingsMenuItemImproved(
-              title: '의료진 데이터 공유',
-              subtitle: '주간 리포트를 의료진에게 공유합니다',
+              title: context.l10n.settings_menu_dataSharing,
+              subtitle: context.l10n.settings_menu_dataSharingSubtitle,
               onTap: () => context.push('/share-report'),
             ),
             SettingsMenuItemImproved(
-              title: '부작용 대처 가이드',
-              subtitle: '증상별 대처법과 관리 팁을 확인할 수 있습니다',
+              title: context.l10n.settings_menu_copingGuide,
+              subtitle: context.l10n.settings_menu_copingGuideSubtitle,
               onTap: () => context.push('/coping-guide'),
             ),
             SettingsMenuItemImproved(
-              title: '온보딩 다시 보기',
-              subtitle: 'GLP-1 약물 정보, 부작용 안내 등 교육 콘텐츠를 다시 볼 수 있습니다',
+              title: context.l10n.settings_menu_onboardingReview,
+              subtitle: context.l10n.settings_menu_onboardingReviewSubtitle,
               onTap: () => context.push('/onboarding/review'),
             ),
             const SizedBox(height: 24.0), // lg spacing
 
             // Legal section
             Text(
-              '약관 및 정책',
+              context.l10n.common_legal_sectionTitle,
               style: AppTypography.heading2,
             ),
             const SizedBox(height: 16.0), // md spacing
 
             SettingsMenuItemImproved(
-              title: '이용약관',
-              subtitle: '서비스 이용에 관한 약관을 확인합니다',
+              title: context.l10n.common_legal_termsOfService,
+              subtitle: context.l10n.common_legal_termsOfServiceSubtitle,
               onTap: () => _openUrl(LegalUrls.termsOfService),
             ),
             SettingsMenuItemImproved(
-              title: '개인정보 처리방침',
-              subtitle: '개인정보 수집 및 이용에 관한 정책을 확인합니다',
+              title: context.l10n.common_legal_privacyPolicy,
+              subtitle: context.l10n.common_legal_privacyPolicySubtitle,
               onTap: () => _openUrl(LegalUrls.privacyPolicy),
             ),
             SettingsMenuItemImproved(
-              title: '건강정보 면책조항',
-              subtitle: '의료 면책 및 서비스 사용에 관한 안내를 확인합니다',
+              title: context.l10n.common_legal_medicalDisclaimer,
+              subtitle: context.l10n.common_legal_medicalDisclaimerSubtitle,
               onTap: () => _openUrl(LegalUrls.medicalDisclaimer),
             ),
             const SizedBox(height: 24.0), // lg spacing after menu items
 
             // Logout section
             DangerButton(
-              text: '로그아웃',
+              text: context.l10n.common_button_logout,
               onPressed: () => _handleLogout(context, ref),
             ),
             const SizedBox(height: 12.0),
 
             // Account deletion section
             DangerButton(
-              text: '계정 삭제',
+              text: context.l10n.common_dialog_deleteAccountTitle,
               onPressed: () => _handleDeleteAccount(context, ref),
             ),
             const SizedBox(height: 16.0), // md spacing at bottom
@@ -225,7 +232,7 @@ class SettingsScreen extends ConsumerWidget {
               color: Colors.red[300],
             ),
             const SizedBox(height: 16),
-            const Text('프로필 정보를 불러올 수 없습니다'),
+            Text(context.l10n.common_error_profileLoadFailed),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
@@ -236,7 +243,7 @@ class SettingsScreen extends ConsumerWidget {
                       .loadProfile(authState.value!.id);
                 }
               },
-              child: const Text('다시 시도'),
+              child: Text(context.l10n.common_button_retry),
             ),
           ],
         ),
@@ -289,7 +296,7 @@ class SettingsScreen extends ConsumerWidget {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('로그아웃 중 오류가 발생했습니다: $e'),
+            content: Text(context.l10n.common_error_logoutFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -327,12 +334,12 @@ class SettingsScreen extends ConsumerWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Column(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('계정을 삭제하는 중...'),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(context.l10n.common_loading_deletingAccount),
             ],
           ),
         ),
@@ -356,12 +363,20 @@ class SettingsScreen extends ConsumerWidget {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('계정 삭제 중 오류가 발생했습니다: $e'),
+            content: Text(context.l10n.common_error_deleteAccountFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
       }
     }
+  }
+
+  /// Show language selector dialog
+  void _showLanguageSelector(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => const LanguageSelectorDialog(),
+    );
   }
 
   /// Open URL in external browser

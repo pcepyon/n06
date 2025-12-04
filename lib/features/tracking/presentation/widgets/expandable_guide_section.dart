@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 
@@ -149,7 +150,7 @@ void showDetailedGuideBottomSheet(
               children: [
                 Expanded(
                   child: Text(
-                    '$symptomName 대처 가이드',
+                    context.l10n.tracking_guide_symptomTitle(symptomName),
                     style: AppTypography.heading2.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.neutral800,

@@ -1,10 +1,11 @@
+import 'package:n06/features/daily_checkin/domain/entities/greeting_message_type.dart';
 import 'package:n06/features/daily_checkin/domain/repositories/daily_checkin_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/medication_repository.dart';
 
 /// 컨텍스트 인사 정보
 class GreetingContext {
-  /// 인사말 메시지
-  final String message;
+  /// 인사말 메시지 타입
+  final GreetingMessageType messageType;
 
   /// 인사 타입
   final GreetingType type;
@@ -16,7 +17,7 @@ class GreetingContext {
   final int daysSinceLastCheckin;
 
   const GreetingContext({
-    required this.message,
+    required this.messageType,
     required this.type,
     required this.isPostInjection,
     required this.daysSinceLastCheckin,
@@ -57,7 +58,7 @@ class GreetingService {
     // 2. 복귀 사용자 확인 (3일+ 공백)
     if (daysSinceLastCheckin >= 3) {
       return GreetingContext(
-        message: _getReturningMessage(daysSinceLastCheckin),
+        messageType: _getReturningMessageType(daysSinceLastCheckin),
         type: GreetingType.returning,
         isPostInjection: false,
         daysSinceLastCheckin: daysSinceLastCheckin,
@@ -68,7 +69,7 @@ class GreetingService {
     final isPostInjection = await _isPostInjectionDay(userId);
     if (isPostInjection) {
       return GreetingContext(
-        message: _postInjectionMessage,
+        messageType: GreetingMessageType.postInjection,
         type: GreetingType.postInjection,
         isPostInjection: true,
         daysSinceLastCheckin: daysSinceLastCheckin,
@@ -76,9 +77,9 @@ class GreetingService {
     }
 
     // 4. 시간대별 인사
-    final timeOfDayMessage = _getTimeOfDayMessage();
+    final timeOfDayMessageType = _getTimeOfDayMessageType();
     return GreetingContext(
-      message: timeOfDayMessage,
+      messageType: timeOfDayMessageType,
       type: GreetingType.timeOfDay,
       isPostInjection: false,
       daysSinceLastCheckin: daysSinceLastCheckin,
@@ -134,35 +135,29 @@ class GreetingService {
     }
   }
 
-  /// 복귀 사용자 인사말
-  String _getReturningMessage(int daysSinceLastCheckin) {
+  /// 복귀 사용자 인사말 타입
+  GreetingMessageType _getReturningMessageType(int daysSinceLastCheckin) {
     if (daysSinceLastCheckin >= 7) {
-      return '다시 만나서 반가워요 😊\n'
-          '쉬어가는 것도 여정의 일부예요.\n'
-          '오늘부터 다시 함께해요!';
+      return GreetingMessageType.returningLongGap;
     }
-    return '다시 만나서 반가워요 😊\n'
-        '오늘부터 다시 함께해요!';
+    return GreetingMessageType.returningShortGap;
   }
 
-  /// 주사 다음날 인사말
-  static const String _postInjectionMessage =
-      '어제 주사 맞으셨죠?\n오늘 컨디션은 어떠세요? 💉';
-
-  /// 시간대별 인사말
-  String _getTimeOfDayMessage() {
+  /// 시간대별 인사말 타입
+  GreetingMessageType _getTimeOfDayMessageType() {
     final hour = DateTime.now().hour;
+    final randomIndex = DateTime.now().millisecond % 3;
 
     if (hour >= 5 && hour < 11) {
-      return _morningMessages[DateTime.now().millisecond % _morningMessages.length];
+      return _morningMessageTypes[randomIndex];
     }
     if (hour >= 11 && hour < 17) {
-      return _afternoonMessages[DateTime.now().millisecond % _afternoonMessages.length];
+      return _afternoonMessageTypes[randomIndex];
     }
     if (hour >= 17 && hour < 21) {
-      return _eveningMessages[DateTime.now().millisecond % _eveningMessages.length];
+      return _eveningMessageTypes[randomIndex];
     }
-    return _nightMessages[DateTime.now().millisecond % _nightMessages.length];
+    return _nightMessageTypes[randomIndex];
   }
 
   /// 시간대별 그리팅 타입 반환 (외부 접근용)
@@ -174,28 +169,28 @@ class GreetingService {
     return 'night';
   }
 
-  // 시간대별 인사말 풀
-  static const List<String> _morningMessages = [
-    '좋은 아침이에요 ☀️',
-    '오늘 하루도 화이팅! ☀️',
-    '좋은 아침이에요! 오늘도 함께해요 ☀️',
+  // 시간대별 인사말 타입 풀
+  static const List<GreetingMessageType> _morningMessageTypes = [
+    GreetingMessageType.morningOne,
+    GreetingMessageType.morningTwo,
+    GreetingMessageType.morningThree,
   ];
 
-  static const List<String> _afternoonMessages = [
-    '오늘 하루 어떠세요?',
-    '오후에도 잘 보내고 계신가요?',
-    '점심은 드셨나요?',
+  static const List<GreetingMessageType> _afternoonMessageTypes = [
+    GreetingMessageType.afternoonOne,
+    GreetingMessageType.afternoonTwo,
+    GreetingMessageType.afternoonThree,
   ];
 
-  static const List<String> _eveningMessages = [
-    '오늘 하루 수고하셨어요 🌙',
-    '저녁이에요! 오늘 하루는 어떠셨어요?',
-    '하루를 마무리하며 체크인해요 🌙',
+  static const List<GreetingMessageType> _eveningMessageTypes = [
+    GreetingMessageType.eveningOne,
+    GreetingMessageType.eveningTwo,
+    GreetingMessageType.eveningThree,
   ];
 
-  static const List<String> _nightMessages = [
-    '늦은 시간까지 수고 많으셨어요',
-    '오늘도 수고하셨어요 🌃',
-    '하루를 마무리하고 계시군요',
+  static const List<GreetingMessageType> _nightMessageTypes = [
+    GreetingMessageType.nightOne,
+    GreetingMessageType.nightTwo,
+    GreetingMessageType.nightThree,
   ];
 }

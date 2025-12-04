@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
@@ -72,17 +73,25 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
 
   bool _canProceed() {
     if (_selectedTemplate == null) {
-      _errorMessage = '약물을 선택해주세요.';
+      _errorMessage = 'onboarding_dosagePlan_errorSelectMedication';
       return false;
     }
 
     if (_selectedDose == null) {
-      _errorMessage = '초기 용량을 선택해주세요.';
+      _errorMessage = 'onboarding_dosagePlan_errorSelectDose';
       return false;
     }
 
     _errorMessage = null;
     return true;
+  }
+
+  String _getErrorMessage(BuildContext context, String key) {
+    return switch (key) {
+      'onboarding_dosagePlan_errorSelectMedication' => context.l10n.onboarding_dosagePlan_errorSelectMedication,
+      'onboarding_dosagePlan_errorSelectDose' => context.l10n.onboarding_dosagePlan_errorSelectDose,
+      _ => key,
+    };
   }
 
   @override
@@ -95,7 +104,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
           children: [
             const SizedBox(height: 16), // md
             Text(
-              widget.isReviewMode ? '투여 계획 확인' : '투여 계획 설정',
+              widget.isReviewMode ? context.l10n.onboarding_dosagePlan_titleReview : context.l10n.onboarding_dosagePlan_title,
               style: AppTypography.heading2,
             ),
             const SizedBox(height: 16), // md
@@ -105,7 +114,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
               key: ValueKey(_selectedTemplate),
               value: _selectedTemplate, // ignore: deprecated_member_use
               decoration: InputDecoration(
-                labelText: '약물명',
+                labelText: context.l10n.onboarding_dosagePlan_medicationLabel,
                 labelStyle: AppTypography.labelMedium,
                 filled: true,
                 fillColor: AppColors.surface,
@@ -177,7 +186,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '시작일',
+                      context.l10n.onboarding_dosagePlan_startDateLabel,
                       style: AppTypography.labelMedium,
                     ),
                     Text(
@@ -197,8 +206,8 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
               controller: TextEditingController(
                 text: _selectedTemplate?.standardCycleDays.toString() ?? '7',
               ),
-              label: '투여 주기 (일)',
-              hint: '투여 주기',
+              label: context.l10n.onboarding_dosagePlan_cycleLabel,
+              hint: context.l10n.onboarding_dosagePlan_cycleHint,
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 16), // md
@@ -208,7 +217,7 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
               key: ValueKey(_selectedDose),
               value: _selectedDose, // ignore: deprecated_member_use
               decoration: InputDecoration(
-                labelText: '초기 용량 (mg)',
+                labelText: context.l10n.onboarding_dosagePlan_initialDoseLabel,
                 labelStyle: AppTypography.labelMedium,
                 filled: true,
                 fillColor: AppColors.surface,
@@ -259,14 +268,14 @@ class _DosagePlanFormState extends State<DosagePlanForm> {
             if (_errorMessage != null) ...[
               ValidationAlert(
                 type: ValidationAlertType.error,
-                message: _errorMessage!,
+                message: _getErrorMessage(context, _errorMessage!),
               ),
               const SizedBox(height: 16), // md
             ],
 
             // Next Button
             GabiumButton(
-              text: '다음',
+              text: context.l10n.onboarding_common_nextButton,
               onPressed: _canProceed() ? widget.onNext : null,
               variant: GabiumButtonVariant.primary,
               size: GabiumButtonSize.medium,

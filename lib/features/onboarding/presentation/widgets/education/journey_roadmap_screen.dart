@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
@@ -16,8 +17,8 @@ class JourneyRoadmapScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return OnboardingPageTemplate(
-      title: '앞으로의 여정이에요',
-      subtitle: '조급해하지 않아도 괜찮아요\n몸이 천천히 변화할 거예요',
+      title: context.l10n.onboarding_journeyRoadmap_title,
+      subtitle: context.l10n.onboarding_journeyRoadmap_subtitle,
       showSkip: true,
       onSkip: onSkip,
       onNext: onNext,
@@ -26,9 +27,10 @@ class JourneyRoadmapScreen extends StatelessWidget {
         children: [
           // Timeline Phase 1
           _buildTimelineItem(
+            context: context,
             icon: '🌱',
-            phase: '1-4주: 적응기',
-            description: '몸이 약과 친해지는 시간\n큰 변화 없어도 정상이에요',
+            phase: context.l10n.onboarding_journeyRoadmap_phase1Title,
+            description: context.l10n.onboarding_journeyRoadmap_phase1Description,
             color: AppColors.history.withValues(alpha: 0.7), // Purple lighter
             isLast: false,
           ),
@@ -37,9 +39,10 @@ class JourneyRoadmapScreen extends StatelessWidget {
 
           // Timeline Phase 2
           _buildTimelineItem(
+            context: context,
             icon: '🌿',
-            phase: '5-12주: 변화기',
-            description: '본격적인 효과가 나타나요\n체중 감소가 눈에 보여요',
+            phase: context.l10n.onboarding_journeyRoadmap_phase2Title,
+            description: context.l10n.onboarding_journeyRoadmap_phase2Description,
             color: AppColors.history, // Purple
             isLast: false,
           ),
@@ -48,9 +51,10 @@ class JourneyRoadmapScreen extends StatelessWidget {
 
           // Timeline Phase 3
           _buildTimelineItem(
+            context: context,
             icon: '🌳',
-            phase: '13주+: 성장기',
-            description: '새로운 습관이 자리잡아요\n건강한 일상이 되어가요',
+            phase: context.l10n.onboarding_journeyRoadmap_phase3Title,
+            description: context.l10n.onboarding_journeyRoadmap_phase3Description,
             color: const Color(0xFF6B21A8), // Purple-800 (darker)
             isLast: true,
           ),
@@ -86,13 +90,13 @@ class JourneyRoadmapScreen extends StatelessWidget {
                             color: AppColors.history,
                             height: 1.43,
                           ),
-                          children: const [
+                          children: [
                             TextSpan(
-                              text: '평균 4-5주 후부터\n',
-                              style: TextStyle(fontWeight: FontWeight.w600),
+                              text: '${context.l10n.onboarding_journeyRoadmap_tip1}\n',
+                              style: const TextStyle(fontWeight: FontWeight.w600),
                             ),
                             TextSpan(
-                              text: '확실한 변화를 느껴요',
+                              text: context.l10n.onboarding_journeyRoadmap_tip1Part2,
                             ),
                           ],
                         ),
@@ -123,13 +127,13 @@ class JourneyRoadmapScreen extends StatelessWidget {
                             color: AppColors.history,
                             height: 1.43,
                           ),
-                          children: const [
+                          children: [
                             TextSpan(
-                              text: '체중이 잠시 멈추는 건\n',
+                              text: '${context.l10n.onboarding_journeyRoadmap_tip2}\n',
                             ),
                             TextSpan(
-                              text: '몸이 적응하는 건강한 신호예요',
-                              style: TextStyle(fontWeight: FontWeight.w600),
+                              text: context.l10n.onboarding_journeyRoadmap_tip2Part2,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -148,6 +152,7 @@ class JourneyRoadmapScreen extends StatelessWidget {
   }
 
   Widget _buildTimelineItem({
+    required BuildContext context,
     required String icon,
     required String phase,
     required String description,

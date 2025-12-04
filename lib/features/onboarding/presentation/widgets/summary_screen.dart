@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
@@ -50,7 +51,7 @@ class SummaryScreen extends ConsumerWidget {
             const SizedBox(height: 16), // md
             // Encouragement Message
             Text(
-              isReviewMode ? '입력하신 정보입니다' : '준비가 잘 되었어요! ✨',
+              isReviewMode ? context.l10n.onboarding_summary_titleReview : context.l10n.onboarding_summary_titleReady,
               style: AppTypography.bodyLarge.copyWith(
                 fontWeight: FontWeight.w500,
                 color: isReviewMode ? AppColors.textTertiary : AppColors.primary,
@@ -58,34 +59,34 @@ class SummaryScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 8), // sm
             Text(
-              isReviewMode ? '정보 확인 (저장되지 않음)' : '정보 확인',
+              isReviewMode ? context.l10n.onboarding_summary_sectionTitleReview : context.l10n.onboarding_summary_sectionTitle,
               style: AppTypography.heading2,
             ),
             const SizedBox(height: 24), // lg
 
             // Basic Info Summary Card
             SummaryCard(
-              title: '기본 정보',
+              title: context.l10n.onboarding_summary_basicInfoTitle,
               items: [
-                ('이름', name),
-                ('현재 체중', '$currentWeight kg'),
-                ('목표 체중', '$targetWeight kg'),
-                ('감량 목표', '${(currentWeight - targetWeight).toStringAsFixed(1)} kg'),
+                (context.l10n.onboarding_summary_basicInfo_name, name),
+                (context.l10n.onboarding_summary_basicInfo_currentWeight, '$currentWeight kg'),
+                (context.l10n.onboarding_summary_basicInfo_targetWeight, '$targetWeight kg'),
+                (context.l10n.onboarding_summary_basicInfo_weightGoal, '${(currentWeight - targetWeight).toStringAsFixed(1)} kg'),
               ],
             ),
             const SizedBox(height: 24), // lg
 
             // Dosage Plan Summary Card
             SummaryCard(
-              title: '투여 계획',
+              title: context.l10n.onboarding_summary_dosagePlanTitle,
               items: [
-                ('약물명', medicationName),
+                (context.l10n.onboarding_summary_dosagePlan_medication, medicationName),
                 (
-                  '시작일',
+                  context.l10n.onboarding_summary_dosagePlan_startDate,
                   '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}',
                 ),
-                ('주기', '$cycleDays일'),
-                ('초기 용량', '$initialDose mg'),
+                (context.l10n.onboarding_summary_dosagePlan_cycle, '$cycleDays일'),
+                (context.l10n.onboarding_summary_dosagePlan_initialDose, '$initialDose mg'),
               ],
             ),
             const SizedBox(height: 24), // lg
@@ -94,7 +95,7 @@ class SummaryScreen extends ConsumerWidget {
             // 리뷰 모드: 저장 없이 다음 단계로 이동
             if (isReviewMode)
               GabiumButton(
-                text: '다음',
+                text: context.l10n.onboarding_common_nextButton,
                 onPressed: () {
                   if (onComplete != null) {
                     onComplete!();
@@ -119,11 +120,11 @@ class SummaryScreen extends ConsumerWidget {
                 children: [
                   ValidationAlert(
                     type: ValidationAlertType.error,
-                    message: '저장 실패: ${onboardingState.error}',
+                    message: context.l10n.onboarding_summary_errorSaving(onboardingState.error.toString()),
                   ),
                   const SizedBox(height: 16), // md
                   GabiumButton(
-                    text: '재시도',
+                    text: context.l10n.onboarding_summary_retryButton,
                     onPressed: () {
                       ref.read(onboardingNotifierProvider.notifier).retrySave(
                             userId: userId,
@@ -144,7 +145,7 @@ class SummaryScreen extends ConsumerWidget {
               )
             else
               GabiumButton(
-                text: '확인',
+                text: context.l10n.onboarding_summary_confirmButton,
                 onPressed: () async {
                   await ref.read(onboardingNotifierProvider.notifier).saveOnboardingData(
                         userId: userId,

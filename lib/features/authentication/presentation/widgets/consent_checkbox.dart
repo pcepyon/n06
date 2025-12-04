@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 동의 체크박스 컴포넌트
 ///
@@ -86,39 +87,43 @@ class ConsentCheckbox extends StatelessWidget {
                     ),
                   ),
                   if (isRequired)
-                    Container(
-                      margin: const EdgeInsets.only(left: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '필수',
-                        style: AppTypography.labelSmall.copyWith(
-                          color: AppColors.error,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  if (onViewTap != null)
-                    GestureDetector(
-                      onTap: onViewTap,
-                      child: Container(
+                    Builder(
+                      builder: (context) => Container(
                         margin: const EdgeInsets.only(left: 8),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 2,
                         ),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                         child: Text(
-                          '보기',
+                          context.l10n.auth_consent_required,
                           style: AppTypography.labelSmall.copyWith(
-                            color: AppColors.primary,
+                            color: AppColors.error,
                             fontWeight: FontWeight.w600,
-                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (onViewTap != null)
+                    Builder(
+                      builder: (context) => GestureDetector(
+                        onTap: onViewTap,
+                        child: Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          child: Text(
+                            context.l10n.auth_consent_view,
+                            style: AppTypography.labelSmall.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                            ),
                           ),
                         ),
                       ),

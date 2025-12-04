@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/widgets/record_type_icon.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// RecordListCard component
 /// 기록 항목을 표시하는 카드 컨테이너
@@ -151,7 +152,7 @@ class _RecordListCardState extends State<RecordListCard>
                               AppColors.error.withValues(alpha: 0.1),
                           highlightColor: AppColors.error.withValues(alpha: 0.1),
                           hoverColor: AppColors.error.withValues(alpha: 0.1),
-                          tooltip: '삭제',
+                          tooltip: context.l10n.records_tooltip_delete,
                         ),
                       ),
                     ],

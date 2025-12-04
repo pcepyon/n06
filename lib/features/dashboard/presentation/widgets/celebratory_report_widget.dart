@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import '../../domain/entities/weekly_summary.dart';
 
 /// CelebratoryReportWidget: 주간 요약을 축하의 관점으로 전환
@@ -37,28 +38,32 @@ class _CelebratoryReportWidgetState extends State<CelebratoryReportWidget> {
   /// - "3회 발생" → "3일을 잘 견뎌냈어요" : 피해자 → 극복자
   /// - "72%" → "목표의 72% 달성!" : 부족함 → 성취
   /// - "2회 투여" → "2회 투여 완료" : 완료 = 성취
-  String _getCelebratoryValue(String type, dynamic value) {
+  String _getCelebratoryValue(BuildContext context, String type, dynamic value) {
+    final l10n = context.l10n;
     switch (type) {
       case 'dose':
-        return '$value회 투여 완료';
+        return l10n.dashboard_report_dose_value(value as int);
       case 'weight':
         final double weightValue = value as double;
-        final direction = weightValue < 0 ? '줄었어요' : '늘었어요';
-        return '${weightValue.abs().toStringAsFixed(1)}kg $direction';
+        final weight = weightValue.abs().toStringAsFixed(1);
+        return weightValue < 0
+            ? l10n.dashboard_report_weight_decreased(weight)
+            : l10n.dashboard_report_weight_increased(weight);
       case 'symptom':
         final int count = value as int;
         if (count == 0) {
-          return '증상 없이 잘 지냈어요!';
+          return l10n.dashboard_report_symptom_none;
         } else if (count <= 2) {
-          return '가벼운 적응기를 잘 보냈어요';
+          return l10n.dashboard_report_symptom_mild;
         } else if (count <= 5) {
-          return '$count건의 증상을 잘 견뎌냈어요';
+          return l10n.dashboard_report_symptom_moderate(count);
         } else {
-          return '적응 중이에요, 잘하고 있어요!';
+          return l10n.dashboard_report_symptom_adapting;
         }
       case 'adherence':
+        // This is not used in the current code, but keeping for compatibility
         final double adherenceValue = value as double;
-        return '목표의 ${adherenceValue.toStringAsFixed(0)}% 달성!';
+        return l10n.dashboard_report_adherence_fallback(adherenceValue.toStringAsFixed(0));
       default:
         return value.toString();
     }
@@ -70,10 +75,11 @@ class _CelebratoryReportWidgetState extends State<CelebratoryReportWidget> {
   /// - 70%도 칭찬: "잘하고 있어요" (Duolingo는 50%도 칭찬)
   /// - 100%는 특별: "완벽해요!"
   /// - 70% 미만도 비난 없음 (빈 문자열)
-  String _getAdherenceMessage(double percentage) {
-    if (percentage >= 100) return '완벽해요!';
-    if (percentage >= 90) return '거의 다 왔어요!';
-    if (percentage >= 70) return '잘하고 있어요!';
+  String _getAdherenceMessage(BuildContext context, double percentage) {
+    final l10n = context.l10n;
+    if (percentage >= 100) return l10n.dashboard_report_adherence_perfect;
+    if (percentage >= 90) return l10n.dashboard_report_adherence_almostThere;
+    if (percentage >= 70) return l10n.dashboard_report_adherence_doingWell;
     return '';
   }
 
@@ -86,7 +92,7 @@ class _CelebratoryReportWidgetState extends State<CelebratoryReportWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final adherenceMessage = _getAdherenceMessage(widget.summary.adherencePercentage);
+    final adherenceMessage = _getAdherenceMessage(context, widget.summary.adherencePercentage);
     final adherenceColor = _getAdherenceColor(widget.summary.adherencePercentage);
 
     return GestureDetector(
@@ -123,7 +129,7 @@ class _CelebratoryReportWidgetState extends State<CelebratoryReportWidget> {
           children: [
             // Section Title
             Text(
-              '지난주 요약',
+              context.l10n.dashboard_report_title,
               style: AppTypography.heading2,
             ),
 
@@ -136,8 +142,9 @@ class _CelebratoryReportWidgetState extends State<CelebratoryReportWidget> {
                 _CelebratoryReportItem(
                   icon: Icons.medication,
                   iconColor: AppColors.primary,
-                  label: '투여',
+                  label: context.l10n.dashboard_report_dose,
                   value: _getCelebratoryValue(
+                    context,
                     'dose',
                     widget.summary.doseCompletedCount,
                   ),
@@ -145,8 +152,9 @@ class _CelebratoryReportWidgetState extends State<CelebratoryReportWidget> {
                 _CelebratoryReportItem(
                   icon: Icons.monitor_weight,
                   iconColor: AppColors.success,
-                  label: '체중',
+                  label: context.l10n.dashboard_report_weight,
                   value: _getCelebratoryValue(
+                    context,
                     'weight',
                     widget.summary.weightChangeKg,
                   ),
@@ -155,8 +163,9 @@ class _CelebratoryReportWidgetState extends State<CelebratoryReportWidget> {
                 _CelebratoryReportItem(
                   icon: Icons.favorite_border, // 더 부드러운 아이콘
                   iconColor: AppColors.warning, // NOT error!
-                  label: '적응기', // NOT "부작용"!
+                  label: context.l10n.dashboard_report_symptom, // NOT "부작용"!
                   value: _getCelebratoryValue(
+                    context,
                     'symptom',
                     widget.summary.symptomRecordCount,
                   ),
@@ -185,7 +194,7 @@ class _CelebratoryReportWidgetState extends State<CelebratoryReportWidget> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '투여 순응도',
+                        context.l10n.dashboard_report_adherence,
                         style: AppTypography.bodySmall,
                       ),
                       // 70%+ 일 때 격려 메시지 표시

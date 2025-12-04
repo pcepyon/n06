@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 입력값 검증 위젯
 ///
@@ -83,22 +84,22 @@ class _InputValidationWidgetState extends State<InputValidationWidget> {
 
   /// 입력값 검증
   /// 반환값: (isValid, errorMessage)
-  (bool, String?) _validate(String value) {
+  (bool, String?) _validate(String value, BuildContext context) {
     if (value.isEmpty) {
       return (false, null); // 빈 값은 에러 메시지 없이 그냥 유효하지 않음
     }
 
     final weight = double.tryParse(value);
     if (weight == null) {
-      return (false, '숫자를 입력하세요');
+      return (false, context.l10n.tracking_validation_enterNumber);
     }
 
     if (weight < 20) {
-      return (false, '20kg 이상이어야 합니다');
+      return (false, context.l10n.tracking_validation_minWeight);
     }
 
     if (weight > 300) {
-      return (false, '300kg 이하여야 합니다');
+      return (false, context.l10n.tracking_validation_maxWeight);
     }
 
     return (true, null);
@@ -106,7 +107,7 @@ class _InputValidationWidgetState extends State<InputValidationWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final (isValid, errorMessage) = _validate(_controller.text);
+    final (isValid, errorMessage) = _validate(_controller.text, context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

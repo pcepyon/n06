@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// Widget for inputting weekly goal values (0-7)
 ///
@@ -44,7 +45,7 @@ class _WeeklyGoalInputWidgetState extends State<WeeklyGoalInputWidget> {
 
       // Check if non-integer
       if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-        _errorMessage = '정수만 입력 가능합니다';
+        _errorMessage = context.l10n.weeklyGoal_input_error_integerOnly;
         return;
       }
 
@@ -52,9 +53,9 @@ class _WeeklyGoalInputWidgetState extends State<WeeklyGoalInputWidget> {
 
       // Check range
       if (intValue < 0) {
-        _errorMessage = '0 이상의 값을 입력하세요';
+        _errorMessage = context.l10n.weeklyGoal_input_error_minimum;
       } else if (intValue > 7) {
-        _errorMessage = '주간 목표는 최대 7회입니다';
+        _errorMessage = context.l10n.weeklyGoal_input_error_maximum;
       } else {
         _errorMessage = null;
         // Notify parent of valid change
@@ -71,9 +72,9 @@ class _WeeklyGoalInputWidgetState extends State<WeeklyGoalInputWidget> {
       maxLength: 1,
       decoration: InputDecoration(
         labelText: widget.label,
-        hintText: '0~7',
+        hintText: context.l10n.weeklyGoal_input_hint,
         counterText: '',
-        suffixText: '회/주',
+        suffixText: context.l10n.weeklyGoal_input_suffix,
         suffixStyle: Theme.of(context).textTheme.bodyMedium,
         errorText: _errorMessage,
         errorBorder: OutlineInputBorder(

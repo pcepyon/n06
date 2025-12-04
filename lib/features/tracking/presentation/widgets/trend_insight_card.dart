@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/tracking/domain/entities/trend_insight.dart';
@@ -49,13 +50,15 @@ class TrendInsightCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      insight.period == TrendPeriod.weekly ? '이번 주' : '이번 달',
+                      insight.period == TrendPeriod.weekly
+                          ? context.l10n.tracking_trendInsight_weekly
+                          : context.l10n.tracking_trendInsight_monthly,
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.neutral500,
                       ),
                     ),
                     Text(
-                      _getDirectionLabel(insight.overallDirection),
+                      _getDirectionLabel(context, insight.overallDirection),
                       style: AppTypography.heading3.copyWith(
                         color: _getDirectionColor(insight.overallDirection),
                         fontWeight: FontWeight.w700,
@@ -74,7 +77,8 @@ class TrendInsightCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
-                  '기록률 ${insight.completionRate.toInt()}%',
+                  context.l10n.tracking_trendInsight_completionRateLabel(
+                      insight.completionRate.toInt()),
                   style: AppTypography.caption.copyWith(
                     color: _getCompletionColor(insight.completionRate),
                     fontWeight: FontWeight.w600,
@@ -107,8 +111,10 @@ class TrendInsightCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildMetric(
-                  label: '연속 기록',
-                  value: '${insight.consecutiveDays}일',
+                  context: context,
+                  label: context.l10n.tracking_trendInsight_consecutiveDaysLabel,
+                  value: context.l10n.tracking_trendInsight_consecutiveDaysValue(
+                      insight.consecutiveDays),
                   icon: Icons.local_fire_department,
                   color: const Color(0xFFFF9800),
                 ),
@@ -117,7 +123,8 @@ class TrendInsightCard extends StatelessWidget {
               if (insight.averageAppetiteScore != null)
                 Expanded(
                   child: _buildMetric(
-                    label: '평균 식욕',
+                    context: context,
+                    label: context.l10n.tracking_trendInsight_averageAppetiteLabel,
                     value: insight.averageAppetiteScore!.toStringAsFixed(1),
                     icon: Icons.restaurant,
                     color: const Color(0xFF4CAF50),
@@ -127,8 +134,10 @@ class TrendInsightCard extends StatelessWidget {
                 const SizedBox(width: 12),
               Expanded(
                 child: _buildMetric(
-                  label: '주의 신호',
-                  value: '${insight.redFlagCount}회',
+                  context: context,
+                  label: context.l10n.tracking_trendInsight_redFlagsLabel,
+                  value: context.l10n
+                      .tracking_trendInsight_redFlagsValue(insight.redFlagCount),
                   icon: Icons.warning_amber_rounded,
                   color: insight.redFlagCount > 0
                       ? AppColors.error
@@ -144,7 +153,7 @@ class TrendInsightCard extends StatelessWidget {
             const Divider(),
             const SizedBox(height: 12),
             Text(
-              '컨디션 요약',
+              context.l10n.tracking_trendInsight_conditionSummary,
               style: AppTypography.bodySmall.copyWith(
                 color: AppColors.neutral600,
                 fontWeight: FontWeight.w600,
@@ -164,7 +173,7 @@ class TrendInsightCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      '상세 보기',
+                      context.l10n.tracking_trendInsight_viewDetails,
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w500,
@@ -187,6 +196,7 @@ class TrendInsightCard extends StatelessWidget {
   }
 
   Widget _buildMetric({
+    required BuildContext context,
     required String label,
     required String value,
     required IconData icon,
@@ -293,14 +303,14 @@ class TrendInsightCard extends StatelessWidget {
     }
   }
 
-  String _getDirectionLabel(TrendDirection direction) {
+  String _getDirectionLabel(BuildContext context, TrendDirection direction) {
     switch (direction) {
       case TrendDirection.improving:
-        return '좋아지고 있어요';
+        return context.l10n.tracking_trendInsight_improving;
       case TrendDirection.stable:
-        return '안정적이에요';
+        return context.l10n.tracking_trendInsight_stable;
       case TrendDirection.worsening:
-        return '관리가 필요해요';
+        return context.l10n.tracking_trendInsight_worsening;
     }
   }
 

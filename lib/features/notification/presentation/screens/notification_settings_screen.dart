@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/features/notification/application/notifiers/notification_notifier.dart';
 import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import 'package:n06/features/notification/presentation/widgets/time_picker_button.dart';
@@ -24,14 +25,16 @@ class NotificationSettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('푸시 알림 설정'),
+        title: Text(context.l10n.notification_settings_title),
         elevation: 0,
       ),
       backgroundColor: const Color(0xFFF8FAFC), // Neutral-50
       body: settingsAsync.when(
         data: (settings) => _buildContent(context, ref, settings),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('오류가 발생했습니다: $error')),
+        error: (error, stackTrace) => Center(
+          child: Text(context.l10n.notification_settings_error(error.toString())),
+        ),
       ),
     );
   }
@@ -66,16 +69,18 @@ class NotificationSettingsScreen extends ConsumerWidget {
               ],
             ),
             child: ListTile(
-              title: const Text(
-                '알림 활성화',
-                style: TextStyle(
+              title: Text(
+                context.l10n.notification_settings_enabledTitle,
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600, // Semibold (xl)
                   color: Color(0xFF1E293B), // Neutral-800
                 ),
               ),
               subtitle: Text(
-                settings.notificationEnabled ? '알림이 활성화되었습니다' : '알림이 비활성화되었습니다',
+                settings.notificationEnabled
+                  ? context.l10n.notification_settings_statusEnabled
+                  : context.l10n.notification_settings_statusDisabled,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.normal,
@@ -108,9 +113,9 @@ class NotificationSettingsScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Change 3: 섹션 제목 xl (20px, Semibold)로 강화
-                const Text(
-                  '알림 시간',
-                  style: TextStyle(
+                Text(
+                  context.l10n.notification_settings_timeTitle,
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600, // Semibold (xl)
                     color: Color(0xFF1E293B), // Neutral-800
@@ -126,9 +131,9 @@ class NotificationSettingsScreen extends ConsumerWidget {
                     await notifier.updateNotificationTime(notificationTime);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('알림 설정이 저장되었습니다'),
-                          duration: Duration(seconds: 2),
+                        SnackBar(
+                          content: Text(context.l10n.notification_settings_saved),
+                          duration: const Duration(seconds: 2),
                         ),
                       );
                     }
@@ -171,11 +176,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '알림은 매 투여 예정일 설정된 시간에 발송됩니다.',
-                  style: TextStyle(
+                  context.l10n.notification_settings_infoMessage,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.normal,
-                    color: const Color(0xFF1E40AF), // Blue-800
+                    color: Color(0xFF1E40AF), // Blue-800
                   ),
                 ),
               ),

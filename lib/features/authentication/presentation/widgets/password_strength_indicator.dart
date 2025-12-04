@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/core/utils/validators.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// Password Strength Indicator component
 /// Visual strength feedback with Gabium semantic colors
@@ -16,7 +17,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _getColor();
-    final label = _getLabel();
+    final label = _getLabel(context);
     final progress = _getProgress();
 
     return Row(
@@ -62,14 +63,14 @@ class PasswordStrengthIndicator extends StatelessWidget {
     }
   }
 
-  String _getLabel() {
+  String _getLabel(BuildContext context) {
     switch (strength) {
       case PasswordStrength.weak:
-        return '약함';
+        return context.l10n.auth_passwordStrength_weak;
       case PasswordStrength.medium:
-        return '보통';
+        return context.l10n.auth_passwordStrength_medium;
       case PasswordStrength.strong:
-        return '강함';
+        return context.l10n.auth_passwordStrength_strong;
     }
   }
 

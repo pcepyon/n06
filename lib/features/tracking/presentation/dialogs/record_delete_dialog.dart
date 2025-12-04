@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 class RecordDeleteDialog extends StatelessWidget {
   final String recordType;
@@ -15,12 +16,12 @@ class RecordDeleteDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('기록 삭제'),
+      title: Text(context.l10n.tracking_deleteDialog_title),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('다음 기록을 삭제하시겠습니까?', style: Theme.of(context).textTheme.bodyMedium),
+          Text(context.l10n.tracking_deleteDialog_message, style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(12),
@@ -51,7 +52,7 @@ class RecordDeleteDialog extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '이 작업은 되돌릴 수 없습니다',
+                    context.l10n.tracking_deleteDialog_warning,
                     style: TextStyle(fontSize: 12, color: Colors.red.shade800),
                   ),
                 ),
@@ -61,7 +62,7 @@ class RecordDeleteDialog extends StatelessWidget {
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.common_button_cancel)),
         ElevatedButton(
           onPressed: () {
             onConfirm();
@@ -71,7 +72,7 @@ class RecordDeleteDialog extends StatelessWidget {
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,
           ),
-          child: const Text('삭제'),
+          child: Text(context.l10n.common_button_delete),
         ),
       ],
     );

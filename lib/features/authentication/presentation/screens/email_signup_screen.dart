@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:n06/core/constants/legal_urls.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/core/utils/validators.dart';
@@ -82,7 +83,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
       if (!mounted) return;
       GabiumToast.showError(
         context,
-        '이용약관과 개인정보 처리방침에 동의해주세요',
+        context.l10n.auth_signup_error_consentRequired,
       );
       return;
     }
@@ -91,7 +92,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
       if (!mounted) return;
       GabiumToast.showError(
         context,
-        '비밀번호가 일치하지 않습니다',
+        context.l10n.auth_signup_error_passwordMismatch,
       );
       return;
     }
@@ -113,7 +114,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
 
       GabiumToast.showSuccess(
         context,
-        '회원가입이 완료되었습니다!',
+        context.l10n.auth_signup_success,
       );
 
       // FIX BUG-2025-1119-003: 회원가입 성공 시 무조건 온보딩으로 이동
@@ -125,40 +126,40 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
       setState(() => _isLoading = false);
       GabiumToast.showError(
         context,
-        '회원가입에 실패했습니다: $e',
+        context.l10n.auth_signup_error_failed(e.toString()),
       );
     }
   }
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return '이메일을 입력해주세요';
+      return context.l10n.auth_signup_validation_emailRequired;
     }
     if (!isValidEmail(value)) {
-      return '올바른 이메일 형식을 입력해주세요';
+      return context.l10n.auth_signup_validation_emailInvalid;
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return '비밀번호를 입력해주세요';
+      return context.l10n.auth_signup_validation_passwordRequired;
     }
     if (value.length < 8) {
-      return '비밀번호는 최소 8자 이상이어야 합니다';
+      return context.l10n.auth_signup_validation_passwordTooShort;
     }
     if (!isValidPassword(value)) {
-      return '비밀번호는 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다';
+      return context.l10n.auth_signup_validation_passwordWeak;
     }
     return null;
   }
 
   String? _validateConfirmPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return '비밀번호 확인을 입력해주세요';
+      return context.l10n.auth_signup_validation_confirmPasswordRequired;
     }
     if (value != _passwordController.text) {
-      return '비밀번호가 일치하지 않습니다';
+      return context.l10n.auth_signup_validation_confirmPasswordMismatch;
     }
     return null;
   }
@@ -178,7 +179,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
         backgroundColor: AppColors.surface,
         elevation: 0,
         title: Text(
-          '가비움 시작하기',
+          context.l10n.auth_signup_title,
           style: AppTypography.heading2,
         ),
         leading: IconButton(
@@ -207,9 +208,9 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Hero Section
-              const AuthHeroSection(
-                title: '가비움과 함께 시작해요',
-                subtitle: '건강한 변화의 첫 걸음',
+              AuthHeroSection(
+                title: context.l10n.auth_signup_heroTitle,
+                subtitle: context.l10n.auth_signup_heroSubtitle,
               ),
               const SizedBox(height: 16),
 
@@ -217,8 +218,8 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
               GabiumTextField(
                 key: const Key('email_field'),
                 controller: _emailController,
-                label: '이메일',
-                hint: 'user@example.com',
+                label: context.l10n.auth_signup_emailLabel,
+                hint: context.l10n.auth_signup_emailHint,
                 keyboardType: TextInputType.emailAddress,
                 validator: _validateEmail,
               ),
@@ -227,7 +228,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
               // Password field
               GabiumTextField(
                 controller: _passwordController,
-                label: '비밀번호',
+                label: context.l10n.auth_signup_passwordLabel,
                 obscureText: !_showPassword,
                 onChanged: _updatePasswordStrength,
                 validator: _validatePassword,
@@ -248,7 +249,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
               // Confirm password field
               GabiumTextField(
                 controller: _confirmPasswordController,
-                label: '비밀번호 확인',
+                label: context.l10n.auth_signup_passwordConfirmLabel,
                 obscureText: !_showConfirmPassword,
                 validator: _validateConfirmPassword,
                 suffixIcon: IconButton(
@@ -274,7 +275,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
                     ConsentCheckbox(
                       value: _agreeToTerms,
                       onChanged: (value) => setState(() => _agreeToTerms = value),
-                      label: '이용약관에 동의합니다',
+                      label: context.l10n.auth_signup_consentTerms,
                       isRequired: true,
                       onViewTap: () => _openUrl(LegalUrls.termsOfService),
                     ),
@@ -282,7 +283,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
                     ConsentCheckbox(
                       value: _agreeToPrivacy,
                       onChanged: (value) => setState(() => _agreeToPrivacy = value),
-                      label: '개인정보 처리방침에 동의합니다',
+                      label: context.l10n.auth_signup_consentPrivacy,
                       isRequired: true,
                       onViewTap: () => _openUrl(LegalUrls.privacyPolicy),
                     ),
@@ -290,7 +291,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
                     ConsentCheckbox(
                       value: _agreeToMarketing,
                       onChanged: (value) => setState(() => _agreeToMarketing = value),
-                      label: '마케팅 정보 수신에 동의합니다',
+                      label: context.l10n.auth_signup_consentMarketing,
                       isRequired: false,
                     ),
                   ],
@@ -300,7 +301,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
 
               // Sign up button
               GabiumButton(
-                text: '회원가입',
+                text: context.l10n.auth_signup_button,
                 onPressed: _handleSignup,
                 isLoading: _isLoading,
                 variant: GabiumButtonVariant.primary,
@@ -311,7 +312,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
               // Sign in link
               Center(
                 child: GabiumButton(
-                  text: '이미 계정이 있으신가요? 로그인',
+                  text: context.l10n.auth_signup_signinLink,
                   onPressed: () => context.go('/email-signin'),
                   variant: GabiumButtonVariant.ghost,
                   size: GabiumButtonSize.medium,

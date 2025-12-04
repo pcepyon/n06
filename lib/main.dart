@@ -3,10 +3,15 @@ import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:n06/core/presentation/theme/app_theme.dart';
 import 'package:n06/core/routing/app_router.dart';
+import 'package:n06/core/providers/shared_preferences_provider.dart';
+import 'package:n06/l10n/generated/app_localizations.dart';
+import 'package:n06/features/settings/application/notifiers/locale_notifier.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -137,11 +142,18 @@ Future<void> _initializeAndRunApp() async {
       loggingEnabled: true,  // Enable detailed debug logging
     );
 
-    // Initialize Korean locale for DateFormat
+    // Initialize locales for DateFormat
     if (kDebugMode) {
-      developer.log('🌐 Initializing Korean locale...', name: 'Main');
+      developer.log('🌐 Initializing locales...', name: 'Main');
     }
     await initializeDateFormatting('ko_KR', null);
+    await initializeDateFormatting('en_US', null);
+
+    // Initialize SharedPreferences
+    if (kDebugMode) {
+      developer.log('💾 Initializing SharedPreferences...', name: 'Main');
+    }
+    final sharedPreferences = await SharedPreferences.getInstance();
 
     if (kDebugMode) {
       developer.log('🎯 Launching app...', name: 'Main');
@@ -149,6 +161,9 @@ Future<void> _initializeAndRunApp() async {
 
     runApp(
       ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+        ],
         observers: kDebugMode ? [_ProviderLogger()] : null,
         child: const MyApp(),
       ),
@@ -187,14 +202,14 @@ final class _ProviderLogger extends ProviderObserver {
   }
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -241,6 +256,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final locale = ref.watch(localeProvider);
+
     return MaterialApp.router(
       title: 'GLP-1 치료 관리',
       theme: AppTheme.lightTheme.copyWith(
@@ -248,6 +265,24 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       ),
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       routerConfig: appRouter,
+      // L10n Configuration
+      localizationsDelegates: const [
+        L10n.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: L10n.supportedLocales,
+      locale: locale, // null = system default
+      localeResolutionCallback: (locale, supportedLocales) {
+        // Fallback to Korean if locale is not supported
+        for (var supportedLocale in supportedLocales) {
+          if (supportedLocale.languageCode == locale?.languageCode) {
+            return supportedLocale;
+          }
+        }
+        return const Locale('ko');
+      },
     );
   }
 }

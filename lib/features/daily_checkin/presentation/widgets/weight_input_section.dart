@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
-import 'package:n06/features/daily_checkin/presentation/constants/checkin_strings.dart';
 
 /// 체중 입력 섹션 위젯
 ///
@@ -42,7 +42,7 @@ class _WeightInputSectionState extends State<WeightInputSection> {
     final text = _controller.text.trim();
     if (text.isEmpty) {
       setState(() {
-        _errorText = '체중을 입력해주세요';
+        _errorText = context.l10n.checkin_validation_weightRequired;
       });
       return;
     }
@@ -50,14 +50,14 @@ class _WeightInputSectionState extends State<WeightInputSection> {
     final weight = double.tryParse(text);
     if (weight == null) {
       setState(() {
-        _errorText = '올바른 숫자를 입력해주세요';
+        _errorText = context.l10n.checkin_validation_weightInvalid;
       });
       return;
     }
 
     if (weight < 30.0 || weight > 300.0) {
       setState(() {
-        _errorText = '30.0 ~ 300.0 범위로 입력해주세요';
+        _errorText = context.l10n.checkin_validation_weightOutOfRange;
       });
       return;
     }
@@ -70,6 +70,8 @@ class _WeightInputSectionState extends State<WeightInputSection> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -86,7 +88,7 @@ class _WeightInputSectionState extends State<WeightInputSection> {
           const SizedBox(height: 24),
           // 제목
           Text(
-            WeightInputStrings.title,
+            l10n.checkin_weightInput_title,
             textAlign: TextAlign.center,
             style: AppTypography.heading2.copyWith(
               fontWeight: FontWeight.w600,
@@ -146,7 +148,7 @@ class _WeightInputSectionState extends State<WeightInputSection> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      WeightInputStrings.unit,
+                      l10n.checkin_weightInput_unit,
                       style: AppTypography.heading2.copyWith(
                         color: AppColors.neutral600,
                       ),
@@ -157,7 +159,7 @@ class _WeightInputSectionState extends State<WeightInputSection> {
                 if (widget.previousWeight != null) ...[
                   const SizedBox(height: 16),
                   Text(
-                    '${WeightInputStrings.previousLabel}: ${widget.previousWeight!.toStringAsFixed(1)}${WeightInputStrings.unit}',
+                    '${l10n.checkin_weightInput_previousLabel}: ${widget.previousWeight!.toStringAsFixed(1)}${l10n.checkin_weightInput_unit}',
                     style: AppTypography.bodyMedium.copyWith(
                       color: AppColors.neutral600,
                     ),
@@ -189,7 +191,7 @@ class _WeightInputSectionState extends State<WeightInputSection> {
               ),
             ),
             child: Text(
-              WeightInputStrings.nextButton,
+              l10n.checkin_weightInput_nextButton,
               style: AppTypography.bodyLarge.copyWith(
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -206,7 +208,7 @@ class _WeightInputSectionState extends State<WeightInputSection> {
             child: Column(
               children: [
                 Text(
-                  WeightInputStrings.skipButton,
+                  l10n.checkin_weightInput_skipButton,
                   style: AppTypography.bodyMedium.copyWith(
                     color: AppColors.neutral600,
                     fontWeight: FontWeight.w500,
@@ -214,7 +216,7 @@ class _WeightInputSectionState extends State<WeightInputSection> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  WeightInputStrings.skipHint,
+                  l10n.checkin_weightInput_skipHint,
                   style: AppTypography.bodySmall.copyWith(
                     color: AppColors.neutral500,
                   ),

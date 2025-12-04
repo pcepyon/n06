@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/tracking/domain/entities/trend_insight.dart';
@@ -54,7 +55,7 @@ class WeeklyPatternInsightCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                '이번 주 인사이트',
+                context.l10n.tracking_weeklyInsight_title,
                 style: AppTypography.heading3.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -92,16 +93,17 @@ class WeeklyPatternInsightCard extends StatelessWidget {
           const SizedBox(height: 16),
 
           // 통계 요약
-          _buildStatsSummary(),
+          _buildStatsSummary(context),
           const SizedBox(height: 16),
 
           // 주사 후 패턴
           if (pattern.hasPostInjectionPattern &&
               pattern.postInjectionInsight != null) ...[
             _buildInsightItem(
+              context: context,
               icon: Icons.vaccines,
               color: AppColors.primary,
-              title: '주사 후 패턴',
+              title: context.l10n.tracking_weeklyInsight_postInjectionPattern,
               content: pattern.postInjectionInsight!,
             ),
             const SizedBox(height: 12),
@@ -110,11 +112,12 @@ class WeeklyPatternInsightCard extends StatelessWidget {
           // 주의 영역
           if (pattern.topConcernArea != null) ...[
             _buildInsightItem(
+              context: context,
               icon: Icons.warning_amber_rounded,
               color: const Color(0xFFFF9800),
-              title: '신경 쓸 영역',
-              content:
-                  '${_getQuestionLabel(pattern.topConcernArea!)} 상태가 좋지 않아요. 관리가 필요해요.',
+              title: context.l10n.tracking_weeklyInsight_concernArea,
+              content: context.l10n.tracking_weeklyInsight_concernMessage(
+                  _getQuestionLabel(context, pattern.topConcernArea!)),
             ),
             const SizedBox(height: 12),
           ],
@@ -122,11 +125,12 @@ class WeeklyPatternInsightCard extends StatelessWidget {
           // 개선 영역
           if (pattern.improvementArea != null) ...[
             _buildInsightItem(
+              context: context,
               icon: Icons.trending_up,
               color: const Color(0xFF4CAF50),
-              title: '개선된 영역',
-              content:
-                  '${_getQuestionLabel(pattern.improvementArea!)} 상태가 좋아지고 있어요!',
+              title: context.l10n.tracking_weeklyInsight_improvementArea,
+              content: context.l10n.tracking_weeklyInsight_improvementMessage(
+                  _getQuestionLabel(context, pattern.improvementArea!)),
             ),
             const SizedBox(height: 12),
           ],
@@ -136,7 +140,7 @@ class WeeklyPatternInsightCard extends StatelessWidget {
             const Divider(),
             const SizedBox(height: 12),
             Text(
-              '추천 사항',
+              context.l10n.tracking_weeklyInsight_recommendations,
               style: AppTypography.bodyLarge.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -174,12 +178,13 @@ class WeeklyPatternInsightCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsSummary() {
+  Widget _buildStatsSummary(BuildContext context) {
     return Row(
       children: [
         Expanded(
           child: _buildStatItem(
-            label: '기록률',
+            context: context,
+            label: context.l10n.tracking_weeklyInsight_completionRate,
             value: '${insight.completionRate.toInt()}%',
             color: insight.completionRate >= 70
                 ? const Color(0xFF4CAF50)
@@ -188,15 +193,18 @@ class WeeklyPatternInsightCard extends StatelessWidget {
         ),
         Expanded(
           child: _buildStatItem(
-            label: '연속 기록',
-            value: '${insight.consecutiveDays}일',
+            context: context,
+            label: context.l10n.tracking_weeklyInsight_consecutiveDays,
+            value: context.l10n
+                .tracking_weeklyInsight_days(insight.consecutiveDays),
             color: AppColors.primary,
           ),
         ),
         if (insight.averageAppetiteScore != null)
           Expanded(
             child: _buildStatItem(
-              label: '평균 식욕',
+              context: context,
+              label: context.l10n.tracking_weeklyInsight_averageAppetite,
               value: insight.averageAppetiteScore!.toStringAsFixed(1),
               color: const Color(0xFFFF9800),
             ),
@@ -204,8 +212,10 @@ class WeeklyPatternInsightCard extends StatelessWidget {
         if (insight.redFlagCount > 0)
           Expanded(
             child: _buildStatItem(
-              label: '주의 신호',
-              value: '${insight.redFlagCount}회',
+              context: context,
+              label: context.l10n.tracking_weeklyInsight_redFlags,
+              value: context.l10n
+                  .tracking_weeklyInsight_redFlagCount(insight.redFlagCount),
               color: AppColors.error,
             ),
           ),
@@ -214,6 +224,7 @@ class WeeklyPatternInsightCard extends StatelessWidget {
   }
 
   Widget _buildStatItem({
+    required BuildContext context,
     required String label,
     required String value,
     required Color color,
@@ -247,6 +258,7 @@ class WeeklyPatternInsightCard extends StatelessWidget {
   }
 
   Widget _buildInsightItem({
+    required BuildContext context,
     required IconData icon,
     required Color color,
     required String title,
@@ -301,20 +313,20 @@ class WeeklyPatternInsightCard extends StatelessWidget {
     }
   }
 
-  String _getQuestionLabel(QuestionType type) {
+  String _getQuestionLabel(BuildContext context, QuestionType type) {
     switch (type) {
       case QuestionType.meal:
-        return '식사';
+        return context.l10n.tracking_weeklyInsight_questionLabel_meal;
       case QuestionType.hydration:
-        return '수분';
+        return context.l10n.tracking_weeklyInsight_questionLabel_hydration;
       case QuestionType.giComfort:
-        return '속 편안함';
+        return context.l10n.tracking_weeklyInsight_questionLabel_giComfort;
       case QuestionType.bowel:
-        return '배변';
+        return context.l10n.tracking_weeklyInsight_questionLabel_bowel;
       case QuestionType.energy:
-        return '에너지';
+        return context.l10n.tracking_weeklyInsight_questionLabel_energy;
       case QuestionType.mood:
-        return '기분';
+        return context.l10n.tracking_weeklyInsight_questionLabel_mood;
     }
   }
 }

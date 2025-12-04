@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
-import 'package:n06/features/daily_checkin/presentation/constants/checkin_strings.dart';
+import 'package:n06/l10n/generated/app_localizations.dart';
 
 /// 체크인 진행률 표시 위젯
 ///
@@ -20,6 +20,8 @@ class CheckinProgressIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+
     return Column(
       children: [
         // 진행 바
@@ -47,7 +49,7 @@ class CheckinProgressIndicator extends StatelessWidget {
         const SizedBox(height: 8),
         // 텍스트 표시
         Text(
-          ProgressStrings.currentStep(currentStep, totalSteps),
+          l10n.checkin_progress_currentStep(currentStep, totalSteps),
           style: AppTypography.bodySmall.copyWith(
             color: AppColors.neutral600,
             fontWeight: FontWeight.w500,

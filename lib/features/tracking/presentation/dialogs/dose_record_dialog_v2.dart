@@ -8,6 +8,7 @@ import 'package:n06/features/tracking/presentation/widgets/injection_site_select
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 class DoseRecordDialogV2 extends ConsumerStatefulWidget {
   final DoseSchedule schedule;
@@ -46,9 +47,17 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
     return recordDateOnly.isBefore(todayOnly);
   }
 
-  String _getWeekday(DateTime date) {
-    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-    return weekdays[date.weekday - 1];
+  String _getWeekday(BuildContext context, DateTime date) {
+    final weekdayNames = [
+      context.l10n.tracking_weekday_monday,
+      context.l10n.tracking_weekday_tuesday,
+      context.l10n.tracking_weekday_wednesday,
+      context.l10n.tracking_weekday_thursday,
+      context.l10n.tracking_weekday_friday,
+      context.l10n.tracking_weekday_saturday,
+      context.l10n.tracking_weekday_sunday,
+    ];
+    return weekdayNames[date.weekday - 1];
   }
 
   @override
@@ -72,7 +81,7 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
             children: [
               // 제목
               Text(
-                '투여 기록',
+                context.l10n.tracking_doseRecord_title,
                 style: AppTypography.heading1.copyWith(color: AppColors.textPrimary),
               ),
               const SizedBox(height: 16),
@@ -94,7 +103,11 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '${_recordDate.month}월 ${_recordDate.day}일 (${_getWeekday(_recordDate)})',
+                      context.l10n.tracking_doseRecord_dateLabel(
+                        _recordDate.month,
+                        _recordDate.day,
+                        _getWeekday(context, _recordDate),
+                      ),
                       style: AppTypography.bodyLarge.copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
@@ -129,7 +142,7 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '이 날짜에 실제로 투여하셨나요?',
+                              context.l10n.tracking_doseRecord_pastDateQuestion,
                               style: AppTypography.labelMedium.copyWith(
                                 color: AppColors.info,
                                 fontWeight: FontWeight.w600,
@@ -140,8 +153,7 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '• 예 → 아래에서 주사 부위를 선택하고 기록하세요\n'
-                        '• 아니오 → 실제 투여한 날짜를 선택해서 기록하세요',
+                        context.l10n.tracking_doseRecord_pastDateInstructions,
                         style: AppTypography.bodySmall.copyWith(
                           color: AppColors.info,
                         ),
@@ -155,7 +167,7 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
 
               // 콘텐츠
               Text(
-                '${widget.schedule.scheduledDoseMg} mg를 투여합니다.',
+                context.l10n.tracking_doseRecord_doseAmount(widget.schedule.scheduledDoseMg),
                 style: AppTypography.bodyLarge.copyWith(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 16),
@@ -172,7 +184,7 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
 
               const SizedBox(height: 16),
               Text(
-                '메모 (선택사항)',
+                context.l10n.tracking_doseRecord_noteLabel,
                 style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 8),
@@ -180,7 +192,7 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
                 controller: noteController,
                 style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
                 decoration: InputDecoration(
-                  hintText: '메모를 입력하세요',
+                  hintText: context.l10n.tracking_doseRecord_noteHint,
                   hintStyle: AppTypography.bodyLarge.copyWith(color: AppColors.textDisabled),
                   filled: true,
                   fillColor: AppColors.surface,
@@ -213,7 +225,7 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
                 children: [
                   Expanded(
                     child: GabiumButton(
-                      text: '취소',
+                      text: context.l10n.tracking_doseRecord_cancelButton,
                       onPressed: isLoading ? null : () => Navigator.of(context).pop(),
                       variant: GabiumButtonVariant.secondary,
                       size: GabiumButtonSize.medium,
@@ -222,7 +234,7 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: GabiumButton(
-                      text: '저장',
+                      text: context.l10n.tracking_doseRecord_saveButton,
                       onPressed: isLoading || selectedSite == null
                           ? null
                           : _saveDoseRecord,
@@ -244,7 +256,7 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
   Future<void> _saveDoseRecord() async {
     if (selectedSite == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('주사 부위를 선택해주세요')),
+        SnackBar(content: Text(context.l10n.tracking_doseRecord_siteRequired)),
       );
       return;
     }
@@ -259,7 +271,7 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
 
       final state = medicationState.asData?.value;
       if (state?.activePlan == null) {
-        throw Exception('활성 투여 계획이 없습니다');
+        throw Exception(context.l10n.tracking_doseRecord_noPlanError);
       }
 
       // 기록 날짜의 정오(12:00)로 설정
@@ -288,13 +300,13 @@ class _DoseRecordDialogV2State extends ConsumerState<DoseRecordDialogV2> {
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('투여 기록이 저장되었습니다')),
+          SnackBar(content: Text(context.l10n.tracking_doseRecord_saveSuccess)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('오류가 발생했습니다: $e')),
+          SnackBar(content: Text(context.l10n.tracking_doseRecord_saveError(e.toString()))),
         );
       }
     } finally {

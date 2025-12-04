@@ -1,4 +1,5 @@
 import 'package:n06/features/dashboard/domain/entities/dashboard_data.dart';
+import 'package:n06/features/dashboard/domain/entities/dashboard_message_type.dart';
 import 'package:n06/features/dashboard/domain/entities/next_schedule.dart';
 import 'package:n06/features/dashboard/domain/entities/timeline_event.dart';
 import 'package:n06/features/dashboard/domain/entities/weekly_summary.dart';
@@ -50,7 +51,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     final userId = authState.value?.id;
 
     if (userId == null) {
-      throw Exception('User not authenticated');
+      throw Exception(DashboardMessageType.errorNotAuthenticated.toString());
     }
 
     // repositories 초기화
@@ -70,7 +71,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     final userId = authState.value?.id;
 
     if (userId == null) {
-      throw Exception('User not authenticated');
+      throw Exception(DashboardMessageType.errorNotAuthenticated.toString());
     }
 
     state = const AsyncValue.loading();
@@ -81,14 +82,14 @@ class DashboardNotifier extends _$DashboardNotifier {
     // 프로필 조회
     final profile = await _profileRepository.getUserProfile(userId);
     if (profile == null) {
-      throw Exception('User profile not found - Please complete onboarding first');
+      throw Exception(DashboardMessageType.errorProfileNotFound.toString());
     }
 
     // 활성 투여 계획 조회
     final activePlan =
         await _medicationRepository.getActiveDosagePlan(userId);
     if (activePlan == null) {
-      throw Exception('Active dosage plan not found - Please set up your medication plan');
+      throw Exception(DashboardMessageType.errorActivePlanNotFound.toString());
     }
 
     // 체중 기록, 투여 기록 조회
@@ -153,7 +154,7 @@ class DashboardNotifier extends _$DashboardNotifier {
       weeklySummary: weeklySummary,
       badges: updatedBadges,
       timeline: timeline,
-      insightMessage: _generateInsightMessage(
+      insightMessageData: _generateInsightMessageData(
         continuousRecordDays,
         weightLossPercentage,
         weeklyProgress,
@@ -242,8 +243,8 @@ class DashboardNotifier extends _$DashboardNotifier {
         id: 'treatment_start',
         dateTime: activePlan.startDate,
         eventType: TimelineEventType.treatmentStart,
-        title: '치료 시작',
-        description: '${activePlan.initialDoseMg}mg 투여 시작',
+        titleMessageType: DashboardMessageType.timelineTreatmentStart,
+        doseMg: activePlan.initialDoseMg.toString(),
       ),
     );
 
@@ -258,8 +259,8 @@ class DashboardNotifier extends _$DashboardNotifier {
             id: 'escalation_${step.doseMg.toStringAsFixed(1)}',
             dateTime: escalationDate,
             eventType: TimelineEventType.escalation,
-            title: '용량 증량',
-            description: '${step.doseMg.toStringAsFixed(2)}mg로 증량',
+            titleMessageType: DashboardMessageType.timelineEscalation,
+            doseMg: step.doseMg.toStringAsFixed(2),
           ),
         );
       }
@@ -294,9 +295,9 @@ class DashboardNotifier extends _$DashboardNotifier {
                 id: 'milestone_${(milestone * 100).toInt()}',
                 dateTime: firstLogBelowMilestone.logDate,
                 eventType: TimelineEventType.weightMilestone,
-                title: '목표 진행도 ${(milestone * 100).toInt()}%',
-                description:
-                    '${firstLogBelowMilestone.weightKg.toStringAsFixed(1)}kg 달성',
+                titleMessageType: DashboardMessageType.timelineWeightMilestone,
+                milestonePercent: (milestone * 100).toInt(),
+                weightKg: firstLogBelowMilestone.weightKg.toStringAsFixed(1),
               ),
             );
           }
@@ -310,39 +311,55 @@ class DashboardNotifier extends _$DashboardNotifier {
     return events;
   }
 
-  String? _generateInsightMessage(
+  InsightMessageData? _generateInsightMessageData(
     int continuousRecordDays,
     double weightLossPercentage,
     dynamic weeklyProgress,
   ) {
     // 우선순위 1: 연속 기록일 달성
     if (continuousRecordDays >= 30) {
-      return '대단해요! 30일 연속 기록을 달성했어요. 이대로라면 건강한 습관이 완성될 거예요!';
+      return InsightMessageData(
+        type: DashboardMessageType.insight30DaysStreak,
+      );
     }
 
     if (continuousRecordDays >= 7) {
-      return '축하합니다! 연속 $continuousRecordDays일 기록을 달성했어요. 좋은 기록 유지하세요!';
+      return InsightMessageData(
+        type: DashboardMessageType.insightWeeklyStreak,
+        continuousRecordDays: continuousRecordDays,
+      );
     }
 
     // 우선순위 2: 체중 감량 진행
     if (weightLossPercentage >= 10.0) {
-      return '놀라운 진전이에요! 목표의 10%를 달성했습니다. 계속 응원할게요!';
+      return InsightMessageData(
+        type: DashboardMessageType.insightWeight10Percent,
+      );
     }
 
     if (weightLossPercentage >= 5.0) {
-      return '훌륭해요! 이미 목표의 5%에 도달했어요. 현재 추세라면 목표 달성 가능해요!';
+      return InsightMessageData(
+        type: DashboardMessageType.insightWeight5Percent,
+      );
     }
 
     if (weightLossPercentage >= 1.0) {
-      return '좋은 시작이에요! 이미 첫 감량 목표를 달성했습니다. 계속 유지하세요!';
+      return InsightMessageData(
+        type: DashboardMessageType.insightWeight1Percent,
+      );
     }
 
     // 우선순위 3: 기본 격려 메시지
     if (continuousRecordDays > 0) {
-      return '$continuousRecordDays일 동안 꾸준히 기록해주셨어요. 오늘도 계속해주세요!';
+      return InsightMessageData(
+        type: DashboardMessageType.insightKeepRecording,
+        continuousRecordDays: continuousRecordDays,
+      );
     }
 
-    return '오늘도 함께 목표를 향해 나아가요! 첫 기록을 해보세요.';
+    return InsightMessageData(
+      type: DashboardMessageType.insightFirstRecord,
+    );
   }
 }
 

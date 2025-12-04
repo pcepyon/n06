@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/features/daily_checkin/presentation/constants/questions.dart';
 import 'package:n06/features/daily_checkin/presentation/widgets/answer_button.dart';
@@ -25,7 +26,7 @@ class DerivedQuestionSheet extends StatelessWidget {
     if (derivedQuestion == null) {
       return Container(
         padding: const EdgeInsets.all(24),
-        child: const Text('질문을 찾을 수 없습니다'),
+        child: Text(context.l10n.checkin_error_questionNotFound),
       );
     }
 
@@ -50,8 +51,8 @@ class DerivedQuestionSheet extends StatelessWidget {
           const SizedBox(height: 24),
           // 질문 카드
           QuestionCard(
-            emoji: derivedQuestion.emoji,
-            question: derivedQuestion.question,
+            emoji: derivedQuestion.getEmoji(context.l10n),
+            question: derivedQuestion.getQuestion(context.l10n),
           ),
           const SizedBox(height: 32),
           // 답변 버튼들
@@ -61,8 +62,8 @@ class DerivedQuestionSheet extends StatelessWidget {
             alignment: WrapAlignment.center,
             children: derivedQuestion.options.map((option) {
               return AnswerButton(
-                emoji: option.emoji,
-                text: option.text,
+                emoji: option.getEmoji(context.l10n),
+                text: option.getText(context.l10n),
                 isSelected: false,
                 isPositive: false,
                 onTap: () {
@@ -96,8 +97,8 @@ class DerivedQuestionSheet extends StatelessWidget {
         return DerivedQuestions.upperPainSeverity;
       case 'Q3-3-radiation':
         return DerivedQuestions.radiationToBack;
-      case 'Q3-3-duration':
-        return DerivedQuestions.painDuration;
+      // case 'Q3-3-duration': // Commented out - no ARB keys
+      //   return DerivedQuestions.painDuration;
       case 'Q3-4':
         return DerivedQuestions.rightUpperPainSeverity;
       case 'Q3-4-fever':
@@ -116,10 +117,10 @@ class DerivedQuestionSheet extends StatelessWidget {
         return DerivedQuestions.hypoglycemiaCheck;
       case 'Q5-2-tremor':
         return DerivedQuestions.tremorCheck;
-      case 'Q5-2-meds':
-        return DerivedQuestions.diabetesMedsCheck;
-      case 'Q5-3':
-        return DerivedQuestions.renalCheck;
+      // case 'Q5-2-meds': // Commented out - no ARB keys
+      //   return DerivedQuestions.diabetesMedsCheck;
+      // case 'Q5-3': // Commented out - no ARB keys
+      //   return DerivedQuestions.renalCheck;
       case 'Q5-3-urine':
         return DerivedQuestions.urineOutputCheck;
       case 'Q5-3-weight':

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:n06/features/dashboard/domain/entities/dashboard_data.dart';
+import 'package:n06/features/dashboard/domain/entities/dashboard_message_type.dart';
 import 'package:n06/features/dashboard/domain/entities/weekly_progress.dart';
 import 'package:n06/features/dashboard/domain/entities/next_schedule.dart';
 import 'package:n06/features/dashboard/domain/entities/weekly_summary.dart';
@@ -32,6 +33,11 @@ void main() {
       adherencePercentage: 100.0,
     );
 
+    final insightData = InsightMessageData(
+      type: DashboardMessageType.insightKeepRecording,
+      continuousRecordDays: 5,
+    );
+
     final dashboardData = DashboardData(
       userName: 'John Doe',
       continuousRecordDays: 5,
@@ -41,7 +47,7 @@ void main() {
       weeklySummary: weeklySummary,
       badges: [],
       timeline: [],
-      insightMessage: '현재 추세라면 2개월 내 목표 달성 가능해요',
+      insightMessageData: insightData,
     );
 
     test('should create valid DashboardData instance', () {
@@ -53,7 +59,7 @@ void main() {
       expect(dashboardData.weeklySummary, weeklySummary);
       expect(dashboardData.badges, []);
       expect(dashboardData.timeline, []);
-      expect(dashboardData.insightMessage, '현재 추세라면 2개월 내 목표 달성 가능해요');
+      expect(dashboardData.insightMessageData, insightData);
     });
 
     test('should support equality comparison', () {
@@ -66,7 +72,7 @@ void main() {
         weeklySummary: weeklySummary,
         badges: [],
         timeline: [],
-        insightMessage: '현재 추세라면 2개월 내 목표 달성 가능해요',
+        insightMessageData: insightData,
       );
 
       expect(dashboardData, dashboardData2);
@@ -82,7 +88,7 @@ void main() {
         weeklySummary: weeklySummary,
         badges: [],
         timeline: [],
-        insightMessage: null,
+        insightMessageData: null,
       );
 
       expect(dashboardData, isNot(dashboardData2));

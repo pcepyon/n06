@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/authentication/domain/exceptions/auth_exceptions.dart';
 import 'package:n06/features/authentication/presentation/widgets/auth_hero_section.dart';
@@ -108,8 +109,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('로그인에 실패했습니다. 다시 시도해주세요.'),
+            SnackBar(
+              content: Text(context.l10n.auth_login_error_failed),
               backgroundColor: Colors.red,
             ),
           );
@@ -130,8 +131,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('로그인 정보를 가져올 수 없습니다.'),
+            SnackBar(
+              content: Text(context.l10n.auth_login_error_userInfoFailed),
               backgroundColor: Colors.red,
             ),
           );
@@ -171,8 +172,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('로그인이 취소되었습니다. 다시 시도해주세요.'),
+          SnackBar(
+            content: Text(context.l10n.auth_login_error_cancelled),
             backgroundColor: Colors.orange,
           ),
         );
@@ -190,10 +191,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('네트워크 연결을 확인해주세요.'),
+            content: Text(context.l10n.auth_login_error_networkWithRetry),
             backgroundColor: Colors.red,
             action: SnackBarAction(
-              label: '재시도',
+              label: context.l10n.auth_login_error_retryButton,
               textColor: Colors.white,
               onPressed: () => _handleKakaoLogin(),
             ),
@@ -213,7 +214,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('로그인 중 오류가 발생했습니다: $e'),
+            content: Text(context.l10n.auth_login_error_unknown(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -274,8 +275,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('로그인에 실패했습니다. 다시 시도해주세요.'),
+            SnackBar(
+              content: Text(context.l10n.auth_login_error_failed),
               backgroundColor: Colors.red,
             ),
           );
@@ -296,8 +297,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('로그인 정보를 가져올 수 없습니다.'),
+            SnackBar(
+              content: Text(context.l10n.auth_login_error_userInfoFailed),
               backgroundColor: Colors.red,
             ),
           );
@@ -328,8 +329,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } on OAuthCancelledException {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('로그인이 취소되었습니다. 다시 시도해주세요.'),
+          SnackBar(
+            content: Text(context.l10n.auth_login_error_cancelled),
             backgroundColor: Colors.orange,
           ),
         );
@@ -338,10 +339,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('네트워크 연결을 확인해주세요.'),
+            content: Text(context.l10n.auth_login_error_networkWithRetry),
             backgroundColor: Colors.red,
             action: SnackBarAction(
-              label: '재시도',
+              label: context.l10n.auth_login_error_retryButton,
               textColor: Colors.white,
               onPressed: () => _handleNaverLogin(),
             ),
@@ -352,7 +353,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('로그인 중 오류가 발생했습니다: $e'),
+            content: Text(context.l10n.auth_login_error_unknown(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -378,9 +379,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // 1. Hero Section with Gabium branding
-                const AuthHeroSection(
-                  title: '가비움',
-                  subtitle: 'GLP-1 치료를 체계적으로 관리하세요',
+                Builder(
+                  builder: (context) => AuthHeroSection(
+                    title: context.l10n.auth_login_heroTitle,
+                    subtitle: context.l10n.auth_login_heroSubtitle,
+                  ),
                 ),
                 const SizedBox(height: 24),
 
@@ -404,28 +407,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      ConsentCheckbox(
-                        key: const Key('terms_checkbox'),
-                        label: '이용약관에 동의합니다',
-                        isRequired: true,
-                        value: _agreedToTerms,
-                        onChanged: _isLoading
-                            ? (val) {}
-                            : (val) {
-                                setState(() => _agreedToTerms = val);
-                              },
+                      Builder(
+                        builder: (context) => ConsentCheckbox(
+                          key: const Key('terms_checkbox'),
+                          label: context.l10n.auth_login_consentTerms,
+                          isRequired: true,
+                          value: _agreedToTerms,
+                          onChanged: _isLoading
+                              ? (val) {}
+                              : (val) {
+                                  setState(() => _agreedToTerms = val);
+                                },
+                        ),
                       ),
                       const SizedBox(height: 16),
-                      ConsentCheckbox(
-                        key: const Key('privacy_checkbox'),
-                        label: '개인정보처리방침에 동의합니다',
-                        isRequired: true,
-                        value: _agreedToPrivacy,
-                        onChanged: _isLoading
-                            ? (val) {}
-                            : (val) {
-                                setState(() => _agreedToPrivacy = val);
-                              },
+                      Builder(
+                        builder: (context) => ConsentCheckbox(
+                          key: const Key('privacy_checkbox'),
+                          label: context.l10n.auth_login_consentPrivacy,
+                          isRequired: true,
+                          value: _agreedToPrivacy,
+                          onChanged: _isLoading
+                              ? (val) {}
+                              : (val) {
+                                  setState(() => _agreedToPrivacy = val);
+                                },
+                        ),
                       ),
                     ],
                   ),
@@ -453,10 +460,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            '소셜 로그인하려면 약관에 모두 동의해주세요',
-                            style: AppTypography.bodyLarge.copyWith(
-                              color: AppColors.warning,
+                          child: Builder(
+                            builder: (context) => Text(
+                              context.l10n.auth_login_consentRequired,
+                              style: AppTypography.bodyLarge.copyWith(
+                                color: AppColors.warning,
+                              ),
                             ),
                           ),
                         ),
@@ -466,24 +475,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 16),
 
                 // 4. Social Login Buttons
-                SocialLoginButton(
-                  key: const Key('kakao_login_button'),
-                  label: '카카오 로그인',
-                  icon: Icons.chat_bubble,
-                  backgroundColor: const Color(0xFFFEE500),
-                  foregroundColor: Colors.black87,
-                  isLoading: _isLoading,
-                  onPressed: _canLogin ? _handleKakaoLogin : null,
+                Builder(
+                  builder: (context) => SocialLoginButton(
+                    key: const Key('kakao_login_button'),
+                    label: context.l10n.auth_login_kakaoButton,
+                    icon: Icons.chat_bubble,
+                    backgroundColor: const Color(0xFFFEE500),
+                    foregroundColor: Colors.black87,
+                    isLoading: _isLoading,
+                    onPressed: _canLogin ? _handleKakaoLogin : null,
+                  ),
                 ),
                 const SizedBox(height: 8),
-                SocialLoginButton(
-                  key: const Key('naver_login_button'),
-                  label: '네이버 로그인',
-                  icon: Icons.language,
-                  backgroundColor: const Color(0xFF03C75A),
-                  foregroundColor: Colors.white,
-                  isLoading: _isLoading,
-                  onPressed: _canLogin ? _handleNaverLogin : null,
+                Builder(
+                  builder: (context) => SocialLoginButton(
+                    key: const Key('naver_login_button'),
+                    label: context.l10n.auth_login_naverButton,
+                    icon: Icons.language,
+                    backgroundColor: const Color(0xFF03C75A),
+                    foregroundColor: Colors.white,
+                    isLoading: _isLoading,
+                    onPressed: _canLogin ? _handleNaverLogin : null,
+                  ),
                 ),
 
                 const SizedBox(height: 24),
@@ -499,9 +512,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        '또는',
-                        style: AppTypography.bodySmall,
+                      child: Builder(
+                        builder: (context) => Text(
+                          context.l10n.auth_login_divider,
+                          style: AppTypography.bodySmall,
+                        ),
                       ),
                     ),
                     Expanded(
@@ -515,43 +530,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 20),
 
                 // 6. Email Section Label
-                Text(
-                  '다른 계정으로 계속하기',
-                  style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.neutral700,
+                Builder(
+                  builder: (context) => Text(
+                    context.l10n.auth_login_otherOptions,
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.neutral700,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
 
                 // Email Login Button
-                OutlinedButton.icon(
-                  key: const Key('email_login_button'),
-                  onPressed: () => context.go('/email-signin'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  icon: const Icon(Icons.email_outlined),
-                  label: Text(
-                    '이메일로 로그인',
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.primary,
+                Builder(
+                  builder: (context) => OutlinedButton.icon(
+                    key: const Key('email_login_button'),
+                    onPressed: () => context.go('/email-signin'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    icon: const Icon(Icons.email_outlined),
+                    label: Text(
+                      context.l10n.auth_login_emailButton,
+                      style: AppTypography.labelLarge.copyWith(
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 8),
 
                 // Email Signup Button (consistent with login)
-                OutlinedButton.icon(
-                  key: const Key('email_signup_link'),
-                  onPressed: () => context.go('/email-signup'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  icon: const Icon(Icons.person_add_outlined),
-                  label: Text(
-                    '이메일로 회원가입',
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.primary,
+                Builder(
+                  builder: (context) => OutlinedButton.icon(
+                    key: const Key('email_signup_link'),
+                    onPressed: () => context.go('/email-signup'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    icon: const Icon(Icons.person_add_outlined),
+                    label: Text(
+                      context.l10n.auth_login_emailSignupButton,
+                      style: AppTypography.labelLarge.copyWith(
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                 ),

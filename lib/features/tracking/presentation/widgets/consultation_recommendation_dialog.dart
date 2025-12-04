@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// F005: 전문가 상담 권장 다이얼로그
 ///
@@ -21,6 +22,8 @@ class ConsultationRecommendationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Dialog(
       backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
@@ -48,7 +51,7 @@ class ConsultationRecommendationDialog extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      '전문가와 상담이 필요합니다',
+                      l10n.tracking_consultation_title,
                       style: AppTypography.heading1.copyWith(
                         color: AppColors.textPrimary,
                       ),
@@ -74,7 +77,7 @@ class ConsultationRecommendationDialog extends StatelessWidget {
                 children: [
                   // Label
                   Text(
-                    '선택하신 증상:',
+                    l10n.tracking_consultation_selectedSymptoms,
                     style: AppTypography.heading3.copyWith(
                       color: AppColors.textPrimary,
                     ),
@@ -134,8 +137,7 @@ class ConsultationRecommendationDialog extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            '선택하신 증상으로 보아 전문가의 상담이 필요해 보입니다. '
-                            '가능한 한 빨리 의료진에게 연락하시기 바랍니다.',
+                            l10n.tracking_consultation_message,
                             style: AppTypography.labelMedium.copyWith(
                               color: AppColors.textSecondary,
                               height: 1.5,
@@ -161,7 +163,7 @@ class ConsultationRecommendationDialog extends StatelessWidget {
                 ),
               ),
               child: GabiumButton(
-                text: '확인',
+                text: l10n.common_button_confirm,
                 onPressed: () => Navigator.of(context).pop(),
                 variant: GabiumButtonVariant.danger,
                 size: GabiumButtonSize.medium,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 class InjectionSiteSelectorV2 extends ConsumerStatefulWidget {
   final String? initialSite;
@@ -55,23 +56,25 @@ class _InjectionSiteSelectorV2State extends ConsumerState<InjectionSiteSelectorV
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '주사 부위 선택',
+          l10n.tracking_siteSelector_title,
           style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 12),
 
         // 복부 4분할
         _buildSiteGroup(
-          '복부 (4개 부위)',
+          l10n.tracking_siteSelector_abdomen,
           [
-            ('abdomen_upper_left', '좌측 상단'),
-            ('abdomen_upper_right', '우측 상단'),
-            ('abdomen_lower_left', '좌측 하단'),
-            ('abdomen_lower_right', '우측 하단'),
+            ('abdomen_upper_left', l10n.tracking_siteSelector_abdomenUpperLeft),
+            ('abdomen_upper_right', l10n.tracking_siteSelector_abdomenUpperRight),
+            ('abdomen_lower_left', l10n.tracking_siteSelector_abdomenLowerLeft),
+            ('abdomen_lower_right', l10n.tracking_siteSelector_abdomenLowerRight),
           ],
         ),
 
@@ -79,10 +82,10 @@ class _InjectionSiteSelectorV2State extends ConsumerState<InjectionSiteSelectorV
 
         // 허벅지
         _buildSiteGroup(
-          '허벅지 (좌/우)',
+          l10n.tracking_siteSelector_thigh,
           [
-            ('thigh_left', '좌측'),
-            ('thigh_right', '우측'),
+            ('thigh_left', l10n.tracking_siteSelector_left),
+            ('thigh_right', l10n.tracking_siteSelector_right),
           ],
         ),
 
@@ -90,10 +93,10 @@ class _InjectionSiteSelectorV2State extends ConsumerState<InjectionSiteSelectorV
 
         // 상완
         _buildSiteGroup(
-          '상완 (좌/우)',
+          l10n.tracking_siteSelector_arm,
           [
-            ('arm_left', '좌측'),
-            ('arm_right', '우측'),
+            ('arm_left', l10n.tracking_siteSelector_left),
+            ('arm_right', l10n.tracking_siteSelector_right),
           ],
         ),
 
@@ -117,8 +120,7 @@ class _InjectionSiteSelectorV2State extends ConsumerState<InjectionSiteSelectorV
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '이 부위는 ${_getDaysAgo(selectedSite!)}일 전에 사용했습니다. '
-                    '1주 이상 간격을 권장합니다.',
+                    l10n.tracking_siteSelector_rotationWarning(_getDaysAgo(selectedSite!)),
                     style: AppTypography.bodySmall.copyWith(
                       color: AppColors.warning,
                     ),
@@ -193,7 +195,7 @@ class _InjectionSiteSelectorV2State extends ConsumerState<InjectionSiteSelectorV
           ),
           if (daysAgo < 999)
             Text(
-              '$daysAgo일 전',
+              context.l10n.tracking_siteSelector_daysAgo(daysAgo),
               style: AppTypography.caption.copyWith(
                 color: AppColors.textTertiary,
               ),

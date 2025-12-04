@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 계정 삭제 확인 다이얼로그
 ///
@@ -51,7 +52,7 @@ class _DeleteAccountConfirmDialogState
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    '계정 삭제',
+                    context.l10n.common_dialog_deleteAccountTitle,
                     style: AppTypography.heading2.copyWith(
                       color: AppColors.error,
                     ),
@@ -69,7 +70,7 @@ class _DeleteAccountConfirmDialogState
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                '계정을 삭제하면 복구할 수 없습니다.',
+                context.l10n.common_dialog_deleteAccountWarning,
                 style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.error,
                   fontWeight: FontWeight.w600,
@@ -80,7 +81,7 @@ class _DeleteAccountConfirmDialogState
 
             // 삭제되는 데이터 목록
             Text(
-              '다음 데이터가 영구적으로 삭제됩니다:',
+              context.l10n.common_dialog_deleteAccountDataList,
               style: AppTypography.bodyMedium.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -112,7 +113,7 @@ class _DeleteAccountConfirmDialogState
                     ),
                     Expanded(
                       child: Text(
-                        '위 내용을 확인했으며, 계정 삭제에 동의합니다.',
+                        context.l10n.common_dialog_deleteAccountConfirmCheckbox,
                         style: AppTypography.bodySmall,
                       ),
                     ),
@@ -136,7 +137,7 @@ class _DeleteAccountConfirmDialogState
                       side: BorderSide(color: AppColors.neutral400),
                     ),
                     child: Text(
-                      '취소',
+                      context.l10n.common_button_cancel,
                       style: AppTypography.labelLarge.copyWith(
                         color: AppColors.neutral600,
                       ),
@@ -159,7 +160,7 @@ class _DeleteAccountConfirmDialogState
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     child: Text(
-                      '삭제',
+                      context.l10n.common_button_delete,
                       style: AppTypography.labelLarge.copyWith(
                         color: _isConfirmed
                             ? Colors.white
@@ -177,38 +178,42 @@ class _DeleteAccountConfirmDialogState
   }
 
   Widget _buildDataList() {
-    final dataItems = [
-      '프로필 및 목표 정보',
-      '체중 기록',
-      '투여 기록 및 계획',
-      '데일리 체크인 기록',
-      '획득한 뱃지',
-      '알림 설정',
-    ];
+    return Builder(
+      builder: (context) {
+        final dataItems = [
+          context.l10n.common_dialog_deleteAccountDataProfile,
+          context.l10n.common_dialog_deleteAccountDataWeight,
+          context.l10n.common_dialog_deleteAccountDataDose,
+          context.l10n.common_dialog_deleteAccountDataCheckin,
+          context.l10n.common_dialog_deleteAccountDataBadges,
+          context.l10n.common_dialog_deleteAccountDataNotifications,
+        ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: dataItems.map((item) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2.0),
-          child: Row(
-            children: [
-              Icon(
-                Icons.remove,
-                size: 16,
-                color: AppColors.neutral500,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: dataItems.map((item) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2.0),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.remove,
+                    size: 16,
+                    color: AppColors.neutral500,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    item,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.neutral600,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Text(
-                item,
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.neutral600,
-                ),
-              ),
-            ],
-          ),
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
 }

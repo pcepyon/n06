@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
@@ -10,7 +11,7 @@ class OnboardingPageTemplate extends StatelessWidget {
   final Widget content;
   final Widget? bottomWidget;
   final VoidCallback? onNext;
-  final String nextButtonText;
+  final String? nextButtonText;
   final bool isNextEnabled;
   final bool showSkip;
   final VoidCallback? onSkip;
@@ -22,7 +23,7 @@ class OnboardingPageTemplate extends StatelessWidget {
     required this.content,
     this.bottomWidget,
     this.onNext,
-    this.nextButtonText = '다음',
+    this.nextButtonText,
     this.isNextEnabled = true,
     this.showSkip = false,
     this.onSkip,
@@ -46,7 +47,7 @@ class OnboardingPageTemplate extends StatelessWidget {
                     onSkip?.call();
                   },
                   child: Text(
-                    '건너뛰기',
+                    context.l10n.onboarding_common_skipButton,
                     style: AppTypography.bodySmall.copyWith(
                       color: AppColors.textTertiary,
                     ),
@@ -92,7 +93,7 @@ class OnboardingPageTemplate extends StatelessWidget {
             // Next button
             if (onNext != null) ...[
               GabiumButton(
-                text: nextButtonText,
+                text: nextButtonText ?? context.l10n.onboarding_common_nextButton,
                 onPressed: isNextEnabled
                     ? () {
                         HapticFeedback.lightImpact();

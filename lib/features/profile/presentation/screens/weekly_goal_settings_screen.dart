@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
 import 'package:n06/features/profile/presentation/widgets/weekly_goal_input_widget.dart';
 
@@ -39,12 +40,12 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
     if (_weightGoal == 0 || _symptomGoal == 0) {
       final confirm = await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('목표 0 설정'),
-          content: const Text('목표를 0으로 설정하시겠습니까?'),
+        builder: (dialogContext) => AlertDialog(
+          title: Text(context.l10n.weeklyGoal_dialog_zeroGoal_title),
+          content: Text(context.l10n.weeklyGoal_dialog_zeroGoal_message),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('취소')),
-            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('확인')),
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(context.l10n.common_button_cancel)),
+            TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(context.l10n.common_button_confirm)),
           ],
         ),
       );
@@ -58,12 +59,12 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('주간 목표가 저장되었습니다'),
-            backgroundColor: Color(0xFF10B981), // Success color
+          SnackBar(
+            content: Text(context.l10n.weeklyGoal_toast_success),
+            backgroundColor: const Color(0xFF10B981), // Success color
             behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.all(16.0),
-            duration: Duration(seconds: 3),
+            margin: const EdgeInsets.all(16.0),
+            duration: const Duration(seconds: 3),
           ),
         );
         Navigator.pop(context);
@@ -73,7 +74,7 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('저장 중 오류가 발생했습니다: $e'),
+            content: Text(context.l10n.weeklyGoal_toast_saveFailed(e.toString())),
             backgroundColor: const Color(0xFFEF4444), // Error color
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16.0),
@@ -89,7 +90,7 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
     final profileState = ref.watch(profileNotifierProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('주간 기록 목표 조정'), elevation: 0),
+      appBar: AppBar(title: Text(context.l10n.weeklyGoal_screen_title), elevation: 0),
       body: profileState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _buildErrorState(error),
@@ -139,10 +140,10 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
                     ),
                   ),
                   const SizedBox(width: 12.0),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      '주간 목표를 설정하여 기록 달성을 추적하세요.\n투여 목표는 계획된 스케줄로부터 자동 계산됩니다.',
-                      style: TextStyle(
+                      context.l10n.weeklyGoal_info_message,
+                      style: const TextStyle(
                         fontSize: 16.0,
                         fontWeight: FontWeight.w400,
                         color: Color(0xFF334155), // Neutral-700
@@ -157,7 +158,7 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
 
             // Weight record goal section
             Text(
-              '주간 체중 기록 목표',
+              context.l10n.weeklyGoal_weightRecord_title,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontSize: 20.0,
                     fontWeight: FontWeight.w600,
@@ -166,13 +167,13 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
             ),
             const SizedBox(height: 8.0),
             WeeklyGoalInputWidget(
-              label: '주간 체중 기록 횟수 (0~7회)',
+              label: context.l10n.weeklyGoal_weightRecord_label,
               initialValue: _weightGoal,
               onChanged: (value) => setState(() => _weightGoal = value),
             ),
             const SizedBox(height: 20.0),
             Text(
-              '$_weightGoal회 / 주',
+              context.l10n.weeklyGoal_weightRecord_display(_weightGoal),
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: const Color(0xFF64748B), // Neutral-500
                   ),
@@ -181,7 +182,7 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
 
             // Symptom record goal section
             Text(
-              '주간 부작용 기록 목표',
+              context.l10n.weeklyGoal_symptomRecord_title,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontSize: 20.0,
                     fontWeight: FontWeight.w600,
@@ -190,13 +191,13 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
             ),
             const SizedBox(height: 8.0),
             WeeklyGoalInputWidget(
-              label: '주간 부작용 기록 횟수 (0~7회)',
+              label: context.l10n.weeklyGoal_symptomRecord_label,
               initialValue: _symptomGoal,
               onChanged: (value) => setState(() => _symptomGoal = value),
             ),
             const SizedBox(height: 20.0),
             Text(
-              '$_symptomGoal회 / 주',
+              context.l10n.weeklyGoal_symptomRecord_display(_symptomGoal),
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: const Color(0xFF64748B), // Neutral-500
                   ),
@@ -224,7 +225,7 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '투여 목표 (읽기 전용)',
+                    context.l10n.weeklyGoal_doseGoal_title,
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
                           fontSize: 14.0,
                           fontWeight: FontWeight.w500,
@@ -233,7 +234,7 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
                   ),
                   const SizedBox(height: 8.0),
                   Text(
-                    '투여 목표는 현재 투여 스케줄에 따라 자동으로 계산됩니다.',
+                    context.l10n.weeklyGoal_doseGoal_message,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontSize: 14.0,
                           fontWeight: FontWeight.w400,
@@ -276,9 +277,9 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
                           ),
                         ),
                       )
-                    : const Text(
-                        '저장',
-                        style: TextStyle(
+                    : Text(
+                        context.l10n.common_button_save,
+                        style: const TextStyle(
                           fontSize: 16.0,
                           fontWeight: FontWeight.w600,
                         ),
@@ -300,13 +301,13 @@ class _WeeklyGoalSettingsScreenState extends ConsumerState<WeeklyGoalSettingsScr
           children: [
             Icon(Icons.error_outline, size: 60, color: Colors.red[300]),
             const SizedBox(height: 16),
-            const Text('프로필 정보를 불러올 수 없습니다'),
+            Text(context.l10n.common_error_profileLoadFailed),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
                 ref.invalidate(profileNotifierProvider);
               },
-              child: const Text('다시 시도'),
+              child: Text(context.l10n.common_button_retry),
             ),
           ],
         ),

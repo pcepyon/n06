@@ -6,6 +6,7 @@ import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 2주 이상 투여 공백 시 스케줄 재시작 안내 다이얼로그
 class RestartScheduleDialog extends ConsumerStatefulWidget {
@@ -24,8 +25,17 @@ class RestartScheduleDialog extends ConsumerStatefulWidget {
 }
 
 class _RestartScheduleDialogState extends ConsumerState<RestartScheduleDialog> {
-  String _getWeekday(DateTime date) {
-    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+  String _getWeekday(BuildContext context, DateTime date) {
+    final l10n = context.l10n;
+    final weekdays = [
+      l10n.tracking_weekday_mon,
+      l10n.tracking_weekday_tue,
+      l10n.tracking_weekday_wed,
+      l10n.tracking_weekday_thu,
+      l10n.tracking_weekday_fri,
+      l10n.tracking_weekday_sat,
+      l10n.tracking_weekday_sun,
+    ];
     return weekdays[date.weekday - 1];
   }
 
@@ -37,6 +47,7 @@ class _RestartScheduleDialogState extends ConsumerState<RestartScheduleDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final lastRecord = widget.lastRecord;
     final skippedCount = widget.skippedSchedules.length;
 
@@ -69,7 +80,7 @@ class _RestartScheduleDialogState extends ConsumerState<RestartScheduleDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      '투여가 오랫동안 중단되었습니다',
+                      l10n.tracking_restart_title,
                       style: AppTypography.heading2.copyWith(
                         color: AppColors.textPrimary,
                       ),
@@ -82,19 +93,23 @@ class _RestartScheduleDialogState extends ConsumerState<RestartScheduleDialog> {
               // 마지막 투여 정보
               if (lastRecord != null) ...[
                 _buildInfoRow(
+                  context: context,
                   icon: Icons.medication,
-                  label: '마지막 투여',
-                  value:
-                      '${lastRecord.administeredAt.month}/${lastRecord.administeredAt.day} (${_getWeekday(lastRecord.administeredAt)}) - $_daysSinceLastDose일 전',
+                  label: l10n.tracking_restart_lastDose,
+                  value: l10n.tracking_restart_lastDoseValue(
+                    '${lastRecord.administeredAt.month}/${lastRecord.administeredAt.day} (${_getWeekday(context, lastRecord.administeredAt)})',
+                    _daysSinceLastDose,
+                  ),
                 ),
                 const SizedBox(height: 12),
               ],
 
               // 건너뛴 스케줄 수
               _buildInfoRow(
+                context: context,
                 icon: Icons.event_busy,
-                label: '건너뛴 스케줄',
-                value: '$skippedCount건',
+                label: l10n.tracking_restart_skippedSchedules,
+                value: l10n.tracking_restart_skippedCount(skippedCount),
               ),
               const SizedBox(height: 16),
 
@@ -123,7 +138,10 @@ class _RestartScheduleDialogState extends ConsumerState<RestartScheduleDialog> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                '${date.month}/${date.day} (${_getWeekday(date)}) - ${schedule.scheduledDoseMg}mg',
+                                l10n.tracking_restart_scheduleItem(
+                                  '${date.month}/${date.day} (${_getWeekday(context, date)})',
+                                  schedule.scheduledDoseMg,
+                                ),
                                 style: AppTypography.bodySmall.copyWith(
                                   color: AppColors.textSecondary,
                                 ),
@@ -136,7 +154,7 @@ class _RestartScheduleDialogState extends ConsumerState<RestartScheduleDialog> {
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
-                            '외 ${skippedCount - 5}건...',
+                            l10n.tracking_restart_moreSchedules(skippedCount - 5),
                             style: AppTypography.bodySmall.copyWith(
                               color: AppColors.textTertiary,
                             ),
@@ -170,7 +188,7 @@ class _RestartScheduleDialogState extends ConsumerState<RestartScheduleDialog> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '오랜 중단 후 재시작 시\n의료진과 상담하여 용량을 확인하세요',
+                        l10n.tracking_restart_consultAdvice,
                         style: AppTypography.bodySmall.copyWith(
                           color: AppColors.info,
                         ),
@@ -185,7 +203,7 @@ class _RestartScheduleDialogState extends ConsumerState<RestartScheduleDialog> {
               SizedBox(
                 width: double.infinity,
                 child: GabiumButton(
-                  text: '스케줄 재설정하기',
+                  text: l10n.tracking_restart_rescheduleButton,
                   onPressed: _handleRestart,
                   variant: GabiumButtonVariant.primary,
                   size: GabiumButtonSize.medium,
@@ -195,7 +213,7 @@ class _RestartScheduleDialogState extends ConsumerState<RestartScheduleDialog> {
               SizedBox(
                 width: double.infinity,
                 child: GabiumButton(
-                  text: '나중에 하기',
+                  text: l10n.tracking_restart_laterButton,
                   onPressed: () => Navigator.of(context).pop(),
                   variant: GabiumButtonVariant.secondary,
                   size: GabiumButtonSize.medium,
@@ -209,6 +227,7 @@ class _RestartScheduleDialogState extends ConsumerState<RestartScheduleDialog> {
   }
 
   Widget _buildInfoRow({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required String value,

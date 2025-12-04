@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/tracking/domain/entities/pattern_insight.dart';
@@ -54,7 +55,7 @@ class PatternInsightCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '패턴 발견',
+                  context.l10n.tracking_patternInsight_title,
                   style: AppTypography.heading3.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.neutral800,
@@ -126,7 +127,8 @@ class PatternInsightCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '신뢰도 ${(insight.confidence * 100).toStringAsFixed(0)}%',
+                  context.l10n.tracking_patternInsight_confidence(
+                      (insight.confidence * 100).toStringAsFixed(0)),
                   style: AppTypography.caption.copyWith(
                     color: AppColors.neutral500,
                   ),
@@ -151,7 +153,7 @@ class PatternInsightCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '더 알아보기',
+                      context.l10n.tracking_patternInsight_learnMore,
                       style: AppTypography.bodySmall.copyWith(
                         color: colors.accent,
                         fontWeight: FontWeight.w500,

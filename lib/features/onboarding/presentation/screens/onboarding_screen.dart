@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/journey_progress_indicator.dart';
 import 'package:n06/features/onboarding/application/notifiers/onboarding_notifier.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
@@ -171,7 +172,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isReviewMode ? '온보딩 다시 보기' : '온보딩'),
+        title: Text(widget.isReviewMode ? context.l10n.onboarding_screen_titleReview : context.l10n.onboarding_screen_title),
         elevation: 0,
         leading: _currentStep == 0
             ? (widget.isReviewMode

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/tracking/domain/entities/trend_insight.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 개별 질문 상세 차트 위젯
 ///
@@ -120,7 +121,7 @@ class _QuestionDetailChartState extends State<QuestionDetailChart> {
     if (dailyStatuses.isEmpty) {
       return Center(
         child: Text(
-          '데이터가 없습니다',
+          context.l10n.tracking_chart_noData,
           style: AppTypography.bodyMedium.copyWith(
             color: AppColors.neutral500,
           ),
@@ -138,16 +139,17 @@ class _QuestionDetailChartState extends State<QuestionDetailChart> {
   }
 
   Widget _buildChartLegend() {
+    final l10n = context.l10n;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildLegendItem(const Color(0xFF4CAF50), '좋음'),
+        _buildLegendItem(const Color(0xFF4CAF50), l10n.tracking_chart_legendGood),
         const SizedBox(width: 16),
-        _buildLegendItem(const Color(0xFFFFC107), '보통'),
+        _buildLegendItem(const Color(0xFFFFC107), l10n.tracking_chart_legendModerate),
         const SizedBox(width: 16),
-        _buildLegendItem(const Color(0xFFF44336), '나쁨'),
+        _buildLegendItem(const Color(0xFFF44336), l10n.tracking_chart_legendBad),
         const SizedBox(width: 16),
-        _buildLegendItem(AppColors.neutral300, '기록 없음'),
+        _buildLegendItem(AppColors.neutral300, l10n.tracking_chart_legendNoRecord),
       ],
     );
   }

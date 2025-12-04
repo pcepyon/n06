@@ -1,7 +1,7 @@
 import 'package:n06/features/daily_checkin/domain/entities/daily_checkin.dart';
 import 'package:n06/features/daily_checkin/domain/entities/weekly_report.dart';
 import 'package:n06/features/daily_checkin/domain/entities/symptom_detail.dart';
-import 'package:n06/features/daily_checkin/domain/entities/red_flag_detection.dart';
+import 'package:n06/features/daily_checkin/domain/entities/report_section_type.dart';
 import 'package:n06/features/daily_checkin/domain/repositories/daily_checkin_repository.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
@@ -129,16 +129,16 @@ class WeeklyReportGenerator {
     if (scores.isEmpty) {
       return const AppetiteSummary(
         averageScore: 3.0,
-        stability: 'stable',
+        stability: AppetiteStability.stable,
       );
     }
 
     final average = scores.reduce((a, b) => a + b) / scores.length;
 
     // 안정도 계산 (표준편차 기반)
-    String stability;
+    AppetiteStability stability;
     if (scores.length < 3) {
-      stability = 'stable';
+      stability = AppetiteStability.stable;
     } else {
       final firstHalf = scores.take(scores.length ~/ 2).toList();
       final secondHalf = scores.skip(scores.length ~/ 2).toList();
@@ -147,11 +147,11 @@ class WeeklyReportGenerator {
       final secondAvg = secondHalf.reduce((a, b) => a + b) / secondHalf.length;
 
       if (secondAvg - firstAvg > 0.5) {
-        stability = 'improving';
+        stability = AppetiteStability.improving;
       } else if (firstAvg - secondAvg > 0.5) {
-        stability = 'declining';
+        stability = AppetiteStability.declining;
       } else {
-        stability = 'stable';
+        stability = AppetiteStability.stable;
       }
     }
 
@@ -221,7 +221,7 @@ class WeeklyReportGenerator {
 
     return symptomMap.entries.map((entry) {
       return SymptomOccurrence(
-        symptomName: _symptomTypeToKorean(entry.key),
+        type: entry.key, // Use enum directly
         daysOccurred: entry.value['count'] ?? 0,
         severityCounts: {
           'mild': entry.value['mild'] ?? 0,
@@ -240,8 +240,8 @@ class WeeklyReportGenerator {
         .map((c) {
           return RedFlagRecord(
             date: c.checkinDate,
-            type: _redFlagTypeToKorean(c.redFlagDetected!.type),
-            summary: _summarizeRedFlag(c.redFlagDetected!),
+            type: c.redFlagDetected!.type, // Use enum directly
+            symptoms: c.redFlagDetected!.symptoms, // Use data directly
             userAction: c.redFlagDetected!.userAction,
           );
         })
@@ -261,24 +261,15 @@ class WeeklyReportGenerator {
     }
 
     final conditions = <DailyCondition>[];
-    final dayNames = ['월', '화', '수', '목', '금', '토', '일'];
 
     var current = periodStart;
     while (!current.isAfter(periodEnd)) {
       final key = '${current.year}-${current.month}-${current.day}';
       final checkin = checkinMap[key];
 
-      String emoji;
-      if (checkin == null) {
-        emoji = '--';
-      } else {
-        emoji = _moodToEmoji(checkin.mood);
-      }
-
       conditions.add(DailyCondition(
         date: current,
-        dayOfWeek: dayNames[current.weekday - 1],
-        emoji: emoji,
+        mood: checkin?.mood, // Use enum directly, null if no checkin
         hasCheckin: checkin != null,
       ));
 
@@ -289,136 +280,15 @@ class WeeklyReportGenerator {
   }
 
   /// 텍스트 형식 리포트 생성
+  ///
+  /// DEPRECATED: 이 메서드는 Presentation Layer로 이동될 예정입니다.
+  /// 하드코딩된 문자열이 포함되어 있어 i18n을 지원하지 않습니다.
+  /// TODO: Presentation layer에 i18n 지원 버전 생성 후 제거
+  @Deprecated('Use presentation layer text report formatter with i18n')
   String generateTextReport(WeeklyReport report) {
-    final buffer = StringBuffer();
-
-    // 헤더
-    buffer.writeln('╔════════════════════════════════════════════════════════════╗');
-    buffer.writeln('║                   GLP-1 치료 주간 리포트                      ║');
-
-    // 환자 정보 라인
-    final patientInfo = [
-      if (report.userName != null) '환자: ${report.userName}',
-      if (report.medicationName != null) '약제: ${report.medicationName}',
-      '기간: ${_formatDate(report.periodStart)}-${_formatDate(report.periodEnd)}',
-    ].join(' | ');
-    buffer.writeln('║  $patientInfo');
-
-    buffer.writeln('╠════════════════════════════════════════════════════════════╣');
-
-    // 주요 지표
-    buffer.writeln('║  ▶ 주요 지표                                                ║');
-
-    if (report.weightSummary != null) {
-      final ws = report.weightSummary!;
-      buffer.writeln('║    체중: ${ws.startWeight.toStringAsFixed(1)} → ${ws.endWeight.toStringAsFixed(1)}kg (${ws.changeString})');
-    }
-
-    buffer.writeln('║    식욕: 평균 ${report.appetiteSummary.averageScore}/5, ${report.appetiteSummary.stabilityKorean}');
-    buffer.writeln('║    체크인: ${report.checkinAchievement.checkinDays}/${report.checkinAchievement.totalDays}일 (${report.checkinAchievement.percentage}%)');
-
-    // 증상 발생 현황
-    if (report.symptomOccurrences.isNotEmpty) {
-      buffer.writeln('╠════════════════════════════════════════════════════════════╣');
-      buffer.writeln('║  ▶ 증상 발생 현황                                           ║');
-
-      for (final symptom in report.symptomOccurrences.take(5)) {
-        buffer.writeln('║    ${symptom.symptomName} ${symptom.daysOccurred}일 ${symptom.severitySummary}');
-      }
-    }
-
-    // Red Flag 기록
-    if (report.redFlagRecords.isNotEmpty) {
-      buffer.writeln('╠════════════════════════════════════════════════════════════╣');
-      buffer.writeln('║  ▶ 주의 필요 기록                                           ║');
-
-      for (final flag in report.redFlagRecords) {
-        buffer.writeln('║    ${_formatDate(flag.date)}: ${flag.summary}');
-      }
-    }
-
-    // 컨디션 추이
-    buffer.writeln('╠════════════════════════════════════════════════════════════╣');
-    buffer.writeln('║  ▶ 컨디션 추이                                              ║');
-
-    final emojis = report.dailyConditions.map((c) => c.emoji).join('');
-    buffer.writeln('║    $emojis');
-
-    final days = report.dailyConditions.map((c) => c.dayOfWeek).join(' ');
-    buffer.writeln('║    $days');
-
-    buffer.writeln('╚════════════════════════════════════════════════════════════╝');
-
-    return buffer.toString();
-  }
-
-  // === Helper Methods ===
-
-  String _formatDate(DateTime date) {
-    return '${date.month}.${date.day}';
-  }
-
-  String _symptomTypeToKorean(SymptomType type) {
-    switch (type) {
-      case SymptomType.nausea:
-        return '메스꺼움';
-      case SymptomType.vomiting:
-        return '구토';
-      case SymptomType.lowAppetite:
-        return '식욕 감소';
-      case SymptomType.earlySatiety:
-        return '조기 포만감';
-      case SymptomType.heartburn:
-        return '속쓰림';
-      case SymptomType.abdominalPain:
-        return '복통';
-      case SymptomType.bloating:
-        return '복부 팽만';
-      case SymptomType.constipation:
-        return '변비';
-      case SymptomType.diarrhea:
-        return '설사';
-      case SymptomType.fatigue:
-        return '피로';
-      case SymptomType.dizziness:
-        return '어지러움';
-      case SymptomType.coldSweat:
-        return '식은땀';
-      case SymptomType.swelling:
-        return '부종';
-    }
-  }
-
-  String _redFlagTypeToKorean(RedFlagType type) {
-    switch (type) {
-      case RedFlagType.pancreatitis:
-        return '췌장 확인 필요';
-      case RedFlagType.cholecystitis:
-        return '담낭 확인 필요';
-      case RedFlagType.severeDehydration:
-        return '탈수 주의';
-      case RedFlagType.bowelObstruction:
-        return '장 기능 확인 필요';
-      case RedFlagType.hypoglycemia:
-        return '저혈당 의심';
-      case RedFlagType.renalImpairment:
-        return '신장 기능 확인 필요';
-    }
-  }
-
-  String _summarizeRedFlag(RedFlagDetection detection) {
-    final symptoms = detection.symptoms.take(2).join(', ');
-    return '${_redFlagTypeToKorean(detection.type)} - $symptoms';
-  }
-
-  String _moodToEmoji(MoodLevel mood) {
-    switch (mood) {
-      case MoodLevel.good:
-        return '😊';
-      case MoodLevel.neutral:
-        return '😐';
-      case MoodLevel.low:
-        return '😔';
-    }
+    throw UnimplementedError(
+      'generateTextReport is deprecated. '
+      'Use presentation layer formatter with i18n support instead.',
+    );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/coping_guide/domain/entities/coping_guide.dart';
@@ -110,7 +111,7 @@ class _ContextualGuideCardState extends ConsumerState<ContextualGuideCard>
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '몸이 적응하는 중이에요',
+                          context.l10n.tracking_contextGuide_title,
                           style: AppTypography.heading3.copyWith(
                             fontWeight: FontWeight.w600,
                             color: AppColors.neutral800,
@@ -167,9 +168,9 @@ class _ContextualGuideCardState extends ConsumerState<ContextualGuideCard>
                               color: AppColors.neutral700,
                             ),
                             children: [
-                              const TextSpan(
-                                text: '지금 바로: ',
-                                style: TextStyle(
+                              TextSpan(
+                                text: context.l10n.tracking_contextGuide_actionNow,
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.neutral800,
                                 ),
@@ -198,7 +199,7 @@ class _ContextualGuideCardState extends ConsumerState<ContextualGuideCard>
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '더 알아보기',
+                              context.l10n.tracking_contextGuide_learnMore,
                               style: AppTypography.bodySmall.copyWith(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w500,

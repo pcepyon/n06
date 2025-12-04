@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
@@ -65,8 +66,8 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
   @override
   Widget build(BuildContext context) {
     return OnboardingPageTemplate(
-      title: '머릿속 음식 생각, 줄어들 거예요',
-      subtitle: '혹시 이런 경험 있으신가요?',
+      title: context.l10n.onboarding_foodNoise_title,
+      subtitle: context.l10n.onboarding_foodNoise_subtitle,
       showSkip: true,
       onSkip: widget.onSkip,
       onNext: widget.onNext,
@@ -74,17 +75,17 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 공감 문구
-          _buildEmpathyQuote('배고프지도 않은데 자꾸 뭔가 먹고 싶어...'),
+          _buildEmpathyQuote(context.l10n.onboarding_foodNoise_quote1),
           const SizedBox(height: 8),
-          _buildEmpathyQuote('방금 먹었는데 벌써 다음 끼니 생각이...'),
+          _buildEmpathyQuote(context.l10n.onboarding_foodNoise_quote2),
           const SizedBox(height: 8),
-          _buildEmpathyQuote('다이어트 중인데 음식 생각을 멈출 수가...'),
+          _buildEmpathyQuote(context.l10n.onboarding_foodNoise_quote3),
 
           const SizedBox(height: 24),
 
           // Food Noise 설명
           Text(
-            '이걸 \'Food Noise\'라고 불러요',
+            context.l10n.onboarding_foodNoise_explanation,
             style: AppTypography.bodyLarge.copyWith(
               color: AppColors.textPrimary,
             ),
@@ -113,14 +114,14 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '나의 상태',
+                  context.l10n.onboarding_foodNoise_statusTitle,
                   style: AppTypography.heading3.copyWith(
                     color: const Color(0xFF334155), // Neutral-700
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '현재 음식 생각이 얼마나 자주 나나요?',
+                  context.l10n.onboarding_foodNoise_statusQuestion,
                   style: AppTypography.bodySmall.copyWith(
                     color: AppColors.textTertiary,
                   ),
@@ -184,9 +185,9 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
-                  '변화 예측 보기',
-                  style: TextStyle(
+                child: Text(
+                  context.l10n.onboarding_foodNoise_simulateButton,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -208,9 +209,9 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '변화 예측',
-                    style: TextStyle(
+                  Text(
+                    context.l10n.onboarding_foodNoise_predictionTitle,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF166534), // Green-800
@@ -247,9 +248,9 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    '치료 후 약 16% 수준으로 감소 예상',
-                    style: TextStyle(
+                  Text(
+                    context.l10n.onboarding_foodNoise_predictionMessage,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: Color(0xFF166534), // Green-800
@@ -265,7 +266,7 @@ class _FoodNoiseScreenState extends State<FoodNoiseScreen>
 
           // 데이터 인포카드
           _buildInfoCard(
-            'GLP-1 사용자 중 62%가\n음식 관련 생각이 크게 줄었다고 해요',
+            context.l10n.onboarding_foodNoise_infoCard,
           ),
 
           const SizedBox(height: 32),

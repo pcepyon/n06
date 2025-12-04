@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 class UserInfoCard extends StatelessWidget {
   final String userName;
@@ -36,7 +37,7 @@ class UserInfoCard extends StatelessWidget {
         children: [
           // Section title
           Text(
-            '사용자 정보',
+            context.l10n.settings_userInfo_title,
             style: AppTypography.heading2,
           ),
           const SizedBox(height: 8.0), // sm spacing after title
@@ -46,7 +47,7 @@ class UserInfoCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '이름',
+                context.l10n.settings_userInfo_name,
                 style: AppTypography.labelSmall,
               ),
               const SizedBox(height: 4.0),
@@ -65,7 +66,7 @@ class UserInfoCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '목표 체중',
+                context.l10n.settings_userInfo_targetWeight,
                 style: AppTypography.labelSmall,
               ),
               const SizedBox(height: 4.0),

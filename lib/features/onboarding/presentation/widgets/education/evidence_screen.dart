@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
@@ -39,35 +40,35 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
   @override
   Widget build(BuildContext context) {
     return OnboardingPageTemplate(
-      title: '실제로 일어난 변화들',
-      subtitle: '전 세계 수백만 명이 경험한 검증된 결과예요',
-      content: _buildContent(),
+      title: context.l10n.onboarding_evidence_title,
+      subtitle: context.l10n.onboarding_evidence_subtitle,
+      content: _buildContent(context),
       onNext: widget.onNext,
-      nextButtonText: '다음',
+      nextButtonText: context.l10n.onboarding_common_nextButton,
       isNextEnabled: true,
       showSkip: true,
       onSkip: widget.onSkip,
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
     return Column(
       children: [
         // Main data card with animated counter
-        _buildMainDataCard(),
+        _buildMainDataCard(context),
         const SizedBox(height: 24), // lg
 
         // Benefits grid
-        _buildBenefitsSection(),
+        _buildBenefitsSection(context),
         const SizedBox(height: 24), // lg
 
         // Closing message
-        _buildClosingMessage(),
+        _buildClosingMessage(context),
       ],
     );
   }
 
-  Widget _buildMainDataCard() {
+  Widget _buildMainDataCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -102,7 +103,7 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '평균 체중 감량',
+            context.l10n.onboarding_evidence_weightLossAverage,
             style: AppTypography.heading3.copyWith(
               color: const Color(0xFF334155), // Neutral-700
             ),
@@ -133,7 +134,7 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '출처: 72주 임상시험 결과 (NEJM)',
+                    context.l10n.onboarding_evidence_source,
                     style: AppTypography.caption.copyWith(
                       color: AppColors.textTertiary,
                     ),
@@ -149,9 +150,9 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            '🔗 탭해서 출처 확인',
-            style: TextStyle(
+          Text(
+            context.l10n.onboarding_evidence_tapToConfirm,
+            style: const TextStyle(
               fontSize: 10,
               color: Color(0xFF94A3B8), // Neutral-400
             ),
@@ -161,7 +162,7 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
     );
   }
 
-  Widget _buildBenefitsSection() {
+  Widget _buildBenefitsSection(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -171,9 +172,9 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '추가 효과',
-            style: TextStyle(
+          Text(
+            context.l10n.onboarding_evidence_additionalBenefits,
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: Color(0xFF334155), // Neutral-700
@@ -184,10 +185,10 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildBenefitChip('🫀 심장 건강 개선'),
-              _buildBenefitChip('😴 수면 질 향상'),
-              _buildBenefitChip('🩸 혈당 조절 개선'),
-              _buildBenefitChip('⚡ 에너지 레벨 상승'),
+              _buildBenefitChip(context.l10n.onboarding_evidence_benefit1),
+              _buildBenefitChip(context.l10n.onboarding_evidence_benefit2),
+              _buildBenefitChip(context.l10n.onboarding_evidence_benefit3),
+              _buildBenefitChip(context.l10n.onboarding_evidence_benefit4),
             ],
           ),
         ],
@@ -215,7 +216,7 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
     );
   }
 
-  Widget _buildClosingMessage() {
+  Widget _buildClosingMessage(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 800),
@@ -228,9 +229,9 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
           ),
         );
       },
-      child: const Text(
-        '체중 감량 그 이상의 변화가\n당신을 기다리고 있어요',
-        style: TextStyle(
+      child: Text(
+        context.l10n.onboarding_evidence_closingMessage,
+        style: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: Color(0xFF334155), // Neutral-700

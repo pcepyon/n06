@@ -51,6 +51,9 @@ app.*.map.json
 *.gr.dart
 *.config.dart
 
+# L10n generated files
+lib/l10n/generated/
+
 # Isar Database
 *.isar
 *.isar.lock

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_toast.dart';
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
@@ -25,7 +26,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('프로필 및 목표 수정'),
+        title: Text(context.l10n.profile_edit_title),
         backgroundColor: AppColors.background,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
@@ -62,13 +63,13 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 const SizedBox(height: 16),
                 // Error title
                 Text(
-                  '오류 발생',
+                  context.l10n.profile_edit_error_title,
                   style: AppTypography.heading3,
                 ),
                 const SizedBox(height: 8),
                 // Error message
                 Text(
-                  '프로필을 불러오는 중에 오류가 발생했습니다. 다시 시도해주세요.',
+                  context.l10n.profile_edit_error_message,
                   textAlign: TextAlign.center,
                   style: AppTypography.bodySmall,
                 ),
@@ -88,9 +89,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                     onPressed: () {
                       ref.invalidate(profileNotifierProvider);
                     },
-                    child: const Text(
-                      '다시 시도',
-                      style: TextStyle(
+                    child: Text(
+                      context.l10n.common_button_retry,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -103,8 +104,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         ),
         data: (profile) {
           if (profile == null) {
-            return const Center(
-              child: Text('프로필 정보를 찾을 수 없습니다.'),
+            return Center(
+              child: Text(context.l10n.profile_edit_error_profileNotFound),
             );
           }
 
@@ -124,7 +125,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   void _handleSave() async {
     if (_editedProfile == null) {
-      GabiumToast.showInfo(context, '변경사항이 없습니다.');
+      GabiumToast.showInfo(context, context.l10n.profile_edit_toast_noChanges);
       if (mounted) {
         Navigator.pop(context);
       }
@@ -133,7 +134,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
     // Validate
     if (_editedProfile!.targetWeight.value >= _editedProfile!.currentWeight.value) {
-      GabiumToast.showError(context, '목표 체중은 현재 체중보다 작아야 합니다.');
+      GabiumToast.showError(context, context.l10n.profile_edit_toast_invalidTargetWeight);
       return;
     }
 
@@ -142,12 +143,12 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       await ref.read(profileNotifierProvider.notifier).updateProfile(_editedProfile!);
 
       if (mounted) {
-        GabiumToast.showSuccess(context, '프로필이 저장되었습니다.');
+        GabiumToast.showSuccess(context, context.l10n.profile_edit_toast_success);
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        GabiumToast.showError(context, '저장 실패: $e');
+        GabiumToast.showError(context, context.l10n.profile_edit_toast_saveFailed(e.toString()));
       }
     }
   }

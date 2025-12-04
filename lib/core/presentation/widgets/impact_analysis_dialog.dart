@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/tracking/domain/usecases/analyze_plan_change_impact_usecase.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// ImpactAnalysisDialog: 투여 계획 변경 영향 분석 다이얼로그
 ///
@@ -66,7 +67,7 @@ class ImpactAnalysisDialog extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '투여 계획 변경',
+                    context.l10n.common_dialog_impactAnalysisTitle,
                     style: AppTypography.heading1,
                   ),
                   GestureDetector(
@@ -92,7 +93,7 @@ class ImpactAnalysisDialog extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '투여 계획 변경 시 이후 스케줄이 재계산됩니다.',
+                    context.l10n.common_dialog_impactAnalysisMessage,
                     style: AppTypography.bodyMedium,
                   ),
                   const SizedBox(height: 24),
@@ -118,7 +119,7 @@ class ImpactAnalysisDialog extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            '영향받는 스케줄: ${impact.affectedScheduleCount}개',
+                            context.l10n.common_dialog_impactAnalysisAffectedSchedules(impact.affectedScheduleCount),
                             style: AppTypography.bodyLarge.copyWith(
                               color: const Color(0xFF065F46),
                               fontWeight: FontWeight.w500,
@@ -133,7 +134,7 @@ class ImpactAnalysisDialog extends StatelessWidget {
                   // 변경되는 항목 (칩 형식)
                   if (impact.changedFields.isNotEmpty) ...[
                     Text(
-                      '변경되는 항목:',
+                      context.l10n.common_dialog_impactAnalysisChangedFields,
                       style: AppTypography.labelMedium.copyWith(
                         color: AppColors.neutral700,
                       ),
@@ -224,7 +225,7 @@ class ImpactAnalysisDialog extends StatelessWidget {
                       child: OutlinedButton(
                         onPressed: onCancel,
                         child: Text(
-                          '취소',
+                          context.l10n.common_button_cancel,
                           style: AppTypography.labelMedium.copyWith(
                             color: AppColors.primary,
                           ),
@@ -239,7 +240,7 @@ class ImpactAnalysisDialog extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: onConfirm,
                         child: Text(
-                          '확인',
+                          context.l10n.common_button_confirm,
                           style: AppTypography.labelMedium.copyWith(
                             color: Colors.white,
                           ),

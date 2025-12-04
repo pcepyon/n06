@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/tracking/domain/entities/trend_insight.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 일상 상태 캘린더 위젯
 ///
@@ -41,20 +41,33 @@ class ConditionCalendar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 요일 헤더
-          Row(
-            children: ['월', '화', '수', '목', '금', '토', '일']
-                .map((day) => Expanded(
-                      child: Center(
-                        child: Text(
-                          day,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.neutral500,
-                            fontWeight: FontWeight.w500,
+          Builder(
+            builder: (context) {
+              final l10n = context.l10n;
+              return Row(
+                children: [
+                  l10n.tracking_weekday_mon,
+                  l10n.tracking_weekday_tue,
+                  l10n.tracking_weekday_wed,
+                  l10n.tracking_weekday_thu,
+                  l10n.tracking_weekday_fri,
+                  l10n.tracking_weekday_sat,
+                  l10n.tracking_weekday_sun,
+                ]
+                    .map((day) => Expanded(
+                          child: Center(
+                            child: Text(
+                              day,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.neutral500,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ))
-                .toList(),
+                        ))
+                    .toList(),
+              );
+            },
           ),
           const SizedBox(height: 12),
           // 날짜 셀
@@ -117,30 +130,49 @@ class ConditionCalendar extends StatelessWidget {
         children: [
           // 월 표시
           if (dailyConditions.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                DateFormat('yyyy년 M월').format(dailyConditions.first.date),
-                style: AppTypography.bodyLarge.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+            Builder(
+              builder: (context) {
+                final l10n = context.l10n;
+                final firstDate = dailyConditions.first.date;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    l10n.tracking_conditionCalendar_monthFormat(firstDate.year, firstDate.month),
+                    style: AppTypography.bodyLarge.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                );
+              },
             ),
           // 요일 헤더
-          Row(
-            children: ['월', '화', '수', '목', '금', '토', '일']
-                .map((day) => Expanded(
-                      child: Center(
-                        child: Text(
-                          day,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.neutral500,
-                            fontWeight: FontWeight.w500,
+          Builder(
+            builder: (context) {
+              final l10n = context.l10n;
+              return Row(
+                children: [
+                  l10n.tracking_weekday_mon,
+                  l10n.tracking_weekday_tue,
+                  l10n.tracking_weekday_wed,
+                  l10n.tracking_weekday_thu,
+                  l10n.tracking_weekday_fri,
+                  l10n.tracking_weekday_sat,
+                  l10n.tracking_weekday_sun,
+                ]
+                    .map((day) => Expanded(
+                          child: Center(
+                            child: Text(
+                              day,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.neutral500,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ))
-                .toList(),
+                        ))
+                    .toList(),
+              );
+            },
           ),
           const SizedBox(height: 8),
           // 주별 행
@@ -273,17 +305,22 @@ class ConditionCalendar extends StatelessWidget {
   }
 
   Widget _buildLegend() {
-    return Wrap(
-      spacing: 16,
-      runSpacing: 8,
-      children: [
-        _buildLegendItem(const Color(0xFF4CAF50), '아주 좋음'),
-        _buildLegendItem(const Color(0xFF8BC34A), '좋음'),
-        _buildLegendItem(const Color(0xFFFFC107), '보통'),
-        _buildLegendItem(const Color(0xFFFF9800), '주의'),
-        _buildLegendItem(AppColors.error, '경고'),
-        _buildLegendItem(AppColors.neutral100, '기록 없음'),
-      ],
+    return Builder(
+      builder: (context) {
+        final l10n = context.l10n;
+        return Wrap(
+          spacing: 16,
+          runSpacing: 8,
+          children: [
+            _buildLegendItem(const Color(0xFF4CAF50), l10n.tracking_conditionCalendar_gradeExcellent),
+            _buildLegendItem(const Color(0xFF8BC34A), l10n.tracking_conditionCalendar_gradeGood),
+            _buildLegendItem(const Color(0xFFFFC107), l10n.tracking_conditionCalendar_gradeFair),
+            _buildLegendItem(const Color(0xFFFF9800), l10n.tracking_conditionCalendar_gradePoor),
+            _buildLegendItem(AppColors.error, l10n.tracking_conditionCalendar_gradeBad),
+            _buildLegendItem(AppColors.neutral100, l10n.tracking_conditionCalendar_noRecord),
+          ],
+        );
+      },
     );
   }
 

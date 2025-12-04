@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
@@ -26,7 +27,7 @@ class _AppFeaturesScreenState extends State<AppFeaturesScreen> {
   @override
   Widget build(BuildContext context) {
     return OnboardingPageTemplate(
-      title: '이렇게 함께할 거예요',
+      title: context.l10n.onboarding_appFeatures_title,
       subtitle: null,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -42,29 +43,29 @@ class _AppFeaturesScreenState extends State<AppFeaturesScreen> {
               children: [
                 _FeatureCard(
                   emoji: '📅',
-                  title: '투여 알림',
-                  description: '잊지 않도록 챙겨드려요',
+                  title: context.l10n.onboarding_appFeatures_feature1Title,
+                  description: context.l10n.onboarding_appFeatures_feature1Description,
                   color: AppColors.educationBackground, // Blue-50
                   iconColor: AppColors.education, // Blue-500
                 ),
                 _FeatureCard(
                   emoji: '📊',
-                  title: '변화 기록',
-                  description: '체중, 증상을 한눈에',
+                  title: context.l10n.onboarding_appFeatures_feature2Title,
+                  description: context.l10n.onboarding_appFeatures_feature2Description,
                   color: AppColors.historyBackground, // Purple-50
                   iconColor: AppColors.history, // Purple-500
                 ),
                 _FeatureCard(
                   emoji: '🆘',
-                  title: '부작용 가이드',
-                  description: '불편할 땐 바로 확인',
+                  title: context.l10n.onboarding_appFeatures_feature3Title,
+                  description: context.l10n.onboarding_appFeatures_feature3Description,
                   color: AppColors.educationBackground, // Blue-50
                   iconColor: AppColors.education, // Blue-500
                 ),
                 _FeatureCard(
                   emoji: '📋',
-                  title: '의료진 공유',
-                  description: '진료 시 보여드리기 편해요',
+                  title: context.l10n.onboarding_appFeatures_feature4Title,
+                  description: context.l10n.onboarding_appFeatures_feature4Description,
                   color: AppColors.educationBackground, // Blue-50
                   iconColor: AppColors.education, // Blue-500
                 ),
@@ -91,7 +92,7 @@ class _AppFeaturesScreenState extends State<AppFeaturesScreen> {
 
           // Swipe instruction
           Text(
-            '스와이프해서 더 보기 →',
+            context.l10n.onboarding_appFeatures_swipeInstruction,
             textAlign: TextAlign.center,
             style: AppTypography.bodySmall.copyWith(
               color: AppColors.textDisabled,
@@ -100,7 +101,7 @@ class _AppFeaturesScreenState extends State<AppFeaturesScreen> {
         ],
       ),
       onNext: widget.onNext,
-      nextButtonText: '다음',
+      nextButtonText: context.l10n.onboarding_common_nextButton,
       isNextEnabled: true,
       showSkip: false,
     );

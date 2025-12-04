@@ -6,6 +6,7 @@ import 'package:n06/features/tracking/presentation/widgets/consultation_recommen
 import 'package:n06/features/tracking/presentation/widgets/emergency_checklist_item.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// F005: 증상 체크 화면
 ///
@@ -24,15 +25,17 @@ class EmergencyCheckScreen extends ConsumerStatefulWidget {
 
 class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
   /// BR1: 체크리스트 항목 (7개 고정)
-  static const emergencySymptoms = [
-    '24시간 이상 계속 구토하고 있어요',
-    '물이나 음식을 전혀 삼킬 수 없어요',
-    '매우 심한 복통이 있어요 (견디기 어려운 정도)',
-    '설사가 48시간 이상 계속되고 있어요',
-    '소변이 진한 갈색이거나 8시간 이상 나오지 않았어요',
-    '대변에 피가 섞여 있거나 검은색이에요',
-    '피부나 눈 흰자위가 노랗게 변했어요',
-  ];
+  List<String> _getEmergencySymptoms(BuildContext context) {
+    return [
+      context.l10n.tracking_emergency_symptom1,
+      context.l10n.tracking_emergency_symptom2,
+      context.l10n.tracking_emergency_symptom3,
+      context.l10n.tracking_emergency_symptom4,
+      context.l10n.tracking_emergency_symptom5,
+      context.l10n.tracking_emergency_symptom6,
+      context.l10n.tracking_emergency_symptom7,
+    ];
+  }
 
   /// 선택된 증상 목록
   late List<bool> selectedStates;
@@ -40,11 +43,12 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
   @override
   void initState() {
     super.initState();
-    selectedStates = List.filled(emergencySymptoms.length, false);
+    selectedStates = List.filled(7, false);
   }
 
   /// 확인 버튼 클릭 처리
   Future<void> _handleConfirm() async {
+    final emergencySymptoms = _getEmergencySymptoms(context);
     final selectedSymptoms = <String>[];
     for (int i = 0; i < selectedStates.length; i++) {
       if (selectedStates[i]) {
@@ -81,11 +85,11 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
     // Notifier를 통한 저장 (자동으로 부작용 기록도 생성)
     try {
       if (mounted) {
-        GabiumToast.showSuccess(context, '증상이 기록되었습니다.');
+        GabiumToast.showSuccess(context, context.l10n.tracking_emergency_saveSuccess);
       }
     } catch (e) {
       if (mounted) {
-        GabiumToast.showError(context, '기록 실패: $e');
+        GabiumToast.showError(context, context.l10n.tracking_emergency_saveFailed(e.toString()));
       }
     }
   }
@@ -104,7 +108,7 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          '증상 체크',
+          context.l10n.tracking_emergency_title,
           style: AppTypography.heading2.copyWith(color: AppColors.textPrimary),
         ),
         backgroundColor: AppColors.background,
@@ -128,12 +132,12 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '다음 증상 중 해당하는 것이 있나요?',
+                    context.l10n.tracking_emergency_question,
                     style: AppTypography.heading2.copyWith(color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '해당하는 증상을 선택해주세요.',
+                    context.l10n.tracking_emergency_instruction,
                     style: AppTypography.bodyLarge.copyWith(color: AppColors.textSecondary),
                   ),
                 ],
@@ -144,18 +148,21 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
             Padding(
               padding: const EdgeInsets.all(24), // lg
               child: Column(
-                children: List.generate(
-                  emergencySymptoms.length,
-                  (index) => EmergencyChecklistItem(
-                    symptom: emergencySymptoms[index],
-                    isChecked: selectedStates[index],
-                    onChanged: (value) {
-                      setState(() {
-                        selectedStates[index] = value ?? false;
-                      });
-                    },
-                  ),
-                ),
+                children: () {
+                  final emergencySymptoms = _getEmergencySymptoms(context);
+                  return List.generate(
+                    emergencySymptoms.length,
+                    (index) => EmergencyChecklistItem(
+                      symptom: emergencySymptoms[index],
+                      isChecked: selectedStates[index],
+                      onChanged: (value) {
+                        setState(() {
+                          selectedStates[index] = value ?? false;
+                        });
+                      },
+                    ),
+                  );
+                }(),
               ),
             ),
           ],
@@ -169,7 +176,7 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
             // Secondary Button: No Symptoms
             Expanded(
               child: GabiumButton(
-                text: '해당 없음',
+                text: context.l10n.tracking_emergency_noSymptomsButton,
                 onPressed: _handleNoSymptoms,
                 variant: GabiumButtonVariant.secondary,
                 size: GabiumButtonSize.medium,
@@ -179,7 +186,7 @@ class _EmergencyCheckScreenState extends ConsumerState<EmergencyCheckScreen> {
             // Primary Button: Confirm (disabled if no symptoms selected)
             Expanded(
               child: GabiumButton(
-                text: '확인',
+                text: context.l10n.tracking_emergency_confirmButton,
                 onPressed: selectedStates.any((state) => state) ? _handleConfirm : null,
                 variant: GabiumButtonVariant.primary,
                 size: GabiumButtonSize.medium,

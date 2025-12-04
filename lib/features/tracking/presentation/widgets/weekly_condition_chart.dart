@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/tracking/domain/entities/trend_insight.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 주간 컨디션 차트 위젯
 ///
@@ -39,57 +40,59 @@ class WeeklyConditionChart extends StatelessWidget {
   }
 
   Widget _buildTrendRow(QuestionTrend trend) {
-    return GestureDetector(
-      onTap: onTrendTap != null ? () => onTrendTap!(trend) : null,
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 라벨 + 방향 아이콘 + 비율
-          Row(
-            children: [
-              // 질문 아이콘
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: _getQuestionColor(trend.questionType).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
+    return Builder(
+      builder: (context) => GestureDetector(
+        onTap: onTrendTap != null ? () => onTrendTap!(trend) : null,
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 라벨 + 방향 아이콘 + 비율
+            Row(
+              children: [
+                // 질문 아이콘
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: _getQuestionColor(trend.questionType).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _getQuestionEmoji(trend.questionType),
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
                 ),
-                child: Center(
+                const SizedBox(width: 8),
+                // 라벨
+                Expanded(
                   child: Text(
-                    _getQuestionEmoji(trend.questionType),
-                    style: const TextStyle(fontSize: 14),
+                    trend.label,
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              // 라벨
-              Expanded(
-                child: Text(
-                  trend.label,
+                // 방향 아이콘
+                _buildDirectionIndicator(trend.direction, context),
+                const SizedBox(width: 8),
+                // 점수
+                Text(
+                  '${trend.averageScore.toInt()}%',
                   style: AppTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.w600,
+                    color: _getRateColor(trend.averageScore),
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
-              // 방향 아이콘
-              _buildDirectionIndicator(trend.direction),
-              const SizedBox(width: 8),
-              // 점수
-              Text(
-                '${trend.averageScore.toInt()}%',
-                style: AppTypography.bodyMedium.copyWith(
-                  color: _getRateColor(trend.averageScore),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // 프로그레스 바
-          _buildProgressBar(trend),
-        ],
+              ],
+            ),
+            const SizedBox(height: 8),
+            // 프로그레스 바
+            _buildProgressBar(trend),
+          ],
+        ),
       ),
     );
   }
@@ -127,7 +130,8 @@ class WeeklyConditionChart extends StatelessWidget {
     );
   }
 
-  Widget _buildDirectionIndicator(TrendDirection direction) {
+  Widget _buildDirectionIndicator(TrendDirection direction, BuildContext context) {
+    final l10n = context.l10n;
     IconData icon;
     Color color;
     String tooltip;
@@ -136,17 +140,17 @@ class WeeklyConditionChart extends StatelessWidget {
       case TrendDirection.improving:
         icon = Icons.trending_up;
         color = const Color(0xFF4CAF50);
-        tooltip = '개선';
+        tooltip = l10n.tracking_chart_trendImproving;
         break;
       case TrendDirection.stable:
         icon = Icons.trending_flat;
         color = AppColors.neutral500;
-        tooltip = '유지';
+        tooltip = l10n.tracking_chart_trendStable;
         break;
       case TrendDirection.worsening:
         icon = Icons.trending_down;
         color = AppColors.error;
-        tooltip = '주의';
+        tooltip = l10n.tracking_chart_trendWorsening;
         break;
     }
 

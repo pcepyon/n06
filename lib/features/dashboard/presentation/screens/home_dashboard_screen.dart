@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';
 import 'package:n06/features/dashboard/presentation/widgets/emotional_greeting_widget.dart';
 import 'package:n06/features/dashboard/presentation/widgets/encouraging_progress_widget.dart';
@@ -25,7 +26,7 @@ class HomeDashboardScreen extends ConsumerWidget {
         surfaceTintColor: Colors.transparent,
         toolbarHeight: 56,
         title: Text(
-          '홈',
+          context.l10n.dashboard_screen_title,
           style: AppTypography.heading2,
         ),
         actions: [
@@ -64,13 +65,13 @@ class HomeDashboardScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  '데이터를 불러올 수 없습니다',
+                  context.l10n.dashboard_error_loadFailed,
                   style: AppTypography.heading3,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '네트워크 연결을 확인하고 다시 시도해주세요.',
+                  context.l10n.dashboard_error_retryMessage,
                   style: AppTypography.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -79,7 +80,7 @@ class HomeDashboardScreen extends ConsumerWidget {
                   onPressed: () {
                     ref.invalidate(dashboardNotifierProvider);
                   },
-                  child: const Text('다시 시도'),
+                  child: Text(context.l10n.dashboard_error_retryButton),
                 ),
               ],
             ),

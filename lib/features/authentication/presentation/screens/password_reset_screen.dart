@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/utils/validators.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 
@@ -64,7 +65,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password reset email sent. Check your inbox.')),
+        SnackBar(content: Text(context.l10n.auth_passwordReset_emailSent)),
       );
 
       // Clear form
@@ -72,7 +73,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(context.l10n.auth_passwordReset_error(e.toString()))),
       );
     }
   }
@@ -84,7 +85,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
 
     if (_newPasswordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
+        SnackBar(content: Text(context.l10n.auth_passwordReset_validation_passwordMismatch)),
       );
       return;
     }
@@ -101,7 +102,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password changed successfully')),
+        SnackBar(content: Text(context.l10n.auth_passwordReset_success)),
       );
 
       // Navigate back to signin
@@ -109,40 +110,40 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(context.l10n.auth_passwordReset_error(e.toString()))),
       );
     }
   }
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Email is required';
+      return context.l10n.auth_passwordReset_validation_emailRequired;
     }
     if (!isValidEmail(value)) {
-      return 'Please enter a valid email';
+      return context.l10n.auth_passwordReset_validation_emailInvalid;
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Password is required';
+      return context.l10n.auth_passwordReset_validation_passwordRequired;
     }
     if (value.length < 8) {
-      return 'Password must be at least 8 characters';
+      return context.l10n.auth_passwordReset_validation_passwordTooShort;
     }
     if (!isValidPassword(value)) {
-      return 'Password must contain uppercase, lowercase, number, and special character';
+      return context.l10n.auth_passwordReset_validation_passwordWeak;
     }
     return null;
   }
 
   String? _validateConfirmPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Confirm password is required';
+      return context.l10n.auth_passwordReset_validation_confirmPasswordRequired;
     }
     if (value != _newPasswordController.text) {
-      return 'Passwords do not match';
+      return context.l10n.auth_passwordReset_validation_passwordMismatch;
     }
     return null;
   }
@@ -153,12 +154,12 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reset Password'),
+        title: Text(context.l10n.auth_passwordReset_title),
       ),
       body: authState.maybeWhen(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(
-          child: Text('Error: $error'),
+          child: Text(context.l10n.auth_passwordReset_error(error.toString())),
         ),
         data: (_) => SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -170,7 +171,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                 if (!_hasToken) ...[
                   // Step 1: Request reset email
                   Text(
-                    'Enter your email to receive a password reset link',
+                    context.l10n.auth_passwordReset_requestEmail_description,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 24),
@@ -178,8 +179,8 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
-                      labelText: 'Email',
-                      hintText: 'user@example.com',
+                      labelText: context.l10n.auth_passwordReset_emailLabel,
+                      hintText: context.l10n.auth_passwordReset_emailHint,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -189,15 +190,15 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: _handleResetEmailRequest,
-                    child: const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('Send Reset Email'),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(context.l10n.auth_passwordReset_sendEmailButton),
                     ),
                   ),
                 ] else ...[
                   // Step 2: Change password
                   Text(
-                    'Enter your new password',
+                    context.l10n.auth_passwordReset_changePassword_description,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 24),
@@ -206,7 +207,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                     obscureText: !_showPassword,
                     onChanged: _updatePasswordStrength,
                     decoration: InputDecoration(
-                      labelText: 'New Password',
+                      labelText: context.l10n.auth_passwordReset_newPasswordLabel,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -245,7 +246,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                     controller: _confirmPasswordController,
                     obscureText: !_showConfirmPassword,
                     decoration: InputDecoration(
-                      labelText: 'Confirm Password',
+                      labelText: context.l10n.auth_passwordReset_confirmPasswordLabel,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -259,9 +260,9 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: _handlePasswordChange,
-                    child: const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('Change Password'),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(context.l10n.auth_passwordReset_changePasswordButton),
                     ),
                   ),
                 ],
@@ -269,7 +270,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                 Center(
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Back to Sign In'),
+                    child: Text(context.l10n.auth_passwordReset_backToSignin),
                   ),
                 ),
               ],

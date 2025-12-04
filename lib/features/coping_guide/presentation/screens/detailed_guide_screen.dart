@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import '../../domain/entities/coping_guide.dart';
@@ -24,14 +25,14 @@ class DetailedGuideScreen extends StatelessWidget {
             backgroundColor: AppColors.surface,
             foregroundColor: AppColors.textPrimary,
             centerTitle: true,
-            title: const Text(
-              '가비움',
+            title: Text(
+              context.l10n.coping_detailed_appTitle,
               style: AppTypography.heading2,
             ),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: () => Navigator.of(context).pop(),
-              tooltip: '뒤로가기',
+              tooltip: context.l10n.coping_detailed_backTooltip,
             ),
             bottom: const PreferredSize(
               preferredSize: Size.fromHeight(1),

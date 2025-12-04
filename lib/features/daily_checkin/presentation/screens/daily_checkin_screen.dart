@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/daily_checkin/application/notifiers/daily_checkin_notifier.dart';
 import 'package:n06/features/daily_checkin/application/notifiers/checkin_feedback_notifier.dart';
-import 'package:n06/features/daily_checkin/presentation/constants/checkin_strings.dart';
+import 'package:n06/features/daily_checkin/domain/entities/checkin_feedback.dart';
 import 'package:n06/features/daily_checkin/presentation/constants/questions.dart';
 import 'package:n06/features/daily_checkin/presentation/widgets/answer_button.dart';
 import 'package:n06/features/daily_checkin/presentation/widgets/feedback_card.dart';
@@ -16,6 +17,9 @@ import 'package:n06/features/daily_checkin/presentation/widgets/question_card.da
 import 'package:n06/features/daily_checkin/presentation/widgets/weight_input_section.dart';
 import 'package:n06/features/daily_checkin/presentation/widgets/derived_question_sheet.dart';
 import 'package:n06/features/daily_checkin/presentation/widgets/red_flag_guidance_dialog.dart';
+import 'package:n06/features/daily_checkin/presentation/utils/red_flag_localizations.dart';
+import 'package:n06/features/daily_checkin/presentation/utils/feedback_l10n_mapper.dart';
+import 'package:n06/l10n/generated/app_localizations.dart';
 
 /// 데일리 체크인 화면
 ///
@@ -76,7 +80,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     await ref.read(dailyCheckinProvider.notifier).submitAnswer(
           questionIndex,
           option.value,
-          feedback: option.feedback,
+          feedback: option.getFeedback != null ? option.getFeedback!(context.l10n) : null,
         );
   }
 
@@ -95,31 +99,33 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     ref.read(dailyCheckinProvider.notifier).goBack();
   }
 
-  String _getGreeting(String? greetingType) {
+  String _getGreeting(BuildContext context, String? greetingType) {
+    final l10n = L10n.of(context)!;
+
     if (greetingType == null) {
       final hour = DateTime.now().hour;
       if (hour >= 5 && hour < 11) {
-        return GreetingStrings.morning;
+        return l10n.checkin_greeting_morning;
       } else if (hour >= 11 && hour < 17) {
-        return GreetingStrings.afternoon;
+        return l10n.checkin_greeting_afternoon;
       } else if (hour >= 17 && hour < 21) {
-        return GreetingStrings.evening;
+        return l10n.checkin_greeting_evening;
       } else {
-        return GreetingStrings.night;
+        return l10n.checkin_greeting_night;
       }
     }
 
     switch (greetingType) {
       case 'morning':
-        return GreetingStrings.morning;
+        return l10n.checkin_greeting_morning;
       case 'afternoon':
-        return GreetingStrings.afternoon;
+        return l10n.checkin_greeting_afternoon;
       case 'evening':
-        return GreetingStrings.evening;
+        return l10n.checkin_greeting_evening;
       case 'night':
-        return GreetingStrings.night;
+        return l10n.checkin_greeting_night;
       default:
-        return GreetingStrings.morning;
+        return l10n.checkin_greeting_morning;
     }
   }
 
@@ -199,12 +205,12 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
 
     // 파생 질문이 활성화된 경우
     if (state.currentDerivedPath != null) {
-      return _buildDerivedQuestionPage(state.currentDerivedPath!);
+      return _buildDerivedQuestionPage(context, state.currentDerivedPath!);
     }
 
     // 완료 화면
     if (state.isComplete) {
-      return _buildCompletionPage(state);
+      return _buildCompletionPage(context, state);
     }
 
     // 체중 입력 (Step 0)
@@ -215,11 +221,11 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     // 메인 질문 (Step 1-6)
     if (state.currentStep >= 1 && state.currentStep <= 6) {
       final questionIndex = state.currentStep - 1;
-      return _buildQuestionPage(questionIndex, state);
+      return _buildQuestionPage(context, questionIndex, state);
     }
 
     // 기본 인사 화면
-    return _buildGreetingPage(state);
+    return _buildGreetingPage(context, state);
   }
 
   void _showDuplicateCheckinDialog() {
@@ -241,7 +247,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                '오늘 이미 기록했어요',
+                context.l10n.checkin_dialog_alreadyRecorded_title,
                 style: AppTypography.heading2.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.neutral900,
@@ -249,7 +255,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                '기록을 수정할까요?',
+                context.l10n.checkin_dialog_alreadyRecorded_message,
                 style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.neutral600,
                 ),
@@ -269,7 +275,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
                         ),
                       ),
                       child: Text(
-                        '나가기',
+                        context.l10n.checkin_dialog_alreadyRecorded_exitButton,
                         style: AppTypography.bodyMedium.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -290,7 +296,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
                         ),
                       ),
                       child: Text(
-                        '수정하기',
+                        context.l10n.checkin_dialog_alreadyRecorded_editButton,
                         style: AppTypography.bodyMedium.copyWith(
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -315,7 +321,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     });
   }
 
-  Widget _buildGreetingPage(DailyCheckinState state) {
+  Widget _buildGreetingPage(BuildContext context, DailyCheckinState state) {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -327,7 +333,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
           ),
           const SizedBox(height: 24),
           Text(
-            _getGreeting(state.context?.greetingType),
+            _getGreeting(context, state.context?.greetingType),
             textAlign: TextAlign.center,
             style: AppTypography.heading1.copyWith(
               fontWeight: FontWeight.w600,
@@ -345,7 +351,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
               ),
             ),
             child: Text(
-              '시작하기',
+              context.l10n.checkin_greeting_startButton,
               style: AppTypography.bodyLarge.copyWith(
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -365,7 +371,8 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     );
   }
 
-  Widget _buildQuestionPage(int questionIndex, DailyCheckinState state) {
+  Widget _buildQuestionPage(BuildContext context, int questionIndex, DailyCheckinState state) {
+    final l10n = L10n.of(context)!;
     final question = Questions.all[questionIndex];
     final selectedAnswer = state.answers[questionIndex + 1];
 
@@ -394,8 +401,8 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
           const Spacer(),
           // 질문 카드
           QuestionCard(
-            emoji: question.emoji,
-            question: question.question,
+            emoji: question.getEmoji(l10n),
+            question: question.getQuestion(l10n),
           ),
           const SizedBox(height: 32),
           // 답변 버튼들
@@ -408,8 +415,8 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
               final isPositive = option.value == 'good' || option.value == 'normal';
 
               return AnswerButton(
-                emoji: option.emoji,
-                text: option.text,
+                emoji: option.getEmoji(l10n),
+                text: option.getText(l10n),
                 isSelected: isSelected,
                 isPositive: isPositive,
                 onTap: () async => await _handleAnswerSelected(questionIndex + 1, option),
@@ -419,7 +426,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
           const SizedBox(height: 24),
           // 피드백 카드 (pendingFeedback 우선, BUG-20251202-175417)
           if (state.pendingFeedback != null)
-            FeedbackCard(
+            FeedbackCard.direct(
               message: state.pendingFeedback!,
               tone: FeedbackTone.positive,
             )
@@ -430,9 +437,10 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
                   (opt) => opt.value == selectedAnswer,
                   orElse: () => question.options.first,
                 );
-                if (selectedOption.feedback != null) {
-                  return FeedbackCard(
-                    message: selectedOption.feedback!,
+                final feedback = selectedOption.getFeedback;
+                if (feedback != null) {
+                  return FeedbackCard.direct(
+                    message: feedback(l10n),
                     tone: FeedbackTone.positive,
                   );
                 }
@@ -445,7 +453,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     );
   }
 
-  Widget _buildDerivedQuestionPage(String path) {
+  Widget _buildDerivedQuestionPage(BuildContext context, String path) {
     // 파생 질문을 바텀시트로 표시 (중복 열기 방지, BUG-20251202-175417)
     if (!_isDerivedSheetOpen) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -485,7 +493,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     if (currentQuestion >= 1 && currentQuestion <= 6) {
       final state = ref.read(dailyCheckinProvider).value;
       if (state != null) {
-        return _buildQuestionPage(currentQuestion - 1, state);
+        return _buildQuestionPage(context, currentQuestion - 1, state);
       }
     }
 
@@ -500,30 +508,31 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     return 1;
   }
 
-  Widget _buildCompletionPage(DailyCheckinState state) {
+  Widget _buildCompletionPage(BuildContext context, DailyCheckinState state) {
+    final l10n = L10n.of(context)!;
     final consecutiveDays = state.context?.consecutiveDays ?? 0;
     final savedCheckin = state.savedCheckin;
 
     // 피드백 생성
-    String feedbackMessage = CompletionStrings.goodDay;
+    String feedbackMessage = l10n.checkin_completion_goodDay;
     if (savedCheckin != null) {
       final feedbackNotifier = ref.read(checkinFeedbackProvider.notifier);
       final feedback = feedbackNotifier.getCompletionFeedback(savedCheckin);
-      feedbackMessage = feedback.message;
+      feedbackMessage = FeedbackL10nMapper.getFeedbackMessage(context, feedback);
 
       // Red Flag 안내 표시 (중복 방지, BUG-20251202-REDFLAG)
       if (savedCheckin.redFlagDetected != null && !_isRedFlagDialogShown) {
         _isRedFlagDialogShown = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          final redFlagFeedback = feedbackNotifier.getRedFlagGuidance(
-            savedCheckin.redFlagDetected!.type,
-          );
+
+          // Presentation Layer에서 l10n으로 메시지 해결
+          final message = savedCheckin.redFlagDetected!.type.getMessage(context);
 
           showRedFlagGuidanceDialog(
             context: context,
             redFlag: savedCheckin.redFlagDetected!,
-            message: redFlagFeedback.message,
+            message: message,
           );
         });
       }
@@ -536,12 +545,12 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              CompletionStrings.emoji,
+              l10n.checkin_completion_emoji,
               style: const TextStyle(fontSize: 64),
             ),
             const SizedBox(height: 24),
             Text(
-              CompletionStrings.title,
+              l10n.checkin_completion_title,
               textAlign: TextAlign.center,
               style: AppTypography.heading1.copyWith(
                 fontWeight: FontWeight.w600,
@@ -558,7 +567,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '$consecutiveDays일째 연속 기록 중!',
+                  l10n.checkin_completion_daysMessage(consecutiveDays),
                   style: AppTypography.bodyLarge.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
@@ -589,7 +598,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
                 ),
               ),
               child: Text(
-                CompletionStrings.doneButton,
+                l10n.checkin_completion_doneButton,
                 style: AppTypography.bodyLarge.copyWith(
                   fontWeight: FontWeight.w600,
                   color: Colors.white,

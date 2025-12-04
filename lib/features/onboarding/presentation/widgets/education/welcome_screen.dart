@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
@@ -18,17 +19,17 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return OnboardingPageTemplate(
-      title: '새로운 여정을 시작해요',
-      content: _buildContent(),
+      title: context.l10n.onboarding_welcome_title,
+      content: _buildContent(context),
       onNext: onNext,
-      nextButtonText: '다음',
+      nextButtonText: context.l10n.onboarding_common_nextButton,
       isNextEnabled: true,
       showSkip: true,
       onSkip: onSkip,
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
     return Column(
       children: [
         // Lottie animation with fallback
@@ -52,7 +53,7 @@ class WelcomeScreen extends StatelessWidget {
             );
           },
           child: Text(
-            '당신이 여기까지 오기까지\n얼마나 많은 노력을 했는지 알아요',
+            context.l10n.onboarding_welcome_message,
             style: AppTypography.bodyLarge.copyWith(
               color: const Color(0xFF334155), // Neutral-700
             ),
@@ -63,7 +64,7 @@ class WelcomeScreen extends StatelessWidget {
 
         // Quote card
         _buildQuoteCard(
-          '이번엔 혼자가 아니에요\n과학이, 그리고 이 앱이\n당신과 함께할 거예요',
+          context.l10n.onboarding_welcome_quote,
         ),
       ],
     );

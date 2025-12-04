@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
@@ -38,7 +39,7 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
   @override
   Widget build(BuildContext context) {
     return OnboardingPageTemplate(
-      title: '이렇게 도와드려요',
+      title: context.l10n.onboarding_howItWorks_title,
       showSkip: true,
       onSkip: widget.onSkip,
       onNext: widget.onNext,
@@ -66,7 +67,7 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '탭해서 자세히 알아보기',
+                    context.l10n.onboarding_howItWorks_tapInstruction,
                     style: AppTypography.labelMedium.copyWith(
                       color: AppColors.education,
                     ),
@@ -80,10 +81,11 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
 
           // 뇌 설명
           _buildExpandableCard(
+            context: context,
             id: 'brain',
             icon: '🧠',
-            title: '뇌',
-            description: '• 포만감 신호 강화\n• 음식 보상 반응 조절',
+            title: context.l10n.onboarding_howItWorks_brainTitle,
+            description: context.l10n.onboarding_howItWorks_brainDescription,
             isExpanded: _expandedItems.contains('brain'),
             onExpansionChanged: (isExpanded) =>
                 _onExpansionChanged('brain', isExpanded),
@@ -93,10 +95,11 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
 
           // 위 설명
           _buildExpandableCard(
+            context: context,
             id: 'stomach',
             icon: '🫃',
-            title: '위',
-            description: '• 음식 소화 속도 조절\n• 포만감 오래 유지',
+            title: context.l10n.onboarding_howItWorks_stomachTitle,
+            description: context.l10n.onboarding_howItWorks_stomachDescription,
             isExpanded: _expandedItems.contains('stomach'),
             onExpansionChanged: (isExpanded) =>
                 _onExpansionChanged('stomach', isExpanded),
@@ -117,11 +120,11 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildCheckItem('억지로 참는 게 아니에요'),
+                _buildCheckItem(context.l10n.onboarding_howItWorks_check1),
                 const SizedBox(height: 12),
-                _buildCheckItem('자연스럽게 덜 먹게 돼요'),
+                _buildCheckItem(context.l10n.onboarding_howItWorks_check2),
                 const SizedBox(height: 12),
-                _buildCheckItem('선택의 여유가 생겨요'),
+                _buildCheckItem(context.l10n.onboarding_howItWorks_check3),
               ],
             ),
           ),
@@ -133,6 +136,7 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
   }
 
   Widget _buildExpandableCard({
+    required BuildContext context,
     required String id,
     required String icon,
     required String title,

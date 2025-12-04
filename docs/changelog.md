@@ -19,6 +19,36 @@
 
 ---
 
+## 2025-12-04
+
+- [feat] 다국어 지원 (i18n) 인프라 구축 및 전체 기능 적용
+  - **인프라 (Phase 0-4)**
+    - flutter_localizations, intl 패키지 추가
+    - l10n.yaml 설정 및 ARB 파일 구조 생성 (한국어/영어)
+    - L10n extension (context.l10n) 헬퍼 구현
+    - 언어 설정 Provider 및 설정 화면 UI 구현
+  - **Application Layer 리팩토링**
+    - 하드코딩 문자열 → enum 기반 타입 시스템 전환
+    - 31개 Domain enum 타입 정의 (FeedbackType, RedFlagType, GreetingMessageType 등)
+    - 15개 Presentation 매핑 헬퍼 생성
+    - 레이어 분리 원칙 준수 (Application에서 l10n 완전 제거)
+  - **Feature별 i18n 적용**
+    - daily_checkin: 220+ 키 (질문, 피드백, 리포트)
+    - tracking: 116 키 (투약, 달력, 트렌드)
+    - onboarding: 177 키 (14개 화면)
+    - coping_guide: 83 키 (부작용 대처법)
+    - notification: 12 키 (알림 설정)
+    - records: 46 키 (기록 관리)
+  - **의료 콘텐츠 관리**
+    - MEDICAL REVIEW REQUIRED 태그 506개 적용
+    - 증상명, 부작용, 주사 가이드 등 전문가 검토 필요 항목 표시
+  - **통계**: ARB 키 1,317개, context.l10n 855회 사용
+  - `l10n.yaml`, `lib/l10n/app_ko.arb`, `lib/l10n/app_en.arb`
+  - `lib/core/extensions/l10n_extension.dart`
+  - `lib/features/*/domain/entities/*_type.dart` (31개)
+  - `lib/features/*/presentation/utils/*_l10n.dart` (15개)
+  - `docs/i18n/` (가이드 문서)
+
 ## 2025-12-03
 
 - [docs] 앱스토어 제출용 법적 문서 추가 및 앱 내 연동

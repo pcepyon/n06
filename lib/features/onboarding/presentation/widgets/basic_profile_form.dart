@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/presentation/widgets/auth_hero_section.dart';
@@ -66,19 +67,19 @@ class _BasicProfileFormState extends State<BasicProfileForm> {
             // Hero Section
             AuthHeroSection(
               title: widget.isReviewMode
-                  ? '🌟 프로필 확인'
-                  : '🌟 여정의 주인공을 알려주세요',
+                  ? context.l10n.onboarding_profile_titleReview
+                  : context.l10n.onboarding_profile_title,
               subtitle: widget.isReviewMode
-                  ? '현재 등록된 이름입니다'
-                  : '앞으로 이 이름으로 응원해 드릴게요',
+                  ? context.l10n.onboarding_profile_subtitleReview
+                  : context.l10n.onboarding_profile_subtitle,
             ),
             const SizedBox(height: 24), // lg
 
             // Name Input
             GabiumTextField(
               controller: _nameController,
-              label: '성명',
-              hint: '성명',
+              label: context.l10n.onboarding_profile_nameLabel,
+              hint: context.l10n.onboarding_profile_nameHint,
               keyboardType: TextInputType.text,
               onChanged: (value) {
                 widget.onNameChanged(value);
@@ -103,7 +104,7 @@ class _BasicProfileFormState extends State<BasicProfileForm> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '입력하신 건강 데이터는 암호화되어 안전하게 보관됩니다.',
+                      context.l10n.onboarding_profile_privacyNotice,
                       style: AppTypography.caption,
                     ),
                   ),
@@ -114,7 +115,7 @@ class _BasicProfileFormState extends State<BasicProfileForm> {
 
             // Next Button
             GabiumButton(
-              text: '다음',
+              text: context.l10n.onboarding_common_nextButton,
               onPressed: _isNameValid ? widget.onNext : null,
               variant: GabiumButtonVariant.primary,
               size: GabiumButtonSize.medium,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 enum GabiumButtonVariant {
   primary,
@@ -62,7 +63,7 @@ class GabiumButton extends StatelessWidget {
                   ),
                   const SizedBox(width: 8.0), // 스피너-텍스트 간격
                   Text(
-                    '저장 중...',
+                    context.l10n.auth_button_loading,
                     style: textStyle,
                   ),
                 ],

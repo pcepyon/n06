@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_toast.dart';
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/tracking/domain/entities/medication_template.dart';
+import 'package:n06/features/tracking/domain/entities/update_plan_error_type.dart';
 import 'package:n06/features/tracking/domain/usecases/analyze_plan_change_impact_usecase.dart';
 import 'package:n06/features/tracking/presentation/widgets/date_picker_field.dart';
 import 'package:n06/core/presentation/widgets/impact_analysis_dialog.dart';
@@ -26,7 +28,7 @@ class EditDosagePlanScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isRestart ? '투여 계획 재설정' : '투여 계획 수정'),
+        title: Text(isRestart ? context.l10n.tracking_dosagePlan_restartTitle : context.l10n.tracking_dosagePlan_editTitle),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -51,7 +53,7 @@ class EditDosagePlanScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  '오류가 발생했습니다',
+                  context.l10n.tracking_dosagePlan_errorTitle,
                   style: AppTypography.heading1.copyWith(
                     color: AppColors.textPrimary,
                   ),
@@ -66,7 +68,7 @@ class EditDosagePlanScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 24),
                 GabiumButton(
-                  text: '다시 시도',
+                  text: context.l10n.common_button_retry,
                   onPressed: () {
                     ref.invalidate(medicationNotifierProvider);
                   },
@@ -90,7 +92,7 @@ class EditDosagePlanScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      '활성 투여 계획이 없습니다',
+                      context.l10n.tracking_dosagePlan_noPlanMessage,
                       style: AppTypography.heading1.copyWith(
                         color: AppColors.textPrimary,
                       ),
@@ -151,12 +153,12 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
     try {
       // Validate inputs
       if (_selectedTemplate == null) {
-        _showErrorSnackBar('약물을 선택하세요');
+        _showErrorSnackBar(context.l10n.tracking_dosagePlan_selectMedicationError);
         return;
       }
 
       if (_selectedDose == null) {
-        _showErrorSnackBar('용량을 선택하세요');
+        _showErrorSnackBar(context.l10n.tracking_dosagePlan_selectDoseError);
         return;
       }
 
@@ -201,15 +203,18 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
       );
 
       if (result.isSuccess) {
-        _showSuccessSnackBar('투여 계획이 수정되었습니다');
+        _showSuccessSnackBar(context.l10n.tracking_dosagePlan_updateSuccess);
         if (mounted) {
           Navigator.of(context).pop();
         }
       } else {
-        _showErrorSnackBar(result.errorMessage ?? '업데이트 실패');
+        final errorMsg = result.errorType != null
+            ? _getErrorMessage(result.errorType!)
+            : context.l10n.tracking_dosagePlan_updateFailed;
+        _showErrorSnackBar(errorMsg);
       }
     } catch (e) {
-      _showErrorSnackBar('오류 발생: $e');
+      _showErrorSnackBar(context.l10n.tracking_dosagePlan_updateError(e.toString()));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -234,6 +239,19 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
     return confirmed ?? false;
   }
 
+  String _getErrorMessage(UpdatePlanErrorType errorType) {
+    switch (errorType) {
+      case UpdatePlanErrorType.updateFailed:
+        return context.l10n.tracking_dosagePlan_updateFailed;
+      case UpdatePlanErrorType.networkError:
+        return context.l10n.tracking_dosagePlan_updateFailed;
+      case UpdatePlanErrorType.validationError:
+        return context.l10n.tracking_dosagePlan_updateFailed;
+      case UpdatePlanErrorType.permissionError:
+        return context.l10n.tracking_dosagePlan_updateFailed;
+    }
+  }
+
   void _showErrorSnackBar(String message) {
     GabiumToast.showError(context, message);
   }
@@ -249,7 +267,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
       children: [
         // ============== 섹션 제목 ==============
         Text(
-          '투여 계획 수정',
+          context.l10n.tracking_dosagePlan_formTitle,
           style: AppTypography.heading1.copyWith(
             color: AppColors.textPrimary,
           ),
@@ -261,7 +279,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '약물명',
+              context.l10n.tracking_dosagePlan_medicationLabel,
               style: AppTypography.labelMedium.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -289,7 +307,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
                   hint: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      '약물을 선택하세요',
+                      context.l10n.tracking_dosagePlan_medicationHint,
                       style: AppTypography.bodyLarge.copyWith(
                         color: AppColors.textDisabled,
                       ),
@@ -323,7 +341,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  '약물을 선택하면 용량을 선택할 수 있습니다',
+                  context.l10n.tracking_dosagePlan_medicationHelp,
                   style: AppTypography.labelSmall.copyWith(
                     color: AppColors.textDisabled,
                   ),
@@ -338,7 +356,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '초기 용량 (mg)',
+              context.l10n.tracking_dosagePlan_doseLabel,
               style: AppTypography.labelMedium.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -369,8 +387,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       _selectedTemplate == null
-                        ? '먼저 약물을 선택하세요'
-                        : '용량을 선택하세요',
+                        ? context.l10n.tracking_dosagePlan_doseHintDisabled
+                        : context.l10n.tracking_dosagePlan_doseHint,
                       style: AppTypography.bodyLarge.copyWith(
                         color: AppColors.textDisabled,
                       ),
@@ -379,7 +397,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
                   hint: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      '용량을 선택하세요',
+                      context.l10n.tracking_dosagePlan_doseHint,
                       style: AppTypography.bodyLarge.copyWith(
                         color: AppColors.textDisabled,
                       ),
@@ -391,7 +409,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          '$dose mg',
+                          context.l10n.tracking_dosagePlan_doseDisplay(dose),
                           style: AppTypography.bodyLarge.copyWith(
                             color: AppColors.textSecondary,
                           ),
@@ -417,7 +435,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '투여 주기',
+              context.l10n.tracking_dosagePlan_cycleLabel,
               style: AppTypography.labelMedium.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -438,7 +456,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   _selectedTemplate != null
-                    ? '${_selectedTemplate!.standardCycleDays}일 (매주)'
+                    ? context.l10n.tracking_dosagePlan_cycleDisplay(_selectedTemplate!.standardCycleDays)
                     : '-',
                   style: AppTypography.bodyLarge.copyWith(
                     color: AppColors.textSecondary,
@@ -449,7 +467,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                '약물에 따라 자동으로 설정됩니다',
+                context.l10n.tracking_dosagePlan_cycleHelp,
                 style: AppTypography.labelSmall.copyWith(
                   color: AppColors.textDisabled,
                 ),
@@ -461,7 +479,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
 
         // ============== 시작일 선택 ==============
         DatePickerField(
-          label: '시작일',
+          label: context.l10n.tracking_dosagePlan_startDateLabel,
           value: _selectedStartDate,
           onChanged: (newDate) {
             setState(() => _selectedStartDate = newDate);
@@ -477,7 +495,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
             // 취소 버튼
             Expanded(
               child: GabiumButton(
-                text: '취소',
+                text: context.l10n.common_button_cancel,
                 onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
                 variant: GabiumButtonVariant.secondary,
                 size: GabiumButtonSize.medium,
@@ -487,7 +505,7 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
             // 저장 버튼
             Expanded(
               child: GabiumButton(
-                text: '저장',
+                text: context.l10n.common_button_save,
                 onPressed: _isSaving ? null : _handleSave,
                 isLoading: _isSaving,
                 variant: GabiumButtonVariant.primary,

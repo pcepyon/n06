@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import '../../domain/entities/next_schedule.dart';
 
 /// 의료 용어를 여정/성장 언어로 변환
@@ -9,12 +10,12 @@ import '../../domain/entities/next_schedule.dart';
 /// 심리학적 근거:
 /// - "투여" -> "단계" : 치료를 여정의 일부로 인식
 /// - "증량" -> "성장" : 용량 증가를 부담이 아닌 발전으로
-String getHopefulTitle(String scheduleType) {
+String getHopefulTitle(BuildContext context, String scheduleType) {
   switch (scheduleType) {
     case 'dose':
-      return '다음 단계';
+      return context.l10n.dashboard_schedule_dose_title;
     case 'escalation':
-      return '성장의 순간';
+      return context.l10n.dashboard_schedule_escalation_title;
     default:
       return scheduleType;
   }
@@ -25,12 +26,12 @@ String getHopefulTitle(String scheduleType) {
 /// 심리학적 근거:
 /// - 불안 감소: 미리 준비하면 덜 두렵다
 /// - 정상화: "많은 분들이 이 단계를 거쳐요"
-String getSupportMessage(String scheduleType) {
+String getSupportMessage(BuildContext context, String scheduleType) {
   switch (scheduleType) {
     case 'dose':
-      return '투여 전 물 한 잔, 오늘도 건강한 선택!';
+      return context.l10n.dashboard_schedule_dose_supportMessage;
     case 'escalation':
-      return '몸이 잘 적응하고 있어요. 다음 단계로 나아갈 준비가 되었어요.';
+      return context.l10n.dashboard_schedule_escalation_supportMessage;
     default:
       return '';
   }
@@ -73,43 +74,48 @@ class HopefulScheduleWidget extends StatelessWidget {
         ],
       ),
       padding: const EdgeInsets.all(24), // lg padding
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Section Title
-          Text(
-            '다음 예정',
-            style: AppTypography.heading2,
-          ),
-
-          const SizedBox(height: 16), // md spacing
-
-          // Next Dose Schedule (다음 단계)
-          _HopefulScheduleItem(
-            icon: Icons.medication_outlined,
-            iconColor: AppColors.primary,
-            scheduleType: 'dose',
-            date: schedule.nextDoseDate,
-            subtitle: '${schedule.nextDoseMg.toStringAsFixed(schedule.nextDoseMg.truncateToDouble() == schedule.nextDoseMg ? 0 : 1)}mg 투여 예정',
-          ),
-
-          if (schedule.nextEscalationDate != null) ...[
-            const SizedBox(height: 24), // lg spacing between items
-
-            // Next Escalation Schedule (성장의 순간)
-            _HopefulScheduleItem(
-              icon: Icons.trending_up,
-              iconColor: AppColors.textTertiary,
-              scheduleType: 'escalation',
-              date: schedule.nextEscalationDate!,
-              subtitle: null,
+      child: Builder(
+        builder: (context) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Section Title
+            Text(
+              context.l10n.dashboard_schedule_title,
+              style: AppTypography.heading2,
             ),
+
+            const SizedBox(height: 16), // md spacing
+
+            // Next Dose Schedule (다음 단계)
+            _HopefulScheduleItem(
+              icon: Icons.medication_outlined,
+              iconColor: AppColors.primary,
+              scheduleType: 'dose',
+              date: schedule.nextDoseDate,
+              subtitle: context.l10n.dashboard_schedule_dose_subtitle(
+                schedule.nextDoseMg.toStringAsFixed(schedule.nextDoseMg.truncateToDouble() == schedule.nextDoseMg ? 0 : 1),
+              ),
+            ),
+
+            if (schedule.nextEscalationDate != null) ...[
+              const SizedBox(height: 24), // lg spacing between items
+
+              // Next Escalation Schedule (성장의 순간)
+              _HopefulScheduleItem(
+                icon: Icons.trending_up,
+                iconColor: AppColors.textTertiary,
+                scheduleType: 'escalation',
+                date: schedule.nextEscalationDate!,
+                subtitle: null,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 }
+
 
 /// 개별 일정 아이템 위젯
 ///
@@ -133,8 +139,8 @@ class _HopefulScheduleItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('M월 d일 (E)', 'ko_KR');
     final dateString = dateFormat.format(date);
-    final hopefulTitle = getHopefulTitle(scheduleType);
-    final supportMessage = getSupportMessage(scheduleType);
+    final hopefulTitle = getHopefulTitle(context, scheduleType);
+    final supportMessage = getSupportMessage(context, scheduleType);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

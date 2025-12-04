@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 심각도 레벨 표시 위젯
 ///
@@ -30,6 +31,8 @@ class SeverityLevelIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Column(
       children: [
         // 레벨 라벨 (경미 / 중증)
@@ -39,14 +42,14 @@ class SeverityLevelIndicator extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '경미',
+                l10n.tracking_severity_mild,
                 style: AppTypography.labelMedium.copyWith(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w400,
                 ),
               ),
               Text(
-                '중증',
+                l10n.tracking_severity_severe,
                 style: AppTypography.labelMedium.copyWith(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w400,
@@ -71,7 +74,7 @@ class SeverityLevelIndicator extends StatelessWidget {
             min: 1.0,
             max: 10.0,
             divisions: 9,
-            label: '$severity점',
+            label: l10n.tracking_severity_points(severity),
             onChanged: (value) => onChanged(value.toInt()),
           ),
         ),
@@ -80,7 +83,7 @@ class SeverityLevelIndicator extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: 8.0), // sm
           child: Text(
-            '$severity점',
+            l10n.tracking_severity_points(severity),
             style: AppTypography.bodyLarge.copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,

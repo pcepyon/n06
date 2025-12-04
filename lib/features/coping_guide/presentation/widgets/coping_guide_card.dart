@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import '../../../../features/authentication/presentation/widgets/gabium_button.dart';
@@ -66,13 +67,13 @@ class CopingGuideCard extends StatelessWidget {
           if (showWarning && onCheckSymptom != null) ...[
             ValidationAlert(
               type: ValidationAlertType.error,
-              message: '증상이 심각하거나 지속됩니다. 증상을 체크해주세요.',
+              message: context.l10n.coping_card_warningMessage,
               icon: Icons.warning_rounded,
             ),
             const SizedBox(height: 16),
           ],
           Text(
-            '${currentGuide.symptomName} 대처 가이드',
+            context.l10n.coping_card_guideTitle(currentGuide.symptomName),
             style: AppTypography.heading3.copyWith(height: 1.44),
           ),
           const SizedBox(height: 16),
@@ -88,7 +89,7 @@ class CopingGuideCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           GabiumButton(
-            text: '더 자세한 가이드 보기',
+            text: context.l10n.coping_card_detailButton,
             onPressed: onDetailTap,
             variant: GabiumButtonVariant.primary,
             size: GabiumButtonSize.medium,

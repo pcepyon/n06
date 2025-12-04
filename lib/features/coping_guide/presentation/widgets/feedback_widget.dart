@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import '../../../../features/authentication/presentation/widgets/gabium_button.dart';
 import 'coping_guide_feedback_result.dart';
@@ -32,8 +33,8 @@ class _FeedbackWidgetState extends State<FeedbackWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '도움이 되었나요?',
+        Text(
+          context.l10n.coping_feedback_question,
           style: AppTypography.bodySmall,
         ),
         const SizedBox(height: 12),
@@ -41,7 +42,7 @@ class _FeedbackWidgetState extends State<FeedbackWidget> {
           children: [
             Expanded(
               child: GabiumButton(
-                text: '네',
+                text: context.l10n.coping_feedback_yes,
                 onPressed: () {
                   widget.onFeedback(true);
                   setState(() {
@@ -55,7 +56,7 @@ class _FeedbackWidgetState extends State<FeedbackWidget> {
             const SizedBox(width: 16),
             Expanded(
               child: GabiumButton(
-                text: '아니오',
+                text: context.l10n.coping_feedback_no,
                 onPressed: () {
                   widget.onFeedback(false);
                   setState(() {

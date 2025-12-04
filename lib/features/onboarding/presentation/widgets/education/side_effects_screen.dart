@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/features/onboarding/presentation/widgets/common/onboarding_page_template.dart';
 
@@ -16,8 +17,8 @@ class SideEffectsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return OnboardingPageTemplate(
-      title: '처음엔 이런 느낌이 있을 수 있어요',
-      subtitle: '걱정 마세요, 몸이 적응하는\n자연스러운 과정이에요',
+      title: context.l10n.onboarding_sideEffects_title,
+      subtitle: context.l10n.onboarding_sideEffects_subtitle,
       showSkip: true,
       onSkip: onSkip,
       onNext: onNext,
@@ -26,14 +27,15 @@ class SideEffectsScreen extends StatelessWidget {
         children: [
           // 증상 1: 속 불편함
           _buildSymptomCard(
+            context: context,
             icon: '😮‍💨',
-            title: '속이 불편해요',
+            title: context.l10n.onboarding_sideEffects_symptom1Title,
             tips: [
-              '작은 양으로 천천히 드세요',
-              '기름진 음식은 잠시 피해요',
-              '대부분 2주 내 나아져요',
+              context.l10n.onboarding_sideEffects_symptom1Tip1,
+              context.l10n.onboarding_sideEffects_symptom1Tip2,
+              context.l10n.onboarding_sideEffects_symptom1Tip3,
             ],
-            badge: '90%+',
+            badge: context.l10n.onboarding_sideEffects_symptom1Badge,
             badgeColor: const Color(0xFF4ADE80), // Primary
           ),
 
@@ -41,11 +43,12 @@ class SideEffectsScreen extends StatelessWidget {
 
           // 증상 2: 입맛 변화
           _buildSymptomCard(
+            context: context,
             icon: '🍽️',
-            title: '입맛이 변했어요',
+            title: context.l10n.onboarding_sideEffects_symptom2Title,
             tips: [
-              '좋은 신호예요!',
-              '몸이 필요한 만큼만 먹으려는 거예요',
+              context.l10n.onboarding_sideEffects_symptom2Tip1,
+              context.l10n.onboarding_sideEffects_symptom2Tip2,
             ],
             badge: null,
             badgeColor: null,
@@ -55,12 +58,13 @@ class SideEffectsScreen extends StatelessWidget {
 
           // 증상 3: 피로감
           _buildSymptomCard(
+            context: context,
             icon: '😴',
-            title: '좀 피곤해요',
+            title: context.l10n.onboarding_sideEffects_symptom3Title,
             tips: [
-              '수분을 충분히 드세요',
-              '단백질 섭취를 늘려보세요',
-              '몸이 적응하면 나아져요',
+              context.l10n.onboarding_sideEffects_symptom3Tip1,
+              context.l10n.onboarding_sideEffects_symptom3Tip2,
+              context.l10n.onboarding_sideEffects_symptom3Tip3,
             ],
             badge: null,
             badgeColor: null,
@@ -90,10 +94,10 @@ class SideEffectsScreen extends StatelessWidget {
                       color: Color(0xFFD97706), // Warning Yellow-600
                     ),
                     const SizedBox(width: 8),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        '심한 증상은 앱에서\n바로 확인하고 대처할 수 있어요',
-                        style: TextStyle(
+                        context.l10n.onboarding_sideEffects_warning,
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFFD97706), // Warning Yellow-600
@@ -110,9 +114,9 @@ class SideEffectsScreen extends StatelessWidget {
           const SizedBox(height: 16),
 
           // 의료적 면책 조항
-          const Text(
-            '*이 정보는 일반적인 가이드이며, 담당 의사의 처방을 최우선으로 따라주세요.',
-            style: TextStyle(
+          Text(
+            context.l10n.onboarding_sideEffects_disclaimer,
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w400,
               color: Color(0xFF94A3B8), // Neutral-400
@@ -127,6 +131,7 @@ class SideEffectsScreen extends StatelessWidget {
   }
 
   Widget _buildSymptomCard({
+    required BuildContext context,
     required String icon,
     required String title,
     required List<String> tips,

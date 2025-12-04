@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 조건부 UI 섹션 컨테이너
 ///
@@ -24,6 +25,7 @@ class ConditionalSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final Color bgColor = isHighSeverity
         ? AppColors.warning.withValues(alpha: 0.08)
         : AppColors.info.withValues(alpha: 0.08);
@@ -36,7 +38,9 @@ class ConditionalSection extends StatelessWidget {
         ? Icons.error_outline
         : Icons.label_outline;
 
-    final String label = isHighSeverity ? '24시간 지속 여부' : '관련 상황';
+    final String label = isHighSeverity
+        ? l10n.tracking_conditional_highSeverity
+        : l10n.tracking_conditional_lowSeverity;
 
     return Container(
       decoration: BoxDecoration(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// Logout confirmation dialog
 ///
@@ -20,22 +21,22 @@ class LogoutConfirmDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('로그아웃'),
-      content: const Text('로그아웃하시겠습니까?'),
+      title: Text(context.l10n.common_dialog_logoutTitle),
+      content: Text(context.l10n.common_dialog_logoutMessage),
       actions: [
         TextButton(
           onPressed: () {
             Navigator.pop(context);
             onCancel?.call();
           },
-          child: const Text('취소'),
+          child: Text(context.l10n.common_button_cancel),
         ),
         ElevatedButton(
           onPressed: () {
             Navigator.pop(context);
             onConfirm();
           },
-          child: const Text('확인'),
+          child: Text(context.l10n.common_button_confirm),
         ),
       ],
     );

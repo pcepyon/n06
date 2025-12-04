@@ -15,6 +15,7 @@ import 'package:n06/features/daily_checkin/domain/entities/symptom_detail.dart';
 import 'package:intl/intl.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 과거 기록 목록 화면 (체중/증상/투여)
 /// Gabium Design System 기반 UI 개선 완료
@@ -30,8 +31,8 @@ class RecordListScreen extends ConsumerWidget {
         appBar: AppBar(
           elevation: 0,
           backgroundColor: AppColors.background,
-          title: const Text(
-            '기록 관리',
+          title: Text(
+            context.l10n.records_screen_title,
             style: AppTypography.heading2,
           ),
           centerTitle: false,
@@ -42,18 +43,18 @@ class RecordListScreen extends ConsumerWidget {
                 // Change 1: TabBar 색상 및 스타일 적용
                 Container(
                   color: Colors.transparent,
-                  child: const TabBar(
+                  child: TabBar(
                     labelColor: AppColors.primary,
                     unselectedLabelColor: AppColors.textTertiary,
-                    labelStyle: TextStyle(
+                    labelStyle: const TextStyle(
                       fontSize: 16, // Typography - base
                       fontWeight: FontWeight.w500, // Medium (500)
                     ),
-                    unselectedLabelStyle: TextStyle(
+                    unselectedLabelStyle: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
-                    indicator: UnderlineTabIndicator(
+                    indicator: const UnderlineTabIndicator(
                       borderSide: BorderSide(
                         color: AppColors.primary,
                         width: 2, // 2px
@@ -61,9 +62,9 @@ class RecordListScreen extends ConsumerWidget {
                     ),
                     indicatorSize: TabBarIndicatorSize.tab,
                     tabs: [
-                      Tab(text: '체중'),
-                      Tab(text: '체크인'),
-                      Tab(text: '투여'),
+                      Tab(text: context.l10n.records_tab_weight),
+                      Tab(text: context.l10n.records_tab_checkin),
+                      Tab(text: context.l10n.records_tab_dose),
                     ],
                   ),
                 ),
@@ -103,10 +104,10 @@ class _WeightRecordsTab extends ConsumerWidget {
 
     return authState.when(
       // Change 7: 로딩 상태
-      loading: () => _buildLoadingState(),
+      loading: () => _buildLoadingState(context),
       error: (err, stack) => Center(
         child: Text(
-          '오류: $err',
+          context.l10n.records_error(err.toString()),
           style: const TextStyle(
             fontSize: 16,
             color: Color(0xFFEF4444), // Error
@@ -115,10 +116,10 @@ class _WeightRecordsTab extends ConsumerWidget {
       ),
       data: (user) {
         if (user == null) {
-          return const Center(
+          return Center(
             child: Text(
-              '로그인이 필요합니다',
-              style: TextStyle(
+              context.l10n.records_loginRequired,
+              style: const TextStyle(
                 fontSize: 16,
                 color: Color(0xFF64748B), // Neutral-500
               ),
@@ -127,10 +128,10 @@ class _WeightRecordsTab extends ConsumerWidget {
         }
 
         return trackingState.when(
-          loading: () => _buildLoadingState(),
+          loading: () => _buildLoadingState(context),
           error: (err, stack) => Center(
             child: Text(
-              '오류: $err',
+              context.l10n.records_error(err.toString()),
               style: const TextStyle(
                 fontSize: 16,
                 color: Color(0xFFEF4444), // Error
@@ -142,10 +143,10 @@ class _WeightRecordsTab extends ConsumerWidget {
 
             // Change 5: 빈 상태
             if (weights.isEmpty) {
-              return const EmptyStateWidget(
+              return EmptyStateWidget(
                 icon: Icons.monitor_weight_outlined,
-                title: '체중 기록이 없습니다',
-                description: '아직 체중 기록이 없습니다.\n첫 번째 기록을 추가해보세요.',
+                title: context.l10n.records_weight_empty_title,
+                description: context.l10n.records_weight_empty_description,
               );
             }
 
@@ -192,14 +193,14 @@ class _WeightRecordTile extends ConsumerWidget {
       onDelete: () => _showDeleteDialog(
         context,
         ref,
-        '${record.weightKg} kg',
+        context.l10n.records_weight_unit(record.weightKg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Change 3: 기본 정보 (lg, Semibold)
           Text(
-            '${record.weightKg} kg',
+            context.l10n.records_weight_unit(record.weightKg),
             style: AppTypography.heading3,
           ),
           const SizedBox(height: 4), // xs
@@ -222,13 +223,13 @@ class _WeightRecordTile extends ConsumerWidget {
       if (context.mounted) {
         Navigator.pop(context); // 다이얼로그 닫기
         // Change 6: GabiumToast 사용
-        GabiumToast.showSuccess(context, '기록이 삭제되었습니다');
+        GabiumToast.showSuccess(context, context.l10n.records_delete_success);
       }
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context);
         GabiumToast.showError(
-            context, '기록 삭제 중 오류가 발생했습니다. 다시 시도해주세요.');
+            context, context.l10n.records_delete_error);
       }
     }
   }
@@ -247,12 +248,12 @@ class _WeightRecordTile extends ConsumerWidget {
           borderRadius: BorderRadius.circular(16), // lg
         ),
         elevation: 4, // xl shadow approximation
-        title: const Text(
-          '기록을 삭제하시겠습니까?',
+        title: Text(
+          context.l10n.records_delete_confirm_title,
           style: AppTypography.heading1,
         ),
         content: Text(
-          '삭제된 기록은 복구할 수 없습니다.',
+          context.l10n.records_delete_confirm_message,
           style: AppTypography.bodyLarge.copyWith(
             color: AppColors.textTertiary,
           ),
@@ -272,9 +273,9 @@ class _WeightRecordTile extends ConsumerWidget {
                 ),
               ),
             ),
-            child: const Text(
-              '취소',
-              style: TextStyle(
+            child: Text(
+              context.l10n.common_button_cancel,
+              style: const TextStyle(
                 fontSize: 16, // base
                 fontWeight: FontWeight.w600, // Semibold
               ),
@@ -293,9 +294,9 @@ class _WeightRecordTile extends ConsumerWidget {
               ),
               elevation: 0,
             ),
-            child: const Text(
-              '삭제',
-              style: TextStyle(
+            child: Text(
+              context.l10n.common_button_delete,
+              style: const TextStyle(
                 fontSize: 16, // base
                 fontWeight: FontWeight.w600, // Semibold
               ),
@@ -317,10 +318,10 @@ class _CheckinRecordsTab extends ConsumerWidget {
     final checkinsAsync = ref.watch(allCheckinsProvider);
 
     return authState.when(
-      loading: () => _buildLoadingState(),
+      loading: () => _buildLoadingState(context),
       error: (err, stack) => Center(
         child: Text(
-          '오류: $err',
+          context.l10n.records_error(err.toString()),
           style: AppTypography.bodyLarge.copyWith(
             color: AppColors.error,
           ),
@@ -330,7 +331,7 @@ class _CheckinRecordsTab extends ConsumerWidget {
         if (user == null) {
           return Center(
             child: Text(
-              '로그인이 필요합니다',
+              context.l10n.records_loginRequired,
               style: AppTypography.bodyLarge.copyWith(
                 color: AppColors.textTertiary,
               ),
@@ -339,10 +340,10 @@ class _CheckinRecordsTab extends ConsumerWidget {
         }
 
         return checkinsAsync.when(
-          loading: () => _buildLoadingState(),
+          loading: () => _buildLoadingState(context),
           error: (err, stack) => Center(
             child: Text(
-              '오류: $err',
+              context.l10n.records_error(err.toString()),
               style: AppTypography.bodyLarge.copyWith(
                 color: AppColors.error,
               ),
@@ -350,10 +351,10 @@ class _CheckinRecordsTab extends ConsumerWidget {
           ),
           data: (checkins) {
             if (checkins.isEmpty) {
-              return const EmptyStateWidget(
+              return EmptyStateWidget(
                 icon: Icons.check_circle_outline,
-                title: '체크인 기록이 없습니다',
-                description: '아직 데일리 체크인 기록이 없습니다.\n첫 번째 체크인을 완료해보세요.',
+                title: context.l10n.records_checkin_empty_title,
+                description: context.l10n.records_checkin_empty_description,
               );
             }
 
@@ -381,8 +382,8 @@ class _CheckinRecordTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dateStr = DateFormat('yyyy년 MM월 dd일 (E)', 'ko_KR').format(checkin.checkinDate);
-    final summary = _buildSummary();
-    final symptoms = _buildSymptomSummary();
+    final summary = _buildSummary(context);
+    final symptoms = _buildSymptomSummary(context);
 
     return RecordListCard(
       recordType: RecordType.checkin,
@@ -418,75 +419,75 @@ class _CheckinRecordTile extends ConsumerWidget {
     );
   }
 
-  String _buildSummary() {
+  String _buildSummary(BuildContext context) {
     final parts = <String>[];
 
     // 식사 상태
     switch (checkin.mealCondition) {
       case ConditionLevel.good:
-        parts.add('식사 양호');
+        parts.add(context.l10n.records_checkin_summary_mealGood);
         break;
       case ConditionLevel.moderate:
-        parts.add('식사 보통');
+        parts.add(context.l10n.records_checkin_summary_mealModerate);
         break;
       case ConditionLevel.difficult:
-        parts.add('식사 어려움');
+        parts.add(context.l10n.records_checkin_summary_mealDifficult);
         break;
     }
 
     // 에너지 수준
     switch (checkin.energyLevel) {
       case EnergyLevel.good:
-        parts.add('활력 있음');
+        parts.add(context.l10n.records_checkin_summary_energyGood);
         break;
       case EnergyLevel.normal:
-        parts.add('보통');
+        parts.add(context.l10n.records_checkin_summary_energyNormal);
         break;
       case EnergyLevel.tired:
-        parts.add('피로함');
+        parts.add(context.l10n.records_checkin_summary_energyTired);
         break;
     }
 
     return parts.join(' | ');
   }
 
-  String _buildSymptomSummary() {
+  String _buildSymptomSummary(BuildContext context) {
     final symptoms = checkin.symptomDetails;
     if (symptoms == null || symptoms.isEmpty) return '';
 
-    final symptomNames = symptoms.map((s) => _getSymptomName(s.type)).take(3).toList();
-    final suffix = symptoms.length > 3 ? ' 외 ${symptoms.length - 3}개' : '';
-    return '증상: ${symptomNames.join(', ')}$suffix';
+    final symptomNames = symptoms.map((s) => _getSymptomName(context, s.type)).take(3).toList();
+    final suffix = symptoms.length > 3 ? context.l10n.records_checkin_symptoms_more(symptoms.length - 3) : '';
+    return context.l10n.records_checkin_symptoms(symptomNames.join(', ')) + suffix;
   }
 
-  String _getSymptomName(SymptomType type) {
+  String _getSymptomName(BuildContext context, SymptomType type) {
     switch (type) {
       case SymptomType.nausea:
-        return '메스꺼움';
+        return context.l10n.records_symptom_nausea;
       case SymptomType.vomiting:
-        return '구토';
+        return context.l10n.records_symptom_vomiting;
       case SymptomType.lowAppetite:
-        return '입맛 없음';
+        return context.l10n.records_symptom_lowAppetite;
       case SymptomType.earlySatiety:
-        return '조기 포만감';
+        return context.l10n.records_symptom_earlySatiety;
       case SymptomType.heartburn:
-        return '속쓰림';
+        return context.l10n.records_symptom_heartburn;
       case SymptomType.abdominalPain:
-        return '복통';
+        return context.l10n.records_symptom_abdominalPain;
       case SymptomType.bloating:
-        return '복부 팽만';
+        return context.l10n.records_symptom_bloating;
       case SymptomType.constipation:
-        return '변비';
+        return context.l10n.records_symptom_constipation;
       case SymptomType.diarrhea:
-        return '설사';
+        return context.l10n.records_symptom_diarrhea;
       case SymptomType.fatigue:
-        return '피로';
+        return context.l10n.records_symptom_fatigue;
       case SymptomType.dizziness:
-        return '어지러움';
+        return context.l10n.records_symptom_dizziness;
       case SymptomType.coldSweat:
-        return '식은땀';
+        return context.l10n.records_symptom_coldSweat;
       case SymptomType.swelling:
-        return '부종';
+        return context.l10n.records_symptom_swelling;
     }
   }
 
@@ -506,13 +507,13 @@ class _CheckinRecordTile extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '체크인 기록을 삭제하시겠습니까?',
+              Text(
+                context.l10n.records_checkin_delete_confirm_title,
                 style: AppTypography.heading2,
               ),
               const SizedBox(height: 12),
               Text(
-                '$dateStr의 체크인 기록과 수집된 증상이 모두 삭제됩니다.\n삭제된 기록은 복구할 수 없습니다.',
+                context.l10n.records_checkin_delete_confirm_message(dateStr),
                 style: AppTypography.bodyLarge.copyWith(
                   color: AppColors.textTertiary,
                 ),
@@ -534,9 +535,9 @@ class _CheckinRecordTile extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      child: const Text(
-                        '취소',
-                        style: TextStyle(
+                      child: Text(
+                        context.l10n.common_button_cancel,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -556,9 +557,9 @@ class _CheckinRecordTile extends ConsumerWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        '삭제',
-                        style: TextStyle(
+                      child: Text(
+                        context.l10n.common_button_delete,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -584,12 +585,12 @@ class _CheckinRecordTile extends ConsumerWidget {
 
       if (context.mounted) {
         Navigator.pop(context);
-        GabiumToast.showSuccess(context, '체크인 기록이 삭제되었습니다');
+        GabiumToast.showSuccess(context, context.l10n.records_checkin_delete_success);
       }
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context);
-        GabiumToast.showError(context, '기록 삭제 중 오류가 발생했습니다. 다시 시도해주세요.');
+        GabiumToast.showError(context, context.l10n.records_delete_error);
       }
     }
   }
@@ -605,10 +606,10 @@ class _DoseRecordsTab extends ConsumerWidget {
     final medicationState = ref.watch(medicationNotifierProvider);
 
     return authState.when(
-      loading: () => _buildLoadingState(),
+      loading: () => _buildLoadingState(context),
       error: (err, stack) => Center(
         child: Text(
-          '오류: $err',
+          context.l10n.records_error(err.toString()),
           style: AppTypography.bodyLarge.copyWith(
             color: AppColors.error,
           ),
@@ -618,7 +619,7 @@ class _DoseRecordsTab extends ConsumerWidget {
         if (user == null) {
           return Center(
             child: Text(
-              '로그인이 필요합니다',
+              context.l10n.records_loginRequired,
               style: AppTypography.bodyLarge.copyWith(
                 color: AppColors.textTertiary,
               ),
@@ -627,10 +628,10 @@ class _DoseRecordsTab extends ConsumerWidget {
         }
 
         return medicationState.when(
-          loading: () => _buildLoadingState(),
+          loading: () => _buildLoadingState(context),
           error: (err, stack) => Center(
             child: Text(
-              '오류: $err',
+              context.l10n.records_error(err.toString()),
               style: const TextStyle(
                 fontSize: 16,
                 color: Color(0xFFEF4444),
@@ -641,10 +642,10 @@ class _DoseRecordsTab extends ConsumerWidget {
             final records = state.records;
 
             if (records.isEmpty) {
-              return const EmptyStateWidget(
+              return EmptyStateWidget(
                 icon: Icons.medical_services_outlined,
-                title: '투여 기록이 없습니다',
-                description: '아직 투여 기록이 없습니다.\n첫 번째 기록을 추가해보세요.',
+                title: context.l10n.records_dose_empty_title,
+                description: context.l10n.records_dose_empty_description,
               );
             }
 
@@ -683,27 +684,27 @@ class _DoseRecordTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dateStr =
         DateFormat('yyyy년 MM월 dd일 HH:mm').format(record.administeredAt);
-    final siteDisplay = record.injectionSite ?? '미지정';
+    final siteDisplay = record.injectionSite ?? context.l10n.records_dose_site_unspecified;
 
     return RecordListCard(
       recordType: RecordType.dose,
       onDelete: () => _showDeleteDialog(
         context,
         ref,
-        '${record.actualDoseMg} mg ($siteDisplay)',
+        '${context.l10n.records_dose_unit(record.actualDoseMg)} ($siteDisplay)',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 기본 정보
           Text(
-            '${record.actualDoseMg} mg',
+            context.l10n.records_dose_unit(record.actualDoseMg),
             style: AppTypography.heading3,
           ),
           const SizedBox(height: 4),
           // 보조 정보
           Text(
-            '부위: $siteDisplay',
+            context.l10n.records_dose_site(siteDisplay),
             style: AppTypography.bodyLarge.copyWith(
               color: AppColors.textSecondary,
             ),
@@ -730,13 +731,13 @@ class _DoseRecordTile extends ConsumerWidget {
 
       if (context.mounted) {
         Navigator.pop(context);
-        GabiumToast.showSuccess(context, '기록이 삭제되었습니다');
+        GabiumToast.showSuccess(context, context.l10n.records_delete_success);
       }
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context);
         GabiumToast.showError(
-            context, '기록 삭제 중 오류가 발생했습니다. 다시 시도해주세요.');
+            context, context.l10n.records_delete_error);
       }
     }
   }
@@ -754,12 +755,12 @@ class _DoseRecordTile extends ConsumerWidget {
           borderRadius: BorderRadius.circular(16),
         ),
         elevation: 4,
-        title: const Text(
-          '기록을 삭제하시겠습니까?',
+        title: Text(
+          context.l10n.records_delete_confirm_title,
           style: AppTypography.heading1,
         ),
         content: Text(
-          '삭제된 기록은 복구할 수 없습니다.',
+          context.l10n.records_delete_confirm_message,
           style: AppTypography.bodyLarge.copyWith(
             color: AppColors.textTertiary,
           ),
@@ -778,9 +779,9 @@ class _DoseRecordTile extends ConsumerWidget {
                 ),
               ),
             ),
-            child: const Text(
-              '취소',
-              style: TextStyle(
+            child: Text(
+              context.l10n.common_button_cancel,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -798,9 +799,9 @@ class _DoseRecordTile extends ConsumerWidget {
               ),
               elevation: 0,
             ),
-            child: const Text(
-              '삭제',
-              style: TextStyle(
+            child: Text(
+              context.l10n.common_button_delete,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -813,7 +814,7 @@ class _DoseRecordTile extends ConsumerWidget {
 }
 
 /// Change 7: 로딩 상태 위젯
-Widget _buildLoadingState() {
+Widget _buildLoadingState(BuildContext context) {
   return Center(
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -826,7 +827,7 @@ Widget _buildLoadingState() {
         ),
         const SizedBox(height: 16), // md
         Text(
-          '기록을 불러오는 중...',
+          context.l10n.records_loading,
           style: AppTypography.bodyLarge.copyWith(
             color: AppColors.textTertiary,
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
@@ -44,10 +45,10 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
     if (userId == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('트렌드 대시보드'),
+          title: Text(context.l10n.tracking_trend_title),
         ),
-        body: const Center(
-          child: Text('로그인이 필요합니다'),
+        body: Center(
+          child: Text(context.l10n.tracking_trend_loginRequired),
         ),
       );
     }
@@ -59,7 +60,7 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.neutral50,
       appBar: AppBar(
-        title: const Text('트렌드 대시보드'),
+        title: Text(context.l10n.tracking_trend_title),
         backgroundColor: Colors.white,
         elevation: 0,
         bottom: PreferredSize(
@@ -108,7 +109,7 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
         children: [
           Expanded(
             child: _buildPeriodTab(
-              label: '주간',
+              label: context.l10n.tracking_trend_periodWeekly,
               period: TrendPeriod.weekly,
               isSelected: _selectedPeriod == TrendPeriod.weekly,
             ),
@@ -116,7 +117,7 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: _buildPeriodTab(
-              label: '월간',
+              label: context.l10n.tracking_trend_periodMonthly,
               period: TrendPeriod.monthly,
               isSelected: _selectedPeriod == TrendPeriod.monthly,
             ),
@@ -169,8 +170,8 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
 
           // 2. 일상 상태 캘린더
           _buildSection(
-            title: '일상 상태 캘린더',
-            subtitle: '날짜별 컨디션을 확인하세요',
+            title: context.l10n.tracking_trend_calendarTitle,
+            subtitle: context.l10n.tracking_trend_calendarSubtitle,
             child: ConditionCalendar(
               dailyConditions: insight.dailyConditions,
               period: _selectedPeriod,
@@ -185,8 +186,8 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
           // 3. 주간 컨디션 차트
           if (insight.questionTrends.isNotEmpty) ...[
             _buildSection(
-              title: '컨디션 추이',
-              subtitle: '6가지 영역별 상태를 확인하세요',
+              title: context.l10n.tracking_trend_conditionTitle,
+              subtitle: context.l10n.tracking_trend_conditionSubtitle,
               child: WeeklyConditionChart(
                 questionTrends: insight.questionTrends,
                 onTrendTap: (trend) {
@@ -200,8 +201,8 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
           // 4. 개별 질문 상세 차트
           if (insight.questionTrends.isNotEmpty) ...[
             _buildSection(
-              title: '일별 상세 차트',
-              subtitle: '영역별 일간 변화를 확인하세요',
+              title: context.l10n.tracking_trend_detailTitle,
+              subtitle: context.l10n.tracking_trend_detailSubtitle,
               child: QuestionDetailChart(
                 questionTrends: insight.questionTrends,
               ),
@@ -266,7 +267,7 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
             Row(
               children: [
                 Text(
-                  '${condition.date.month}월 ${condition.date.day}일',
+                  context.l10n.tracking_trend_dayDetailDate(condition.date.month, condition.date.day),
                   style: AppTypography.heading2.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -282,13 +283,13 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
 
             // 컨디션 정보
             _buildDetailRow(
-              label: '전반적 컨디션',
-              value: '${condition.overallScore}점',
+              label: context.l10n.tracking_trend_overallCondition,
+              value: context.l10n.tracking_trend_scoreDisplay(condition.overallScore),
               icon: _getGradeEmoji(condition.grade),
             ),
             const SizedBox(height: 12),
             _buildDetailRow(
-              label: '컨디션 등급',
+              label: context.l10n.tracking_trend_gradeLabel,
               value: _getGradeLabel(condition.grade),
               color: _getGradeColor(condition.grade),
             ),
@@ -307,7 +308,7 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '주의가 필요한 증상이 기록되었습니다',
+                        context.l10n.tracking_trend_redFlagWarning,
                         style: AppTypography.bodyMedium.copyWith(
                           color: AppColors.error,
                         ),
@@ -331,7 +332,7 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '주사 다음날이에요',
+                        context.l10n.tracking_trend_postInjectionLabel,
                         style: AppTypography.bodyMedium.copyWith(
                           color: AppColors.primary,
                         ),
@@ -396,15 +397,15 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
   String _getGradeLabel(ConditionGrade grade) {
     switch (grade) {
       case ConditionGrade.excellent:
-        return '아주 좋음';
+        return context.l10n.tracking_trend_gradeExcellent;
       case ConditionGrade.good:
-        return '좋음';
+        return context.l10n.tracking_trend_gradeGood;
       case ConditionGrade.fair:
-        return '보통';
+        return context.l10n.tracking_trend_gradeFair;
       case ConditionGrade.poor:
-        return '주의';
+        return context.l10n.tracking_trend_gradePoor;
       case ConditionGrade.bad:
-        return '나쁨';
+        return context.l10n.tracking_trend_gradeBad;
     }
   }
 
@@ -451,7 +452,7 @@ class _TrendDashboardScreenState extends ConsumerState<TrendDashboardScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              '데이터를 불러오는 중 오류가 발생했어요',
+              context.l10n.tracking_trend_errorMessage,
               style: AppTypography.bodyLarge.copyWith(
                 color: AppColors.error,
               ),

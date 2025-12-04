@@ -13,6 +13,7 @@ import 'package:n06/features/tracking/presentation/widgets/severity_level_indica
 import 'package:n06/features/tracking/presentation/widgets/conditional_section.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 데일리 기록 화면 (체중 전용)
 ///
@@ -29,25 +30,25 @@ class DailyTrackingScreen extends ConsumerStatefulWidget {
 }
 
 class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
-  // 증상 목록 (상수)
-  static const List<String> _symptoms = [
-    '메스꺼움',
-    '구토',
-    '변비',
-    '설사',
-    '복통',
-    '두통',
-    '피로',
+  // 증상 목록 - context.l10n으로 동적 생성
+  List<String> get _symptoms => [
+    context.l10n.tracking_symptom_nausea,
+    context.l10n.tracking_symptom_vomiting,
+    context.l10n.tracking_symptom_constipation,
+    context.l10n.tracking_symptom_diarrhea,
+    context.l10n.tracking_symptom_abdominalPain,
+    context.l10n.tracking_symptom_headache,
+    context.l10n.tracking_symptom_fatigue,
   ];
 
-  // 컨텍스트 태그 목록
-  static const List<String> _contextTags = [
-    '기름진음식',
-    '과식',
-    '음주',
-    '공복',
-    '스트레스',
-    '수면부족',
+  // 컨텍스트 태그 목록 - context.l10n으로 동적 생성
+  List<String> get _contextTags => [
+    context.l10n.tracking_contextTag_oilyFood,
+    context.l10n.tracking_contextTag_overeating,
+    context.l10n.tracking_contextTag_alcohol,
+    context.l10n.tracking_contextTag_emptyStomach,
+    context.l10n.tracking_contextTag_stress,
+    context.l10n.tracking_contextTag_sleepDeprivation,
   ];
 
   // 상태 변수
@@ -153,14 +154,14 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
     // 1. 체중 검증
     if (_weightInput.isEmpty) {
       if (!mounted) return;
-      GabiumToast.showError(context, '체중을 입력해주세요');
+      GabiumToast.showError(context, context.l10n.tracking_dailyTracking_weightRequired);
       return;
     }
 
     final weight = double.tryParse(_weightInput);
     if (weight == null || weight < 20 || weight > 300) {
       if (!mounted) return;
-      GabiumToast.showError(context, '유효한 체중을 입력해주세요 (20-300kg)');
+      GabiumToast.showError(context, context.l10n.tracking_dailyTracking_weightInvalid);
       return;
     }
 
@@ -170,7 +171,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
       final userId = _getCurrentUserId();
       if (userId == null) {
         if (!mounted) return;
-        GabiumToast.showError(context, '로그인이 필요합니다');
+        GabiumToast.showError(context, context.l10n.tracking_dailyTracking_loginRequired);
         setState(() => _isLoading = false);
         return;
       }
@@ -193,7 +194,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        GabiumToast.showError(context, '저장 중 오류가 발생했습니다: $e');
+        GabiumToast.showError(context, context.l10n.tracking_dailyTracking_saveFailed(e.toString()));
       }
     }
   }
@@ -206,7 +207,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
-          '데일리 기록',
+          context.l10n.tracking_dailyTracking_title,
           style: AppTypography.heading2.copyWith(color: AppColors.textPrimary),
         ),
         centerTitle: false,
@@ -246,7 +247,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
 
                   // 4. 저장 버튼 (Change 9: 로딩 상태 시각화 강화)
                   GabiumButton(
-                    text: '저장',
+                    text: context.l10n.tracking_dailyTracking_saveButton,
                     onPressed: _isLoading ? null : _handleSave,
                     size: GabiumButtonSize.large, // 52px
                     isLoading: _isLoading,
@@ -282,16 +283,16 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
         children: [
           // Change 10: 섹션 제목 타이포그래피 계층 개선
           Text(
-            '신체 기록',
+            context.l10n.tracking_dailyTracking_bodySection,
             style: AppTypography.heading2.copyWith(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 12.0), // sm + xs
 
           // 체중 입력
           InputValidationWidget(
-            fieldName: '체중',
-            label: '체중 (kg)',
-            hint: '예: 75.5',
+            fieldName: context.l10n.tracking_dailyTracking_weightFieldName,
+            label: context.l10n.tracking_dailyTracking_weightLabel,
+            hint: context.l10n.tracking_dailyTracking_weightHint,
             onChanged: _handleWeightChanged,
           ),
         ],
@@ -323,14 +324,14 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
         children: [
           // 섹션 제목
           Text(
-            '부작용 기록 (선택)',
+            context.l10n.tracking_dailyTracking_sideEffectsSection,
             style: AppTypography.heading2.copyWith(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 12.0), // sm + xs
 
           // 증상 선택 칩
           Text(
-            '증상 선택',
+            context.l10n.tracking_dailyTracking_symptomSelection,
             style: AppTypography.heading3.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 12.0), // sm + xs
@@ -370,7 +371,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
           // 선택된 증상별 개별 설정
           if (_selectedSymptoms.isNotEmpty) ...[
             Text(
-              '선택된 증상',
+              context.l10n.tracking_dailyTracking_selectedSymptoms,
               style: AppTypography.heading3.copyWith(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 12.0), // sm + xs
@@ -383,7 +384,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
           const SizedBox(height: 16.0), // md
           // Change 7: 입력 필드 높이 & 스타일 통일
           Text(
-            '메모 (선택)',
+            context.l10n.tracking_dailyTracking_memoLabel,
             style: AppTypography.bodySmall.copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -392,7 +393,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
           const SizedBox(height: 8.0), // sm
           TextField(
             decoration: InputDecoration(
-              hintText: '추가 메모를 입력하세요',
+              hintText: context.l10n.tracking_dailyTracking_memoHint,
               filled: true,
               fillColor: AppColors.surface,
               contentPadding: const EdgeInsets.symmetric(
@@ -460,7 +461,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
 
           // Change 4: 심각도 슬라이더 의미 시각화 (SeverityLevelIndicator 사용)
           Text(
-            '심각도',
+            context.l10n.tracking_dailyTracking_severityLabel,
             style: AppTypography.bodySmall.copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -490,7 +491,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
                       Expanded(
                         child: RadioListTile<bool>(
                           title: Text(
-                            '예',
+                            context.l10n.tracking_dailyTracking_persistentYes,
                             style: AppTypography.bodyLarge.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -507,7 +508,7 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
                       Expanded(
                         child: RadioListTile<bool>(
                           title: Text(
-                            '아니오',
+                            context.l10n.tracking_dailyTracking_persistentNo,
                             style: AppTypography.bodyLarge.copyWith(
                               color: AppColors.textSecondary,
                             ),

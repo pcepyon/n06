@@ -40,17 +40,17 @@ class WeeklyComparison {
   bool get hasImprovements => improvements.isNotEmpty;
 }
 
-/// 개선 피드백
+/// Improvement feedback
 class ImprovementFeedback {
-  /// 개선 항목 타입
+  /// Improvement type
   final ImprovementType type;
 
-  /// 피드백 메시지
-  final String message;
+  /// Weight change (kg, negative means loss) - only for weightProgress type
+  final double? weightChange;
 
   const ImprovementFeedback({
     required this.type,
-    required this.message,
+    this.weightChange,
   });
 }
 
@@ -124,41 +124,37 @@ class WeeklyComparisonService {
       thisWeekEnd,
     );
 
-    // 개선 피드백 수집
+    // Collect improvement feedback
     final improvements = <ImprovementFeedback>[];
 
     if (nauseaDecreased) {
       improvements.add(const ImprovementFeedback(
         type: ImprovementType.nauseaDecreased,
-        message: '지난주보다 메스꺼움이 줄었어요! 몸이 적응하고 있네요 💚',
       ));
     }
 
     if (appetiteImproved) {
       improvements.add(const ImprovementFeedback(
         type: ImprovementType.appetiteImproved,
-        message: '식욕 조절이 잘 되고 있어요. 약이 잘 작용하는 신호예요 💚',
       ));
     }
 
     if (energyImproved) {
       improvements.add(const ImprovementFeedback(
         type: ImprovementType.energyImproved,
-        message: '에너지가 돌아오고 있네요! ⚡',
       ));
     }
 
     if (weightChange != null && weightChange < 0) {
       improvements.add(ImprovementFeedback(
         type: ImprovementType.weightProgress,
-        message: '꾸준히 변화하고 있어요! (${weightChange.abs().toStringAsFixed(1)}kg)',
+        weightChange: weightChange,
       ));
     }
 
     if (thisWeekCheckins.length > lastWeekCheckins.length) {
       improvements.add(const ImprovementFeedback(
         type: ImprovementType.checkinStreak,
-        message: '지난주보다 더 자주 기록하고 계시네요! 👏',
       ));
     }
 
@@ -271,14 +267,12 @@ class WeeklyComparisonService {
     }
   }
 
-  /// 종합 피드백 메시지 생성
-  String generateFeedbackMessage(WeeklyComparison comparison) {
-    if (!comparison.hasImprovements) {
-      return '꾸준히 기록하고 계시네요! 💚';
-    }
-
-    // 가장 중요한 개선 사항 1-2개만 보여줌
-    final topImprovements = comparison.improvements.take(2).toList();
-    return topImprovements.map((i) => i.message).join('\n');
+  /// Check if user has improvements this week
+  ///
+  /// This method is kept for backwards compatibility.
+  /// Presentation Layer should directly check comparison.hasImprovements
+  /// and use the improvements list to display localized messages.
+  bool hasImprovements(WeeklyComparison comparison) {
+    return comparison.hasImprovements;
   }
 }

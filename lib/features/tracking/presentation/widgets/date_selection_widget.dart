@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
+import 'package:n06/core/extensions/l10n_extension.dart';
 
 /// 날짜 선택 위젯
 ///
@@ -80,12 +81,14 @@ class _DateSelectionWidgetState extends State<DateSelectionWidget> {
     }
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.year}년 ${date.month}월 ${date.day}일';
+  String _formatDate(BuildContext context, DateTime date) {
+    return context.l10n.tracking_dateSelect_fullDate(date.year, date.month, date.day);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -96,15 +99,15 @@ class _DateSelectionWidgetState extends State<DateSelectionWidget> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _QuickDateButton(
-                label: '오늘',
+                label: l10n.tracking_dateSelect_today,
                 onPressed: () => _selectQuickDate(_today()),
               ),
               _QuickDateButton(
-                label: '어제',
+                label: l10n.tracking_dateSelect_yesterday,
                 onPressed: () => _selectQuickDate(_yesterday()),
               ),
               _QuickDateButton(
-                label: '2일 전',
+                label: l10n.tracking_dateSelect_twoDaysAgo,
                 onPressed: () => _selectQuickDate(_twoDaysAgo()),
               ),
             ],
@@ -118,7 +121,7 @@ class _DateSelectionWidgetState extends State<DateSelectionWidget> {
             onPressed: _openCalendar,
             icon: const Icon(Icons.calendar_today, size: 20.0),
             label: Text(
-              _formatDate(selectedDate),
+              _formatDate(context, selectedDate),
               style: AppTypography.bodyLarge.copyWith(
                 fontWeight: FontWeight.w500,
                 color: Colors.white,

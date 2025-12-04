@@ -1,35 +1,35 @@
-import 'package:n06/features/daily_checkin/presentation/constants/checkin_strings.dart';
+import 'package:n06/l10n/generated/app_localizations.dart';
 
 /// 메인 질문 정의
 ///
 /// 6개 일상 질문의 구조를 정의합니다.
 class MainQuestion {
   final String id;
-  final String emoji;
-  final String question;
+  final String Function(L10n) getEmoji;
+  final String Function(L10n) getQuestion;
   final List<AnswerOption> options;
 
   const MainQuestion({
     required this.id,
-    required this.emoji,
-    required this.question,
+    required this.getEmoji,
+    required this.getQuestion,
     required this.options,
   });
 }
 
 /// 답변 선택지
 class AnswerOption {
-  final String emoji;
-  final String text;
+  final String Function(L10n) getEmoji;
+  final String Function(L10n) getText;
   final String value;
-  final String? feedback;
+  final String Function(L10n)? getFeedback;
   final bool triggersDerived;
 
   const AnswerOption({
-    required this.emoji,
-    required this.text,
+    required this.getEmoji,
+    required this.getText,
     required this.value,
-    this.feedback,
+    this.getFeedback,
     this.triggersDerived = false,
   });
 }
@@ -37,15 +37,15 @@ class AnswerOption {
 /// 파생 질문 정의
 class DerivedQuestion {
   final String parentQuestionId;
-  final String emoji;
-  final String question;
+  final String Function(L10n) getEmoji;
+  final String Function(L10n) getQuestion;
   final List<AnswerOption> options;
   final String? condition;
 
   const DerivedQuestion({
     required this.parentQuestionId,
-    required this.emoji,
-    required this.question,
+    required this.getEmoji,
+    required this.getQuestion,
     required this.options,
     this.condition,
   });
@@ -56,24 +56,24 @@ class Questions {
   /// Q1. 식사 질문
   static const meal = MainQuestion(
     id: 'meal',
-    emoji: MealQuestionStrings.emoji,
-    question: MealQuestionStrings.question,
+    getEmoji: _getMealEmoji,
+    getQuestion: _getMealQuestion,
     options: [
       AnswerOption(
-        emoji: MealQuestionStrings.answerGoodEmoji,
-        text: MealQuestionStrings.answerGood,
+        getEmoji: _getMealGoodEmoji,
+        getText: _getMealGood,
         value: 'good',
-        feedback: MealQuestionStrings.feedbackGood,
+        getFeedback: _getMealFeedbackGood,
       ),
       AnswerOption(
-        emoji: MealQuestionStrings.answerModerateEmoji,
-        text: MealQuestionStrings.answerModerate,
+        getEmoji: _getMealModerateEmoji,
+        getText: _getMealModerate,
         value: 'moderate',
-        feedback: MealQuestionStrings.feedbackModerate,
+        getFeedback: _getMealFeedbackModerate,
       ),
       AnswerOption(
-        emoji: MealQuestionStrings.answerDifficultEmoji,
-        text: MealQuestionStrings.answerDifficult,
+        getEmoji: _getMealDifficultEmoji,
+        getText: _getMealDifficult,
         value: 'difficult',
         triggersDerived: true,
       ),
@@ -83,24 +83,24 @@ class Questions {
   /// Q2. 수분 질문
   static const hydration = MainQuestion(
     id: 'hydration',
-    emoji: HydrationQuestionStrings.emoji,
-    question: HydrationQuestionStrings.question,
+    getEmoji: _getHydrationEmoji,
+    getQuestion: _getHydrationQuestion,
     options: [
       AnswerOption(
-        emoji: HydrationQuestionStrings.answerGoodEmoji,
-        text: HydrationQuestionStrings.answerGood,
+        getEmoji: _getHydrationGoodEmoji,
+        getText: _getHydrationGood,
         value: 'good',
-        feedback: HydrationQuestionStrings.feedbackGood,
+        getFeedback: _getHydrationFeedbackGood,
       ),
       AnswerOption(
-        emoji: HydrationQuestionStrings.answerModerateEmoji,
-        text: HydrationQuestionStrings.answerModerate,
+        getEmoji: _getHydrationModerateEmoji,
+        getText: _getHydrationModerate,
         value: 'moderate',
-        feedback: HydrationQuestionStrings.feedbackModerate,
+        getFeedback: _getHydrationFeedbackModerate,
       ),
       AnswerOption(
-        emoji: HydrationQuestionStrings.answerPoorEmoji,
-        text: HydrationQuestionStrings.answerPoor,
+        getEmoji: _getHydrationPoorEmoji,
+        getText: _getHydrationPoor,
         value: 'poor',
         triggersDerived: true,
       ),
@@ -110,24 +110,24 @@ class Questions {
   /// Q3. 속 편안함 질문
   static const giComfort = MainQuestion(
     id: 'gi_comfort',
-    emoji: GiComfortQuestionStrings.emoji,
-    question: GiComfortQuestionStrings.question,
+    getEmoji: _getGiComfortEmoji,
+    getQuestion: _getGiComfortQuestion,
     options: [
       AnswerOption(
-        emoji: GiComfortQuestionStrings.answerGoodEmoji,
-        text: GiComfortQuestionStrings.answerGood,
+        getEmoji: _getGiComfortGoodEmoji,
+        getText: _getGiComfortGood,
         value: 'good',
-        feedback: GiComfortQuestionStrings.feedbackGood,
+        getFeedback: _getGiComfortFeedbackGood,
       ),
       AnswerOption(
-        emoji: GiComfortQuestionStrings.answerUncomfortableEmoji,
-        text: GiComfortQuestionStrings.answerUncomfortable,
+        getEmoji: _getGiComfortUncomfortableEmoji,
+        getText: _getGiComfortUncomfortable,
         value: 'uncomfortable',
-        feedback: GiComfortQuestionStrings.feedbackUncomfortable,
+        getFeedback: _getGiComfortFeedbackUncomfortable,
       ),
       AnswerOption(
-        emoji: GiComfortQuestionStrings.answerVeryUncomfortableEmoji,
-        text: GiComfortQuestionStrings.answerVeryUncomfortable,
+        getEmoji: _getGiComfortVeryUncomfortableEmoji,
+        getText: _getGiComfortVeryUncomfortable,
         value: 'veryUncomfortable',
         triggersDerived: true,
       ),
@@ -137,24 +137,24 @@ class Questions {
   /// Q4. 화장실 질문
   static const bowel = MainQuestion(
     id: 'bowel',
-    emoji: BowelQuestionStrings.emoji,
-    question: BowelQuestionStrings.question,
+    getEmoji: _getBowelEmoji,
+    getQuestion: _getBowelQuestion,
     options: [
       AnswerOption(
-        emoji: BowelQuestionStrings.answerNormalEmoji,
-        text: BowelQuestionStrings.answerNormal,
+        getEmoji: _getBowelNormalEmoji,
+        getText: _getBowelNormal,
         value: 'normal',
-        feedback: BowelQuestionStrings.feedbackNormal,
+        getFeedback: _getBowelFeedbackNormal,
       ),
       AnswerOption(
-        emoji: BowelQuestionStrings.answerIrregularEmoji,
-        text: BowelQuestionStrings.answerIrregular,
+        getEmoji: _getBowelIrregularEmoji,
+        getText: _getBowelIrregular,
         value: 'irregular',
-        feedback: BowelQuestionStrings.feedbackIrregular,
+        getFeedback: _getBowelFeedbackIrregular,
       ),
       AnswerOption(
-        emoji: BowelQuestionStrings.answerDifficultEmoji,
-        text: BowelQuestionStrings.answerDifficult,
+        getEmoji: _getBowelDifficultEmoji,
+        getText: _getBowelDifficult,
         value: 'difficult',
         triggersDerived: true,
       ),
@@ -164,24 +164,24 @@ class Questions {
   /// Q5. 에너지 질문
   static const energy = MainQuestion(
     id: 'energy',
-    emoji: EnergyQuestionStrings.emoji,
-    question: EnergyQuestionStrings.question,
+    getEmoji: _getEnergyEmoji,
+    getQuestion: _getEnergyQuestion,
     options: [
       AnswerOption(
-        emoji: EnergyQuestionStrings.answerGoodEmoji,
-        text: EnergyQuestionStrings.answerGood,
+        getEmoji: _getEnergyGoodEmoji,
+        getText: _getEnergyGood,
         value: 'good',
-        feedback: EnergyQuestionStrings.feedbackGood,
+        getFeedback: _getEnergyFeedbackGood,
       ),
       AnswerOption(
-        emoji: EnergyQuestionStrings.answerNormalEmoji,
-        text: EnergyQuestionStrings.answerNormal,
+        getEmoji: _getEnergyNormalEmoji,
+        getText: _getEnergyNormal,
         value: 'normal',
-        feedback: EnergyQuestionStrings.feedbackNormal,
+        getFeedback: _getEnergyFeedbackNormal,
       ),
       AnswerOption(
-        emoji: EnergyQuestionStrings.answerTiredEmoji,
-        text: EnergyQuestionStrings.answerTired,
+        getEmoji: _getEnergyTiredEmoji,
+        getText: _getEnergyTired,
         value: 'tired',
         triggersDerived: true,
       ),
@@ -191,26 +191,26 @@ class Questions {
   /// Q6. 기분 질문
   static const mood = MainQuestion(
     id: 'mood',
-    emoji: MoodQuestionStrings.emoji,
-    question: MoodQuestionStrings.question,
+    getEmoji: _getMoodEmoji,
+    getQuestion: _getMoodQuestion,
     options: [
       AnswerOption(
-        emoji: MoodQuestionStrings.answerGoodEmoji,
-        text: MoodQuestionStrings.answerGood,
+        getEmoji: _getMoodGoodEmoji,
+        getText: _getMoodGood,
         value: 'good',
-        feedback: MoodQuestionStrings.feedbackGood,
+        getFeedback: _getMoodFeedbackGood,
       ),
       AnswerOption(
-        emoji: MoodQuestionStrings.answerNeutralEmoji,
-        text: MoodQuestionStrings.answerNeutral,
+        getEmoji: _getMoodNeutralEmoji,
+        getText: _getMoodNeutral,
         value: 'neutral',
-        feedback: MoodQuestionStrings.feedbackNeutral,
+        getFeedback: _getMoodFeedbackNeutral,
       ),
       AnswerOption(
-        emoji: MoodQuestionStrings.answerLowEmoji,
-        text: MoodQuestionStrings.answerLow,
+        getEmoji: _getMoodLowEmoji,
+        getText: _getMoodLow,
         value: 'low',
-        feedback: MoodQuestionStrings.feedbackLow,
+        getFeedback: _getMoodFeedbackLow,
       ),
     ],
   );
@@ -224,6 +224,79 @@ class Questions {
     energy,
     mood,
   ];
+
+  // Meal getters
+  static String _getMealEmoji(L10n l10n) => l10n.checkin_meal_emoji;
+  static String _getMealQuestion(L10n l10n) => l10n.checkin_meal_question;
+  static String _getMealGoodEmoji(L10n l10n) => l10n.checkin_meal_answerGoodEmoji;
+  static String _getMealGood(L10n l10n) => l10n.checkin_meal_answerGood;
+  static String _getMealFeedbackGood(L10n l10n) => l10n.checkin_meal_feedbackGood;
+  static String _getMealModerateEmoji(L10n l10n) => l10n.checkin_meal_answerModerateEmoji;
+  static String _getMealModerate(L10n l10n) => l10n.checkin_meal_answerModerate;
+  static String _getMealFeedbackModerate(L10n l10n) => l10n.checkin_meal_feedbackModerate;
+  static String _getMealDifficultEmoji(L10n l10n) => l10n.checkin_meal_answerDifficultEmoji;
+  static String _getMealDifficult(L10n l10n) => l10n.checkin_meal_answerDifficult;
+
+  // Hydration getters
+  static String _getHydrationEmoji(L10n l10n) => l10n.checkin_hydration_emoji;
+  static String _getHydrationQuestion(L10n l10n) => l10n.checkin_hydration_question;
+  static String _getHydrationGoodEmoji(L10n l10n) => l10n.checkin_hydration_answerGoodEmoji;
+  static String _getHydrationGood(L10n l10n) => l10n.checkin_hydration_answerGood;
+  static String _getHydrationFeedbackGood(L10n l10n) => l10n.checkin_hydration_feedbackGood;
+  static String _getHydrationModerateEmoji(L10n l10n) => l10n.checkin_hydration_answerModerateEmoji;
+  static String _getHydrationModerate(L10n l10n) => l10n.checkin_hydration_answerModerate;
+  static String _getHydrationFeedbackModerate(L10n l10n) => l10n.checkin_hydration_feedbackModerate;
+  static String _getHydrationPoorEmoji(L10n l10n) => l10n.checkin_hydration_answerPoorEmoji;
+  static String _getHydrationPoor(L10n l10n) => l10n.checkin_hydration_answerPoor;
+
+  // GI Comfort getters
+  static String _getGiComfortEmoji(L10n l10n) => l10n.checkin_giComfort_emoji;
+  static String _getGiComfortQuestion(L10n l10n) => l10n.checkin_giComfort_question;
+  static String _getGiComfortGoodEmoji(L10n l10n) => l10n.checkin_giComfort_answerGoodEmoji;
+  static String _getGiComfortGood(L10n l10n) => l10n.checkin_giComfort_answerGood;
+  static String _getGiComfortFeedbackGood(L10n l10n) => l10n.checkin_giComfort_feedbackGood;
+  static String _getGiComfortUncomfortableEmoji(L10n l10n) => l10n.checkin_giComfort_answerUncomfortableEmoji;
+  static String _getGiComfortUncomfortable(L10n l10n) => l10n.checkin_giComfort_answerUncomfortable;
+  static String _getGiComfortFeedbackUncomfortable(L10n l10n) => l10n.checkin_giComfort_feedbackUncomfortable;
+  static String _getGiComfortVeryUncomfortableEmoji(L10n l10n) => l10n.checkin_giComfort_answerVeryUncomfortableEmoji;
+  static String _getGiComfortVeryUncomfortable(L10n l10n) => l10n.checkin_giComfort_answerVeryUncomfortable;
+
+  // Bowel getters
+  static String _getBowelEmoji(L10n l10n) => l10n.checkin_bowel_emoji;
+  static String _getBowelQuestion(L10n l10n) => l10n.checkin_bowel_question;
+  static String _getBowelNormalEmoji(L10n l10n) => l10n.checkin_bowel_answerNormalEmoji;
+  static String _getBowelNormal(L10n l10n) => l10n.checkin_bowel_answerNormal;
+  static String _getBowelFeedbackNormal(L10n l10n) => l10n.checkin_bowel_feedbackNormal;
+  static String _getBowelIrregularEmoji(L10n l10n) => l10n.checkin_bowel_answerIrregularEmoji;
+  static String _getBowelIrregular(L10n l10n) => l10n.checkin_bowel_answerIrregular;
+  static String _getBowelFeedbackIrregular(L10n l10n) => l10n.checkin_bowel_feedbackIrregular;
+  static String _getBowelDifficultEmoji(L10n l10n) => l10n.checkin_bowel_answerDifficultEmoji;
+  static String _getBowelDifficult(L10n l10n) => l10n.checkin_bowel_answerDifficult;
+
+  // Energy getters
+  static String _getEnergyEmoji(L10n l10n) => l10n.checkin_energy_emoji;
+  static String _getEnergyQuestion(L10n l10n) => l10n.checkin_energy_question;
+  static String _getEnergyGoodEmoji(L10n l10n) => l10n.checkin_energy_answerGoodEmoji;
+  static String _getEnergyGood(L10n l10n) => l10n.checkin_energy_answerGood;
+  static String _getEnergyFeedbackGood(L10n l10n) => l10n.checkin_energy_feedbackGood;
+  static String _getEnergyNormalEmoji(L10n l10n) => l10n.checkin_energy_answerNormalEmoji;
+  static String _getEnergyNormal(L10n l10n) => l10n.checkin_energy_answerNormal;
+  static String _getEnergyFeedbackNormal(L10n l10n) => l10n.checkin_energy_feedbackNormal;
+  static String _getEnergyTiredEmoji(L10n l10n) => l10n.checkin_energy_answerTiredEmoji;
+  static String _getEnergyTired(L10n l10n) => l10n.checkin_energy_answerTired;
+
+  // Mood getters
+  static String _getMoodEmoji(L10n l10n) => l10n.checkin_mood_emoji;
+  static String _getMoodQuestion(L10n l10n) => l10n.checkin_mood_question;
+  static String _getMoodGoodEmoji(L10n l10n) => l10n.checkin_mood_answerGoodEmoji;
+  static String _getMoodGood(L10n l10n) => l10n.checkin_mood_answerGood;
+  static String _getMoodFeedbackGood(L10n l10n) => l10n.checkin_mood_feedbackGood;
+  static String _getMoodNeutralEmoji(L10n l10n) => l10n.checkin_mood_answerNeutralEmoji;
+  static String _getMoodNeutral(L10n l10n) => l10n.checkin_mood_answerNeutral;
+  static String _getMoodFeedbackNeutral(L10n l10n) => l10n.checkin_mood_feedbackNeutral;
+  static String _getMoodLowEmoji(L10n l10n) => l10n.checkin_mood_answerLowEmoji;
+  static String _getMoodLow(L10n l10n) => l10n.checkin_mood_answerLow;
+  static String _getMoodFeedbackLow(L10n l10n) => l10n.checkin_mood_feedbackLow;
 }
 
 /// 파생 질문 정의
@@ -231,26 +304,26 @@ class DerivedQuestions {
   /// Q1-1. 식사가 힘들었던 이유
   static const mealDifficulty = DerivedQuestion(
     parentQuestionId: 'meal',
-    emoji: MealQuestionStrings.emoji,
-    question: MealQuestionStrings.derivedQuestion,
+    getEmoji: _getMealEmoji,
+    getQuestion: _getMealDerivedQuestion,
     options: [
       AnswerOption(
-        emoji: MealQuestionStrings.derivedNauseaEmoji,
-        text: MealQuestionStrings.derivedNausea,
+        getEmoji: _getMealDerivedNauseaEmoji,
+        getText: _getMealDerivedNausea,
         value: 'nausea',
-        triggersDerived: true, // Q1-1a로
+        triggersDerived: true,
       ),
       AnswerOption(
-        emoji: MealQuestionStrings.derivedLowAppetiteEmoji,
-        text: MealQuestionStrings.derivedLowAppetite,
+        getEmoji: _getMealDerivedLowAppetiteEmoji,
+        getText: _getMealDerivedLowAppetite,
         value: 'low_appetite',
-        feedback: MealQuestionStrings.feedbackLowAppetite,
+        getFeedback: _getMealFeedbackLowAppetite,
       ),
       AnswerOption(
-        emoji: MealQuestionStrings.derivedEarlySatietyEmoji,
-        text: MealQuestionStrings.derivedEarlySatiety,
+        getEmoji: _getMealDerivedEarlySatietyEmoji,
+        getText: _getMealDerivedEarlySatiety,
         value: 'early_satiety',
-        feedback: MealQuestionStrings.feedbackEarlySatiety,
+        getFeedback: _getMealFeedbackEarlySatiety,
       ),
     ],
   );
@@ -258,24 +331,24 @@ class DerivedQuestions {
   /// Q3-1. 속 불편함의 종류
   static const giDiscomfortType = DerivedQuestion(
     parentQuestionId: 'gi_comfort',
-    emoji: GiComfortQuestionStrings.emoji,
-    question: GiComfortQuestionStrings.derivedQuestion,
+    getEmoji: _getGiComfortEmoji,
+    getQuestion: _getGiComfortDerivedQuestion,
     options: [
       AnswerOption(
-        emoji: GiComfortQuestionStrings.derivedHeartburnEmoji,
-        text: GiComfortQuestionStrings.derivedHeartburn,
+        getEmoji: _getGiComfortDerivedHeartburnEmoji,
+        getText: _getGiComfortDerivedHeartburn,
         value: 'heartburn',
-        feedback: GiComfortQuestionStrings.feedbackHeartburn,
+        getFeedback: _getGiComfortFeedbackHeartburn,
       ),
       AnswerOption(
-        emoji: GiComfortQuestionStrings.derivedPainEmoji,
-        text: GiComfortQuestionStrings.derivedPain,
+        getEmoji: _getGiComfortDerivedPainEmoji,
+        getText: _getGiComfortDerivedPain,
         value: 'abdominal_pain',
-        triggersDerived: true, // Q3-2로 (복통 위치)
+        triggersDerived: true,
       ),
       AnswerOption(
-        emoji: GiComfortQuestionStrings.derivedBloatingEmoji,
-        text: GiComfortQuestionStrings.derivedBloating,
+        getEmoji: _getGiComfortDerivedBloatingEmoji,
+        getText: _getGiComfortDerivedBloating,
         value: 'bloating',
       ),
     ],
@@ -284,20 +357,20 @@ class DerivedQuestions {
   /// Q4-1. 화장실 어떤 상황
   static const bowelIssueType = DerivedQuestion(
     parentQuestionId: 'bowel',
-    emoji: BowelQuestionStrings.emoji,
-    question: BowelQuestionStrings.derivedQuestion,
+    getEmoji: _getBowelEmoji,
+    getQuestion: _getBowelDerivedQuestion,
     options: [
       AnswerOption(
-        emoji: BowelQuestionStrings.derivedConstipationEmoji,
-        text: BowelQuestionStrings.derivedConstipation,
+        getEmoji: _getBowelDerivedConstipationEmoji,
+        getText: _getBowelDerivedConstipation,
         value: 'constipation',
-        triggersDerived: true, // Q4-1a로
+        triggersDerived: true,
       ),
       AnswerOption(
-        emoji: BowelQuestionStrings.derivedDiarrheaEmoji,
-        text: BowelQuestionStrings.derivedDiarrhea,
+        getEmoji: _getBowelDerivedDiarrheaEmoji,
+        getText: _getBowelDerivedDiarrhea,
         value: 'diarrhea',
-        triggersDerived: true, // Q4-1b로
+        triggersDerived: true,
       ),
     ],
   );
@@ -305,90 +378,89 @@ class DerivedQuestions {
   /// Q5-1. 에너지 파생 증상
   static const energySymptoms = DerivedQuestion(
     parentQuestionId: 'energy',
-    emoji: EnergyQuestionStrings.emoji,
-    question: EnergyQuestionStrings.derivedQuestion,
+    getEmoji: _getEnergyEmoji,
+    getQuestion: _getEnergyDerivedQuestion,
     options: [
       AnswerOption(
-        emoji: EnergyQuestionStrings.derivedDizzinessEmoji,
-        text: EnergyQuestionStrings.derivedDizziness,
+        getEmoji: _getEnergyDerivedDizzinessEmoji,
+        getText: _getEnergyDerivedDizziness,
         value: 'dizziness',
-        triggersDerived: true, // Q5-2로 (저혈당 체크)
+        triggersDerived: true,
       ),
       AnswerOption(
-        emoji: EnergyQuestionStrings.derivedColdSweatEmoji,
-        text: EnergyQuestionStrings.derivedColdSweat,
+        getEmoji: _getEnergyDerivedColdSweatEmoji,
+        getText: _getEnergyDerivedColdSweat,
         value: 'cold_sweat',
-        triggersDerived: true, // Q5-2로 (저혈당 체크)
+        triggersDerived: true,
       ),
       AnswerOption(
-        emoji: EnergyQuestionStrings.derivedFatigueOnlyEmoji,
-        text: EnergyQuestionStrings.derivedFatigueOnly,
+        getEmoji: _getEnergyDerivedFatigueOnlyEmoji,
+        getText: _getEnergyDerivedFatigueOnly,
         value: 'fatigue_only',
-        feedback: EnergyQuestionStrings.feedbackFatigue,
+        getFeedback: _getEnergyFeedbackFatigue,
       ),
       AnswerOption(
-        emoji: EnergyQuestionStrings.derivedDyspneaEmoji,
-        text: EnergyQuestionStrings.derivedDyspnea,
+        getEmoji: _getEnergyDerivedDyspneaEmoji,
+        getText: _getEnergyDerivedDyspnea,
         value: 'dyspnea',
-        triggersDerived: true, // Q5-3으로 (신부전 체크)
+        triggersDerived: true,
       ),
       AnswerOption(
-        emoji: EnergyQuestionStrings.derivedSwellingEmoji,
-        text: EnergyQuestionStrings.derivedSwelling,
+        getEmoji: _getEnergyDerivedSwellingEmoji,
+        getText: _getEnergyDerivedSwelling,
         value: 'swelling',
-        triggersDerived: true, // Q5-3으로 (신부전 체크)
+        triggersDerived: true,
       ),
     ],
   );
 
-  /// Q1-1a. 메스꺼움 상세
+  /// Q1-1a. 메스꺼움 강도
   static const nauseaSeverity = DerivedQuestion(
     parentQuestionId: 'meal',
-    emoji: MealQuestionStrings.emoji,
-    question: MealQuestionStrings.derivedNauseaSeverityQuestion,
+    getEmoji: _getMealEmoji,
+    getQuestion: _getNauseaSeverityQuestion,
     options: [
       AnswerOption(
-        emoji: MealQuestionStrings.nauseaMildEmoji,
-        text: MealQuestionStrings.nauseaMild,
+        getEmoji: _getNauseaMildEmoji,
+        getText: _getNauseaMild,
         value: 'mild',
-        feedback: MealQuestionStrings.feedbackNauseaMild,
+        getFeedback: _getNauseaFeedbackMild,
       ),
       AnswerOption(
-        emoji: MealQuestionStrings.nauseaModerateEmoji,
-        text: MealQuestionStrings.nauseaModerate,
+        getEmoji: _getNauseaModerateEmoji,
+        getText: _getNauseaModerate,
         value: 'moderate',
-        triggersDerived: true, // Q1-1b로 (구토 여부)
+        triggersDerived: true,
       ),
       AnswerOption(
-        emoji: MealQuestionStrings.nauseaSevereEmoji,
-        text: MealQuestionStrings.nauseaSevere,
+        getEmoji: _getNauseaSevereEmoji,
+        getText: _getNauseaSevere,
         value: 'severe',
-        triggersDerived: true, // Q1-1b로 (구토 여부)
+        triggersDerived: true,
       ),
     ],
   );
 
-  /// Q1-1b. 구토 여부
+  /// Q1-1b. 구토 확인
   static const vomitingCheck = DerivedQuestion(
     parentQuestionId: 'meal',
-    emoji: MealQuestionStrings.emoji,
-    question: MealQuestionStrings.derivedVomitingQuestion,
+    getEmoji: _getMealEmoji,
+    getQuestion: _getVomitingQuestion,
     options: [
       AnswerOption(
-        emoji: MealQuestionStrings.vomitingNoneEmoji,
-        text: MealQuestionStrings.vomitingNone,
-        value: 'none',
+        getEmoji: _getVomitingNoEmoji,
+        getText: _getVomitingNo,
+        value: 'no',
       ),
       AnswerOption(
-        emoji: MealQuestionStrings.vomitingOnceEmoji,
-        text: MealQuestionStrings.vomitingOnce,
-        value: 'once_twice',
-        feedback: MealQuestionStrings.feedbackVomitingOnce,
+        getEmoji: _getVomitingOnceEmoji,
+        getText: _getVomitingOnce,
+        value: 'once',
       ),
       AnswerOption(
-        emoji: MealQuestionStrings.vomitingSevereEmoji,
-        text: MealQuestionStrings.vomitingSevere,
-        value: 'multiple',
+        getEmoji: _getVomitingSeveralEmoji,
+        getText: _getVomitingSeveral,
+        value: 'several',
       ),
     ],
   );
@@ -396,25 +468,26 @@ class DerivedQuestions {
   /// Q2-1. 수분 섭취 어려움
   static const hydrationDifficulty = DerivedQuestion(
     parentQuestionId: 'hydration',
-    emoji: HydrationQuestionStrings.emoji,
-    question: HydrationQuestionStrings.derivedQuestion,
+    getEmoji: _getHydrationEmoji,
+    getQuestion: _getHydrationDerivedQuestion,
     options: [
       AnswerOption(
-        emoji: HydrationQuestionStrings.derivedForgotEmoji,
-        text: HydrationQuestionStrings.derivedForgot,
+        getEmoji: _getHydrationDerivedForgotEmoji,
+        getText: _getHydrationDerivedForgot,
         value: 'forgot',
-        feedback: HydrationQuestionStrings.feedbackForgot,
+        getFeedback: _getHydrationFeedbackForgot,
       ),
       AnswerOption(
-        emoji: HydrationQuestionStrings.derivedNauseaEmoji,
-        text: HydrationQuestionStrings.derivedNausea,
+        getEmoji: _getHydrationDerivedNauseaEmoji,
+        getText: _getHydrationDerivedNausea,
         value: 'nausea',
-        feedback: HydrationQuestionStrings.feedbackNausea,
+        getFeedback: _getHydrationFeedbackNausea,
       ),
       AnswerOption(
-        emoji: HydrationQuestionStrings.derivedCannotKeepEmoji,
-        text: HydrationQuestionStrings.derivedCannotKeep,
+        getEmoji: _getHydrationDerivedCannotKeepEmoji,
+        getText: _getHydrationDerivedCannotKeep,
         value: 'cannot_keep',
+        // No feedback for cannotKeep
       ),
     ],
   );
@@ -422,366 +495,499 @@ class DerivedQuestions {
   /// Q3-2. 복통 위치
   static const painLocation = DerivedQuestion(
     parentQuestionId: 'gi_comfort',
-    emoji: GiComfortQuestionStrings.emoji,
-    question: GiComfortQuestionStrings.derivedPainLocationQuestion,
+    getEmoji: _getGiComfortEmoji,
+    getQuestion: _getPainLocationQuestion,
     options: [
       AnswerOption(
-        emoji: GiComfortQuestionStrings.painUpperAbdomenEmoji,
-        text: GiComfortQuestionStrings.painUpperAbdomen,
-        value: 'upper_abdomen',
-        triggersDerived: true, // Q3-3으로 (췌장염 체크)
+        getEmoji: _getPainLocationUpperEmoji,
+        getText: _getPainLocationUpper,
+        value: 'upper',
+        triggersDerived: true,
       ),
       AnswerOption(
-        emoji: GiComfortQuestionStrings.painRightUpperEmoji,
-        text: GiComfortQuestionStrings.painRightUpper,
-        value: 'right_upper_quadrant',
-        triggersDerived: true, // Q3-4로 (담낭염 체크)
+        getEmoji: _getPainLocationRightUpperEmoji,
+        getText: _getPainLocationRightUpper,
+        value: 'right_upper',
+        triggersDerived: true,
       ),
       AnswerOption(
-        emoji: GiComfortQuestionStrings.painPeriumbilicalEmoji,
-        text: GiComfortQuestionStrings.painPeriumbilical,
-        value: 'periumbilical',
-        triggersDerived: true, // Q3-3으로 (췌장염 체크)
+        getEmoji: _getPainLocationLowerEmoji,
+        getText: _getPainLocationLower,
+        value: 'lower',
       ),
       AnswerOption(
-        emoji: GiComfortQuestionStrings.painLowerEmoji,
-        text: GiComfortQuestionStrings.painLower,
-        value: 'lower_abdomen',
-        feedback: GiComfortQuestionStrings.feedbackPainLower,
+        getEmoji: _getPainLocationGeneralEmoji,
+        getText: _getPainLocationGeneral,
+        value: 'general',
       ),
     ],
   );
 
-  /// Q3-3. 상복부/배꼽 주변 통증 상세 (췌장염 체크)
+  /// Q3-3. 윗배 통증 강도
   static const upperPainSeverity = DerivedQuestion(
     parentQuestionId: 'gi_comfort',
-    emoji: GiComfortQuestionStrings.emoji,
-    question: GiComfortQuestionStrings.derivedUpperPainSeverityQuestion,
+    getEmoji: _getGiComfortEmoji,
+    getQuestion: _getUpperPainSeverityQuestion,
     options: [
       AnswerOption(
-        emoji: GiComfortQuestionStrings.painMildEmoji,
-        text: GiComfortQuestionStrings.painMild,
+        getEmoji: _getPainSeverityMildEmoji,
+        getText: _getPainSeverityMild,
         value: 'mild',
       ),
       AnswerOption(
-        emoji: GiComfortQuestionStrings.painModerateEmoji,
-        text: GiComfortQuestionStrings.painModerate,
+        getEmoji: _getPainSeverityModerateEmoji,
+        getText: _getPainSeverityModerate,
         value: 'moderate',
       ),
       AnswerOption(
-        emoji: GiComfortQuestionStrings.painSevereEmoji,
-        text: GiComfortQuestionStrings.painSevere,
+        getEmoji: _getPainSeveritySevereEmoji,
+        getText: _getPainSeveritySevere,
         value: 'severe',
+        triggersDerived: true,
       ),
     ],
   );
 
-  /// Q3-4. 오른쪽 윗배 통증 상세 (담낭염 체크)
+  /// Q3-3-radiation. 등으로 통증 방사
+  static const radiationToBack = DerivedQuestion(
+    parentQuestionId: 'gi_comfort',
+    getEmoji: _getGiComfortEmoji,
+    getQuestion: _getRadiationToBackQuestion,
+    options: [
+      AnswerOption(
+        getEmoji: _getRadiationNoEmoji,
+        getText: _getRadiationNo,
+        value: 'no',
+        // No feedback for radiationNo
+      ),
+      AnswerOption(
+        getEmoji: _getRadiationYesEmoji,
+        getText: _getRadiationYes,
+        value: 'yes',
+        triggersDerived: true,
+      ),
+    ],
+  );
+
+//   /// Q3-3-duration. 통증 지속 시간
+//   static const painDuration = DerivedQuestion(
+//     parentQuestionId: 'gi_comfort',
+//     getEmoji: _getGiComfortEmoji,
+//     getQuestion: _getPainDurationQuestion,
+//     options: [
+//       AnswerOption(
+//         getEmoji: _getPainDurationShortEmoji,
+//         getText: _getPainDurationShort,
+//         value: 'short',
+//       ),
+//       AnswerOption(
+//         getEmoji: _getPainDurationLongEmoji,
+//         getText: _getPainDurationLong,
+//         value: 'long',
+//       ),
+//     ],
+//   );
+
+  /// Q3-4. 오른쪽 윗배 통증 강도
   static const rightUpperPainSeverity = DerivedQuestion(
     parentQuestionId: 'gi_comfort',
-    emoji: GiComfortQuestionStrings.emoji,
-    question: GiComfortQuestionStrings.derivedRightUpperPainSeverityQuestion,
+    getEmoji: _getGiComfortEmoji,
+    getQuestion: _getRightUpperPainSeverityQuestion,
     options: [
       AnswerOption(
-        emoji: GiComfortQuestionStrings.painMildEmoji,
-        text: GiComfortQuestionStrings.painMild,
+        getEmoji: _getPainSeverityMildEmoji,
+        getText: _getPainSeverityMild,
         value: 'mild',
       ),
       AnswerOption(
-        emoji: GiComfortQuestionStrings.painModerateEmoji,
-        text: GiComfortQuestionStrings.painModerate,
+        getEmoji: _getPainSeverityModerateEmoji,
+        getText: _getPainSeverityModerate,
         value: 'moderate',
       ),
       AnswerOption(
-        emoji: GiComfortQuestionStrings.painSevereEmoji,
-        text: GiComfortQuestionStrings.painSevere,
+        getEmoji: _getPainSeveritySevereEmoji,
+        getText: _getPainSeveritySevere,
         value: 'severe',
+        triggersDerived: true,
       ),
     ],
   );
 
-  /// Q4-1a. 변비 상세
-  static const constipationDays = DerivedQuestion(
-    parentQuestionId: 'bowel',
-    emoji: BowelQuestionStrings.emoji,
-    question: BowelQuestionStrings.derivedConstipationDaysQuestion,
+  /// Q3-4-fever. 발열/오한 확인
+  static const feverChills = DerivedQuestion(
+    parentQuestionId: 'gi_comfort',
+    getEmoji: _getGiComfortEmoji,
+    getQuestion: _getFeverChillsQuestion,
     options: [
       AnswerOption(
-        emoji: BowelQuestionStrings.constipation1to2DaysEmoji,
-        text: BowelQuestionStrings.constipation1to2Days,
-        value: '1-2',
-      ),
-      AnswerOption(
-        emoji: BowelQuestionStrings.constipation3to4DaysEmoji,
-        text: BowelQuestionStrings.constipation3to4Days,
-        value: '3-4',
-      ),
-      AnswerOption(
-        emoji: BowelQuestionStrings.constipation5PlusDaysEmoji,
-        text: BowelQuestionStrings.constipation5PlusDays,
-        value: '5+',
-      ),
-    ],
-  );
-
-  /// Q4-1b. 설사 상세
-  static const diarrheaFrequency = DerivedQuestion(
-    parentQuestionId: 'bowel',
-    emoji: BowelQuestionStrings.emoji,
-    question: BowelQuestionStrings.derivedDiarrheaFrequencyQuestion,
-    options: [
-      AnswerOption(
-        emoji: BowelQuestionStrings.diarrhea2to3TimesEmoji,
-        text: BowelQuestionStrings.diarrhea2to3Times,
-        value: '2-3',
-        feedback: BowelQuestionStrings.feedbackDiarrheaMild,
-      ),
-      AnswerOption(
-        emoji: BowelQuestionStrings.diarrhea4to5TimesEmoji,
-        text: BowelQuestionStrings.diarrhea4to5Times,
-        value: '4-5',
-        feedback: BowelQuestionStrings.feedbackDiarrheaModerate,
-      ),
-      AnswerOption(
-        emoji: BowelQuestionStrings.diarrhea6PlusTimesEmoji,
-        text: BowelQuestionStrings.diarrhea6PlusTimes,
-        value: '6+',
-      ),
-    ],
-  );
-
-  /// Q5-2. 저혈당 체크
-  static const hypoglycemiaCheck = DerivedQuestion(
-    parentQuestionId: 'energy',
-    emoji: EnergyQuestionStrings.emoji,
-    question: EnergyQuestionStrings.derivedHypoglycemiaQuestion,
-    options: [
-      AnswerOption(
-        emoji: EnergyQuestionStrings.hypoglycemiaNoEmoji,
-        text: EnergyQuestionStrings.hypoglycemiaNo,
+        getEmoji: _getFeverNoEmoji,
+        getText: _getFeverNo,
         value: 'no',
       ),
       AnswerOption(
-        emoji: EnergyQuestionStrings.hypoglycemiaYesEmoji,
-        text: EnergyQuestionStrings.hypoglycemiaYes,
+        getEmoji: _getFeverYesEmoji,
+        getText: _getFeverYes,
         value: 'yes',
       ),
     ],
   );
 
-  /// Q3-3-radiation. 등 방사통 체크 (췌장염 Red Flag)
-  static const radiationToBack = DerivedQuestion(
-    parentQuestionId: 'gi_comfort',
-    emoji: GiComfortQuestionStrings.emoji,
-    question: GiComfortQuestionStrings.derivedRadiationToBackQuestion,
+  /// Q4-1a. 변비 일수
+  static const constipationDays = DerivedQuestion(
+    parentQuestionId: 'bowel',
+    getEmoji: _getBowelEmoji,
+    getQuestion: _getConstipationDaysQuestion,
     options: [
       AnswerOption(
-        emoji: GiComfortQuestionStrings.radiationNoEmoji,
-        text: GiComfortQuestionStrings.radiationNo,
-        value: 'no',
+        getEmoji: _getConstipationFewEmoji,
+        getText: _getConstipationFew,
+        value: 'few',
       ),
       AnswerOption(
-        emoji: GiComfortQuestionStrings.radiationSlightEmoji,
-        text: GiComfortQuestionStrings.radiationSlight,
-        value: 'slight',
+        getEmoji: _getConstipationSeveralEmoji,
+        getText: _getConstipationSeveral,
+        value: 'several',
+        triggersDerived: true,
       ),
       AnswerOption(
-        emoji: GiComfortQuestionStrings.radiationDefiniteEmoji,
-        text: GiComfortQuestionStrings.radiationDefinite,
-        value: 'definite',
+        getEmoji: _getConstipationManyEmoji,
+        getText: _getConstipationMany,
+        value: 'many',
+        triggersDerived: true,
       ),
     ],
   );
 
-  /// Q3-3-duration. 통증 지속 시간 (췌장염 Red Flag)
-  static const painDuration = DerivedQuestion(
-    parentQuestionId: 'gi_comfort',
-    emoji: GiComfortQuestionStrings.emoji,
-    question: GiComfortQuestionStrings.derivedPainDurationQuestion,
-    options: [
-      AnswerOption(
-        emoji: GiComfortQuestionStrings.durationBriefEmoji,
-        text: GiComfortQuestionStrings.durationBrief,
-        value: 'brief',
-      ),
-      AnswerOption(
-        emoji: GiComfortQuestionStrings.durationHoursEmoji,
-        text: GiComfortQuestionStrings.durationHours,
-        value: 'hours',
-      ),
-      AnswerOption(
-        emoji: GiComfortQuestionStrings.durationAllDayEmoji,
-        text: GiComfortQuestionStrings.durationAllDay,
-        value: 'all_day',
-      ),
-    ],
-  );
-
-  /// Q3-4-fever. 발열/오한 체크 (담낭염 Red Flag)
-  static const feverChills = DerivedQuestion(
-    parentQuestionId: 'gi_comfort',
-    emoji: GiComfortQuestionStrings.emoji,
-    question: GiComfortQuestionStrings.derivedFeverChillsQuestion,
-    options: [
-      AnswerOption(
-        emoji: GiComfortQuestionStrings.feverNoEmoji,
-        text: GiComfortQuestionStrings.feverNo,
-        value: 'no',
-      ),
-      AnswerOption(
-        emoji: GiComfortQuestionStrings.feverSlightEmoji,
-        text: GiComfortQuestionStrings.feverSlight,
-        value: 'slight',
-      ),
-      AnswerOption(
-        emoji: GiComfortQuestionStrings.feverDefiniteEmoji,
-        text: GiComfortQuestionStrings.feverDefinite,
-        value: 'definite',
-      ),
-    ],
-  );
-
-  /// Q4-1a-bloating. 빵빵함 정도 (장폐색 Red Flag)
+  /// Q4-1a-bloating. 배 빵빵함 강도
   static const bloatingSeverity = DerivedQuestion(
     parentQuestionId: 'bowel',
-    emoji: BowelQuestionStrings.emoji,
-    question: BowelQuestionStrings.derivedBloatingSeverityQuestion,
+    getEmoji: _getBowelEmoji,
+    getQuestion: _getBloatingSeverityQuestion,
     options: [
       AnswerOption(
-        emoji: BowelQuestionStrings.bloatingMildEmoji,
-        text: BowelQuestionStrings.bloatingMild,
+        getEmoji: _getBloatingMildEmoji,
+        getText: _getBloatingMild,
         value: 'mild',
       ),
       AnswerOption(
-        emoji: BowelQuestionStrings.bloatingModerateEmoji,
-        text: BowelQuestionStrings.bloatingModerate,
+        getEmoji: _getBloatingModerateEmoji,
+        getText: _getBloatingModerate,
         value: 'moderate',
       ),
       AnswerOption(
-        emoji: BowelQuestionStrings.bloatingSevereEmoji,
-        text: BowelQuestionStrings.bloatingSevere,
-        value: 'severe_no_gas',
-      ),
-    ],
-  );
-
-  /// Q5-2-tremor. 손떨림 체크 (저혈당 Red Flag)
-  static const tremorCheck = DerivedQuestion(
-    parentQuestionId: 'energy',
-    emoji: EnergyQuestionStrings.emoji,
-    question: EnergyQuestionStrings.derivedTremorQuestion,
-    options: [
-      AnswerOption(
-        emoji: EnergyQuestionStrings.tremorNoEmoji,
-        text: EnergyQuestionStrings.tremorNo,
-        value: 'no',
-      ),
-      AnswerOption(
-        emoji: EnergyQuestionStrings.tremorMildEmoji,
-        text: EnergyQuestionStrings.tremorMild,
-        value: 'mild',
-      ),
-      AnswerOption(
-        emoji: EnergyQuestionStrings.tremorSevereEmoji,
-        text: EnergyQuestionStrings.tremorSevere,
+        getEmoji: _getBloatingSevereEmoji,
+        getText: _getBloatingSevere,
         value: 'severe',
       ),
     ],
   );
 
-  /// Q5-2-meds. 당뇨약 복용 여부 (저혈당 Red Flag)
-  static const diabetesMedsCheck = DerivedQuestion(
-    parentQuestionId: 'energy',
-    emoji: EnergyQuestionStrings.emoji,
-    question: EnergyQuestionStrings.derivedDiabetesMedsQuestion,
+  /// Q4-1b. 설사 빈도
+  static const diarrheaFrequency = DerivedQuestion(
+    parentQuestionId: 'bowel',
+    getEmoji: _getBowelEmoji,
+    getQuestion: _getDiarrheaFrequencyQuestion,
     options: [
       AnswerOption(
-        emoji: EnergyQuestionStrings.medsNoEmoji,
-        text: EnergyQuestionStrings.medsNo,
+        getEmoji: _getDiarrheaFewEmoji,
+        getText: _getDiarrheaFew,
+        value: 'few',
+      ),
+      AnswerOption(
+        getEmoji: _getDiarrheaSeveralEmoji,
+        getText: _getDiarrheaSeveral,
+        value: 'several',
+      ),
+      AnswerOption(
+        getEmoji: _getDiarrheaManyEmoji,
+        getText: _getDiarrheaMany,
+        value: 'many',
+      ),
+    ],
+  );
+
+  /// Q5-2. 저혈당 확인
+  static const hypoglycemiaCheck = DerivedQuestion(
+    parentQuestionId: 'energy',
+    getEmoji: _getEnergyEmoji,
+    getQuestion: _getHypoglycemiaQuestion,
+    options: [
+      AnswerOption(
+        getEmoji: _getHypoglycemiaNoEmoji,
+        getText: _getHypoglycemiaNo,
         value: 'no',
       ),
       AnswerOption(
-        emoji: EnergyQuestionStrings.medsOralEmoji,
-        text: EnergyQuestionStrings.medsOral,
-        value: 'oral',
-      ),
-      AnswerOption(
-        emoji: EnergyQuestionStrings.medsInsulinEmoji,
-        text: EnergyQuestionStrings.medsInsulin,
-        value: 'insulin',
+        getEmoji: _getHypoglycemiaYesEmoji,
+        getText: _getHypoglycemiaYes,
+        value: 'yes',
+        triggersDerived: true,
       ),
     ],
   );
 
-  /// Q5-3. 신부전 체크
-  static const renalCheck = DerivedQuestion(
+  /// Q5-2-tremor. 손떨림 확인
+  static const tremorCheck = DerivedQuestion(
     parentQuestionId: 'energy',
-    emoji: EnergyQuestionStrings.emoji,
-    question: EnergyQuestionStrings.derivedRenalCheckQuestion,
+    getEmoji: _getEnergyEmoji,
+    getQuestion: _getTremorQuestion,
     options: [
       AnswerOption(
-        emoji: EnergyQuestionStrings.urineNormalEmoji,
-        text: EnergyQuestionStrings.urineNormal,
-        value: 'normal',
+        getEmoji: _getTremorNoEmoji,
+        getText: _getTremorNo,
+        value: 'no',
       ),
       AnswerOption(
-        emoji: EnergyQuestionStrings.urineDecreasedEmoji,
-        text: EnergyQuestionStrings.urineDecreased,
-        value: 'decreased',
-      ),
-      AnswerOption(
-        emoji: EnergyQuestionStrings.urineSeverelyDecreasedEmoji,
-        text: EnergyQuestionStrings.urineSeverelyDecreased,
-        value: 'severely_decreased',
+        getEmoji: _getTremorYesEmoji,
+        getText: _getTremorYes,
+        value: 'yes',
+        triggersDerived: true,
       ),
     ],
   );
 
-  /// Q5-3-urine. 소변량 상세 (신부전 Red Flag)
+//   /// Q5-2-meds. 당뇨약 복용 확인
+//   static const diabetesMedsCheck = DerivedQuestion(
+//     parentQuestionId: 'energy',
+//     getEmoji: _getEnergyEmoji,
+//     getQuestion: _getDiabetesMedsQuestion,
+//     options: [
+//       AnswerOption(
+//         getEmoji: _getDiabetesMedsNoEmoji,
+//         getText: _getDiabetesMedsNo,
+//         value: 'no',
+//       ),
+//       AnswerOption(
+//         getEmoji: _getDiabetesMedsYesEmoji,
+//         getText: _getDiabetesMedsYes,
+//         value: 'yes',
+//       ),
+//     ],
+//   );
+
+//   /// Q5-3. 신장 기능 확인
+//   static const renalCheck = DerivedQuestion(
+//     parentQuestionId: 'energy',
+//     getEmoji: _getEnergyEmoji,
+//     getQuestion: _getRenalCheckQuestion,
+//     options: [
+//       AnswerOption(
+//         getEmoji: _getRenalNoEmoji,
+//         getText: _getRenalNo,
+//         value: 'no',
+//       ),
+//       AnswerOption(
+//         getEmoji: _getRenalYesEmoji,
+//         getText: _getRenalYes,
+//         value: 'yes',
+//         triggersDerived: true,
+//       ),
+//     ],
+//   );
+
+  /// Q5-3-urine. 소변량 확인
   static const urineOutputCheck = DerivedQuestion(
     parentQuestionId: 'energy',
-    emoji: EnergyQuestionStrings.emoji,
-    question: EnergyQuestionStrings.derivedUrineOutputQuestion,
+    getEmoji: _getEnergyEmoji,
+    getQuestion: _getUrineOutputQuestion,
     options: [
       AnswerOption(
-        emoji: EnergyQuestionStrings.urineOutputNormalEmoji,
-        text: EnergyQuestionStrings.urineOutputNormal,
+        getEmoji: _getUrineOutputNormalEmoji,
+        getText: _getUrineOutputNormal,
         value: 'normal',
       ),
       AnswerOption(
-        emoji: EnergyQuestionStrings.urineOutputDecreasedEmoji,
-        text: EnergyQuestionStrings.urineOutputDecreased,
+        getEmoji: _getUrineOutputDecreasedEmoji,
+        getText: _getUrineOutputDecreased,
         value: 'decreased',
-      ),
-      AnswerOption(
-        emoji: EnergyQuestionStrings.urineOutputSevereEmoji,
-        text: EnergyQuestionStrings.urineOutputSevere,
-        value: 'significantly_decreased',
+        triggersDerived: true,
       ),
     ],
   );
 
-  /// Q5-3-weight. 체중 증가 체크 (신부전 Red Flag)
+  /// Q5-3-weight. 체중 증가 확인
   static const weightGainCheck = DerivedQuestion(
     parentQuestionId: 'energy',
-    emoji: EnergyQuestionStrings.emoji,
-    question: EnergyQuestionStrings.derivedWeightGainQuestion,
+    getEmoji: _getEnergyEmoji,
+    getQuestion: _getWeightGainQuestion,
     options: [
       AnswerOption(
-        emoji: EnergyQuestionStrings.weightGainNoEmoji,
-        text: EnergyQuestionStrings.weightGainNo,
+        getEmoji: _getWeightGainNoEmoji,
+        getText: _getWeightGainNo,
         value: 'no',
       ),
       AnswerOption(
-        emoji: EnergyQuestionStrings.weightGainMildEmoji,
-        text: EnergyQuestionStrings.weightGainMild,
-        value: 'mild',
-      ),
-      AnswerOption(
-        emoji: EnergyQuestionStrings.weightGainSignificantEmoji,
-        text: EnergyQuestionStrings.weightGainSignificant,
-        value: 'significant',
+        getEmoji: _getWeightGainYesEmoji,
+        getText: _getWeightGainYes,
+        value: 'yes',
       ),
     ],
   );
+
+  // Meal derived getters
+  static String _getMealEmoji(L10n l10n) => l10n.checkin_meal_emoji;
+  static String _getMealDerivedQuestion(L10n l10n) => l10n.checkin_meal_derivedQuestion;
+  static String _getMealDerivedNauseaEmoji(L10n l10n) => l10n.checkin_meal_derivedNauseaEmoji;
+  static String _getMealDerivedNausea(L10n l10n) => l10n.checkin_meal_derivedNausea;
+  static String _getMealDerivedLowAppetiteEmoji(L10n l10n) => l10n.checkin_meal_derivedLowAppetiteEmoji;
+  static String _getMealDerivedLowAppetite(L10n l10n) => l10n.checkin_meal_derivedLowAppetite;
+  static String _getMealFeedbackLowAppetite(L10n l10n) => l10n.checkin_meal_feedbackLowAppetite;
+  static String _getMealDerivedEarlySatietyEmoji(L10n l10n) => l10n.checkin_meal_derivedEarlySatietyEmoji;
+  static String _getMealDerivedEarlySatiety(L10n l10n) => l10n.checkin_meal_derivedEarlySatiety;
+  static String _getMealFeedbackEarlySatiety(L10n l10n) => l10n.checkin_meal_feedbackEarlySatiety;
+
+  // GI Comfort derived getters
+  static String _getGiComfortEmoji(L10n l10n) => l10n.checkin_giComfort_emoji;
+  static String _getGiComfortDerivedQuestion(L10n l10n) => l10n.checkin_giComfort_derivedQuestion;
+  static String _getGiComfortDerivedHeartburnEmoji(L10n l10n) => l10n.checkin_giComfort_derivedHeartburnEmoji;
+  static String _getGiComfortDerivedHeartburn(L10n l10n) => l10n.checkin_giComfort_derivedHeartburn;
+  static String _getGiComfortFeedbackHeartburn(L10n l10n) => l10n.checkin_giComfort_feedbackHeartburn;
+  static String _getGiComfortDerivedPainEmoji(L10n l10n) => l10n.checkin_giComfort_derivedPainEmoji;
+  static String _getGiComfortDerivedPain(L10n l10n) => l10n.checkin_giComfort_derivedPain;
+  static String _getGiComfortDerivedBloatingEmoji(L10n l10n) => l10n.checkin_giComfort_derivedBloatingEmoji;
+  static String _getGiComfortDerivedBloating(L10n l10n) => l10n.checkin_giComfort_derivedBloating;
+
+  // Bowel derived getters
+  static String _getBowelEmoji(L10n l10n) => l10n.checkin_bowel_emoji;
+  static String _getBowelDerivedQuestion(L10n l10n) => l10n.checkin_bowel_derivedQuestion;
+  static String _getBowelDerivedConstipationEmoji(L10n l10n) => l10n.checkin_bowel_derivedConstipationEmoji;
+  static String _getBowelDerivedConstipation(L10n l10n) => l10n.checkin_bowel_derivedConstipation;
+  static String _getBowelDerivedDiarrheaEmoji(L10n l10n) => l10n.checkin_bowel_derivedDiarrheaEmoji;
+  static String _getBowelDerivedDiarrhea(L10n l10n) => l10n.checkin_bowel_derivedDiarrhea;
+
+  // Energy derived getters
+  static String _getEnergyEmoji(L10n l10n) => l10n.checkin_energy_emoji;
+  static String _getEnergyDerivedQuestion(L10n l10n) => l10n.checkin_energy_derivedQuestion;
+  static String _getEnergyDerivedDizzinessEmoji(L10n l10n) => l10n.checkin_energy_derivedDizzinessEmoji;
+  static String _getEnergyDerivedDizziness(L10n l10n) => l10n.checkin_energy_derivedDizziness;
+  static String _getEnergyDerivedColdSweatEmoji(L10n l10n) => l10n.checkin_energy_derivedColdSweatEmoji;
+  static String _getEnergyDerivedColdSweat(L10n l10n) => l10n.checkin_energy_derivedColdSweat;
+  static String _getEnergyDerivedFatigueOnlyEmoji(L10n l10n) => l10n.checkin_energy_derivedFatigueOnlyEmoji;
+  static String _getEnergyDerivedFatigueOnly(L10n l10n) => l10n.checkin_energy_derivedFatigueOnly;
+  static String _getEnergyFeedbackFatigue(L10n l10n) => l10n.checkin_energy_feedbackFatigue;
+  static String _getEnergyDerivedDyspneaEmoji(L10n l10n) => l10n.checkin_energy_derivedDyspneaEmoji;
+  static String _getEnergyDerivedDyspnea(L10n l10n) => l10n.checkin_energy_derivedDyspnea;
+  static String _getEnergyDerivedSwellingEmoji(L10n l10n) => l10n.checkin_energy_derivedSwellingEmoji;
+  static String _getEnergyDerivedSwelling(L10n l10n) => l10n.checkin_energy_derivedSwelling;
+
+  // Hydration derived getters
+  static String _getHydrationEmoji(L10n l10n) => l10n.checkin_hydration_emoji;
+  static String _getHydrationDerivedQuestion(L10n l10n) => l10n.checkin_hydration_derivedQuestion;
+  static String _getHydrationDerivedForgotEmoji(L10n l10n) => l10n.checkin_hydration_derivedForgotEmoji;
+  static String _getHydrationDerivedForgot(L10n l10n) => l10n.checkin_hydration_derivedForgot;
+  static String _getHydrationFeedbackForgot(L10n l10n) => l10n.checkin_hydration_feedbackForgot;
+  static String _getHydrationDerivedNauseaEmoji(L10n l10n) => l10n.checkin_hydration_derivedNauseaEmoji;
+  static String _getHydrationDerivedNausea(L10n l10n) => l10n.checkin_hydration_derivedNausea;
+  static String _getHydrationFeedbackNausea(L10n l10n) => l10n.checkin_hydration_feedbackNausea;
+  static String _getHydrationDerivedCannotKeepEmoji(L10n l10n) => l10n.checkin_hydration_derivedCannotKeepEmoji;
+  static String _getHydrationDerivedCannotKeep(L10n l10n) => l10n.checkin_hydration_derivedCannotKeep;
+
+  // Nausea severity getters
+  static String _getNauseaSeverityQuestion(L10n l10n) => l10n.checkin_meal_derivedNauseaSeverityQuestion;
+  static String _getNauseaMildEmoji(L10n l10n) => l10n.checkin_meal_nauseaMildEmoji;
+  static String _getNauseaMild(L10n l10n) => l10n.checkin_meal_nauseaMild;
+  static String _getNauseaFeedbackMild(L10n l10n) => l10n.checkin_meal_feedbackNauseaMild;
+  static String _getNauseaModerateEmoji(L10n l10n) => l10n.checkin_meal_nauseaModerateEmoji;
+  static String _getNauseaModerate(L10n l10n) => l10n.checkin_meal_nauseaModerate;
+  static String _getNauseaSevereEmoji(L10n l10n) => l10n.checkin_meal_nauseaSevereEmoji;
+  static String _getNauseaSevere(L10n l10n) => l10n.checkin_meal_nauseaSevere;
+
+  // Vomiting check getters
+  static String _getVomitingQuestion(L10n l10n) => l10n.checkin_meal_derivedVomitingQuestion;
+  static String _getVomitingNoEmoji(L10n l10n) => l10n.checkin_meal_vomitingNoneEmoji;
+  static String _getVomitingNo(L10n l10n) => l10n.checkin_meal_vomitingNone;
+  static String _getVomitingOnceEmoji(L10n l10n) => l10n.checkin_meal_vomitingOnceEmoji;
+  static String _getVomitingOnce(L10n l10n) => l10n.checkin_meal_vomitingOnce;
+  static String _getVomitingSeveralEmoji(L10n l10n) => l10n.checkin_meal_vomitingSevereEmoji;
+  static String _getVomitingSeveral(L10n l10n) => l10n.checkin_meal_vomitingSevere;
+
+  // Pain location getters
+  static String _getPainLocationQuestion(L10n l10n) => l10n.checkin_giComfort_derivedPainLocationQuestion;
+  static String _getPainLocationUpperEmoji(L10n l10n) => l10n.checkin_giComfort_painUpperAbdomenEmoji;
+  static String _getPainLocationUpper(L10n l10n) => l10n.checkin_giComfort_painUpperAbdomen;
+  static String _getPainLocationRightUpperEmoji(L10n l10n) => l10n.checkin_giComfort_painRightUpperEmoji;
+  static String _getPainLocationRightUpper(L10n l10n) => l10n.checkin_giComfort_painRightUpper;
+  static String _getPainLocationLowerEmoji(L10n l10n) => l10n.checkin_giComfort_painLowerEmoji;
+  static String _getPainLocationLower(L10n l10n) => l10n.checkin_giComfort_painLower;
+  static String _getPainLocationGeneralEmoji(L10n l10n) => l10n.checkin_giComfort_painPeriumbilicalEmoji;
+  static String _getPainLocationGeneral(L10n l10n) => l10n.checkin_giComfort_painPeriumbilical;
+
+  // Pain severity getters
+  static String _getUpperPainSeverityQuestion(L10n l10n) => l10n.checkin_giComfort_derivedUpperPainSeverityQuestion;
+  static String _getRightUpperPainSeverityQuestion(L10n l10n) => l10n.checkin_giComfort_derivedRightUpperPainSeverityQuestion;
+  static String _getPainSeverityMildEmoji(L10n l10n) => l10n.checkin_giComfort_painMildEmoji;
+  static String _getPainSeverityMild(L10n l10n) => l10n.checkin_giComfort_painMild;
+  static String _getPainSeverityModerateEmoji(L10n l10n) => l10n.checkin_giComfort_painModerateEmoji;
+  static String _getPainSeverityModerate(L10n l10n) => l10n.checkin_giComfort_painModerate;
+  static String _getPainSeveritySevereEmoji(L10n l10n) => l10n.checkin_giComfort_painSevereEmoji;
+  static String _getPainSeveritySevere(L10n l10n) => l10n.checkin_giComfort_painSevere;
+
+  // Radiation to back getters
+  static String _getRadiationToBackQuestion(L10n l10n) => l10n.checkin_giComfort_derivedRadiationToBackQuestion;
+  static String _getRadiationNoEmoji(L10n l10n) => l10n.checkin_giComfort_radiationNoEmoji;
+  static String _getRadiationNo(L10n l10n) => l10n.checkin_giComfort_radiationNo;
+  static String _getRadiationYesEmoji(L10n l10n) => l10n.checkin_giComfort_radiationDefiniteEmoji;
+  static String _getRadiationYes(L10n l10n) => l10n.checkin_giComfort_radiationDefinite;
+
+  // Fever/chills getters
+  static String _getFeverChillsQuestion(L10n l10n) => l10n.checkin_giComfort_derivedFeverChillsQuestion;
+  static String _getFeverNoEmoji(L10n l10n) => l10n.checkin_giComfort_feverNoEmoji;
+  static String _getFeverNo(L10n l10n) => l10n.checkin_giComfort_feverNo;
+  static String _getFeverYesEmoji(L10n l10n) => l10n.checkin_giComfort_feverDefiniteEmoji;
+  static String _getFeverYes(L10n l10n) => l10n.checkin_giComfort_feverDefinite;
+
+  // Constipation getters
+  static String _getConstipationDaysQuestion(L10n l10n) => l10n.checkin_bowel_derivedConstipationDaysQuestion;
+  static String _getConstipationFewEmoji(L10n l10n) => l10n.checkin_bowel_constipation1to2DaysEmoji;
+  static String _getConstipationFew(L10n l10n) => l10n.checkin_bowel_constipation1to2Days;
+  static String _getConstipationSeveralEmoji(L10n l10n) => l10n.checkin_bowel_constipation3to4DaysEmoji;
+  static String _getConstipationSeveral(L10n l10n) => l10n.checkin_bowel_constipation3to4Days;
+  static String _getConstipationManyEmoji(L10n l10n) => l10n.checkin_bowel_constipation5PlusDaysEmoji;
+  static String _getConstipationMany(L10n l10n) => l10n.checkin_bowel_constipation5PlusDays;
+
+  // Bloating severity getters
+  static String _getBloatingSeverityQuestion(L10n l10n) => l10n.checkin_bowel_derivedBloatingSeverityQuestion;
+  static String _getBloatingMildEmoji(L10n l10n) => l10n.checkin_bowel_bloatingMildEmoji;
+  static String _getBloatingMild(L10n l10n) => l10n.checkin_bowel_bloatingMild;
+  static String _getBloatingModerateEmoji(L10n l10n) => l10n.checkin_bowel_bloatingModerateEmoji;
+  static String _getBloatingModerate(L10n l10n) => l10n.checkin_bowel_bloatingModerate;
+  static String _getBloatingSevereEmoji(L10n l10n) => l10n.checkin_bowel_bloatingSevereEmoji;
+  static String _getBloatingSevere(L10n l10n) => l10n.checkin_bowel_bloatingSevere;
+
+  // Diarrhea frequency getters
+  static String _getDiarrheaFrequencyQuestion(L10n l10n) => l10n.checkin_bowel_derivedDiarrheaFrequencyQuestion;
+  static String _getDiarrheaFewEmoji(L10n l10n) => l10n.checkin_bowel_diarrhea2to3TimesEmoji;
+  static String _getDiarrheaFew(L10n l10n) => l10n.checkin_bowel_diarrhea2to3Times;
+  static String _getDiarrheaSeveralEmoji(L10n l10n) => l10n.checkin_bowel_diarrhea4to5TimesEmoji;
+  static String _getDiarrheaSeveral(L10n l10n) => l10n.checkin_bowel_diarrhea4to5Times;
+  static String _getDiarrheaManyEmoji(L10n l10n) => l10n.checkin_bowel_diarrhea6PlusTimesEmoji;
+  static String _getDiarrheaMany(L10n l10n) => l10n.checkin_bowel_diarrhea6PlusTimes;
+
+  // Hypoglycemia check getters
+  static String _getHypoglycemiaQuestion(L10n l10n) => l10n.checkin_energy_derivedHypoglycemiaQuestion;
+  static String _getHypoglycemiaNoEmoji(L10n l10n) => l10n.checkin_energy_hypoglycemiaNoEmoji;
+  static String _getHypoglycemiaNo(L10n l10n) => l10n.checkin_energy_hypoglycemiaNo;
+  static String _getHypoglycemiaYesEmoji(L10n l10n) => l10n.checkin_energy_hypoglycemiaYesEmoji;
+  static String _getHypoglycemiaYes(L10n l10n) => l10n.checkin_energy_hypoglycemiaYes;
+
+  // Tremor check getters
+  static String _getTremorQuestion(L10n l10n) => l10n.checkin_energy_derivedTremorQuestion;
+  static String _getTremorNoEmoji(L10n l10n) => l10n.checkin_energy_tremorNoEmoji;
+  static String _getTremorNo(L10n l10n) => l10n.checkin_energy_tremorNo;
+  static String _getTremorYesEmoji(L10n l10n) => l10n.checkin_energy_tremorMildEmoji;
+  static String _getTremorYes(L10n l10n) => l10n.checkin_energy_tremorMild;
+
+  // Urine output check getters
+  static String _getUrineOutputQuestion(L10n l10n) => l10n.checkin_energy_derivedUrineOutputQuestion;
+  static String _getUrineOutputNormalEmoji(L10n l10n) => l10n.checkin_energy_urineOutputNormalEmoji;
+  static String _getUrineOutputNormal(L10n l10n) => l10n.checkin_energy_urineOutputNormal;
+  static String _getUrineOutputDecreasedEmoji(L10n l10n) => l10n.checkin_energy_urineOutputDecreasedEmoji;
+  static String _getUrineOutputDecreased(L10n l10n) => l10n.checkin_energy_urineOutputDecreased;
+
+  // Weight gain check getters
+  static String _getWeightGainQuestion(L10n l10n) => l10n.checkin_energy_derivedWeightGainQuestion;
+  static String _getWeightGainNoEmoji(L10n l10n) => l10n.checkin_energy_weightGainNoEmoji;
+  static String _getWeightGainNo(L10n l10n) => l10n.checkin_energy_weightGainNo;
+  static String _getWeightGainYesEmoji(L10n l10n) => l10n.checkin_energy_weightGainSignificantEmoji;
+  static String _getWeightGainYes(L10n l10n) => l10n.checkin_energy_weightGainSignificant;
 }

@@ -1,4 +1,8 @@
 import 'package:equatable/equatable.dart';
+import 'package:n06/features/daily_checkin/domain/entities/report_section_type.dart';
+import 'package:n06/features/daily_checkin/domain/entities/symptom_detail.dart';
+import 'package:n06/features/daily_checkin/domain/entities/red_flag_detection.dart';
+import 'package:n06/features/daily_checkin/domain/entities/daily_checkin.dart';
 
 /// 주간 리포트 엔티티
 ///
@@ -89,14 +93,14 @@ class WeightSummary extends Equatable {
     required this.change,
   });
 
-  /// 변화 방향 표시 문자열
-  String get changeString {
+  /// 변화 방향 (데이터만, i18n은 Presentation에서 처리)
+  WeightChangeDirection get direction {
     if (change > 0) {
-      return '▲${change.abs().toStringAsFixed(1)}kg';
+      return WeightChangeDirection.increased;
     } else if (change < 0) {
-      return '▼${change.abs().toStringAsFixed(1)}kg';
+      return WeightChangeDirection.decreased;
     }
-    return '→ 유지';
+    return WeightChangeDirection.maintained;
   }
 
   @override
@@ -108,26 +112,13 @@ class AppetiteSummary extends Equatable {
   /// 평균 식욕 점수 (1-5)
   final double averageScore;
 
-  /// 안정도 (stable, improving, declining)
-  final String stability;
+  /// 안정도 (enum, i18n은 Presentation에서 처리)
+  final AppetiteStability stability;
 
   const AppetiteSummary({
     required this.averageScore,
     required this.stability,
   });
-
-  String get stabilityKorean {
-    switch (stability) {
-      case 'stable':
-        return '안정적';
-      case 'improving':
-        return '개선 중';
-      case 'declining':
-        return '감소 중';
-      default:
-        return stability;
-    }
-  }
 
   @override
   List<Object?> get props => [averageScore, stability];
@@ -156,8 +147,8 @@ class CheckinAchievement extends Equatable {
 
 /// 증상 발생 현황
 class SymptomOccurrence extends Equatable {
-  /// 증상 이름
-  final String symptomName;
+  /// 증상 타입 (enum, i18n은 Presentation에서 처리)
+  final SymptomType type;
 
   /// 발생 일수
   final int daysOccurred;
@@ -166,28 +157,13 @@ class SymptomOccurrence extends Equatable {
   final Map<String, int> severityCounts; // mild, moderate, severe
 
   const SymptomOccurrence({
-    required this.symptomName,
+    required this.type,
     required this.daysOccurred,
     required this.severityCounts,
   });
 
-  /// 심각도 요약 문자열
-  String get severitySummary {
-    final parts = <String>[];
-    if (severityCounts['mild'] != null && severityCounts['mild']! > 0) {
-      parts.add('경미${severityCounts['mild']}');
-    }
-    if (severityCounts['moderate'] != null && severityCounts['moderate']! > 0) {
-      parts.add('중등도${severityCounts['moderate']}');
-    }
-    if (severityCounts['severe'] != null && severityCounts['severe']! > 0) {
-      parts.add('심각${severityCounts['severe']}');
-    }
-    return parts.isEmpty ? '' : '(${parts.join(', ')})';
-  }
-
   @override
-  List<Object?> get props => [symptomName, daysOccurred, severityCounts];
+  List<Object?> get props => [type, daysOccurred, severityCounts];
 }
 
 /// Red Flag 기록
@@ -195,11 +171,11 @@ class RedFlagRecord extends Equatable {
   /// 발생 날짜
   final DateTime date;
 
-  /// Red Flag 타입
-  final String type;
+  /// Red Flag 타입 (enum, i18n은 Presentation에서 처리)
+  final RedFlagType type;
 
-  /// 요약
-  final String summary;
+  /// 감지된 증상 목록 (데이터만)
+  final List<String> symptoms;
 
   /// 사용자 액션
   final String? userAction;
@@ -207,12 +183,12 @@ class RedFlagRecord extends Equatable {
   const RedFlagRecord({
     required this.date,
     required this.type,
-    required this.summary,
+    required this.symptoms,
     this.userAction,
   });
 
   @override
-  List<Object?> get props => [date, type, summary, userAction];
+  List<Object?> get props => [date, type, symptoms, userAction];
 }
 
 /// 일별 컨디션
@@ -220,22 +196,18 @@ class DailyCondition extends Equatable {
   /// 날짜
   final DateTime date;
 
-  /// 요일 (월, 화, ...)
-  final String dayOfWeek;
-
-  /// 컨디션 이모지
-  final String emoji;
+  /// 기분 수준 (데이터만, i18n은 Presentation에서 처리)
+  final MoodLevel? mood;
 
   /// 체크인 여부
   final bool hasCheckin;
 
   const DailyCondition({
     required this.date,
-    required this.dayOfWeek,
-    required this.emoji,
+    required this.mood,
     required this.hasCheckin,
   });
 
   @override
-  List<Object?> get props => [date, dayOfWeek, emoji, hasCheckin];
+  List<Object?> get props => [date, mood, hasCheckin];
 }

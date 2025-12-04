@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import '../../application/notifiers/coping_guide_notifier.dart';
@@ -31,8 +32,8 @@ class _CopingGuideScreenState extends ConsumerState<CopingGuideScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          '부작용 대처 가이드',
+        title: Text(
+          context.l10n.coping_screen_title,
           style: AppTypography.heading2,
         ),
         backgroundColor: AppColors.surface,
@@ -64,10 +65,10 @@ class _CopingGuideScreenState extends ConsumerState<CopingGuideScreen> {
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.education),
           ),
         ),
-        error: (err, stack) => const Center(child: Text('오류가 발생했습니다')),
+        error: (err, stack) => Center(child: Text(context.l10n.coping_screen_error)),
         data: (guides) {
           if (guides.isEmpty) {
-            return const Center(child: Text('가이드가 없습니다'));
+            return Center(child: Text(context.l10n.coping_screen_empty));
           }
 
           return ListView.separated(
