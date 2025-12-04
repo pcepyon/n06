@@ -19,6 +19,21 @@
 
 ---
 
+## 2025-12-05
+
+- [fix] BUG-20251205: 세션 만료 시 무한 로딩 및 오프라인 에러 수정
+  - **문제**: 만료된 세션으로 앱 재시작 시 무한 로딩, 오프라인에서 Uncaught error
+  - **원인**: GoRouter와 AuthNotifier 인증 상태 불일치, SDK의 자동 세션 복구 에러
+  - **수정 내용**:
+    - `_isSessionExpired()` 헬퍼 함수 추가 (expiresAt null 시 유효로 간주)
+    - GoRouter redirect에서 정확한 세션 만료 체크
+    - AuthNotifier에서 signOut() 호출 제거 (오프라인 에러 방지)
+    - main.dart에서 Supabase 네트워크 에러 무시 처리
+  - `lib/core/routing/app_router.dart`
+  - `lib/features/authentication/application/notifiers/auth_notifier.dart`
+  - `lib/features/authentication/infrastructure/repositories/supabase_auth_repository.dart`
+  - `lib/main.dart`
+
 ## 2025-12-04
 
 - [feat] Firebase Analytics 및 Crashlytics 모니터링 활성화

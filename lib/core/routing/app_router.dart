@@ -80,39 +80,66 @@ bool _isProtectedRoute(String location) {
 /// Auth refresh stream instance (singleton)
 final _authRefreshStream = GoRouterAuthRefreshStream();
 
+/// BUG-20251205: 세션 만료 여부를 직접 계산
+///
+/// Supabase SDK의 session.isExpired는 expiresAt이 null이면 true를 반환하지만,
+/// 새로 생성된 세션은 expiresAt이 아직 설정되지 않았을 수 있습니다.
+/// 따라서 null인 경우는 유효한 것으로 간주합니다.
+bool _isSessionExpired(Session? session) {
+  if (session == null) return false;
+
+  final expiresAt = session.expiresAt;
+  // expiresAt이 null이면 유효한 것으로 간주 (새 세션일 수 있음)
+  if (expiresAt == null) return false;
+
+  final expiryDateTime = DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000);
+  return DateTime.now().isAfter(expiryDateTime);
+}
+
 /// GoRouter configuration for the application
 final appRouter = GoRouter(
   initialLocation: '/login',
   refreshListenable: _authRefreshStream,
   redirect: (BuildContext context, GoRouterState state) {
     final session = Supabase.instance.client.auth.currentSession;
-    final isLoggedIn = session != null;
     final location = state.uri.path;
+
+    // BUG-20251205: 세션 유효성 판단 로직 개선
+    //
+    // 문제: session.isExpired가 너무 엄격하여 정상 로그인 플로우도 방해
+    // - expiresAt이 null이면 만료로 판단 (새 세션에서 문제)
+    //
+    // 해결: 세션이 "확실히" 만료된 경우에만 로그인되지 않은 것으로 처리
+    // - expiresAt이 null → 유효한 것으로 간주 (새 세션)
+    // - expiresAt이 과거 시간 → 만료된 것으로 처리
+    final isExpired = _isSessionExpired(session);
+    final isLoggedIn = session != null && !isExpired;
 
     if (kDebugMode) {
       developer.log(
-        'Router redirect check: location=$location, isLoggedIn=$isLoggedIn',
+        'Router redirect check: location=$location, isLoggedIn=$isLoggedIn, '
+        'sessionExists=${session != null}, isExpired=$isExpired, expiresAt=${session?.expiresAt}',
         name: 'AppRouter',
       );
     }
 
-    // Case 1: Not logged in, trying to access protected route
+    // Case 1: Not logged in (or session expired), trying to access protected route
     if (!isLoggedIn && _isProtectedRoute(location)) {
       if (kDebugMode) {
         developer.log(
-          'Redirecting to /login: not authenticated',
+          'Redirecting to /login: not authenticated or session expired',
           name: 'AppRouter',
         );
       }
       return '/login';
     }
 
-    // Case 2: Logged in, on login page → redirect to home
+    // Case 2: Logged in with valid session, on login page → redirect to home
     // This handles the case where user opens app while already logged in
     if (isLoggedIn && location == '/login') {
       if (kDebugMode) {
         developer.log(
-          'Redirecting to /home: already authenticated',
+          'Redirecting to /home: already authenticated with valid session',
           name: 'AppRouter',
         );
       }

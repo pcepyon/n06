@@ -127,35 +127,21 @@ class SupabaseAuthRepository implements AuthRepository {
         return null;
       }
 
-      // If session expires in less than 30 minutes, try to refresh
+      // BUG-20251205: 30분 이내 만료 시 refresh 호출 제거
+      //
+      // 문제: Future.timeout()은 원래 Future를 취소하지 않음
+      // → 타임아웃 후에도 HTTP 요청이 백그라운드에서 계속 진행
+      // → 오프라인 상태에서 "Uncaught error in root zone" 발생
+      //
+      // 해결: Supabase SDK의 autoRefreshToken (기본 활성화)에 의존
+      // → 세션이 아직 유효하면 사용자 정보 반환
+      // → SDK가 백그라운드에서 자동으로 토큰 갱신 처리
       final timeUntilExpiry = expiryDateTime.difference(now);
-      if (timeUntilExpiry.inMinutes < 30) {
-        if (kDebugMode) {
-          developer.log(
-            'Session expiring soon (${timeUntilExpiry.inMinutes} minutes), attempting refresh',
-            name: 'SupabaseAuthRepository',
-          );
-        }
-
-        try {
-          await _supabase.auth.refreshSession();
-          if (kDebugMode) {
-            developer.log(
-              'Session refreshed successfully',
-              name: 'SupabaseAuthRepository',
-            );
-          }
-        } catch (e) {
-          if (kDebugMode) {
-            developer.log(
-              'Failed to refresh session: $e',
-              name: 'SupabaseAuthRepository',
-              error: e,
-            );
-          }
-          // If refresh fails, return null (user needs to re-login)
-          return null;
-        }
+      if (timeUntilExpiry.inMinutes < 30 && kDebugMode) {
+        developer.log(
+          'Session expiring soon (${timeUntilExpiry.inMinutes} minutes), relying on autoRefreshToken',
+          name: 'SupabaseAuthRepository',
+        );
       }
     }
 

@@ -1,7 +1,8 @@
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:n06/features/authentication/domain/entities/user.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase, Session;
+import 'package:n06/features/authentication/domain/entities/user.dart' as entities;
 import 'package:n06/features/authentication/domain/repositories/auth_repository.dart';
 import 'package:n06/features/authentication/application/providers.dart';
 import 'package:n06/features/authentication/infrastructure/repositories/supabase_auth_repository.dart';
@@ -19,10 +20,42 @@ part 'auth_notifier.g.dart';
 @Riverpod(keepAlive: true)  // 인증 상태는 글로벌 상태이므로 keepAlive 필수
 class AuthNotifier extends _$AuthNotifier {
   @override
-  Future<User?> build() async {
+  Future<entities.User?> build() async {
     if (kDebugMode) {
       developer.log('AuthNotifier.build() called', name: 'AuthNotifier');
     }
+
+    // BUG-20251205: 세션 만료 시 로컬 세션 삭제
+    //
+    // 문제 1: Future.timeout()은 원래 Future를 취소하지 않음
+    // → 오프라인에서 refreshSession() 호출 시 "Uncaught error in root zone" 발생
+    //
+    // 문제 2: GoRouter는 session != null로 판단하므로
+    // → 만료된 세션이 있으면 /home으로 리디렉션
+    // → AuthNotifier는 null 반환 → 무한 로딩 발생
+    //
+    // 해결: 세션 만료 시 로컬 세션 삭제 (signOut)
+    // → GoRouter의 session != null 체크도 false가 됨
+    // → /login으로 정상 리디렉션
+    final session = Supabase.instance.client.auth.currentSession;
+
+    // 세션 만료 여부를 직접 계산 (session.isExpired는 expiresAt이 null이면 true 반환)
+    // 새 세션은 expiresAt이 아직 설정되지 않았을 수 있으므로, null이면 유효한 것으로 간주
+    final isExpired = _isSessionExpired(session);
+
+    if (session != null && isExpired) {
+      if (kDebugMode) {
+        developer.log(
+          'Session expired (expiresAt: ${session.expiresAt}), returning null for re-login',
+          name: 'AuthNotifier',
+        );
+      }
+      // 만료된 세션은 null 반환 (로그인 화면으로 이동)
+      // signOut() 호출하지 않음 - scope: local이어도 네트워크 요청 발생
+      // GoRouter redirect에서 처리
+      return null;
+    }
+
     // Load current user on initialization
     final repository = ref.read(authRepositoryProvider);
     return await repository.getCurrentUser();
@@ -171,7 +204,7 @@ class AuthNotifier extends _$AuthNotifier {
   ///
   /// Returns User object on successful signup
   /// Throws exception on validation or network errors
-  Future<User> signUpWithEmail({
+  Future<entities.User> signUpWithEmail({
     required String email,
     required String password,
     required bool agreedToTerms,
@@ -421,3 +454,19 @@ AuthRepository authRepository(Ref ref) {
 /// Alias for backwards compatibility
 /// The generated provider is named 'authProvider', but the codebase uses 'authNotifierProvider'
 const authNotifierProvider = authProvider;
+
+/// BUG-20251205: 세션 만료 여부를 직접 계산
+///
+/// Supabase SDK의 session.isExpired는 expiresAt이 null이면 true를 반환하지만,
+/// 새로 생성된 세션은 expiresAt이 아직 설정되지 않았을 수 있습니다.
+/// 따라서 null인 경우는 유효한 것으로 간주합니다.
+bool _isSessionExpired(Session? session) {
+  if (session == null) return false;
+
+  final expiresAt = session.expiresAt;
+  // expiresAt이 null이면 유효한 것으로 간주 (새 세션일 수 있음)
+  if (expiresAt == null) return false;
+
+  final expiryDateTime = DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000);
+  return DateTime.now().isAfter(expiryDateTime);
+}

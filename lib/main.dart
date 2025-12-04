@@ -34,6 +34,21 @@ void main() async {
       await _initializeAndRunApp();
     },
     (error, stackTrace) {
+      // BUG-20251205: Supabase SDK의 자동 세션 복구 시 오프라인 에러 무시
+      //
+      // Supabase.initialize() → recoverSession() → refreshAccessToken()
+      // 오프라인 상태에서 AuthRetryableFetchException 발생
+      // 이 에러는 치명적이지 않음 (앱은 정상 작동, 로그인 화면으로 이동)
+      if (_isSupabaseNetworkError(error)) {
+        if (kDebugMode) {
+          developer.log(
+            '⚠️ Supabase network error (offline) - ignoring: ${error.runtimeType}',
+            name: 'ErrorHandler',
+          );
+        }
+        return; // 에러 무시
+      }
+
       _logError('Uncaught error in root zone', error, stackTrace);
       // Send to Crashlytics in release mode
       if (!kDebugMode) {
@@ -41,6 +56,24 @@ void main() async {
       }
     },
   );
+}
+
+/// BUG-20251205: Supabase 오프라인 네트워크 에러 판별
+///
+/// Supabase SDK의 자동 세션 복구(recoverSession) 시 오프라인 상태에서
+/// 발생하는 AuthRetryableFetchException을 감지합니다.
+///
+/// 이 에러는:
+/// - 치명적이지 않음 (앱 정상 작동)
+/// - 사용자에게 알릴 필요 없음 (로그인 화면으로 자동 이동)
+/// - Crashlytics에 보낼 필요 없음 (네트워크 상태 문제)
+bool _isSupabaseNetworkError(Object error) {
+  final errorString = error.toString();
+  // AuthRetryableFetchException with network errors
+  return errorString.contains('AuthRetryableFetchException') &&
+      (errorString.contains('SocketException') ||
+          errorString.contains('Failed host lookup') ||
+          errorString.contains('No address associated with hostname'));
 }
 
 void _setupErrorHandlers() {
