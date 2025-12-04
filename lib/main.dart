@@ -14,6 +14,9 @@ import 'package:n06/l10n/generated/app_localizations.dart';
 import 'package:n06/features/settings/application/notifiers/locale_notifier.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'firebase_options.dart';
 
 /// Global ScaffoldMessengerKey for displaying SnackBars above Dialogs/BottomSheets
 /// This solves the z-index issue where SnackBars were hidden behind overlays
@@ -32,6 +35,10 @@ void main() async {
     },
     (error, stackTrace) {
       _logError('Uncaught error in root zone', error, stackTrace);
+      // Send to Crashlytics in release mode
+      if (!kDebugMode) {
+        FirebaseCrashlytics.instance.recordError(error, stackTrace, fatal: true);
+      }
     },
   );
 }
@@ -123,6 +130,26 @@ Future<void> _initializeAndRunApp() async {
       developer.log('📄 Loading environment variables...', name: 'Main');
     }
     await dotenv.load(fileName: ".env");
+
+    // Initialize Firebase
+    if (kDebugMode) {
+      developer.log('🔥 Initializing Firebase...', name: 'Main');
+    }
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // Configure Crashlytics
+    if (kDebugMode) {
+      // Disable Crashlytics in debug mode to avoid noise
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(false);
+      developer.log('🔥 Crashlytics disabled in debug mode', name: 'Main');
+    } else {
+      // Enable Crashlytics in release mode
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+      // Pass Flutter errors to Crashlytics
+      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    }
 
     // Initialize Supabase
     if (kDebugMode) {

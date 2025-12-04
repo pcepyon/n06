@@ -21,6 +21,12 @@
 
 ## 2025-12-04
 
+- [feat] Firebase Analytics 및 Crashlytics 모니터링 활성화
+  - firebase_core, firebase_analytics, firebase_crashlytics 패키지 활성화
+  - FlutterFire CLI로 Firebase 프로젝트 연동
+  - AnalyticsService 클래스 생성 (화면 조회, 이벤트 로깅, 에러 리포팅)
+  - `lib/main.dart`, `lib/core/services/analytics_service.dart`
+
 - [feat] 다국어 지원 (i18n) 인프라 구축 및 전체 기능 적용
   - **인프라 (Phase 0-4)**
     - flutter_localizations, intl 패키지 추가
