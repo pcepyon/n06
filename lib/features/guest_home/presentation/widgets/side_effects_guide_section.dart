@@ -165,6 +165,7 @@ class _SymptomCardState extends State<_SymptomCard>
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // 항상 보이는 헤더 부분
             Padding(
@@ -230,15 +231,14 @@ class _SymptomCardState extends State<_SymptomCard>
                 ],
               ),
             ),
-            // 확장된 콘텐츠
-            AnimatedCrossFade(
-              firstChild: const SizedBox.shrink(),
-              secondChild: _buildExpandedContent(),
-              crossFadeState: widget.isExpanded
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
+            // 확장된 콘텐츠 - AnimatedSize 사용으로 부드러운 전환
+            AnimatedSize(
               duration: const Duration(milliseconds: 300),
-              sizeCurve: Curves.easeOutCubic,
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: widget.isExpanded
+                  ? _buildExpandedContent()
+                  : const SizedBox.shrink(),
             ),
           ],
         ),

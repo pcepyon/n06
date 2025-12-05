@@ -148,179 +148,171 @@ class _JourneyPhaseItemState extends State<_JourneyPhaseItem>
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 타임라인 마커와 연결선
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        // 타임라인 마커 (고정 크기)
+        SizedBox(
+          width: 40,
+          child: Column(
             children: [
-              // 타임라인 마커와 라인
-              SizedBox(
-                width: 40,
-                child: Column(
-                  children: [
-                    // 마커
-                    AnimatedBuilder(
-                      animation: _celebrationAnimation,
-                      builder: (context, child) {
-                        final scale = widget.isLast && widget.isExpanded
-                            ? 1.0 + (_celebrationAnimation.value * 0.3)
-                            : (widget.isExpanded ? 1.2 : 1.0);
+              // 마커
+              AnimatedBuilder(
+                animation: _celebrationAnimation,
+                builder: (context, child) {
+                  final scale = widget.isLast && widget.isExpanded
+                      ? 1.0 + (_celebrationAnimation.value * 0.3)
+                      : (widget.isExpanded ? 1.2 : 1.0);
 
-                        return Transform.scale(
-                          scale: scale,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            width: 16,
-                            height: 16,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: widget.isExpanded
-                                  ? AppColors.primary
-                                  : AppColors.neutral300,
-                              boxShadow: widget.isExpanded
-                                  ? [
-                                      BoxShadow(
-                                        color: AppColors.primary
-                                            .withValues(alpha: 0.4),
-                                        blurRadius: 8,
-                                        spreadRadius: 2,
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: widget.isExpanded
-                                ? const Icon(
-                                    Icons.check,
-                                    size: 10,
-                                    color: Colors.white,
-                                  )
-                                : null,
-                          ),
-                        );
-                      },
-                    ),
-                    // 연결선
-                    if (!widget.isLast)
-                      Expanded(
-                        child: Container(
-                          width: 2,
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          color: widget.isExpanded
-                              ? AppColors.primary.withValues(alpha: 0.3)
-                              : AppColors.neutral200,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              // 콘텐츠
-              Expanded(
-                child: GestureDetector(
-                  onTap: widget.onTap,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOutCubic,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: widget.isExpanded
-                          ? (widget.isLast
-                              ? AppColors.successBackground
-                              : AppColors.surface)
-                          : AppColors.neutral50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
+                  return Transform.scale(
+                    scale: scale,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
                         color: widget.isExpanded
-                            ? AppColors.primary.withValues(alpha: 0.3)
-                            : AppColors.border,
-                        width: widget.isExpanded ? 1.5 : 1,
+                            ? AppColors.primary
+                            : AppColors.neutral300,
+                        boxShadow: widget.isExpanded
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.primary
+                                      .withValues(alpha: 0.4),
+                                  blurRadius: 8,
+                                  spreadRadius: 2,
+                                ),
+                              ]
+                            : null,
                       ),
-                      boxShadow: widget.isExpanded
-                          ? [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
+                      child: widget.isExpanded
+                          ? const Icon(
+                              Icons.check,
+                              size: 10,
+                              color: Colors.white,
+                            )
                           : null,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 헤더
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: widget.isExpanded
-                                    ? AppColors.primary.withValues(alpha: 0.1)
-                                    : AppColors.neutral200,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                widget.phase.weekRange,
-                                style: AppTypography.labelSmall.copyWith(
-                                  color: widget.isExpanded
-                                      ? AppColors.primary
-                                      : AppColors.textTertiary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              widget.phase.shortLabel,
-                              style: AppTypography.labelSmall.copyWith(
-                                color: AppColors.textTertiary,
-                              ),
-                            ),
-                            const Spacer(),
-                            AnimatedRotation(
-                              turns: widget.isExpanded ? 0.5 : 0,
-                              duration: const Duration(milliseconds: 200),
-                              child: Icon(
-                                Icons.keyboard_arrow_down,
-                                size: 20,
-                                color: widget.isExpanded
-                                    ? AppColors.primary
-                                    : AppColors.textTertiary,
-                              ),
-                            ),
-                          ],
+                  );
+                },
+              ),
+              // 연결선 - 고정 높이로 카드 아래까지 확장
+              if (!widget.isLast)
+                Container(
+                  width: 2,
+                  height: 80, // 기본 연결선 높이
+                  margin: const EdgeInsets.only(top: 4),
+                  color: widget.isExpanded
+                      ? AppColors.primary.withValues(alpha: 0.3)
+                      : AppColors.neutral200,
+                ),
+            ],
+          ),
+        ),
+        // 콘텐츠
+        Expanded(
+          child: GestureDetector(
+            onTap: widget.onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: widget.isExpanded
+                    ? (widget.isLast
+                        ? AppColors.successBackground
+                        : AppColors.surface)
+                    : AppColors.neutral50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: widget.isExpanded
+                      ? AppColors.primary.withValues(alpha: 0.3)
+                      : AppColors.border,
+                  width: widget.isExpanded ? 1.5 : 1,
+                ),
+                boxShadow: widget.isExpanded
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
-                        const SizedBox(height: 8),
-                        // 제목
-                        Text(
-                          widget.phase.title,
-                          style: AppTypography.heading3.copyWith(
+                      ]
+                    : null,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 헤더
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: widget.isExpanded
+                              ? AppColors.primary.withValues(alpha: 0.1)
+                              : AppColors.neutral200,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          widget.phase.weekRange,
+                          style: AppTypography.labelSmall.copyWith(
                             color: widget.isExpanded
                                 ? AppColors.primary
-                                : AppColors.textPrimary,
+                                : AppColors.textTertiary,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        // 확장된 콘텐츠
-                        AnimatedCrossFade(
-                          firstChild: const SizedBox.shrink(),
-                          secondChild: _buildExpandedContent(),
-                          crossFadeState: widget.isExpanded
-                              ? CrossFadeState.showSecond
-                              : CrossFadeState.showFirst,
-                          duration: const Duration(milliseconds: 300),
-                          sizeCurve: Curves.easeOutCubic,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.phase.shortLabel,
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.textTertiary,
                         ),
-                      ],
+                      ),
+                      const Spacer(),
+                      AnimatedRotation(
+                        turns: widget.isExpanded ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 20,
+                          color: widget.isExpanded
+                              ? AppColors.primary
+                              : AppColors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // 제목
+                  Text(
+                    widget.phase.title,
+                    style: AppTypography.heading3.copyWith(
+                      color: widget.isExpanded
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
                     ),
                   ),
-                ),
+                  // 확장된 콘텐츠 - AnimatedSize 사용으로 부드러운 전환
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: widget.isExpanded
+                        ? _buildExpandedContent()
+                        : const SizedBox.shrink(),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ],

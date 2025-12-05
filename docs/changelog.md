@@ -21,6 +21,12 @@
 
 ## 2025-12-05
 
+- [fix] 게스트 홈 텍스트 펼침/닫힘 시 RenderFlex overflow 수정
+  - **원인**: IntrinsicHeight + AnimatedCrossFade 조합에서 높이 계산 충돌
+  - **수정**: IntrinsicHeight 제거, AnimatedCrossFade → AnimatedSize 교체
+  - `lib/features/guest_home/presentation/widgets/journey_preview_section.dart`
+  - `lib/features/guest_home/presentation/widgets/side_effects_guide_section.dart`
+
 - [feat] 게스트 홈 인터랙티브 UX 개선 - Progress Bar, 스크롤 기반 애니메이션, CTA 체크박스
   - **Progress Bar + 섹션 네비게이션**: 상단 고정, 스크롤 진행률 표시, 탭하여 섹션 이동
   - **스크롤 기반 애니메이션**: 섹션 진입 시 fade-in + slide-up, 숫자 카운팅 트리거
