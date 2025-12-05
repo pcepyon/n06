@@ -43,16 +43,25 @@ Application/Presentation → Repository Interface (Domain)
                         → Repository Implementation (Infrastructure)
 ```
 
-### Dialog 버튼 레이아웃 (BUG-20251130-152000)
+### Flutter 레이아웃 제약 조건
 ```
-❌ AlertDialog.actions + Expanded → OverflowBar 타입 충돌
-✅ Dialog + Row + Expanded → 정상 동작
-```
+[원칙] Constraints 흐름: 부모 → 자식 (크기 제한), 자식 → 부모 (크기 결정)
 
-### Container 스타일링 (BUG-20251130-110218)
-```
-❌ Container(color: X, decoration: BoxDecoration(...))
-✅ Container(decoration: BoxDecoration(color: X, ...))
+1. Unbounded 컨텍스트 (Row, Column, ListView, AppBar.actions)
+   ❌ Expanded/Flexible 직접 사용 → RenderFlex overflow
+   ✅ SizedBox로 명시적 크기 제공
+
+2. Bounded 컨테이너 + 가변 콘텐츠
+   ❌ SizedBox(height: N) 내 Column 직접 배치 → overflow 위험
+   ✅ SingleChildScrollView 감싸기 또는 Flexible 사용
+
+3. AlertDialog.actions
+   ❌ Expanded 사용 → OverflowBar 타입 충돌
+   ✅ Dialog + Row + Expanded로 대체
+
+4. Container
+   ❌ color + decoration 동시 사용
+   ✅ decoration: BoxDecoration(color: X, ...)
 ```
 
 ### Widget Lifecycle 내 Provider 수정 (BUG-20251202-153023)
@@ -61,13 +70,6 @@ initState/didChangeDependencies/build 내에서 Provider 수정 시:
 ❌ ref.read(provider.notifier).method()  // 직접 호출 금지
 ✅ Future.microtask(() { ref.read(provider.notifier).method(); })
 ✅ WidgetsBinding.instance.addPostFrameCallback((_) { ... })
-```
-
-### AppBar.actions 레이아웃 (BUG-20251202-173205)
-```
-AppBar.actions는 unbounded width constraint 제공
-❌ AppBar.actions 내 Expanded/Flexible 포함 Row 직접 배치
-✅ SizedBox(width: N)로 감싸서 고정 너비 제공
 ```
 
 ### void async 안티패턴 (BUG-20251202-231014)

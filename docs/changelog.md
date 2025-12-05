@@ -21,6 +21,13 @@
 
 ## 2025-12-05
 
+- [fix] EvidenceCard Column overflow 수정 및 CLAUDE.md 레이아웃 규칙 통합
+  - **문제**: SizedBox(height: 480) 내 Column이 39픽셀 overflow
+  - **수정**: SingleChildScrollView로 감싸서 스크롤 가능하게 변경
+  - **문서 개선**: 4개 개별 레이아웃 버그 규칙을 "Flutter 레이아웃 제약 조건" 섹션으로 통합
+  - `lib/features/guest_home/presentation/widgets/evidence_card.dart`
+  - `claude.md`
+
 - [refactor] Medication 엔티티 개선 및 SQL 뷰 호환성 수정
   - **Medication.startDose**: 빈 availableDoses 배열 방어 코드 추가 (0.0 반환)
   - **Medication.findByDisplayName**: static 헬퍼 메서드 추가로 fallback 로직 통일

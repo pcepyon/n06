@@ -115,9 +115,11 @@ class _EvidenceCardState extends State<EvidenceCard>
           ),
           child: Padding(
             padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 // 헤더 (아이콘 + 타이틀)
                 Row(
                   children: [
@@ -235,6 +237,7 @@ class _EvidenceCardState extends State<EvidenceCard>
                   ),
                 ),
               ],
+              ),
             ),
           ),
         ),
