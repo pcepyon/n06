@@ -15,9 +15,9 @@ import 'package:n06/features/guest_home/presentation/widgets/section_progress_in
 ///
 /// 인터랙티브 기능:
 /// - Progress Bar + 섹션 네비게이션
-/// - 스크롤 기반 섹션 감지 및 애니메이션 트리거
+/// - 페이지 전환 애니메이션 (스케일 + 페이드)
 /// - CTA 체크박스 활성화
-/// - 섹션 진입 fade-in 애니메이션
+/// - 섹션 진입 애니메이션
 class GuestHomeScreen extends StatefulWidget {
   const GuestHomeScreen({super.key});
 
@@ -25,123 +25,105 @@ class GuestHomeScreen extends StatefulWidget {
   State<GuestHomeScreen> createState() => _GuestHomeScreenState();
 }
 
-class _GuestHomeScreenState extends State<GuestHomeScreen> {
-  final ScrollController _scrollController = ScrollController();
+class _GuestHomeScreenState extends State<GuestHomeScreen>
+    with TickerProviderStateMixin {
+  // 현재 페이지 인덱스 (0: Welcome, 1-5: 각 섹션)
+  int _currentPageIndex = 0;
 
-  // 섹션 GlobalKey들 (Welcome은 항상 보이므로 제외, 5개 섹션)
-  final List<GlobalKey> _sectionKeys = List.generate(
-    5,
-    (_) => GlobalKey(),
-  );
-
-  // 현재 활성 섹션 인덱스
-  int _currentSectionIndex = 0;
-
-  // 방문한 섹션들
+  // 방문한 섹션들 (Progress Bar 용, Welcome 제외하고 0-4)
   final Set<int> _visitedSections = {};
-
-  // 각 섹션의 visibility 상태 (애니메이션 트리거용)
-  final List<bool> _sectionVisibility = List.filled(5, false);
 
   // CTA 체크된 아이템들
   final Set<String> _checkedItems = {};
 
-  // 전체 스크롤 진행률
-  double _scrollProgress = 0.0;
+  // 페이지 전환 애니메이션 컨트롤러
+  late final AnimationController _pageTransitionController;
+  late final Animation<double> _scaleAnimation;
+  late final Animation<double> _fadeAnimation;
+
+  // 전환 중인지 여부
+  bool _isTransitioning = false;
+
+  // 전환 방향 (true: forward, false: backward)
+  bool _transitionForward = true;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
+    _pageTransitionController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.92,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _pageTransitionController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _pageTransitionController,
+      curve: Curves.easeOut,
+    );
+
+    // 초기 페이지는 바로 보이도록
+    _pageTransitionController.value = 1.0;
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
+    _pageTransitionController.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
+  /// 페이지 전환 (스케일 + 페이드 애니메이션)
+  Future<void> _goToPage(int pageIndex) async {
+    if (_isTransitioning || pageIndex == _currentPageIndex) return;
+    if (pageIndex < 0 || pageIndex > 5) return;
 
-    final scrollOffset = _scrollController.offset;
-    final maxScroll = _scrollController.position.maxScrollExtent;
+    _isTransitioning = true;
+    _transitionForward = pageIndex > _currentPageIndex;
 
-    // 전체 스크롤 진행률 계산
+    // Fade out
+    await _pageTransitionController.reverse();
+
     setState(() {
-      _scrollProgress = maxScroll > 0 ? (scrollOffset / maxScroll) : 0;
+      _currentPageIndex = pageIndex;
+      // 섹션 방문 기록 (Welcome 제외)
+      if (pageIndex > 0) {
+        _visitedSections.add(pageIndex - 1);
+      }
     });
 
-    // 현재 뷰포트 정보
-    final viewportHeight = _scrollController.position.viewportDimension;
-    final viewportTop = scrollOffset;
-    final viewportCenter = viewportTop + (viewportHeight / 2);
+    HapticFeedback.selectionClick();
 
-    // 각 섹션의 위치 확인 및 visibility 업데이트
-    for (int i = 0; i < _sectionKeys.length; i++) {
-      final key = _sectionKeys[i];
-      final renderBox = key.currentContext?.findRenderObject() as RenderBox?;
+    // Fade in
+    await _pageTransitionController.forward();
+    _isTransitioning = false;
+  }
 
-      if (renderBox != null && renderBox.hasSize) {
-        final position = renderBox.localToGlobal(
-          Offset.zero,
-          ancestor: context.findRenderObject(),
-        );
-        final sectionTop = scrollOffset + position.dy;
-        final sectionBottom = sectionTop + renderBox.size.height;
-
-        // 섹션이 뷰포트에 30% 이상 보이면 visible로 처리
-        final visibleThreshold = viewportTop + (viewportHeight * 0.3);
-        if (sectionTop < viewportTop + viewportHeight &&
-            sectionBottom > visibleThreshold) {
-          if (!_sectionVisibility[i]) {
-            setState(() {
-              _sectionVisibility[i] = true;
-              _visitedSections.add(i);
-            });
-            HapticFeedback.selectionClick();
-          }
-        }
-
-        // 현재 섹션 결정 (뷰포트 중심에 가장 가까운 섹션)
-        if (sectionTop <= viewportCenter && sectionBottom >= viewportCenter) {
-          if (_currentSectionIndex != i) {
-            setState(() {
-              _currentSectionIndex = i;
-            });
-          }
-        }
-      }
+  /// 다음 페이지로 이동
+  void _goToNextPage() {
+    if (_currentPageIndex < 5) {
+      _goToPage(_currentPageIndex + 1);
     }
   }
 
-  void _scrollToSection(int index) {
-    final key = _sectionKeys[index];
-    final renderBox = key.currentContext?.findRenderObject() as RenderBox?;
-
-    if (renderBox != null) {
-      final position = renderBox.localToGlobal(
-        Offset.zero,
-        ancestor: context.findRenderObject(),
-      );
-      final targetOffset = _scrollController.offset + position.dy - 80; // Progress bar 높이 고려
-
-      _scrollController.animateTo(
-        targetOffset.clamp(0, _scrollController.position.maxScrollExtent),
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeOutCubic,
-      );
-    }
+  /// Progress Bar 섹션 탭 핸들러
+  void _onSectionTap(int sectionIndex) {
+    // Progress Bar의 섹션 인덱스는 0-4, 페이지 인덱스는 1-5
+    _goToPage(sectionIndex + 1);
   }
 
   void _handleSignUp() {
-    context.go('/sign-up');
+    context.go('/login');
   }
 
   void _handleLearnMore() {
-    // 부작용 가이드 섹션으로 스크롤
-    _scrollToSection(3);
+    // 부작용 가이드 섹션으로 이동 (페이지 인덱스 4)
+    _goToPage(4);
     HapticFeedback.lightImpact();
   }
 
@@ -155,6 +137,12 @@ class _GuestHomeScreenState extends State<GuestHomeScreen> {
     });
   }
 
+  /// 현재 페이지에 해당하는 Progress Bar 섹션 인덱스 (-1: Welcome)
+  int get _currentSectionIndex => _currentPageIndex - 1;
+
+  /// 전체 스크롤 진행률 (페이지 기반)
+  double get _scrollProgress => _currentPageIndex / 5;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -166,191 +154,209 @@ class _GuestHomeScreenState extends State<GuestHomeScreen> {
             currentSectionIndex: _currentSectionIndex,
             visitedSections: _visitedSections,
             scrollProgress: _scrollProgress,
-            onSectionTap: _scrollToSection,
+            onSectionTap: _onSectionTap,
           ),
-          // 스크롤 가능한 콘텐츠
+          // 페이지 콘텐츠
           Expanded(
-            child: CustomScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                // 1. 환영 섹션 (항상 보임)
-                const SliverToBoxAdapter(
-                  child: WelcomeSection(),
-                ),
+            child: AnimatedBuilder(
+              animation: _pageTransitionController,
+              builder: (context, child) {
+                // 전환 방향에 따른 스케일 조정
+                final scale = _transitionForward
+                    ? _scaleAnimation.value
+                    : 2.0 - _scaleAnimation.value; // 뒤로 갈 때는 작아지는 효과
 
-                // 섹션 간격
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 40),
-                ),
-
-                // 2. 과학적 근거 섹션
-                SliverToBoxAdapter(
-                  child: _SectionWrapper(
-                    key: _sectionKeys[0],
-                    isVisible: _sectionVisibility[0],
-                    child: ScientificEvidenceSection(
-                      isVisible: _sectionVisibility[0],
-                    ),
+                return Transform.scale(
+                  scale: scale.clamp(0.92, 1.0),
+                  child: Opacity(
+                    opacity: _fadeAnimation.value,
+                    child: _buildCurrentPage(),
                   ),
-                ),
-
-                // 섹션 간격
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 48),
-                ),
-
-                // 3. 치료 여정 미리보기 섹션
-                SliverToBoxAdapter(
-                  child: _SectionWrapper(
-                    key: _sectionKeys[1],
-                    isVisible: _sectionVisibility[1],
-                    child: JourneyPreviewSection(
-                      isVisible: _sectionVisibility[1],
-                    ),
-                  ),
-                ),
-
-                // 섹션 간격
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 48),
-                ),
-
-                // 4. 앱 기능 소개 섹션
-                SliverToBoxAdapter(
-                  child: _SectionWrapper(
-                    key: _sectionKeys[2],
-                    isVisible: _sectionVisibility[2],
-                    child: AppFeaturesSection(
-                      isVisible: _sectionVisibility[2],
-                    ),
-                  ),
-                ),
-
-                // 섹션 간격
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 48),
-                ),
-
-                // 5. 부작용 대처 가이드 섹션
-                SliverToBoxAdapter(
-                  child: _SectionWrapper(
-                    key: _sectionKeys[3],
-                    isVisible: _sectionVisibility[3],
-                    child: SideEffectsGuideSection(
-                      isVisible: _sectionVisibility[3],
-                    ),
-                  ),
-                ),
-
-                // 섹션 간격
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 48),
-                ),
-
-                // 6. CTA 섹션
-                SliverToBoxAdapter(
-                  child: _SectionWrapper(
-                    key: _sectionKeys[4],
-                    isVisible: _sectionVisibility[4],
-                    child: CtaSection(
-                      isVisible: _sectionVisibility[4],
-                      visitedSections: _visitedSections,
-                      checkedItems: _checkedItems,
-                      onCheckItem: _handleCheckItem,
-                      onSignUp: _handleSignUp,
-                      onLearnMore: _handleLearnMore,
-                    ),
-                  ),
-                ),
-
-                // 하단 여백
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 32),
-                ),
-              ],
+                );
+              },
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildCurrentPage() {
+    switch (_currentPageIndex) {
+      case 0:
+        return _PageWrapper(
+          showNextButton: true,
+          onNext: _goToNextPage,
+          child: const WelcomeSection(),
+        );
+      case 1:
+        return _PageWrapper(
+          showNextButton: true,
+          onNext: _goToNextPage,
+          child: ScientificEvidenceSection(
+            isVisible: _visitedSections.contains(0) || _currentPageIndex == 1,
+          ),
+        );
+      case 2:
+        return _PageWrapper(
+          showNextButton: true,
+          onNext: _goToNextPage,
+          child: JourneyPreviewSection(
+            isVisible: _visitedSections.contains(1) || _currentPageIndex == 2,
+          ),
+        );
+      case 3:
+        return _PageWrapper(
+          showNextButton: true,
+          onNext: _goToNextPage,
+          child: AppFeaturesSection(
+            isVisible: _visitedSections.contains(2) || _currentPageIndex == 3,
+          ),
+        );
+      case 4:
+        return _PageWrapper(
+          showNextButton: true,
+          onNext: _goToNextPage,
+          child: SideEffectsGuideSection(
+            isVisible: _visitedSections.contains(3) || _currentPageIndex == 4,
+          ),
+        );
+      case 5:
+        return _PageWrapper(
+          showNextButton: false,
+          onNext: null,
+          child: CtaSection(
+            isVisible: _visitedSections.contains(4) || _currentPageIndex == 5,
+            visitedSections: _visitedSections,
+            checkedItems: _checkedItems,
+            onCheckItem: _handleCheckItem,
+            onSignUp: _handleSignUp,
+            onLearnMore: _handleLearnMore,
+          ),
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
 }
 
-/// 섹션 래퍼 위젯
-/// fade-in 애니메이션을 적용
-class _SectionWrapper extends StatefulWidget {
+/// 페이지 래퍼 위젯
+/// 스크롤 가능한 영역 + 하단 다음 버튼
+class _PageWrapper extends StatelessWidget {
   final Widget child;
-  final bool isVisible;
+  final bool showNextButton;
+  final VoidCallback? onNext;
 
-  const _SectionWrapper({
-    super.key,
+  const _PageWrapper({
     required this.child,
-    required this.isVisible,
+    required this.showNextButton,
+    this.onNext,
   });
 
   @override
-  State<_SectionWrapper> createState() => _SectionWrapperState();
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // 스크롤 가능한 콘텐츠 영역
+        Expanded(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(top: 16, bottom: 24),
+            child: child,
+          ),
+        ),
+        // 하단 다음 버튼
+        if (showNextButton)
+          SafeArea(
+            top: false,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                border: Border(
+                  top: BorderSide(
+                    color: AppColors.border,
+                    width: 1,
+                  ),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: _NextButton(onPressed: onNext),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
-class _SectionWrapperState extends State<_SectionWrapper>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _fadeAnimation;
-  late final Animation<Offset> _slideAnimation;
-  bool _hasRevealed = false;
+/// 다음 섹션 버튼
+class _NextButton extends StatefulWidget {
+  final VoidCallback? onPressed;
+
+  const _NextButton({this.onPressed});
 
   @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
+  State<_NextButton> createState() => _NextButtonState();
+}
 
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    );
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.05),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
-  }
-
-  @override
-  void didUpdateWidget(_SectionWrapper oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isVisible && !_hasRevealed) {
-      _hasRevealed = true;
-      _controller.forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+class _NextButtonState extends State<_NextButton> {
+  bool _isPressed = false;
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return FractionalTranslation(
-          translation: _slideAnimation.value,
-          child: Opacity(
-            opacity: _hasRevealed ? _fadeAnimation.value : 0,
-            child: child,
-          ),
-        );
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        HapticFeedback.lightImpact();
+        widget.onPressed?.call();
       },
-      child: widget.child,
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: _isPressed
+              ? AppColors.primaryHover
+              : AppColors.primary,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: _isPressed
+              ? null
+              : [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '다음으로',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.arrow_forward,
+              color: Colors.white,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
