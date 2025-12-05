@@ -21,6 +21,12 @@
 
 ## 2025-12-05
 
+- [feat] 로그인 사용자 대상 '앱 소개 다시보기' 기능 추가
+  - 설정 화면에서 게스트 홈 콘텐츠를 다시 볼 수 있도록 preview 모드 구현
+  - 쿼리 파라미터 방식으로 기존 라우팅 로직에 영향 없이 구현
+  - `lib/core/routing/app_router.dart`
+  - `lib/features/settings/presentation/screens/settings_screen.dart`
+
 - [fix] 게스트 홈 텍스트 펼침/닫힘 시 RenderFlex overflow 수정
   - **원인**: IntrinsicHeight + AnimatedCrossFade 조합에서 높이 계산 충돌
   - **수정**: IntrinsicHeight 제거, AnimatedCrossFade → AnimatedSize 교체

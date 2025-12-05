@@ -155,7 +155,13 @@ final appRouter = GoRouter(
 
     // Case 2: Logged in with valid session, on guest/login page → redirect to home
     // This handles the case where user opens app while already logged in
+    // Exception: Allow preview mode for "앱 소개 다시보기" feature
+    final isPreviewMode = state.uri.queryParameters['preview'] == 'true';
     if (isLoggedIn && (location == '/guest' || location == '/login')) {
+      if (location == '/guest' && isPreviewMode) {
+        // Allow logged-in users to view guest home in preview mode
+        return null;
+      }
       if (kDebugMode) {
         developer.log(
           'Redirecting to /home: already authenticated with valid session',
