@@ -51,6 +51,19 @@ dose_records + weight_logs + daily_checkins + user_badges
 → weekly statistics, insights, badges, timeline
 ```
 
+### 9. Master Tables (Static Reference)
+```
+medications (약물 마스터)
+symptom_types (증상 유형 마스터)
+```
+
+### 10. Analytics Views
+```
+v_weekly_weight_summary
+v_weekly_checkin_summary
+v_monthly_dose_adherence
+```
+
 ---
 
 ## Tables
@@ -362,6 +375,123 @@ dose_records + weight_logs + daily_checkins + user_badges
 
 ---
 
+### medications
+GLP-1 약물 마스터 테이블 (앱 배포 없이 새 약물 추가 가능)
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | varchar(50) | PK | 약물 ID (예: 'wegovy', 'ozempic') |
+| name_ko | varchar(100) | NOT NULL | 한글명 |
+| name_en | varchar(100) | NOT NULL | 영문명 |
+| generic_name | varchar(100) | NULL | 성분명 (예: 세마글루타이드) |
+| manufacturer | varchar(100) | NULL | 제조사 |
+| available_doses | jsonb | NOT NULL | 가용 용량 목록 [0.25, 0.5, ...] |
+| recommended_start_dose | numeric(6,2) | NULL | 권장 시작 용량 |
+| dose_unit | varchar(10) | NOT NULL, DEFAULT 'mg' | 용량 단위 |
+| cycle_days | integer | NOT NULL, DEFAULT 7 | 투여 주기 (일) |
+| is_active | boolean | NOT NULL, DEFAULT true | 활성 여부 |
+| display_order | integer | NOT NULL | 표시 순서 |
+| created_at | timestamptz | NOT NULL, DEFAULT now() | |
+
+**Indexes**
+- INDEX: (is_active, display_order)
+
+**초기 데이터**
+- wegovy (위고비) - Semaglutide, 주 1회
+- ozempic (오젬픽) - Semaglutide, 주 1회
+- mounjaro (마운자로) - Tirzepatide, 주 1회
+- zepbound (젭바운드) - Tirzepatide, 주 1회
+- saxenda (삭센다) - Liraglutide, 일 1회
+
+**사용 시점**
+- 온보딩/투여 계획에서 약물 드롭다운 표시
+- 새 약물 출시 시 DB에만 추가하면 앱에 즉시 반영
+
+**향후 확장**
+- dosage_plans.medication_id FK 연결 (MVP 후)
+- 약물별 증량 가이드 추가
+
+---
+
+### symptom_types
+증상 유형 마스터 테이블
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | varchar(50) | PK | 증상 ID (예: 'nausea', 'vomiting') |
+| name_ko | varchar(100) | NOT NULL | 한글명 |
+| name_en | varchar(100) | NOT NULL | 영문명 |
+| category | varchar(20) | NOT NULL | 카테고리 (digestive/systemic/red_flag) |
+| is_red_flag | boolean | NOT NULL, DEFAULT false | Red Flag 여부 |
+| display_order | integer | NOT NULL | 표시 순서 |
+| is_active | boolean | NOT NULL, DEFAULT true | 활성 여부 |
+| created_at | timestamptz | NOT NULL, DEFAULT now() | |
+
+**Indexes**
+- INDEX: (is_active, category, display_order)
+
+**카테고리**
+- digestive: 소화기 증상 (메스꺼움, 구토, 변비 등)
+- systemic: 전신 증상 (피로, 어지러움 등)
+- red_flag: 위험 증상 (췌장염, 담낭염 등)
+
+**초기 데이터**
+- 기본 증상 13종 + Red Flag 6종
+
+**Note**: daily_checkins.symptom_details JSONB는 그대로 유지 (마이그레이션 하지 않음)
+
+---
+
+## Analytics Views
+
+### v_weekly_weight_summary
+주간 체중 요약 뷰
+
+| Column | Type | Description |
+|--------|------|-------------|
+| user_id | TEXT | 사용자 ID |
+| week_start | timestamptz | 주 시작일 |
+| record_count | bigint | 기록 수 |
+| avg_weight | numeric | 평균 체중 |
+| min_weight | numeric | 최소 체중 |
+| max_weight | numeric | 최대 체중 |
+| weight_range | numeric | 체중 범위 |
+| weekly_change | numeric | 주간 변화량 |
+
+---
+
+### v_weekly_checkin_summary
+주간 체크인 요약 뷰
+
+| Column | Type | Description |
+|--------|------|-------------|
+| user_id | TEXT | 사용자 ID |
+| week_start | timestamptz | 주 시작일 |
+| checkin_count | bigint | 체크인 수 |
+| avg_appetite_score | numeric | 평균 식욕 점수 |
+| red_flag_count | bigint | Red Flag 감지 수 |
+| good_meal_count | bigint | 식사 양호 횟수 |
+| good_energy_count | bigint | 에너지 양호 횟수 |
+| good_mood_count | bigint | 기분 양호 횟수 |
+
+---
+
+### v_monthly_dose_adherence
+월별 투여 순응도 뷰
+
+| Column | Type | Description |
+|--------|------|-------------|
+| user_id | TEXT | 사용자 ID |
+| month_start | timestamptz | 월 시작일 |
+| medication_name | varchar | 약물명 |
+| scheduled_count | bigint | 예정 투여 수 |
+| completed_count | bigint | 완료 투여 수 |
+| adherence_rate | numeric | 순응도 (%) |
+
+**Note**: 뷰는 기본 테이블의 RLS를 자동 상속
+
+---
+
 ## RLS (Row Level Security) Policies
 
 모든 테이블에 RLS가 활성화되어 있으며, 다음 정책이 적용되었습니다:
@@ -410,6 +540,17 @@ ON badge_definitions FOR SELECT
 USING (auth.role() = 'authenticated');
 ```
 
+**medications / symptom_types 정책 (모든 인증된 사용자 읽기 가능):**
+```sql
+CREATE POLICY "Medications readable by authenticated users"
+ON medications FOR SELECT
+USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Symptom types readable by authenticated users"
+ON symptom_types FOR SELECT
+USING (auth.role() = 'authenticated');
+```
+
 **RLS 적용 테이블:**
 - users
 - consent_records
@@ -425,6 +566,8 @@ USING (auth.role() = 'authenticated');
 - notification_settings
 - guide_feedback
 - audit_logs
+- medications (읽기 전용)
+- symptom_types (읽기 전용)
 
 ---
 
@@ -630,6 +773,7 @@ final repo = ref.watch(tracking_providers.trackingRepositoryProvider);
 | dose_schedules | `features/tracking/` | onboarding, tracking | ScheduleRepository 제공 |
 | badge_definitions | `features/dashboard/` | dashboard | BadgeRepository 제공 |
 | user_badges | `features/dashboard/` | dashboard | BadgeRepository 제공 |
+| medications | `features/tracking/` | onboarding, tracking | MedicationMasterRepository 제공 |
 
 **원칙:**
 - 각 테이블은 **가장 직접적으로 사용하는 기능**이 구현을 소유

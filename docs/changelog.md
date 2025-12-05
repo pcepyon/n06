@@ -21,6 +21,21 @@
 
 ## 2025-12-05
 
+- [feat] DB 확장성 준비: medications, symptom_types 마스터 테이블 및 분석 뷰 추가
+  - **목적**: 앱 배포 없이 새 약물/증상 추가 가능하도록 마스터 테이블 도입
+  - **DB 변경**:
+    - `medications` 테이블: GLP-1 약물 5종 (위고비, 오젬픽, 마운자로, 젭바운드, 삭센다)
+    - `symptom_types` 테이블: 기본 증상 13종 + Red Flag 6종
+    - 분석 뷰 3개: v_weekly_weight_summary, v_weekly_checkin_summary, v_monthly_dose_adherence
+  - **Flutter 변경**:
+    - `MedicationTemplate` (하드코딩) → `Medication` 엔티티 + DB 조회로 전환
+    - MedicationMasterRepository, DTO, Provider 추가
+    - 온보딩/투여계획 수정 화면에서 DB 약물 목록 사용
+  - `supabase/migrations/07_add_master_tables.sql`
+  - `lib/features/tracking/domain/entities/medication.dart`
+  - `lib/features/tracking/domain/repositories/medication_master_repository.dart`
+  - `lib/features/tracking/infrastructure/repositories/supabase_medication_master_repository.dart`
+
 - [feat] GoRouter에 FirebaseAnalyticsObserver 추가하여 화면 추적 활성화
   - `lib/core/routing/app_router.dart`
 

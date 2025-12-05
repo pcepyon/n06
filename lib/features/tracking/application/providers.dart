@@ -4,10 +4,12 @@ import 'package:n06/core/providers.dart';
 import 'package:n06/features/tracking/application/notifiers/weight_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/dose_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/usecases/update_dosage_plan_usecase.dart';
+import 'package:n06/features/tracking/domain/entities/medication.dart';
 import 'package:n06/features/tracking/domain/repositories/audit_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/dosage_plan_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/dose_schedule_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/medication_repository.dart';
+import 'package:n06/features/tracking/domain/repositories/medication_master_repository.dart';
 import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
 import 'package:n06/features/tracking/domain/usecases/analyze_plan_change_impact_usecase.dart';
 import 'package:n06/features/tracking/domain/usecases/injection_site_rotation_usecase.dart';
@@ -17,6 +19,7 @@ import 'package:n06/features/tracking/domain/usecases/schedule_generator_usecase
 import 'package:n06/features/tracking/infrastructure/services/notification_service.dart';
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_tracking_repository.dart';
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_medication_repository.dart';
+import 'package:n06/features/tracking/infrastructure/repositories/supabase_medication_master_repository.dart';
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_dosage_plan_repository.dart';
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_dose_schedule_repository.dart';
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_audit_repository.dart';
@@ -56,6 +59,20 @@ TrackingRepository trackingRepository(Ref ref) {
 AuditRepository auditRepository(Ref ref) {
   final supabase = ref.watch(supabaseProvider);
   return SupabaseAuditRepository(supabase);
+}
+
+// Medication Master Repository (마스터 테이블 조회)
+@riverpod
+MedicationMasterRepository medicationMasterRepository(Ref ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return SupabaseMedicationMasterRepository(supabase);
+}
+
+// Active Medications Provider (활성화된 약물 목록)
+@riverpod
+Future<List<Medication>> activeMedications(Ref ref) async {
+  final repo = ref.watch(medicationMasterRepositoryProvider);
+  return repo.getActiveMedications();
 }
 
 // UseCase Providers with Code Generation

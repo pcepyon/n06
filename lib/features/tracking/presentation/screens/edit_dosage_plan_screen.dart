@@ -6,7 +6,7 @@ import 'package:n06/features/authentication/presentation/widgets/gabium_toast.da
 import 'package:n06/features/tracking/application/notifiers/medication_notifier.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
-import 'package:n06/features/tracking/domain/entities/medication_template.dart';
+import 'package:n06/features/tracking/domain/entities/medication.dart';
 import 'package:n06/features/tracking/domain/entities/update_plan_error_type.dart';
 import 'package:n06/features/tracking/domain/usecases/analyze_plan_change_impact_usecase.dart';
 import 'package:n06/features/tracking/presentation/widgets/date_picker_field.dart';
@@ -132,27 +132,45 @@ class _EditDosagePlanForm extends ConsumerStatefulWidget {
 }
 
 class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
-  MedicationTemplate? _selectedTemplate;
+  Medication? _selectedMedication;
   double? _selectedDose;
   late DateTime _selectedStartDate;
   bool _isSaving = false;
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
+    _selectedStartDate = widget.initialPlan.startDate;
+    _selectedDose = widget.initialPlan.initialDoseMg;
+  }
+
+  /// 약물 목록 로드 후 초기값 설정
+  void _initializeMedication(List<Medication> medications) {
+    if (_initialized) return;
+    _initialized = true;
+
     final plan = widget.initialPlan;
 
-    // Find matching template from existing medication name
-    _selectedTemplate = MedicationTemplate.findByName(plan.medicationName);
-    _selectedDose = plan.initialDoseMg;
-    _selectedStartDate = plan.startDate;
+    // 기존 약물 이름으로 매칭
+    _selectedMedication = medications.where(
+      (m) => m.displayName == plan.medicationName,
+    ).firstOrNull;
+
+    // 매칭 실패 시 name_en으로 시도
+    if (_selectedMedication == null) {
+      final nameEn = plan.medicationName.split(' (').first;
+      _selectedMedication = medications.where(
+        (m) => m.nameEn.toLowerCase() == nameEn.toLowerCase(),
+      ).firstOrNull;
+    }
   }
 
   Future<void> _handleSave() async {
     setState(() => _isSaving = true);
     try {
       // Validate inputs
-      if (_selectedTemplate == null) {
+      if (_selectedMedication == null) {
         _showErrorSnackBar(context.l10n.tracking_dosagePlan_selectMedicationError);
         return;
       }
@@ -166,8 +184,8 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
 
       // Create updated plan
       final updatedPlan = plan.copyWith(
-        medicationName: _selectedTemplate!.displayName,
-        cycleDays: _selectedTemplate!.standardCycleDays,
+        medicationName: _selectedMedication!.displayName,
+        cycleDays: _selectedMedication!.cycleDays,
         initialDoseMg: _selectedDose!,
         startDate: _selectedStartDate,
         updatedAt: DateTime.now(),
@@ -262,260 +280,294 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // ============== 섹션 제목 ==============
-        Text(
-          context.l10n.tracking_dosagePlan_formTitle,
-          style: AppTypography.heading1.copyWith(
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 24), // lg spacing
+    final medicationsAsync = ref.watch(activeMedicationsProvider);
 
-        // ============== 약물명 드롭다운 ==============
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return medicationsAsync.when(
+      loading: () => const Center(
+        child: CircularProgressIndicator(),
+      ),
+      error: (error, stack) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            const SizedBox(height: 16),
             Text(
-              context.l10n.tracking_dosagePlan_medicationLabel,
-              style: AppTypography.labelMedium.copyWith(
+              context.l10n.common_error_networkRetry,
+              style: AppTypography.bodyMedium.copyWith(
                 color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: _selectedTemplate == null
-                    ? AppColors.borderDark
-                    : AppColors.primary,
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                color: AppColors.surface,
-              ),
-              child: Theme(
-                data: Theme.of(context).copyWith(
-                  canvasColor: AppColors.surface,
-                ),
-                child: DropdownButton<MedicationTemplate>(
-                  isExpanded: true,
-                  underline: const SizedBox.shrink(),
-                  value: _selectedTemplate,
-                  hint: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      context.l10n.tracking_dosagePlan_medicationHint,
-                      style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.textDisabled,
-                      ),
-                    ),
-                  ),
-                  items: MedicationTemplate.all.map((template) {
-                    return DropdownMenuItem<MedicationTemplate>(
-                      value: template,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          template.displayName,
-                          style: AppTypography.bodyLarge.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (newTemplate) {
-                    setState(() {
-                      _selectedTemplate = newTemplate;
-                      _selectedDose = null;
-                    });
-                  },
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-              ),
-            ),
-            if (_selectedTemplate == null)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  context.l10n.tracking_dosagePlan_medicationHelp,
-                  style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.textDisabled,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 16), // md spacing
-
-        // ============== 초기 용량 드롭다운 ==============
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              context.l10n.tracking_dosagePlan_doseLabel,
-              style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: _selectedDose == null
-                    ? AppColors.borderDark
-                    : AppColors.primary,
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                color: _selectedTemplate == null
-                  ? AppColors.background
-                  : AppColors.surface,
-              ),
-              child: Theme(
-                data: Theme.of(context).copyWith(
-                  canvasColor: AppColors.surface,
-                ),
-                child: DropdownButton<double>(
-                  isExpanded: true,
-                  underline: const SizedBox.shrink(),
-                  value: _selectedDose,
-                  disabledHint: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      _selectedTemplate == null
-                        ? context.l10n.tracking_dosagePlan_doseHintDisabled
-                        : context.l10n.tracking_dosagePlan_doseHint,
-                      style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.textDisabled,
-                      ),
-                    ),
-                  ),
-                  hint: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      context.l10n.tracking_dosagePlan_doseHint,
-                      style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.textDisabled,
-                      ),
-                    ),
-                  ),
-                  items: _selectedTemplate?.availableDoses.map((dose) {
-                    return DropdownMenuItem<double>(
-                      value: dose,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          context.l10n.tracking_dosagePlan_doseDisplay(dose),
-                          style: AppTypography.bodyLarge.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList() ?? [],
-                  onChanged: _selectedTemplate == null
-                    ? null
-                    : (newDose) {
-                      setState(() => _selectedDose = newDose);
-                    },
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-              ),
+            const SizedBox(height: 16),
+            GabiumButton(
+              text: context.l10n.common_button_retry,
+              onPressed: () => ref.invalidate(activeMedicationsProvider),
+              variant: GabiumButtonVariant.secondary,
+              size: GabiumButtonSize.small,
             ),
           ],
         ),
-        const SizedBox(height: 16), // md spacing
+      ),
+      data: (medications) {
+        // 초기화
+        _initializeMedication(medications);
 
-        // ============== 투여 주기 (읽기 전용) ==============
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // ============== 섹션 제목 ==============
             Text(
-              context.l10n.tracking_dosagePlan_cycleLabel,
-              style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondary,
+              context.l10n.tracking_dosagePlan_formTitle,
+              style: AppTypography.heading1.copyWith(
+                color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 8),
-            Container(
-              height: 48,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: AppColors.border,
-                  width: 1,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                color: AppColors.background,
-              ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  _selectedTemplate != null
-                    ? context.l10n.tracking_dosagePlan_cycleDisplay(_selectedTemplate!.standardCycleDays)
-                    : '-',
-                  style: AppTypography.bodyLarge.copyWith(
+            const SizedBox(height: 24), // lg spacing
+
+            // ============== 약물명 드롭다운 ==============
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.l10n.tracking_dosagePlan_medicationLabel,
+                  style: AppTypography.labelMedium.copyWith(
                     color: AppColors.textSecondary,
                   ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                context.l10n.tracking_dosagePlan_cycleHelp,
-                style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.textDisabled,
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: _selectedMedication == null
+                        ? AppColors.borderDark
+                        : AppColors.primary,
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.surface,
+                  ),
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      canvasColor: AppColors.surface,
+                    ),
+                    child: DropdownButton<Medication>(
+                      isExpanded: true,
+                      underline: const SizedBox.shrink(),
+                      value: _selectedMedication,
+                      hint: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          context.l10n.tracking_dosagePlan_medicationHint,
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: AppColors.textDisabled,
+                          ),
+                        ),
+                      ),
+                      items: medications.map((medication) {
+                        return DropdownMenuItem<Medication>(
+                          value: medication,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              medication.displayName,
+                              style: AppTypography.bodyLarge.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (newMedication) {
+                        setState(() {
+                          _selectedMedication = newMedication;
+                          _selectedDose = null;
+                        });
+                      },
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                  ),
                 ),
-              ),
+                if (_selectedMedication == null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      context.l10n.tracking_dosagePlan_medicationHelp,
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.textDisabled,
+                      ),
+                    ),
+                  ),
+              ],
             ),
-          ],
-        ),
-        const SizedBox(height: 16), // md spacing
+            const SizedBox(height: 16), // md spacing
 
-        // ============== 시작일 선택 ==============
-        DatePickerField(
-          label: context.l10n.tracking_dosagePlan_startDateLabel,
-          value: _selectedStartDate,
-          onChanged: (newDate) {
-            setState(() => _selectedStartDate = newDate);
-          },
-          firstDate: DateTime(2020),
-          lastDate: DateTime.now().add(const Duration(days: 365)),
-        ),
-        const SizedBox(height: 32), // xl spacing
+            // ============== 초기 용량 드롭다운 ==============
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.l10n.tracking_dosagePlan_doseLabel,
+                  style: AppTypography.labelMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: _selectedDose == null
+                        ? AppColors.borderDark
+                        : AppColors.primary,
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    color: _selectedMedication == null
+                      ? AppColors.background
+                      : AppColors.surface,
+                  ),
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      canvasColor: AppColors.surface,
+                    ),
+                    child: DropdownButton<double>(
+                      isExpanded: true,
+                      underline: const SizedBox.shrink(),
+                      value: _selectedDose,
+                      disabledHint: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          _selectedMedication == null
+                            ? context.l10n.tracking_dosagePlan_doseHintDisabled
+                            : context.l10n.tracking_dosagePlan_doseHint,
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: AppColors.textDisabled,
+                          ),
+                        ),
+                      ),
+                      hint: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          context.l10n.tracking_dosagePlan_doseHint,
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: AppColors.textDisabled,
+                          ),
+                        ),
+                      ),
+                      items: _selectedMedication?.availableDoses.map((dose) {
+                        return DropdownMenuItem<double>(
+                          value: dose,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              context.l10n.tracking_dosagePlan_doseDisplay(dose),
+                              style: AppTypography.bodyLarge.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList() ?? [],
+                      onChanged: _selectedMedication == null
+                        ? null
+                        : (newDose) {
+                          setState(() => _selectedDose = newDose);
+                        },
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16), // md spacing
 
-        // ============== 버튼 그룹 ==============
-        Row(
-          children: [
-            // 취소 버튼
-            Expanded(
-              child: GabiumButton(
-                text: context.l10n.common_button_cancel,
-                onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
-                variant: GabiumButtonVariant.secondary,
-                size: GabiumButtonSize.medium,
-              ),
+            // ============== 투여 주기 (읽기 전용) ==============
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.l10n.tracking_dosagePlan_cycleLabel,
+                  style: AppTypography.labelMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: AppColors.border,
+                      width: 1,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.background,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      _selectedMedication != null
+                        ? context.l10n.tracking_dosagePlan_cycleDisplay(_selectedMedication!.cycleDays)
+                        : '-',
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    context.l10n.tracking_dosagePlan_cycleHelp,
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.textDisabled,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12), // md spacing
-            // 저장 버튼
-            Expanded(
-              child: GabiumButton(
-                text: context.l10n.common_button_save,
-                onPressed: _isSaving ? null : _handleSave,
-                isLoading: _isSaving,
-                variant: GabiumButtonVariant.primary,
-                size: GabiumButtonSize.medium,
-              ),
+            const SizedBox(height: 16), // md spacing
+
+            // ============== 시작일 선택 ==============
+            DatePickerField(
+              label: context.l10n.tracking_dosagePlan_startDateLabel,
+              value: _selectedStartDate,
+              onChanged: (newDate) {
+                setState(() => _selectedStartDate = newDate);
+              },
+              firstDate: DateTime(2020),
+              lastDate: DateTime.now().add(const Duration(days: 365)),
             ),
+            const SizedBox(height: 32), // xl spacing
+
+            // ============== 버튼 그룹 ==============
+            Row(
+              children: [
+                // 취소 버튼
+                Expanded(
+                  child: GabiumButton(
+                    text: context.l10n.common_button_cancel,
+                    onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+                    variant: GabiumButtonVariant.secondary,
+                    size: GabiumButtonSize.medium,
+                  ),
+                ),
+                const SizedBox(width: 12), // md spacing
+                // 저장 버튼
+                Expanded(
+                  child: GabiumButton(
+                    text: context.l10n.common_button_save,
+                    onPressed: _isSaving ? null : _handleSave,
+                    isLoading: _isSaving,
+                    variant: GabiumButtonVariant.primary,
+                    size: GabiumButtonSize.medium,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
           ],
-        ),
-        const SizedBox(height: 16),
-      ],
+        );
+      },
     );
   }
 }
