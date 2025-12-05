@@ -10,6 +10,11 @@ part 'notification_notifier.g.dart';
 /// Notifier Class
 @riverpod
 class NotificationNotifier extends _$NotificationNotifier {
+  // ✅ 의존성을 late final 필드로 선언
+  late final _repository = ref.read(notificationRepositoryProvider);
+  late final _scheduler = ref.read(notificationSchedulerProvider);
+  late final _medicationRepository = ref.read(medicationRepositoryProvider);
+
   @override
   Future<NotificationSettings> build() async {
     final userId = ref.watch(authNotifierProvider).value?.id;
@@ -17,8 +22,7 @@ class NotificationNotifier extends _$NotificationNotifier {
       throw Exception('User not authenticated');
     }
 
-    final repository = ref.watch(notificationRepositoryProvider);
-    final settings = await repository.getNotificationSettings(userId);
+    final settings = await _repository.getNotificationSettings(userId);
 
     return settings ??
         NotificationSettings(
@@ -43,8 +47,7 @@ class NotificationNotifier extends _$NotificationNotifier {
         if (previousState == null) throw Exception('Settings not loaded');
 
         final updated = previousState.copyWith(notificationTime: newTime);
-        final repository = ref.read(notificationRepositoryProvider);
-        await repository.saveNotificationSettings(updated);
+        await _repository.saveNotificationSettings(updated);
 
         // ✅ async gap 후 mounted 체크
         if (!ref.mounted) {
@@ -75,14 +78,13 @@ class NotificationNotifier extends _$NotificationNotifier {
       state = await AsyncValue.guard(() async {
         if (previousState == null) throw Exception('Settings not loaded');
 
-        final scheduler = ref.read(notificationSchedulerProvider);
         final newEnabled = !previousState.notificationEnabled;
 
         if (newEnabled) {
           // 활성화할 때 권한 확인 및 요청
-          final hasPermission = await scheduler.checkPermission();
+          final hasPermission = await _scheduler.checkPermission();
           if (!hasPermission) {
-            final granted = await scheduler.requestPermission();
+            final granted = await _scheduler.requestPermission();
             if (!granted) {
               // 권한이 거부되면 변경하지 않음
               return previousState;
@@ -91,8 +93,7 @@ class NotificationNotifier extends _$NotificationNotifier {
         }
 
         final updated = previousState.copyWith(notificationEnabled: newEnabled);
-        final repository = ref.read(notificationRepositoryProvider);
-        await repository.saveNotificationSettings(updated);
+        await _repository.saveNotificationSettings(updated);
 
         // ✅ async gap 후 mounted 체크
         if (!ref.mounted) {
@@ -104,7 +105,7 @@ class NotificationNotifier extends _$NotificationNotifier {
           await _rescheduleNotifications(updated);
         } else {
           // 비활성화하면 모든 알림 취소
-          await scheduler.cancelAllNotifications();
+          await _scheduler.cancelAllNotifications();
         }
 
         return updated;
@@ -120,23 +121,21 @@ class NotificationNotifier extends _$NotificationNotifier {
   ) async {
     if (!settings.notificationEnabled) return;
 
-    final scheduler = ref.read(notificationSchedulerProvider);
-    final medicationRepository = ref.read(medicationRepositoryProvider);
     final userId = settings.userId;
 
     // 기존 알림 취소
-    await scheduler.cancelAllNotifications();
+    await _scheduler.cancelAllNotifications();
 
     // 투여 스케줄 조회
-    final activePlan = await medicationRepository.getActiveDosagePlan(userId);
+    final activePlan = await _medicationRepository.getActiveDosagePlan(userId);
     if (activePlan == null) return;
 
     final schedules =
-        await medicationRepository.getDoseSchedules(activePlan.id);
+        await _medicationRepository.getDoseSchedules(activePlan.id);
 
     // 새로운 알림 등록
     if (schedules.isNotEmpty) {
-      await scheduler.scheduleNotifications(
+      await _scheduler.scheduleNotifications(
         doseSchedules: schedules,
         notificationTime: settings.notificationTime,
       );

@@ -15,6 +15,14 @@ part 'onboarding_notifier.g.dart';
 /// 온보딩 상태 저장 및 데이터 저장 Notifier
 @riverpod
 class OnboardingNotifier extends _$OnboardingNotifier {
+  // ✅ 의존성을 late final 필드로 선언
+  late final _userRepo = ref.read(userRepositoryProvider);
+  late final _profileRepo = ref.read(profileRepositoryProvider);
+  late final _medicationRepo = ref.read(medicationRepositoryProvider);
+  late final _trackingRepo = ref.read(tracking_providers.trackingRepositoryProvider);
+  late final _scheduleRepo = ref.read(scheduleRepositoryProvider);
+  late final _dosagePlanRepo = ref.read(tracking_providers.dosagePlanRepositoryProvider);
+
   @override
   Future<void> build() async {}
 
@@ -43,12 +51,6 @@ class OnboardingNotifier extends _$OnboardingNotifier {
         if (kDebugMode) {
           debugPrint('🎯 [1/4] Onboarding: Start');
         }
-
-        final userRepo = ref.read(userRepositoryProvider);
-        final profileRepo = ref.read(profileRepositoryProvider);
-        final medicationRepo = ref.read(medicationRepositoryProvider);
-        final trackingRepo = ref.read(tracking_providers.trackingRepositoryProvider);
-        final scheduleRepo = ref.read(scheduleRepositoryProvider);
 
         // UseCase 인스턴스 생성
         final calculateGoalUseCase = CalculateWeeklyGoalUseCase();
@@ -100,10 +102,10 @@ class OnboardingNotifier extends _$OnboardingNotifier {
           );
 
           // 5. 모든 데이터 저장
-          await userRepo.updateUserName(userId, name);
-          await profileRepo.saveUserProfile(userProfile);
-          await medicationRepo.saveDosagePlan(dosagePlan);
-          await trackingRepo.saveWeightLog(weightLog);
+          await _userRepo.updateUserName(userId, name);
+          await _profileRepo.saveUserProfile(userProfile);
+          await _medicationRepo.saveDosagePlan(dosagePlan);
+          await _trackingRepo.saveWeightLog(weightLog);
 
           if (kDebugMode) {
             debugPrint('🎯 [2/4] Onboarding: DosagePlan & Profile created');
@@ -116,7 +118,7 @@ class OnboardingNotifier extends _$OnboardingNotifier {
           }
 
           try {
-            await scheduleRepo.saveAll(schedules);
+            await _scheduleRepo.saveAll(schedules);
             if (kDebugMode) {
               debugPrint('🎯 [4/4] Onboarding: Complete ✅');
             }
@@ -174,8 +176,7 @@ class OnboardingNotifier extends _$OnboardingNotifier {
   ///
   /// Layer 규칙 준수: Presentation → Application → Infrastructure
   Future<DosagePlan?> getActiveDosagePlan(String userId) async {
-    final dosagePlanRepo = ref.read(tracking_providers.dosagePlanRepositoryProvider);
-    return dosagePlanRepo.getActiveDosagePlan(userId);
+    return _dosagePlanRepo.getActiveDosagePlan(userId);
   }
 }
 

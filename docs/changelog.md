@@ -21,6 +21,12 @@
 
 ## 2025-12-05
 
+- [refactor] 전체 Notifier에 Riverpod AsyncNotifier 안전 패턴 적용
+  - **범위**: 11개 Notifier 파일
+  - **수정**: getter → late final 필드로 의존성 캡처, AsyncValue.guard 내부 ref.read 제거
+  - **핵심 수정**: `daily_checkin_notifier.dart`의 getter 패턴 제거
+  - 파일 목록: `notification_notifier`, `profile_notifier`, `onboarding_notifier`, `tracking_notifier`, `trend_insight_notifier`, `daily_checkin_notifier`, `dose_record_edit_notifier`, `weight_record_edit_notifier`, `coping_guide_notifier`, `auth_notifier`
+
 - [fix] MedicationProvider "Cannot use Ref after disposed" 에러 수정
   - **원인**: getter로 ref.read() 호출 시 async 작업 중 disposed ref 접근
   - **수정**: build()에서 late final 필드로 의존성 캡처 패턴 적용

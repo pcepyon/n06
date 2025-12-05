@@ -5,9 +5,6 @@ import 'package:n06/features/daily_checkin/domain/entities/daily_checkin.dart';
 import 'package:n06/features/daily_checkin/domain/entities/symptom_detail.dart';
 import 'package:n06/features/daily_checkin/domain/entities/checkin_context.dart';
 import 'package:n06/features/daily_checkin/domain/entities/red_flag_detection.dart';
-import 'package:n06/features/daily_checkin/domain/repositories/daily_checkin_repository.dart';
-import 'package:n06/features/tracking/domain/repositories/medication_repository.dart';
-import 'package:n06/features/tracking/domain/repositories/tracking_repository.dart';
 import 'package:n06/features/tracking/domain/entities/weight_log.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:uuid/uuid.dart';
@@ -104,12 +101,10 @@ class DailyCheckinState {
 
 @riverpod
 class DailyCheckinNotifier extends _$DailyCheckinNotifier {
-  DailyCheckinRepository get _repository =>
-      ref.read(dailyCheckinRepositoryProvider);
-  MedicationRepository get _medicationRepository =>
-      ref.read(medicationRepositoryProvider);
-  TrackingRepository get _trackingRepository =>
-      ref.read(trackingRepositoryProvider);
+  // ✅ 의존성을 late final 필드로 선언 (getter 사용 금지 - BUG-20251205)
+  late final _repository = ref.read(dailyCheckinRepositoryProvider);
+  late final _medicationRepository = ref.read(medicationRepositoryProvider);
+  late final _trackingRepository = ref.read(trackingRepositoryProvider);
 
   @override
   Future<DailyCheckinState> build() async {
@@ -120,6 +115,7 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
   Future<void> startCheckin() async {
     final link = ref.keepAlive();
 
+    // userId 미리 캡처
     final userId = ref.read(authNotifierProvider).value?.id;
     if (userId == null) throw Exception('User not authenticated');
 
@@ -307,6 +303,7 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
   Future<void> finishCheckin() async {
     final link = ref.keepAlive();
 
+    // userId 미리 캡처
     final userId = ref.read(authNotifierProvider).value?.id;
     if (userId == null) throw Exception('User not authenticated');
 

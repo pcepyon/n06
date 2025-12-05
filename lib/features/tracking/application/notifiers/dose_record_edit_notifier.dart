@@ -7,13 +7,14 @@ import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.
 import 'package:uuid/uuid.dart';
 
 class DoseRecordEditNotifier extends AsyncNotifier<void> {
+  // ✅ 의존성을 late final 필드로 선언
+  late final _medicationRepo = ref.read(medicationRepositoryProvider);
+  late final _auditRepo = ref.read(auditRepositoryProvider);
   late LogRecordChangeUseCase _logUseCase;
 
   @override
   Future<void> build() async {
-    _logUseCase = LogRecordChangeUseCase(
-      ref.watch(auditRepositoryProvider),
-    );
+    _logUseCase = LogRecordChangeUseCase(_auditRepo);
   }
 
   Future<void> updateDoseRecord({
@@ -35,16 +36,14 @@ class DoseRecordEditNotifier extends AsyncNotifier<void> {
           throw Exception('투여량은 0보다 커야 합니다');
         }
 
-        final medicationRepo = ref.read(medicationRepositoryProvider);
-
         // Get original record for audit
-        final originalRecord = await medicationRepo.getDoseRecord(recordId);
+        final originalRecord = await _medicationRepo.getDoseRecord(recordId);
         if (originalRecord == null) {
           throw Exception('Record not found');
         }
 
         // Update
-        await medicationRepo.updateDoseRecord(
+        await _medicationRepo.updateDoseRecord(
           recordId,
           newDoseMg,
           injectionSite,
@@ -96,16 +95,14 @@ class DoseRecordEditNotifier extends AsyncNotifier<void> {
 
     try {
       state = await AsyncValue.guard(() async {
-        final medicationRepo = ref.read(medicationRepositoryProvider);
-
         // Get original record for audit
-        final originalRecord = await medicationRepo.getDoseRecord(recordId);
+        final originalRecord = await _medicationRepo.getDoseRecord(recordId);
         if (originalRecord == null) {
           throw Exception('Record not found');
         }
 
         // Delete (note: schedule is NOT affected)
-        await medicationRepo.deleteDoseRecord(recordId);
+        await _medicationRepo.deleteDoseRecord(recordId);
 
         // Log deletion
         await _logUseCase.execute(AuditLog(

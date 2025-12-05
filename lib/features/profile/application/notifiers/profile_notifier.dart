@@ -17,6 +17,10 @@ part 'profile_notifier.g.dart';
 /// - Profile data caching
 @riverpod
 class ProfileNotifier extends _$ProfileNotifier {
+  // ✅ 의존성을 late final 필드로 선언
+  late final _repository = ref.read(onboarding_providers.profileRepositoryProvider);
+  late final _trackingRepository = ref.read(trackingRepositoryProvider);
+
   @override
   Future<UserProfile?> build() async {
     // Load current user profile on initialization
@@ -27,8 +31,7 @@ class ProfileNotifier extends _$ProfileNotifier {
     }
 
     try {
-      final repository = ref.read(onboarding_providers.profileRepositoryProvider);
-      return await repository.getUserProfile(authState.value!.id);
+      return await _repository.getUserProfile(authState.value!.id);
     } catch (e) {
       // Re-throw as AsyncValue will handle error state
       rethrow;
@@ -39,8 +42,7 @@ class ProfileNotifier extends _$ProfileNotifier {
   Future<void> loadProfile(String userId) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repository = ref.read(onboarding_providers.profileRepositoryProvider);
-      return await repository.getUserProfile(userId);
+      return await _repository.getUserProfile(userId);
     });
   }
 
@@ -55,11 +57,9 @@ class ProfileNotifier extends _$ProfileNotifier {
 
     try {
       state = await AsyncValue.guard(() async {
-        final repository = ref.read(onboarding_providers.profileRepositoryProvider);
-        final trackingRepository = ref.read(trackingRepositoryProvider);
         final useCase = UpdateProfileUseCase(
-          profileRepository: repository,
-          trackingRepository: trackingRepository,
+          profileRepository: _repository,
+          trackingRepository: _trackingRepository,
         );
 
         await useCase.execute(profile);
@@ -108,10 +108,8 @@ class ProfileNotifier extends _$ProfileNotifier {
 
     try {
       state = await AsyncValue.guard(() async {
-        final repository = ref.read(onboarding_providers.profileRepositoryProvider);
-
         // Update weekly goals in repository
-        await repository.updateWeeklyGoals(
+        await _repository.updateWeeklyGoals(
           userId,
           weeklyWeightRecordGoal,
           weeklySymptomRecordGoal,
@@ -123,7 +121,7 @@ class ProfileNotifier extends _$ProfileNotifier {
         }
 
         // Fetch updated profile
-        final updatedProfile = await repository.getUserProfile(userId);
+        final updatedProfile = await _repository.getUserProfile(userId);
 
         // Invalidate dashboard to refresh weekly progress
         ref.invalidate(dashboardNotifierProvider);

@@ -19,6 +19,10 @@ part 'auth_notifier.g.dart';
 /// - First login detection
 @Riverpod(keepAlive: true)  // 인증 상태는 글로벌 상태이므로 keepAlive 필수
 class AuthNotifier extends _$AuthNotifier {
+  // ✅ 의존성을 late final 필드로 선언 (keepAlive: true이지만 일관성 유지)
+  late final _repository = ref.read(authRepositoryProvider);
+  late final _logoutUseCase = ref.read(logoutUseCaseProvider);
+
   @override
   Future<entities.User?> build() async {
     if (kDebugMode) {
@@ -57,8 +61,7 @@ class AuthNotifier extends _$AuthNotifier {
     }
 
     // Load current user on initialization
-    final repository = ref.read(authRepositoryProvider);
-    return await repository.getCurrentUser();
+    return await _repository.getCurrentUser();
   }
 
   /// Login with Kakao OAuth
@@ -87,13 +90,11 @@ class AuthNotifier extends _$AuthNotifier {
 
     // Use try-catch instead of AsyncValue.guard
     try {
-      final repository = ref.read(authRepositoryProvider);
-
       if (kDebugMode) {
         developer.log('📞 Calling repository.loginWithKakao()...', name: 'AuthNotifier');
       }
 
-      final user = await repository.loginWithKakao(
+      final user = await _repository.loginWithKakao(
         agreedToTerms: agreedToTerms,
         agreedToPrivacy: agreedToPrivacy,
       );
@@ -109,7 +110,7 @@ class AuthNotifier extends _$AuthNotifier {
       state = AsyncValue.data(user);
 
       // Check if this is first login
-      final isFirstLogin = await repository.isFirstLogin();
+      final isFirstLogin = await _repository.isFirstLogin();
 
       if (kDebugMode) {
         developer.log(
@@ -150,8 +151,7 @@ class AuthNotifier extends _$AuthNotifier {
   }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repository = ref.read(authRepositoryProvider);
-      final user = await repository.loginWithNaver(
+      final user = await _repository.loginWithNaver(
         agreedToTerms: agreedToTerms,
         agreedToPrivacy: agreedToPrivacy,
       );
@@ -160,8 +160,7 @@ class AuthNotifier extends _$AuthNotifier {
 
     // Return isFirstLogin status
     if (state.hasValue) {
-      final repository = ref.read(authRepositoryProvider);
-      return await repository.isFirstLogin();
+      return await _repository.isFirstLogin();
     }
     return false;
   }
@@ -172,8 +171,7 @@ class AuthNotifier extends _$AuthNotifier {
   Future<void> logout() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final useCase = ref.read(logoutUseCaseProvider);
-      await useCase.execute();
+      await _logoutUseCase.execute();
       return null;
     });
   }
@@ -183,8 +181,7 @@ class AuthNotifier extends _$AuthNotifier {
   /// Returns true if token is valid or successfully refreshed
   /// Returns false if refresh fails (user needs to re-login)
   Future<bool> ensureValidToken() async {
-    final repository = ref.read(authRepositoryProvider);
-    final isValid = await repository.isAccessTokenValid();
+    final isValid = await _repository.isAccessTokenValid();
 
     if (!isValid) {
       // Token expired, need to re-login
@@ -220,8 +217,7 @@ class AuthNotifier extends _$AuthNotifier {
     state = const AsyncValue.loading();
 
     try {
-      final repository = ref.read(authRepositoryProvider);
-      final user = await repository.signUpWithEmail(
+      final user = await _repository.signUpWithEmail(
         email: email,
         password: password,
       );
@@ -276,8 +272,7 @@ class AuthNotifier extends _$AuthNotifier {
     state = const AsyncValue.loading();
 
     try {
-      final repository = ref.read(authRepositoryProvider);
-      final user = await repository.signInWithEmail(
+      final user = await _repository.signInWithEmail(
         email: email,
         password: password,
       );
@@ -323,8 +318,7 @@ class AuthNotifier extends _$AuthNotifier {
     }
 
     try {
-      final repository = ref.read(authRepositoryProvider);
-      await repository.resetPasswordForEmail(email);
+      await _repository.resetPasswordForEmail(email);
 
       if (kDebugMode) {
         developer.log(
@@ -364,8 +358,7 @@ class AuthNotifier extends _$AuthNotifier {
     }
 
     try {
-      final repository = ref.read(authRepositoryProvider);
-      final user = await repository.updatePassword(
+      final user = await _repository.updatePassword(
         currentPassword: currentPassword,
         newPassword: newPassword,
       );
@@ -412,8 +405,7 @@ class AuthNotifier extends _$AuthNotifier {
     state = const AsyncValue.loading();
 
     try {
-      final repository = ref.read(authRepositoryProvider);
-      await repository.deleteAccount();
+      await _repository.deleteAccount();
 
       // 삭제 성공 후 상태를 null로 설정 (로그아웃 상태)
       state = const AsyncValue.data(null);

@@ -14,14 +14,15 @@ part 'trend_insight_notifier.g.dart';
 /// - 결과 캐싱 (기간 변경 시 재계산)
 @riverpod
 class TrendInsightNotifier extends _$TrendInsightNotifier {
-  late final TrendInsightAnalyzer _analyzer;
+  // ✅ 의존성을 late final 필드로 선언
+  late final _repository = ref.read(dailyCheckinRepositoryProvider);
+  late final TrendInsightAnalyzer _analyzer = TrendInsightAnalyzer();
 
   @override
   Future<TrendInsight> build({
     required String userId,
     required TrendPeriod period,
   }) async {
-    _analyzer = TrendInsightAnalyzer();
     return _fetchAndAnalyze();
   }
 
@@ -42,15 +43,13 @@ class TrendInsightNotifier extends _$TrendInsightNotifier {
 
   /// 데이터 조회 및 분석
   Future<TrendInsight> _fetchAndAnalyze() async {
-    final repository = ref.read(dailyCheckinRepositoryProvider);
-
     // 기간 계산
     final today = DateTime.now();
     final periodDays = period == TrendPeriod.weekly ? 7 : 30;
     final startDate = today.subtract(Duration(days: periodDays - 1));
 
     // 현재 기간 데이터 조회
-    final checkins = await repository.getByDateRange(
+    final checkins = await _repository.getByDateRange(
       userId,
       startDate,
       today,
@@ -59,14 +58,14 @@ class TrendInsightNotifier extends _$TrendInsightNotifier {
     // 이전 기간 데이터 조회 (비교용)
     final previousStartDate = startDate.subtract(Duration(days: periodDays));
     final previousEndDate = startDate.subtract(const Duration(days: 1));
-    final previousCheckins = await repository.getByDateRange(
+    final previousCheckins = await _repository.getByDateRange(
       userId,
       previousStartDate,
       previousEndDate,
     );
 
     // 연속 기록 일수 조회
-    final consecutiveDays = await repository.getConsecutiveDays(userId);
+    final consecutiveDays = await _repository.getConsecutiveDays(userId);
 
     // 분석 실행
     return _analyzer.analyze(
@@ -83,15 +82,13 @@ class TrendInsightNotifier extends _$TrendInsightNotifier {
     required DateTime endDate,
     required TrendPeriod customPeriod,
   }) async {
-    final repository = ref.read(dailyCheckinRepositoryProvider);
-
-    final checkins = await repository.getByDateRange(
+    final checkins = await _repository.getByDateRange(
       userId,
       startDate,
       endDate,
     );
 
-    final consecutiveDays = await repository.getConsecutiveDays(userId);
+    final consecutiveDays = await _repository.getConsecutiveDays(userId);
 
     return _analyzer.analyze(
       checkins: checkins,

@@ -8,6 +8,9 @@ import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.
 import 'package:uuid/uuid.dart';
 
 class WeightRecordEditNotifier extends AsyncNotifier<void> {
+  // ✅ 의존성을 late final 필드로 선언
+  late final _trackingRepo = ref.read(trackingRepositoryProvider);
+  late final _auditRepo = ref.read(auditRepositoryProvider);
   late ValidateWeightEditUseCase _validateUseCase;
   late ValidateDateUniqueConstraintUseCase _validateDateUseCase;
   late LogRecordChangeUseCase _logUseCase;
@@ -15,12 +18,8 @@ class WeightRecordEditNotifier extends AsyncNotifier<void> {
   @override
   Future<void> build() async {
     _validateUseCase = ValidateWeightEditUseCase();
-    _validateDateUseCase = ValidateDateUniqueConstraintUseCase(
-      ref.watch(trackingRepositoryProvider),
-    );
-    _logUseCase = LogRecordChangeUseCase(
-      ref.watch(auditRepositoryProvider),
-    );
+    _validateDateUseCase = ValidateDateUniqueConstraintUseCase(_trackingRepo);
+    _logUseCase = LogRecordChangeUseCase(_auditRepo);
   }
 
   Future<void> updateWeight({
@@ -37,8 +36,6 @@ class WeightRecordEditNotifier extends AsyncNotifier<void> {
 
     try {
       state = await AsyncValue.guard(() async {
-        final trackingRepo = ref.read(trackingRepositoryProvider);
-
         // Validate weight
         final weightValidation = _validateUseCase.execute(newWeight);
         if (weightValidation.isFailure) {
@@ -46,7 +43,7 @@ class WeightRecordEditNotifier extends AsyncNotifier<void> {
         }
 
         // Get original log
-        final originalLog = await trackingRepo.getWeightLogById(recordId);
+        final originalLog = await _trackingRepo.getWeightLogById(recordId);
         if (originalLog == null) {
           throw Exception('Record not found');
         }
@@ -68,7 +65,7 @@ class WeightRecordEditNotifier extends AsyncNotifier<void> {
           }
 
           // Update with new date
-          await trackingRepo.updateWeightLogWithDate(recordId, newWeight, newDate);
+          await _trackingRepo.updateWeightLogWithDate(recordId, newWeight, newDate);
 
           // Log change
           await _logUseCase.execute(AuditLog(
@@ -90,7 +87,7 @@ class WeightRecordEditNotifier extends AsyncNotifier<void> {
         } else {
           // Update weight only
           if (originalLog.weightKg != newWeight) {
-            await trackingRepo.updateWeightLog(recordId, newWeight);
+            await _trackingRepo.updateWeightLog(recordId, newWeight);
 
             // Log change
             await _logUseCase.execute(AuditLog(
@@ -131,16 +128,14 @@ class WeightRecordEditNotifier extends AsyncNotifier<void> {
 
     try {
       state = await AsyncValue.guard(() async {
-        final trackingRepo = ref.read(trackingRepositoryProvider);
-
         // Get original log for audit
-        final originalLog = await trackingRepo.getWeightLogById(recordId);
+        final originalLog = await _trackingRepo.getWeightLogById(recordId);
         if (originalLog == null) {
           throw Exception('Record not found');
         }
 
         // Delete
-        await trackingRepo.deleteWeightLog(recordId);
+        await _trackingRepo.deleteWeightLog(recordId);
 
         // Log deletion
         await _logUseCase.execute(AuditLog(

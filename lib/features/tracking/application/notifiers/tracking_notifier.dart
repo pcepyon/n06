@@ -23,11 +23,12 @@ class TrackingState {
 
 @riverpod
 class TrackingNotifier extends _$TrackingNotifier {
+  // ✅ 의존성을 late final 필드로 선언
+  late final _repository = ref.read(trackingRepositoryProvider);
+
   @override
   Future<TrackingState> build() async {
-    // ref.read 사용 (Riverpod 3.0 권장)
-    final repository = ref.read(trackingRepositoryProvider);
-    final userId = ref.read(authNotifierProvider).value?.id;
+    final userId = ref.watch(authNotifierProvider).value?.id;
 
     // userId가 없으면 빈 상태 반환
     if (userId == null) {
@@ -37,7 +38,7 @@ class TrackingNotifier extends _$TrackingNotifier {
     }
 
     // userId가 있으면 데이터 로드
-    final weights = await repository.getWeightLogs(userId);
+    final weights = await _repository.getWeightLogs(userId);
 
     return TrackingState(
       weights: weights,
@@ -57,12 +58,12 @@ class TrackingNotifier extends _$TrackingNotifier {
 
     state = const AsyncValue.loading();
 
+    // userId 미리 캡처
+    final userId = ref.read(authNotifierProvider).value?.id;
+
     try {
       state = await AsyncValue.guard(() async {
-        final repository = ref.read(trackingRepositoryProvider);
-        final userId = ref.read(authNotifierProvider).value?.id;
-
-        await repository.saveWeightLog(log);
+        await _repository.saveWeightLog(log);
 
         // ✅ async gap 후 mounted 체크
         if (!ref.mounted) {
@@ -70,7 +71,7 @@ class TrackingNotifier extends _$TrackingNotifier {
         }
 
         if (userId != null) {
-          final weights = await repository.getWeightLogs(userId);
+          final weights = await _repository.getWeightLogs(userId);
           return previousState.copyWith(weights: weights);
         }
 
@@ -93,12 +94,12 @@ class TrackingNotifier extends _$TrackingNotifier {
 
     state = const AsyncValue.loading();
 
+    // userId 미리 캡처
+    final userId = ref.read(authNotifierProvider).value?.id;
+
     try {
       state = await AsyncValue.guard(() async {
-        final repository = ref.read(trackingRepositoryProvider);
-        final userId = ref.read(authNotifierProvider).value?.id;
-
-        await repository.deleteWeightLog(id);
+        await _repository.deleteWeightLog(id);
 
         // ✅ async gap 후 mounted 체크
         if (!ref.mounted) {
@@ -106,7 +107,7 @@ class TrackingNotifier extends _$TrackingNotifier {
         }
 
         if (userId != null) {
-          final weights = await repository.getWeightLogs(userId);
+          final weights = await _repository.getWeightLogs(userId);
           return previousState.copyWith(weights: weights);
         }
 
@@ -129,12 +130,12 @@ class TrackingNotifier extends _$TrackingNotifier {
 
     state = const AsyncValue.loading();
 
+    // userId 미리 캡처
+    final userId = ref.read(authNotifierProvider).value?.id;
+
     try {
       state = await AsyncValue.guard(() async {
-        final repository = ref.read(trackingRepositoryProvider);
-        final userId = ref.read(authNotifierProvider).value?.id;
-
-        await repository.updateWeightLog(id, newWeight);
+        await _repository.updateWeightLog(id, newWeight);
 
         // ✅ async gap 후 mounted 체크
         if (!ref.mounted) {
@@ -142,7 +143,7 @@ class TrackingNotifier extends _$TrackingNotifier {
         }
 
         if (userId != null) {
-          final weights = await repository.getWeightLogs(userId);
+          final weights = await _repository.getWeightLogs(userId);
           return previousState.copyWith(weights: weights);
         }
 
@@ -156,20 +157,17 @@ class TrackingNotifier extends _$TrackingNotifier {
 
   // 특정 날짜의 체중 기록 확인
   Future<bool> hasWeightLogOnDate(String userId, DateTime date) async {
-    final repository = ref.read(trackingRepositoryProvider);
-    final existing = await repository.getWeightLog(userId, date);
+    final existing = await _repository.getWeightLog(userId, date);
     return existing != null;
   }
 
   // 특정 날짜의 체중 기록 조회
   Future<WeightLog?> getWeightLog(String userId, DateTime date) async {
-    final repository = ref.read(trackingRepositoryProvider);
-    return await repository.getWeightLog(userId, date);
+    return await _repository.getWeightLog(userId, date);
   }
 
   // 최근 증량일 조회
   Future<DateTime?> getLatestDoseEscalationDate(String userId) async {
-    final repository = ref.read(trackingRepositoryProvider);
-    return await repository.getLatestDoseEscalationDate(userId);
+    return await _repository.getLatestDoseEscalationDate(userId);
   }
 }

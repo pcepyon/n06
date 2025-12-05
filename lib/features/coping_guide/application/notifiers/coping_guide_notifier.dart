@@ -11,6 +11,10 @@ part 'coping_guide_notifier.g.dart';
 /// 부작용 대처 가이드 조회 및 관리 Notifier
 @riverpod
 class CopingGuideNotifier extends _$CopingGuideNotifier {
+  // ✅ 의존성을 late final 필드로 선언
+  late final _repository = ref.read(copingGuideRepositoryProvider);
+  late final _feedbackRepository = ref.read(feedbackRepositoryProvider);
+
   @override
   Future<CopingGuideState> build() async {
     final defaultGuide = _createDefaultGuide();
@@ -31,8 +35,7 @@ class CopingGuideNotifier extends _$CopingGuideNotifier {
   Future<void> getGuideBySymptom(String symptomName) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repository = ref.read(copingGuideRepositoryProvider);
-      final guide = await repository.getGuideBySymptom(symptomName);
+      final guide = await _repository.getGuideBySymptom(symptomName);
 
       if (guide == null) {
         // 기본 가이드 반환
@@ -54,9 +57,8 @@ class CopingGuideNotifier extends _$CopingGuideNotifier {
   ) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repository = ref.read(copingGuideRepositoryProvider);
       final guide =
-          await repository.getGuideBySymptom(symptomName) ?? _createDefaultGuide();
+          await _repository.getGuideBySymptom(symptomName) ?? _createDefaultGuide();
 
       // 심각도 7-10점 AND 24시간 이상 지속 시 경고 활성화
       final showWarning = severity >= 7 && isPersistent24h;
@@ -70,19 +72,21 @@ class CopingGuideNotifier extends _$CopingGuideNotifier {
 
   /// 피드백 제출
   Future<void> submitFeedback(String symptomName, {required bool helpful}) async {
-    final repository = ref.read(feedbackRepositoryProvider);
     final feedback = GuideFeedback(
       symptomName: symptomName,
       helpful: helpful,
       timestamp: DateTime.now(),
     );
-    await repository.saveFeedback(feedback);
+    await _feedbackRepository.saveFeedback(feedback);
   }
 }
 
 /// 모든 가이드 목록 조회 Notifier
 @riverpod
 class CopingGuideListNotifier extends _$CopingGuideListNotifier {
+  // ✅ 의존성을 late final 필드로 선언
+  late final _repository = ref.read(copingGuideRepositoryProvider);
+
   @override
   Future<List<CopingGuide>> build() async {
     return [];
@@ -92,8 +96,7 @@ class CopingGuideListNotifier extends _$CopingGuideListNotifier {
   Future<void> loadAllGuides() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final repository = ref.read(copingGuideRepositoryProvider);
-      return repository.getAllGuides();
+      return _repository.getAllGuides();
     });
   }
 }
