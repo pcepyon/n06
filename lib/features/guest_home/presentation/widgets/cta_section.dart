@@ -103,7 +103,7 @@ class _CtaSectionState extends State<CtaSection>
       builder: (context, child) {
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           decoration: BoxDecoration(
             color: _backgroundAnimation.value,
             border: Border(
@@ -119,25 +119,25 @@ class _CtaSectionState extends State<CtaSection>
               position: _slideAnimation,
               child: Column(
                 children: [
-                  // 제목
+                  // 제목 (간결하게)
                   Text(
                     GuestHomeContent.ctaTitle,
-                    style: AppTypography.heading1.copyWith(
+                    style: AppTypography.heading2.copyWith(
                       color: AppColors.textPrimary,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
-                  // 설명
+                  const SizedBox(height: 8),
+                  // 설명 (간결하게)
                   Text(
                     GuestHomeContent.ctaDescription,
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: AppTypography.bodySmall.copyWith(
                       color: AppColors.textSecondary,
-                      height: 1.6,
+                      height: 1.5,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
                   // 체크리스트
                   CtaChecklist(
                     visitedSections: widget.visitedSections,
@@ -145,10 +145,10 @@ class _CtaSectionState extends State<CtaSection>
                     onItemChecked: widget.onCheckItem,
                     allChecked: _allChecked,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   // Primary CTA Button with Pulse
                   _buildPulsingButton(),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   // Secondary Button
                   TextButton(
                     onPressed: () {
@@ -157,40 +157,29 @@ class _CtaSectionState extends State<CtaSection>
                     },
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.textSecondary,
-                      textStyle: AppTypography.labelMedium,
+                      textStyle: AppTypography.labelSmall,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+                        horizontal: 16,
+                        vertical: 8,
                       ),
                     ),
                     child: Text(GuestHomeContent.ctaSecondaryButton),
                   ),
-                  const SizedBox(height: 32),
-                  // 마무리 메시지
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.successBackground,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('💚', style: TextStyle(fontSize: 20)),
-                        const SizedBox(width: 12),
-                        Flexible(
-                          child: Text(
-                            GuestHomeContent.ctaFooterMessage,
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.primary,
-                              fontStyle: FontStyle.italic,
-                              height: 1.5,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+                  const SizedBox(height: 16),
+                  // 마무리 메시지 (간결하게)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('💚', style: TextStyle(fontSize: 16)),
+                      const SizedBox(width: 8),
+                      Text(
+                        GuestHomeContent.ctaFooterMessage,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w500,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),

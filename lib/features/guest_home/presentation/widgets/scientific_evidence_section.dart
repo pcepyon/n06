@@ -29,6 +29,7 @@ class _ScientificEvidenceSectionState extends State<ScientificEvidenceSection> {
   int _currentPage = 0;
   bool _userInteracting = false;
   bool _hasStartedAutoSlide = false;
+  bool _isAnyCardExpanded = false;
 
   @override
   void initState() {
@@ -113,9 +114,13 @@ class _ScientificEvidenceSectionState extends State<ScientificEvidenceSection> {
           ),
         ),
         const SizedBox(height: 24),
-        // 카드 캐러셀
-        SizedBox(
-          height: 480,
+        // 카드 캐러셀 (카드 확장에 따라 높이 동적 조정)
+        // 접힌 상태: 헤더+통계+요약+힌트 ≈ 230px
+        // 확장 상태: 위 + 설명+출처 ≈ 360px
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          height: _isAnyCardExpanded ? 360 : 230,
           child: GestureDetector(
             onPanDown: (_) => _onUserInteractionStart(),
             onPanEnd: (_) => _onUserInteractionEnd(),
@@ -123,7 +128,11 @@ class _ScientificEvidenceSectionState extends State<ScientificEvidenceSection> {
             child: PageView.builder(
               controller: _pageController,
               onPageChanged: (index) {
-                setState(() => _currentPage = index);
+                setState(() {
+                  _currentPage = index;
+                  // 페이지 변경 시 확장 상태 초기화
+                  _isAnyCardExpanded = false;
+                });
                 HapticFeedback.lightImpact();
               },
               itemCount: GuestHomeContent.evidenceCards.length,
@@ -149,6 +158,17 @@ class _ScientificEvidenceSectionState extends State<ScientificEvidenceSection> {
                           data: GuestHomeContent.evidenceCards[index],
                           // 섹션이 보이고 현재 페이지일 때만 카운팅 시작
                           isVisible: widget.isVisible && _currentPage == index,
+                          onExpandChanged: (isExpanded) {
+                            setState(() {
+                              _isAnyCardExpanded = isExpanded;
+                            });
+                            // 확장 시 자동 슬라이드 일시 중지
+                            if (isExpanded) {
+                              _onUserInteractionStart();
+                            } else {
+                              _onUserInteractionEnd();
+                            }
+                          },
                         ),
                       ),
                     );

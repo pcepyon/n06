@@ -6,6 +6,11 @@ class EvidenceCardData {
   final String mainStat;
   final String mainStatUnit;
   final String subStat;
+
+  /// 한 줄 요약 (기본 표시)
+  final String summary;
+
+  /// 상세 설명 (확장 시 표시)
   final String description;
   final String source;
   final String sourceDetail;
@@ -18,6 +23,7 @@ class EvidenceCardData {
     required this.mainStat,
     required this.mainStatUnit,
     required this.subStat,
+    required this.summary,
     required this.description,
     required this.source,
     required this.sourceDetail,

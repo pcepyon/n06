@@ -43,7 +43,7 @@ class _JourneyPreviewSectionState extends State<JourneyPreviewSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 섹션 헤더
+        // 섹션 헤더 (간결화)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
@@ -51,16 +51,15 @@ class _JourneyPreviewSectionState extends State<JourneyPreviewSection> {
             children: [
               Text(
                 GuestHomeContent.journeySectionTitle,
-                style: AppTypography.heading1.copyWith(
+                style: AppTypography.heading2.copyWith(
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 GuestHomeContent.journeySectionSubtitle,
                 style: AppTypography.bodySmall.copyWith(
                   color: AppColors.textSecondary,
-                  height: 1.6,
                 ),
               ),
             ],

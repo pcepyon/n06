@@ -182,15 +182,18 @@ class _GuestHomeScreenState extends State<GuestHomeScreen>
   }
 
   Widget _buildCurrentPage() {
+    // key를 사용하여 페이지 전환 시 위젯 재생성 → 스크롤 위치 초기화
     switch (_currentPageIndex) {
       case 0:
         return _PageWrapper(
+          key: const ValueKey('page_0'),
           showNextButton: true,
           onNext: _goToNextPage,
           child: const WelcomeSection(),
         );
       case 1:
         return _PageWrapper(
+          key: const ValueKey('page_1'),
           showNextButton: true,
           onNext: _goToNextPage,
           child: ScientificEvidenceSection(
@@ -199,6 +202,7 @@ class _GuestHomeScreenState extends State<GuestHomeScreen>
         );
       case 2:
         return _PageWrapper(
+          key: const ValueKey('page_2'),
           showNextButton: true,
           onNext: _goToNextPage,
           child: JourneyPreviewSection(
@@ -207,6 +211,7 @@ class _GuestHomeScreenState extends State<GuestHomeScreen>
         );
       case 3:
         return _PageWrapper(
+          key: const ValueKey('page_3'),
           showNextButton: true,
           onNext: _goToNextPage,
           child: AppFeaturesSection(
@@ -215,6 +220,7 @@ class _GuestHomeScreenState extends State<GuestHomeScreen>
         );
       case 4:
         return _PageWrapper(
+          key: const ValueKey('page_4'),
           showNextButton: true,
           onNext: _goToNextPage,
           child: SideEffectsGuideSection(
@@ -223,6 +229,7 @@ class _GuestHomeScreenState extends State<GuestHomeScreen>
         );
       case 5:
         return _PageWrapper(
+          key: const ValueKey('page_5'),
           showNextButton: false,
           onNext: null,
           child: CtaSection(
@@ -248,6 +255,7 @@ class _PageWrapper extends StatelessWidget {
   final VoidCallback? onNext;
 
   const _PageWrapper({
+    super.key,
     required this.child,
     required this.showNextButton,
     this.onNext,

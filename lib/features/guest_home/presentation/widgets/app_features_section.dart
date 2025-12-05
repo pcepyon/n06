@@ -6,7 +6,8 @@ import 'package:n06/features/guest_home/data/guest_home_content.dart';
 import 'package:n06/features/guest_home/domain/entities/app_feature_data.dart';
 
 /// 앱 기능 소개 섹션
-/// P0 인터랙션: Staggered Card Entry, Press State with Depth
+/// P0 인터랙션: Staggered Card Entry, Press State with Depth, Expandable Details
+/// 스크롤에 따라 카드가 순차적으로 나타남
 class AppFeaturesSection extends StatefulWidget {
   /// 섹션이 뷰포트에 보이는지 여부 (스크롤 기반 트리거)
   final bool isVisible;
@@ -34,32 +35,32 @@ class _AppFeaturesSectionState extends State<AppFeaturesSection> {
             children: [
               Text(
                 GuestHomeContent.featuresSectionTitle,
-                style: AppTypography.heading1.copyWith(
+                style: AppTypography.heading2.copyWith(
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 GuestHomeContent.featuresSectionSubtitle,
                 style: AppTypography.bodySmall.copyWith(
                   color: AppColors.textSecondary,
-                  height: 1.6,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         // 기능 카드 리스트
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: List.generate(
               GuestHomeContent.appFeatures.length,
-              (index) => _StaggeredFeatureCard(
+              (index) => _ScrollRevealFeatureCard(
                 feature: GuestHomeContent.appFeatures[index],
                 index: index,
-                isVisible: widget.isVisible,
+                // 처음 2개는 바로 보이고, 나머지는 스크롤에 따라
+                immediateReveal: index < 2,
               ),
             ),
           ),
@@ -69,29 +70,35 @@ class _AppFeaturesSectionState extends State<AppFeaturesSection> {
   }
 }
 
-/// Staggered Entry 애니메이션이 적용된 기능 카드
-class _StaggeredFeatureCard extends StatefulWidget {
+/// 스크롤 기반 Reveal 애니메이션이 적용된 기능 카드
+/// 간결한 형태: 아이콘 + 제목 + 한 줄 요약 (확장 시 상세)
+class _ScrollRevealFeatureCard extends StatefulWidget {
   final AppFeatureData feature;
   final int index;
-  final bool isVisible;
+  final bool immediateReveal;
 
-  const _StaggeredFeatureCard({
+  const _ScrollRevealFeatureCard({
     required this.feature,
     required this.index,
-    required this.isVisible,
+    this.immediateReveal = false,
   });
 
   @override
-  State<_StaggeredFeatureCard> createState() => _StaggeredFeatureCardState();
+  State<_ScrollRevealFeatureCard> createState() =>
+      _ScrollRevealFeatureCardState();
 }
 
-class _StaggeredFeatureCardState extends State<_StaggeredFeatureCard>
-    with SingleTickerProviderStateMixin {
+class _ScrollRevealFeatureCardState extends State<_ScrollRevealFeatureCard>
+    with TickerProviderStateMixin {
   late final AnimationController _entryController;
   late final Animation<double> _fadeAnimation;
   late final Animation<Offset> _slideAnimation;
+  late final AnimationController _expandController;
+  late final Animation<double> _expandAnimation;
   bool _hasAnimated = false;
   bool _isPressed = false;
+  bool _isExpanded = false;
+  final GlobalKey _cardKey = GlobalKey();
 
   @override
   void initState() {
@@ -111,92 +118,168 @@ class _StaggeredFeatureCardState extends State<_StaggeredFeatureCard>
       parent: _entryController,
       curve: Curves.easeOutCubic,
     ));
+
+    _expandController = AnimationController(
+      duration: const Duration(milliseconds: 250),
+      vsync: this,
+    );
+    _expandAnimation = CurvedAnimation(
+      parent: _expandController,
+      curve: Curves.easeOutCubic,
+    );
+
+    // immediateReveal인 경우 staggered 딜레이로 바로 애니메이션
+    if (widget.immediateReveal) {
+      Future.delayed(
+        Duration(milliseconds: 100 * widget.index),
+        () {
+          if (mounted && !_hasAnimated) {
+            _hasAnimated = true;
+            _entryController.forward();
+          }
+        },
+      );
+    } else {
+      // 스크롤 기반: 프레임마다 visibility 체크
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _startVisibilityCheck();
+      });
+    }
+  }
+
+  void _startVisibilityCheck() {
+    if (!mounted || _hasAnimated) return;
+    _checkVisibility();
+  }
+
+  void _checkVisibility() {
+    if (!mounted || _hasAnimated) return;
+
+    final renderBox =
+        _cardKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null && renderBox.hasSize) {
+      final position = renderBox.localToGlobal(Offset.zero);
+      final screenHeight = MediaQuery.of(context).size.height;
+
+      final triggerPoint = screenHeight * 0.85;
+      if (position.dy < triggerPoint) {
+        _hasAnimated = true;
+        _entryController.forward();
+        HapticFeedback.selectionClick();
+        return;
+      }
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkVisibility();
+    });
+  }
+
+  void _toggleExpand() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+    if (_isExpanded) {
+      _expandController.forward();
+    } else {
+      _expandController.reverse();
+    }
+    HapticFeedback.selectionClick();
   }
 
   @override
   void dispose() {
     _entryController.dispose();
+    _expandController.dispose();
     super.dispose();
-  }
-
-  void _triggerAnimation() {
-    if (!_hasAnimated) {
-      _hasAnimated = true;
-      Future.delayed(
-        Duration(milliseconds: 100 * widget.index),
-        () {
-          if (mounted) {
-            _entryController.forward();
-          }
-        },
-      );
-    }
-  }
-
-  @override
-  void didUpdateWidget(_StaggeredFeatureCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // 섹션이 보이게 되면 애니메이션 시작
-    if (widget.isVisible && !oldWidget.isVisible) {
-      _triggerAnimation();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return SlideTransition(
+      key: _cardKey,
       position: _slideAnimation,
       child: FadeTransition(
         opacity: _fadeAnimation,
         child: GestureDetector(
           onTapDown: (_) {
             setState(() => _isPressed = true);
-            HapticFeedback.lightImpact();
           },
-          onTapUp: (_) => setState(() => _isPressed = false),
+          onTapUp: (_) {
+            setState(() => _isPressed = false);
+            _toggleExpand();
+          },
           onTapCancel: () => setState(() => _isPressed = false),
           child: AnimatedScale(
-            scale: _isPressed ? 1.02 : 1.0,
+            scale: _isPressed ? 0.98 : 1.0,
             duration: const Duration(milliseconds: 150),
             child: Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              child: Material(
-                elevation: _isPressed ? 6 : 2,
-                borderRadius: BorderRadius.circular(16),
-                shadowColor: Colors.black.withValues(alpha: 0.1),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppColors.border,
-                      width: 1,
-                    ),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _isExpanded ? AppColors.primary.withValues(alpha: 0.3) : AppColors.border,
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ],
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 아이콘 + 제목 + 확장 인디케이터
+                  Row(
                     children: [
-                      // 아이콘 + 제목
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.feature.icon,
-                            style: const TextStyle(fontSize: 28),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              widget.feature.title,
-                              style: AppTypography.heading3,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        widget.feature.icon,
+                        style: const TextStyle(fontSize: 24),
                       ),
-                      // 페인 포인트 (있는 경우)
-                      if (widget.feature.painPoints.isNotEmpty) ...[
-                        const SizedBox(height: 16),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.feature.title,
+                              style: AppTypography.labelLarge.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.feature.summary,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AnimatedRotation(
+                        turns: _isExpanded ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 250),
+                        child: Icon(
+                          Icons.keyboard_arrow_down,
+                          color: AppColors.textTertiary,
+                          size: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // 확장 가능한 상세 섹션
+                  SizeTransition(
+                    sizeFactor: _expandAnimation,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 12),
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
@@ -204,54 +287,34 @@ class _StaggeredFeatureCardState extends State<_StaggeredFeatureCard>
                             color: AppColors.neutral100,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: widget.feature.painPoints
-                                .map(
-                                  (point) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 4),
-                                    child: Text(
-                                      point,
-                                      style: AppTypography.bodySmall.copyWith(
-                                        color: AppColors.textSecondary,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 12),
-                      // 설명
-                      Text(
-                        widget.feature.description,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                          height: 1.6,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      // 격려 메시지
-                      Row(
-                        children: [
-                          const Text('💚', style: TextStyle(fontSize: 14)),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              widget.feature.encouragement,
-                              style: AppTypography.caption.copyWith(
-                                color: AppColors.primary,
-                                fontStyle: FontStyle.italic,
-                              ),
+                          child: Text(
+                            widget.feature.description,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                              height: 1.5,
                             ),
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const SizedBox(height: 8),
+                        // 격려 메시지
+                        Row(
+                          children: [
+                            const Text('💚', style: TextStyle(fontSize: 12)),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                widget.feature.encouragement,
+                                style: AppTypography.caption.copyWith(
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
