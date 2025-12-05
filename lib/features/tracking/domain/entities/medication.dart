@@ -51,11 +51,34 @@ class Medication extends Equatable {
     return nameEn;
   }
 
-  /// 권장 시작 용량 (없으면 첫 번째 용량)
-  double get startDose => recommendedStartDose ?? availableDoses.first;
+  /// 권장 시작 용량 (없으면 첫 번째 용량, 빈 배열이면 0)
+  double get startDose {
+    if (recommendedStartDose != null) return recommendedStartDose!;
+    if (availableDoses.isEmpty) return 0.0;
+    return availableDoses.first;
+  }
 
   /// 용량이 유효한지 확인
   bool isValidDose(double dose) => availableDoses.contains(dose);
+
+  /// displayName으로 약물 찾기 (fallback 포함)
+  ///
+  /// 1차: displayName 정확 매칭
+  /// 2차: nameEn만으로 매칭 (case-insensitive)
+  static Medication? findByDisplayName(
+    List<Medication> medications,
+    String displayName,
+  ) {
+    // 1차: displayName 정확 매칭
+    final exact = medications.where((m) => m.displayName == displayName).firstOrNull;
+    if (exact != null) return exact;
+
+    // 2차: nameEn만으로 매칭 (case-insensitive)
+    final nameEn = displayName.split(' (').first;
+    return medications
+        .where((m) => m.nameEn.toLowerCase() == nameEn.toLowerCase())
+        .firstOrNull;
+  }
 
   Medication copyWith({
     String? id,

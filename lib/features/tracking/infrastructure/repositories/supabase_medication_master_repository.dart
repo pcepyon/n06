@@ -38,22 +38,7 @@ class SupabaseMedicationMasterRepository implements MedicationMasterRepository {
 
   @override
   Future<Medication?> getMedicationByDisplayName(String displayName) async {
-    // displayName 형식: "Wegovy (세마글루타이드)"
-    // name_en과 generic_name을 조합하여 매칭
     final medications = await getActiveMedications();
-
-    try {
-      return medications.firstWhere((m) => m.displayName == displayName);
-    } catch (_) {
-      // 정확히 일치하는 것이 없으면 name_en만으로 시도
-      final nameEn = displayName.split(' (').first;
-      try {
-        return medications.firstWhere(
-          (m) => m.nameEn.toLowerCase() == nameEn.toLowerCase(),
-        );
-      } catch (_) {
-        return null;
-      }
-    }
+    return Medication.findByDisplayName(medications, displayName);
   }
 }

@@ -50,10 +50,11 @@ class _DosagePlanFormState extends ConsumerState<DosagePlanForm> {
     if (!widget.isReviewMode || widget.initialMedicationName == null) return;
     if (_selectedMedication != null) return; // 이미 초기화됨
 
-    // 약물 이름으로 매칭
-    final medication = medications.where(
-      (m) => m.displayName == widget.initialMedicationName,
-    ).firstOrNull;
+    // 약물 이름으로 매칭 (fallback 포함)
+    final medication = Medication.findByDisplayName(
+      medications,
+      widget.initialMedicationName!,
+    );
 
     if (medication != null) {
       _selectedMedication = medication;

@@ -21,6 +21,13 @@
 
 ## 2025-12-05
 
+- [refactor] Medication 엔티티 개선 및 SQL 뷰 호환성 수정
+  - **Medication.startDose**: 빈 availableDoses 배열 방어 코드 추가 (0.0 반환)
+  - **Medication.findByDisplayName**: static 헬퍼 메서드 추가로 fallback 로직 통일
+  - **v_weekly_weight_summary**: PostgreSQL GROUP BY 호환성 수정 (윈도우 함수 사용)
+  - `lib/features/tracking/domain/entities/medication.dart`
+  - `supabase/migrations/07_add_master_tables.sql`
+
 - [feat] Guest Home 비로그인 홈 화면 구현 (앱 스토어 심사 대응)
   - **목적**: 로그인 없이 GLP-1 치료 정보와 앱 가치를 전달하여 회원가입 유도
   - **6개 섹션**: 환영, 과학적 근거(5개 카드), 12주 치료 여정, 앱 기능(5개), 부작용 가이드(4개 증상), CTA

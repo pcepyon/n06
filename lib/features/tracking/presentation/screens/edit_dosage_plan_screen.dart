@@ -152,18 +152,11 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
 
     final plan = widget.initialPlan;
 
-    // 기존 약물 이름으로 매칭
-    _selectedMedication = medications.where(
-      (m) => m.displayName == plan.medicationName,
-    ).firstOrNull;
-
-    // 매칭 실패 시 name_en으로 시도
-    if (_selectedMedication == null) {
-      final nameEn = plan.medicationName.split(' (').first;
-      _selectedMedication = medications.where(
-        (m) => m.nameEn.toLowerCase() == nameEn.toLowerCase(),
-      ).firstOrNull;
-    }
+    // 기존 약물 이름으로 매칭 (fallback 포함)
+    _selectedMedication = Medication.findByDisplayName(
+      medications,
+      plan.medicationName,
+    );
   }
 
   Future<void> _handleSave() async {

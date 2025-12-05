@@ -102,30 +102,33 @@ ON CONFLICT (id) DO NOTHING;
 
 -- 3.1 주간 체중 요약 뷰
 CREATE OR REPLACE VIEW public.v_weekly_weight_summary AS
+WITH weekly_data AS (
+  SELECT
+    user_id,
+    DATE_TRUNC('week', log_date) AS week_start,
+    weight_kg,
+    FIRST_VALUE(weight_kg) OVER (
+      PARTITION BY user_id, DATE_TRUNC('week', log_date)
+      ORDER BY log_date ASC
+    ) AS first_weight,
+    FIRST_VALUE(weight_kg) OVER (
+      PARTITION BY user_id, DATE_TRUNC('week', log_date)
+      ORDER BY log_date DESC
+    ) AS last_weight
+  FROM weight_logs
+)
 SELECT
   user_id,
-  DATE_TRUNC('week', log_date) AS week_start,
+  week_start,
   COUNT(*) AS record_count,
   ROUND(AVG(weight_kg)::numeric, 2) AS avg_weight,
   MIN(weight_kg) AS min_weight,
   MAX(weight_kg) AS max_weight,
   MAX(weight_kg) - MIN(weight_kg) AS weight_range,
-  -- 주간 변화량 (첫 기록 - 마지막 기록)
-  (
-    SELECT w2.weight_kg
-    FROM weight_logs w2
-    WHERE w2.user_id = weight_logs.user_id
-      AND DATE_TRUNC('week', w2.log_date) = DATE_TRUNC('week', weight_logs.log_date)
-    ORDER BY w2.log_date DESC LIMIT 1
-  ) - (
-    SELECT w3.weight_kg
-    FROM weight_logs w3
-    WHERE w3.user_id = weight_logs.user_id
-      AND DATE_TRUNC('week', w3.log_date) = DATE_TRUNC('week', weight_logs.log_date)
-    ORDER BY w3.log_date ASC LIMIT 1
-  ) AS weekly_change
-FROM weight_logs
-GROUP BY user_id, DATE_TRUNC('week', log_date)
+  -- 주간 변화량 (마지막 기록 - 첫 기록)
+  MAX(last_weight) - MAX(first_weight) AS weekly_change
+FROM weekly_data
+GROUP BY user_id, week_start
 ORDER BY user_id, week_start DESC;
 
 -- 3.2 주간 체크인 요약 뷰
