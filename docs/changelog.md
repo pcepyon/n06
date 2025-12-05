@@ -21,6 +21,13 @@
 
 ## 2025-12-05
 
+- [fix] MedicationProvider "Cannot use Ref after disposed" 에러 수정
+  - **원인**: getter로 ref.read() 호출 시 async 작업 중 disposed ref 접근
+  - **수정**: build()에서 late final 필드로 의존성 캡처 패턴 적용
+  - **문서**: CLAUDE.md에 5단계 AsyncNotifier 안전 패턴 추가
+  - `lib/features/tracking/application/notifiers/medication_notifier.dart`
+  - `claude.md`
+
 - [fix] EvidenceCard Column overflow 수정 및 CLAUDE.md 레이아웃 규칙 통합
   - **문제**: SizedBox(height: 480) 내 Column이 39픽셀 overflow
   - **수정**: SingleChildScrollView로 감싸서 스크롤 가능하게 변경

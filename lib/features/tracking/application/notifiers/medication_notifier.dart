@@ -37,13 +37,20 @@ class MedicationState {
 
 @riverpod
 class MedicationNotifier extends _$MedicationNotifier {
-  MedicationRepository get _repository => ref.read(medicationRepositoryProvider);
-  ScheduleGeneratorUseCase get _scheduleGeneratorUseCase => ref.read(scheduleGeneratorUseCaseProvider);
-  InjectionSiteRotationUseCase get _injectionSiteRotationUseCase => ref.read(injectionSiteRotationUseCaseProvider);
-  MissedDoseAnalyzerUseCase get _missedDoseAnalyzerUseCase => ref.read(missedDoseAnalyzerUseCaseProvider);
+  // ✅ ref 의존성은 build()에서 한 번만 캡처 후 재사용
+  late final MedicationRepository _repository;
+  late final ScheduleGeneratorUseCase _scheduleGeneratorUseCase;
+  late final InjectionSiteRotationUseCase _injectionSiteRotationUseCase;
+  late final MissedDoseAnalyzerUseCase _missedDoseAnalyzerUseCase;
 
   @override
   Future<MedicationState> build() async {
+    // ✅ 모든 ref 의존성을 async 작업 전에 캡처
+    _repository = ref.read(medicationRepositoryProvider);
+    _scheduleGeneratorUseCase = ref.read(scheduleGeneratorUseCaseProvider);
+    _injectionSiteRotationUseCase = ref.read(injectionSiteRotationUseCaseProvider);
+    _missedDoseAnalyzerUseCase = ref.read(missedDoseAnalyzerUseCaseProvider);
+
     final userId = ref.watch(authNotifierProvider).value?.id;
     if (userId == null) {
       throw Exception('User not authenticated');

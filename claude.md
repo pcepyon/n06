@@ -21,20 +21,35 @@ Application Layer ONLY:
   - showDialog() / showModalBottomSheet() / ScaffoldMessenger
 ```
 
-### Async Mutation 안전 패턴 (BUG-20251125-223741)
+### Riverpod AsyncNotifier 안전 패턴 (BUG-20251205)
 ```dart
-Future<void> anyMutation() async {
-  final link = ref.keepAlive();  // 작업 완료 보장
-  try {
-    state = await AsyncValue.guard(() async {
-      await repository.save();
-      if (!ref.mounted) return previousState;
-      return newState;
-    });
-  } finally {
-    link.close();  // 메모리 누수 방지
+// ⚠️ "Cannot use Ref after disposed" 에러 방지 필수 패턴
+
+class MyNotifier extends _$MyNotifier {
+  // ✅ 1. 의존성을 late final 필드로 선언 (getter 사용 금지)
+  late final MyRepository _repository;
+
+  @override
+  Future<MyState> build() async {
+    // ✅ 2. build() 시작부에서 모든 ref 의존성 캡처
+    _repository = ref.read(myRepositoryProvider);
+    // ... 이후 async 작업에서 _repository 사용
+  }
+
+  Future<void> mutation() async {
+    final link = ref.keepAlive();  // ✅ 3. 작업 완료 보장
+    try {
+      await _repository.save();  // 캡처된 의존성 사용
+      if (!ref.mounted) return;  // ✅ 4. async gap 후 mounted 체크
+      state = AsyncData(newState);
+    } finally {
+      link.close();  // ✅ 5. 메모리 누수 방지
+    }
   }
 }
+
+// ❌ 금지 패턴
+MyRepository get _repository => ref.read(provider);  // async 중 disposed ref 접근
 ```
 
 ### Repository Pattern
