@@ -24,6 +24,7 @@ import 'package:n06/features/authentication/presentation/screens/password_reset_
 import 'package:n06/features/tracking/presentation/screens/trend_dashboard_screen.dart';
 import 'package:n06/features/daily_checkin/presentation/screens/daily_checkin_screen.dart';
 import 'package:n06/features/daily_checkin/presentation/screens/share_report_screen.dart';
+import 'package:n06/features/guest_home/presentation/screens/guest_home_screen.dart';
 
 /// Listenable that notifies when auth state changes
 /// Used by GoRouter to re-evaluate redirect logic
@@ -53,7 +54,9 @@ class GoRouterAuthRefreshStream extends ChangeNotifier {
 
 /// Routes that don't require authentication
 const _publicRoutes = <String>{
+  '/guest',
   '/login',
+  '/sign-up',
   '/email-signup',
   '/email-signin',
   '/password-reset',
@@ -113,7 +116,7 @@ final _analyticsObserver = FirebaseAnalyticsObserver(
 
 /// GoRouter configuration for the application
 final appRouter = GoRouter(
-  initialLocation: '/login',
+  initialLocation: '/guest',
   refreshListenable: _authRefreshStream,
   observers: [_analyticsObserver],
   redirect: (BuildContext context, GoRouterState state) {
@@ -143,16 +146,16 @@ final appRouter = GoRouter(
     if (!isLoggedIn && _isProtectedRoute(location)) {
       if (kDebugMode) {
         developer.log(
-          'Redirecting to /login: not authenticated or session expired',
+          'Redirecting to /guest: not authenticated or session expired',
           name: 'AppRouter',
         );
       }
-      return '/login';
+      return '/guest';
     }
 
-    // Case 2: Logged in with valid session, on login page → redirect to home
+    // Case 2: Logged in with valid session, on guest/login page → redirect to home
     // This handles the case where user opens app while already logged in
-    if (isLoggedIn && location == '/login') {
+    if (isLoggedIn && (location == '/guest' || location == '/login')) {
       if (kDebugMode) {
         developer.log(
           'Redirecting to /home: already authenticated with valid session',
@@ -185,11 +188,25 @@ final appRouter = GoRouter(
     router.go('/login');
   },
   routes: [
+    /// Guest Home (for non-logged-in users, app store review)
+    GoRoute(
+      path: '/guest',
+      name: 'guest',
+      builder: (context, state) => const GuestHomeScreen(),
+    ),
+
     /// Authentication routes (without Bottom Nav)
     GoRoute(
       path: '/login',
       name: 'login',
       builder: (context, state) => const LoginScreen(),
+    ),
+
+    /// Sign-up redirect (from guest home CTA)
+    GoRoute(
+      path: '/sign-up',
+      name: 'sign_up',
+      redirect: (context, state) => '/email-signup',
     ),
 
     GoRoute(

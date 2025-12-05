@@ -21,6 +21,15 @@
 
 ## 2025-12-05
 
+- [feat] Guest Home 비로그인 홈 화면 구현 (앱 스토어 심사 대응)
+  - **목적**: 로그인 없이 GLP-1 치료 정보와 앱 가치를 전달하여 회원가입 유도
+  - **6개 섹션**: 환영, 과학적 근거(5개 카드), 12주 치료 여정, 앱 기능(5개), 부작용 가이드(4개 증상), CTA
+  - **P0 인터랙션**: Sequential Text Reveal, Number Counting, Progressive Disclosure Timeline, Expandable Cards, Staggered Entry, Pulsing CTA, Press State with Depth, Milestone Celebration
+  - **P1 인터랙션**: Card Stack Effect, Scroll-Triggered CTA Reveal, Symptom Severity Progress Bar
+  - **라우팅 변경**: 초기 경로 `/login` → `/guest`, 비인증 시 `/guest`로 리다이렉트
+  - `docs/018-guest-home/spec.md`
+  - `lib/features/guest_home/` (13개 파일)
+
 - [feat] DB 확장성 준비: medications, symptom_types 마스터 테이블 및 분석 뷰 추가
   - **목적**: 앱 배포 없이 새 약물/증상 추가 가능하도록 마스터 테이블 도입
   - **DB 변경**:

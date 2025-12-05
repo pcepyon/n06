@@ -57,3 +57,5 @@ prd ─────┬───→ requirements ───→ userflow
 | 014 | 응급 증상 | `docs/014/spec.md` |
 | 015 | 성취 시스템 | `docs/015/spec.md` |
 | 016 | 교육 온보딩 | `docs/016/spec.md` |
+| 017 | 교육 온보딩 플로우 | `docs/017-education-onboarding/spec.md` |
+| 018 | 비로그인 홈 | `docs/018-guest-home/spec.md` |
