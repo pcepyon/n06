@@ -8,7 +8,13 @@ import 'package:n06/features/guest_home/domain/entities/journey_phase_data.dart'
 /// 치료 여정 미리보기 섹션
 /// P0 인터랙션: Progressive Disclosure Timeline, Milestone Celebration
 class JourneyPreviewSection extends StatefulWidget {
-  const JourneyPreviewSection({super.key});
+  /// 섹션이 뷰포트에 보이는지 여부 (스크롤 기반 트리거)
+  final bool isVisible;
+
+  const JourneyPreviewSection({
+    super.key,
+    this.isVisible = false,
+  });
 
   @override
   State<JourneyPreviewSection> createState() => _JourneyPreviewSectionState();

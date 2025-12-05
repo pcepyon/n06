@@ -9,7 +9,13 @@ import 'package:n06/features/guest_home/domain/entities/symptom_preview_data.dar
 /// P0 인터랙션: Expandable Card with Content Reveal
 /// P1 인터랙션: Symptom Severity Progress Bar
 class SideEffectsGuideSection extends StatefulWidget {
-  const SideEffectsGuideSection({super.key});
+  /// 섹션이 뷰포트에 보이는지 여부 (스크롤 기반 트리거)
+  final bool isVisible;
+
+  const SideEffectsGuideSection({
+    super.key,
+    this.isVisible = false,
+  });
 
   @override
   State<SideEffectsGuideSection> createState() =>

@@ -3,16 +3,25 @@ import 'package:flutter/services.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/guest_home/data/guest_home_content.dart';
+import 'package:n06/features/guest_home/presentation/widgets/cta_checklist.dart';
 
 /// CTA 섹션
 /// P0 인터랙션: Pulsing CTA Button, Button Tap Feedback
-/// P1 인터랙션: Scroll-Triggered CTA Reveal
+/// P1 인터랙션: Scroll-Triggered CTA Reveal, 체크박스 커밋먼트
 class CtaSection extends StatefulWidget {
+  final bool isVisible;
+  final Set<int> visitedSections;
+  final Set<String> checkedItems;
+  final ValueChanged<String> onCheckItem;
   final VoidCallback? onSignUp;
   final VoidCallback? onLearnMore;
 
   const CtaSection({
     super.key,
+    this.isVisible = false,
+    required this.visitedSections,
+    required this.checkedItems,
+    required this.onCheckItem,
     this.onSignUp,
     this.onLearnMore,
   });
@@ -64,15 +73,13 @@ class _CtaSectionState extends State<CtaSection>
       begin: AppColors.surface,
       end: AppColors.primary.withValues(alpha: 0.05),
     ).animate(_revealController);
-
-    // 자동 reveal (스크롤 시 viewport 진입 대신)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _triggerReveal();
-    });
   }
 
-  void _triggerReveal() {
-    if (!_hasRevealed && mounted) {
+  @override
+  void didUpdateWidget(CtaSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 섹션이 보이게 되면 reveal 애니메이션
+    if (widget.isVisible && !_hasRevealed) {
       _hasRevealed = true;
       _revealController.forward();
       HapticFeedback.lightImpact();
@@ -85,6 +92,9 @@ class _CtaSectionState extends State<CtaSection>
     _revealController.dispose();
     super.dispose();
   }
+
+  bool get _allChecked =>
+      widget.checkedItems.containsAll(['evidence', 'journey', 'sideEffects']);
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +138,14 @@ class _CtaSectionState extends State<CtaSection>
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
+                  // 체크리스트
+                  CtaChecklist(
+                    visitedSections: widget.visitedSections,
+                    checkedItems: widget.checkedItems,
+                    onItemChecked: widget.onCheckItem,
+                    allChecked: _allChecked,
+                  ),
+                  const SizedBox(height: 24),
                   // Primary CTA Button with Pulse
                   _buildPulsingButton(),
                   const SizedBox(height: 12),
@@ -184,10 +202,13 @@ class _CtaSectionState extends State<CtaSection>
   }
 
   Widget _buildPulsingButton() {
+    // 모든 체크박스가 체크되면 더 강한 펄스 효과
+    final pulseIntensity = _allChecked ? 0.05 : 0.03;
+
     return AnimatedBuilder(
       animation: _pulseController,
       builder: (context, child) {
-        final scale = 1.0 + (_pulseController.value * 0.03);
+        final scale = 1.0 + (_pulseController.value * pulseIntensity);
         final shadowOpacity = 0.2 + (_pulseController.value * 0.1);
         final shadowBlur = 8.0 + (_pulseController.value * 4);
 
@@ -205,22 +226,27 @@ class _CtaSectionState extends State<CtaSection>
           },
           child: Transform.scale(
             scale: _isPressed ? 0.98 : scale,
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary,
-                    AppColors.primaryHover,
-                  ],
+                  colors: _allChecked
+                      ? [AppColors.primary, AppColors.primaryHover]
+                      : [
+                          AppColors.primary.withValues(alpha: 0.7),
+                          AppColors.primaryHover.withValues(alpha: 0.7),
+                        ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: shadowOpacity),
+                    color: AppColors.primary.withValues(
+                      alpha: _allChecked ? shadowOpacity : shadowOpacity * 0.5,
+                    ),
                     blurRadius: shadowBlur,
                     spreadRadius: _pulseController.value * 2,
                     offset: const Offset(0, 4),
@@ -231,15 +257,17 @@ class _CtaSectionState extends State<CtaSection>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    GuestHomeContent.ctaPrimaryButton,
+                    _allChecked
+                        ? GuestHomeContent.ctaPrimaryButton
+                        : '${GuestHomeContent.ctaPrimaryButton} (${widget.checkedItems.length}/3)',
                     style: AppTypography.labelLarge.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(
-                    Icons.arrow_forward,
+                  Icon(
+                    _allChecked ? Icons.rocket_launch : Icons.arrow_forward,
                     color: Colors.white,
                     size: 20,
                   ),

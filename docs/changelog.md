@@ -21,6 +21,20 @@
 
 ## 2025-12-05
 
+- [feat] 게스트 홈 인터랙티브 UX 개선 - Progress Bar, 스크롤 기반 애니메이션, CTA 체크박스
+  - **Progress Bar + 섹션 네비게이션**: 상단 고정, 스크롤 진행률 표시, 탭하여 섹션 이동
+  - **스크롤 기반 애니메이션**: 섹션 진입 시 fade-in + slide-up, 숫자 카운팅 트리거
+  - **CTA 체크박스 커밋먼트**: 섹션 방문 시 체크 가능, 완료 시 버튼 강조
+  - **방문 섹션 추적**: Progress Bar에 체크 아이콘 표시
+  - `lib/features/guest_home/presentation/screens/guest_home_screen.dart`
+  - `lib/features/guest_home/presentation/widgets/section_progress_indicator.dart` (신규)
+  - `lib/features/guest_home/presentation/widgets/cta_checklist.dart` (신규)
+  - `lib/features/guest_home/presentation/widgets/cta_section.dart`
+  - `lib/features/guest_home/presentation/widgets/scientific_evidence_section.dart`
+  - `lib/features/guest_home/presentation/widgets/journey_preview_section.dart`
+  - `lib/features/guest_home/presentation/widgets/app_features_section.dart`
+  - `lib/features/guest_home/presentation/widgets/side_effects_guide_section.dart`
+
 - [refactor] 전체 Notifier에 Riverpod AsyncNotifier 안전 패턴 적용
   - **범위**: 11개 Notifier 파일
   - **수정**: getter → late final 필드로 의존성 캡처, AsyncValue.guard 내부 ref.read 제거

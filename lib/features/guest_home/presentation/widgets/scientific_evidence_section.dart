@@ -10,7 +10,13 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 /// 과학적 근거 섹션 위젯
 /// P0 인터랙션: Card Stack Effect 캐러셀, 자동 슬라이드
 class ScientificEvidenceSection extends StatefulWidget {
-  const ScientificEvidenceSection({super.key});
+  /// 섹션이 뷰포트에 보이는지 여부 (스크롤 기반 트리거)
+  final bool isVisible;
+
+  const ScientificEvidenceSection({
+    super.key,
+    this.isVisible = false,
+  });
 
   @override
   State<ScientificEvidenceSection> createState() =>
@@ -22,12 +28,23 @@ class _ScientificEvidenceSectionState extends State<ScientificEvidenceSection> {
   Timer? _autoSlideTimer;
   int _currentPage = 0;
   bool _userInteracting = false;
+  bool _hasStartedAutoSlide = false;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(viewportFraction: 0.9);
-    _startAutoSlide();
+    // 자동 슬라이드는 섹션이 보일 때 시작
+  }
+
+  @override
+  void didUpdateWidget(ScientificEvidenceSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 섹션이 보이게 되면 자동 슬라이드 시작
+    if (widget.isVisible && !_hasStartedAutoSlide) {
+      _hasStartedAutoSlide = true;
+      _startAutoSlide();
+    }
   }
 
   void _startAutoSlide() {
@@ -130,7 +147,8 @@ class _ScientificEvidenceSectionState extends State<ScientificEvidenceSection> {
                         opacity: opacity,
                         child: EvidenceCard(
                           data: GuestHomeContent.evidenceCards[index],
-                          isVisible: _currentPage == index,
+                          // 섹션이 보이고 현재 페이지일 때만 카운팅 시작
+                          isVisible: widget.isVisible && _currentPage == index,
                         ),
                       ),
                     );
