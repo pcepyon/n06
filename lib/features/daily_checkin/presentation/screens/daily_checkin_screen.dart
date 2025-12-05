@@ -100,7 +100,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
   }
 
   String _getGreeting(BuildContext context, String? greetingType) {
-    final l10n = L10n.of(context)!;
+    final l10n = L10n.of(context);
 
     if (greetingType == null) {
       final hour = DateTime.now().hour;
@@ -372,7 +372,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
   }
 
   Widget _buildQuestionPage(BuildContext context, int questionIndex, DailyCheckinState state) {
-    final l10n = L10n.of(context)!;
+    final l10n = L10n.of(context);
     final question = Questions.all[questionIndex];
     final selectedAnswer = state.answers[questionIndex + 1];
 
@@ -509,7 +509,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
   }
 
   Widget _buildCompletionPage(BuildContext context, DailyCheckinState state) {
-    final l10n = L10n.of(context)!;
+    final l10n = L10n.of(context);
     final consecutiveDays = state.context?.consecutiveDays ?? 0;
     final savedCheckin = state.savedCheckin;
 

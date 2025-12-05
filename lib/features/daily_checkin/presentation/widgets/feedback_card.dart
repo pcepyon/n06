@@ -87,20 +87,17 @@ class _FeedbackCardState extends State<FeedbackCard>
     final String message;
     final String? stat;
     final String? action;
-    final FeedbackTone tone;
 
     if (widget.feedback != null) {
       // CheckinFeedback 객체 사용 (l10n 매핑)
       message = FeedbackL10nMapper.getFeedbackMessage(context, widget.feedback!);
       stat = FeedbackL10nMapper.getFeedbackStat(widget.feedback!);
       action = FeedbackL10nMapper.getFeedbackAction(widget.feedback!);
-      tone = widget.feedback!.tone;
     } else {
       // 직접 문자열 사용 (하위 호환)
       message = widget.directMessage!;
       stat = null;
       action = null;
-      tone = widget.directTone!;
     }
 
     return FadeTransition(
