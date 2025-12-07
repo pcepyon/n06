@@ -7,6 +7,7 @@ import 'package:n06/features/dashboard/domain/entities/weekly_progress.dart';
 import 'package:n06/features/dashboard/domain/entities/weekly_summary.dart';
 
 class DashboardData extends Equatable {
+  final String userId;
   final String userName;
   final int continuousRecordDays;
   final int currentWeek;
@@ -18,6 +19,7 @@ class DashboardData extends Equatable {
   final InsightMessageData? insightMessageData;
 
   const DashboardData({
+    required this.userId,
     required this.userName,
     required this.continuousRecordDays,
     required this.currentWeek,
@@ -30,6 +32,7 @@ class DashboardData extends Equatable {
   });
 
   DashboardData copyWith({
+    String? userId,
     String? userName,
     int? continuousRecordDays,
     int? currentWeek,
@@ -41,6 +44,7 @@ class DashboardData extends Equatable {
     InsightMessageData? insightMessageData,
   }) {
     return DashboardData(
+      userId: userId ?? this.userId,
       userName: userName ?? this.userName,
       continuousRecordDays: continuousRecordDays ?? this.continuousRecordDays,
       currentWeek: currentWeek ?? this.currentWeek,
@@ -55,6 +59,7 @@ class DashboardData extends Equatable {
 
   @override
   List<Object?> get props => [
+        userId,
         userName,
         continuousRecordDays,
         currentWeek,

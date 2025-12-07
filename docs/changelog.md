@@ -21,6 +21,13 @@
 
 ## 2025-12-07
 
+- [fix] StatusSummarySection 컨디션 요약 위젯 미표시 버그 수정
+  - **원인**: `authNotifierProvider`를 별도 watch하여 타이밍 이슈 발생, userId가 null이면 위젯 미렌더링
+  - **해결**: `DashboardData`에 `userId` 필드 추가, 이미 검증된 userId 사용
+  - `lib/features/dashboard/domain/entities/dashboard_data.dart`
+  - `lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
+  - `lib/features/dashboard/presentation/widgets/status_summary_section.dart`
+
 - [feat] 대시보드 Emotion-Driven 개선 - 3섹션 구조 + LLM 공감 메시지 생성
   - **목표**: "정보 나열"에서 "맥락 인식 감정 지지"로 전환
   - **3섹션 UI 구조**:

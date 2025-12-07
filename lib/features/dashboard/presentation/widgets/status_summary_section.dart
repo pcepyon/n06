@@ -6,7 +6,6 @@ import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/dashboard/domain/entities/dashboard_data.dart';
 import 'package:n06/features/tracking/domain/entities/trend_insight.dart';
 import 'package:n06/features/tracking/application/notifiers/trend_insight_notifier.dart';
-import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 
 /// StatusSummarySection - 현재 상태 요약
 ///
@@ -26,9 +25,6 @@ class StatusSummarySection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authNotifierProvider);
-    final userId = authState.value?.id;
-
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -67,11 +63,9 @@ class StatusSummarySection extends ConsumerWidget {
           // 체중 트렌드
           _buildWeightTrend(context),
 
-          // 전반적 컨디션 요약 (TrendInsight)
-          if (userId != null) ...[
-            const SizedBox(height: 16),
-            _buildConditionSummary(context, ref, userId),
-          ],
+          // 전반적 컨디션 요약 (TrendInsight) - dashboardData에서 userId 사용
+          const SizedBox(height: 16),
+          _buildConditionSummary(context, ref, dashboardData.userId),
         ],
       ),
     );

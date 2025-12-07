@@ -146,6 +146,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     final timeline = _buildTimeline(activePlan, profile, weights);
 
     return DashboardData(
+      userId: userId,
       userName: profile.userName ?? profile.userId.split('@').first,
       continuousRecordDays: continuousRecordDays,
       currentWeek: currentWeek,

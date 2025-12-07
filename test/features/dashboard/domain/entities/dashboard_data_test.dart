@@ -39,6 +39,7 @@ void main() {
     );
 
     final dashboardData = DashboardData(
+      userId: 'test-user-id',
       userName: 'John Doe',
       continuousRecordDays: 5,
       currentWeek: 2,
@@ -64,6 +65,7 @@ void main() {
 
     test('should support equality comparison', () {
       final dashboardData2 = DashboardData(
+        userId: 'test-user-id',
         userName: 'John Doe',
         continuousRecordDays: 5,
         currentWeek: 2,
@@ -80,6 +82,7 @@ void main() {
 
     test('should support inequality comparison', () {
       final dashboardData2 = DashboardData(
+        userId: 'test-user-id',
         userName: 'Jane Doe',
         continuousRecordDays: 5,
         currentWeek: 2,
