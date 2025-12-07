@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
@@ -16,6 +18,16 @@ class HomeDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboardState = ref.watch(dashboardNotifierProvider);
     final aiMessageState = ref.watch(aIMessageProvider);
+
+    final aiMsgPreview = aiMessageState.value?.message;
+    final aiMsgShort = aiMsgPreview != null
+        ? (aiMsgPreview.length > 20 ? '${aiMsgPreview.substring(0, 20)}...' : aiMsgPreview)
+        : 'null';
+    developer.log(
+      '📱 HomeDashboard build: dashboard=${dashboardState.isLoading ? "loading" : dashboardState.hasError ? "error" : "data"}, '
+      'aiMessage=${aiMessageState.isLoading ? "loading" : aiMessageState.hasError ? "error" : "data($aiMsgShort)"}',
+      name: 'Dashboard',
+    );
 
     return Scaffold(
       backgroundColor: AppColors.surface,

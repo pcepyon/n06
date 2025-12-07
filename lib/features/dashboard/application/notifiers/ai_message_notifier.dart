@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/dashboard/application/providers.dart';
 import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';
@@ -23,15 +25,36 @@ part 'ai_message_notifier.g.dart';
 /// - No ref access after async gaps
 @riverpod
 class AIMessageNotifier extends _$AIMessageNotifier {
-  // ✅ 1. 의존성을 late final 필드로 선언 (getter 사용 금지 - BUG-20251205)
-  late final AIMessageRepository _repository;
-  late final LLMContextBuilder _contextBuilder;
+  // ✅ ref.watch로 인해 build()가 여러 번 호출될 수 있으므로 late (final 제거)
+  late AIMessageRepository _repository;
+  late LLMContextBuilder _contextBuilder;
 
   @override
   Future<AIGeneratedMessage?> build() async {
-    // ✅ 2. build() 시작부에서 모든 ref 의존성 캡처
+    developer.log('🤖 AIMessageNotifier.build() started', name: 'AIMessage');
+
+    // ✅ build() 시작부에서 모든 ref 의존성 캡처
     _repository = ref.read(aiMessageRepositoryProvider);
     _contextBuilder = ref.read(llmContextBuilderProvider);
+
+    // ✅ dashboardNotifier를 watch하여 데이터가 준비될 때까지 대기
+    final dashboardAsync = ref.watch(dashboardNotifierProvider);
+
+    // Dashboard가 아직 로딩 중이면 AI 메시지도 대기
+    if (dashboardAsync.isLoading) {
+      developer.log('🤖 Dashboard still loading, waiting...', name: 'AIMessage');
+      return null;
+    }
+
+    // Dashboard 에러 시 null 반환
+    if (dashboardAsync.hasError) {
+      developer.log('🤖 Dashboard has error: ${dashboardAsync.error}',
+          name: 'AIMessage');
+      return null;
+    }
+
+    developer.log('🤖 Dashboard data ready, proceeding to load/generate message',
+        name: 'AIMessage');
 
     // 하루 첫 접속 체크 후 메시지 로드/생성
     return _loadOrGenerateMessage();
@@ -42,16 +65,25 @@ class AIMessageNotifier extends _$AIMessageNotifier {
   /// This is called on daily first open. If a message already exists for today,
   /// returns cached message. Otherwise, generates new message.
   Future<AIGeneratedMessage?> _loadOrGenerateMessage() async {
+    developer.log('🤖 _loadOrGenerateMessage() started', name: 'AIMessage');
+
     final userId = ref.read(authNotifierProvider).value?.id;
-    if (userId == null) return null;
+    developer.log('🤖 userId: $userId', name: 'AIMessage');
+    if (userId == null) {
+      developer.log('🤖 ❌ userId is null, returning null', name: 'AIMessage');
+      return null;
+    }
 
     // 1. 오늘 이미 생성된 메시지가 있는지 확인
     final todayMessage = await _repository.getTodayMessage(userId);
+    developer.log('🤖 todayMessage: ${todayMessage?.message}', name: 'AIMessage');
     if (todayMessage != null) {
+      developer.log('🤖 ✅ Returning cached message', name: 'AIMessage');
       return todayMessage; // 캐시된 메시지 반환
     }
 
     // 2. 없으면 새 메시지 생성
+    developer.log('🤖 No cached message, generating new one', name: 'AIMessage');
     return _generateNewMessage(
       triggerType: MessageTriggerType.dailyFirstOpen,
     );
@@ -95,15 +127,26 @@ class AIMessageNotifier extends _$AIMessageNotifier {
     required MessageTriggerType triggerType,
     String? checkinSummary,
   }) async {
+    developer.log('🤖 _generateNewMessage() started, triggerType: $triggerType',
+        name: 'AIMessage');
+
     final userId = ref.read(authNotifierProvider).value?.id;
-    if (userId == null) return null;
+    if (userId == null) {
+      developer.log('🤖 ❌ userId is null in _generateNewMessage',
+          name: 'AIMessage');
+      return null;
+    }
 
     try {
       // 1. Gather dashboard data
       final dashboardState = ref.read(dashboardNotifierProvider);
       final dashboardData = dashboardState.value;
+      developer.log('🤖 dashboardData: ${dashboardData != null}',
+          name: 'AIMessage');
       if (dashboardData == null) {
         // Dashboard data not ready yet, return null
+        developer.log('🤖 ❌ dashboardData is null, returning null',
+            name: 'AIMessage');
         return null;
       }
 
@@ -111,7 +154,10 @@ class AIMessageNotifier extends _$AIMessageNotifier {
       final dosagePlan = await ref
           .read(onboarding_providers.medicationRepositoryProvider)
           .getActiveDosagePlan(userId);
+      developer.log('🤖 dosagePlan: ${dosagePlan != null}', name: 'AIMessage');
       if (dosagePlan == null) {
+        developer.log('🤖 ❌ dosagePlan is null, returning null',
+            name: 'AIMessage');
         return null;
       }
 
@@ -124,8 +170,11 @@ class AIMessageNotifier extends _$AIMessageNotifier {
         userId,
         limit: 7,
       );
+      developer.log('🤖 recentMessages count: ${recentMessages.length}',
+          name: 'AIMessage');
 
       // 5. Build LLM context
+      developer.log('🤖 Building LLM context...', name: 'AIMessage');
       final context = await _contextBuilder.buildContext(
         dashboardData: dashboardData,
         dosagePlan: dosagePlan,
@@ -134,15 +183,21 @@ class AIMessageNotifier extends _$AIMessageNotifier {
         triggerType: triggerType,
         recentCheckinSummary: checkinSummary,
       );
+      developer.log('🤖 LLM context built successfully', name: 'AIMessage');
 
       // 6. Generate message via Edge Function
+      developer.log('🤖 Calling Edge Function...', name: 'AIMessage');
       final generatedMessage = await _repository.generateMessage(
         context: context,
       );
+      developer.log('🤖 ✅ Message generated: ${generatedMessage.message}',
+          name: 'AIMessage');
 
       return generatedMessage;
-    } catch (e) {
+    } catch (e, st) {
       // On error, fallback to latest message
+      developer.log('🤖 ❌ Error generating message: $e\n$st',
+          name: 'AIMessage');
       return await _repository.getLatestMessage(userId);
     }
   }
