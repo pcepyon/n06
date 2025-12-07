@@ -17,6 +17,7 @@
 | database | `docs/database.md` | schema, table, rls, migration | 테이블, 스키마, RLS |
 | techstack | `docs/techstack.md` | flutter, supabase, library, package | 기술 스택, 라이브러리 |
 | tdd | `docs/tdd.md` | test, mock, fake, red-green-refactor | 테스트 작성, TDD |
+| spec-guide | `docs/spec-writing-guide.md` | agent, prompt, context, spec | AI 에이전트용 문서 작성 |
 
 ---
 
@@ -59,3 +60,28 @@ prd ─────┬───→ requirements ───→ userflow
 | 016 | 교육 온보딩 | `docs/016/spec.md` |
 | 017 | 교육 온보딩 플로우 | `docs/017-education-onboarding/spec.md` |
 | 018 | 비로그인 홈 | `docs/018-guest-home/spec.md` |
+| 019 | 데모 모드 | `docs/019-demo-mode/spec.md` |
+| 020 | 대시보드 개선 | `docs/020-dashboard-renewal/spec.md` |
+
+---
+
+## 최근 변경 사항
+
+### 2024-12: 게스트홈 + 온보딩 통합 개선
+
+**관련 문서**:
+- `docs/019-demo-mode/spec.md` - 데모 모드 상세 스펙 (신규)
+- `docs/002/spec.md` - 온보딩 간소화 (14단계 → 6단계)
+- `docs/018-guest-home/spec.md` - 게스트홈 (참조)
+
+**주요 변경**:
+1. **게스트홈**: 정보 전달 → 실제 앱 체험(데모 모드)
+2. **온보딩**: 14단계 → 6단계로 간소화 (교육 콘텐츠 삭제)
+3. **부작용 가이드**: 별도 섹션 → 데일리 체크인 즉각 대처로 변경
+4. **체험 데이터 이관**: 데모 → 실제 계정 자동 이관
+
+**아키텍처 변경**:
+```
+[이전] 게스트홈(정보) → 로그인 → 온보딩(교육 + 설정)
+[현재] 게스트홈(체험) → 로그인 → 온보딩(설정 Only)
+```
