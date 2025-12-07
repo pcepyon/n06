@@ -19,6 +19,29 @@
 
 ---
 
+## 2025-12-07
+
+- [feat] 대시보드 Emotion-Driven 개선 - 3섹션 구조 + LLM 공감 메시지 생성
+  - **목표**: "정보 나열"에서 "맥락 인식 감정 지지"로 전환
+  - **3섹션 UI 구조**:
+    - GreetingSection: 시간대별 인사 + 이름 + 연속기록일
+    - StatusSummarySection: 주차/진행률/다음투여/체중/컨디션
+    - AIMessageSection: LLM 생성 공감 메시지 + 스켈레톤 UI + fade-in 애니메이션
+  - **AI 메시지 저장소**: ai_generated_messages 테이블, Repository 패턴
+  - **LLM 컨텍스트**: UserContext, HealthData, 최근 7개 메시지 (톤 일관성)
+  - **Edge Function**: OpenRouter API 연동 (gpt-oss-20b:free), Fallback 로직
+  - **생성 타이밍**: 하루 첫 접속 + 데일리 체크인 완료 시 재생성
+  - **DBT 검증 원칙**: 판단하지 않음, 감정 먼저, 정상화, 해결책 강요 금지
+  - `lib/features/dashboard/domain/entities/ai_generated_message.dart`
+  - `lib/features/dashboard/domain/entities/llm_context.dart`
+  - `lib/features/dashboard/application/notifiers/ai_message_notifier.dart`
+  - `lib/features/dashboard/application/services/llm_context_builder.dart`
+  - `lib/features/dashboard/presentation/widgets/greeting_section.dart`
+  - `lib/features/dashboard/presentation/widgets/status_summary_section.dart`
+  - `lib/features/dashboard/presentation/widgets/ai_message_section.dart`
+  - `supabase/functions/generate-ai-message/index.ts`
+  - `supabase/migrations/08_create_ai_generated_messages.sql`
+
 ## 2025-12-05
 
 - [feat] 로그인 사용자 대상 '앱 소개 다시보기' 기능 추가

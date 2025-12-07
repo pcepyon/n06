@@ -9,6 +9,7 @@ import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/daily_checkin/application/notifiers/daily_checkin_notifier.dart';
 import 'package:n06/features/daily_checkin/application/notifiers/checkin_feedback_notifier.dart';
 import 'package:n06/features/daily_checkin/domain/entities/checkin_feedback.dart';
+import 'package:n06/features/daily_checkin/domain/entities/daily_checkin.dart';
 import 'package:n06/features/daily_checkin/presentation/constants/questions.dart';
 import 'package:n06/features/daily_checkin/presentation/widgets/answer_button.dart';
 import 'package:n06/features/daily_checkin/presentation/widgets/feedback_card.dart';
@@ -19,6 +20,7 @@ import 'package:n06/features/daily_checkin/presentation/widgets/derived_question
 import 'package:n06/features/daily_checkin/presentation/widgets/red_flag_guidance_dialog.dart';
 import 'package:n06/features/daily_checkin/presentation/utils/red_flag_localizations.dart';
 import 'package:n06/features/daily_checkin/presentation/utils/feedback_l10n_mapper.dart';
+import 'package:n06/features/dashboard/application/notifiers/ai_message_notifier.dart';
 import 'package:n06/l10n/generated/app_localizations.dart';
 
 /// 데일리 체크인 화면
@@ -42,6 +44,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
   String? _lastPendingFeedback;
   bool _isRedFlagDialogShown = false; // Red Flag 다이얼로그 중복 표시 방지
   bool _isDuplicateDialogShown = false; // 중복 체크인 다이얼로그 중복 표시 방지
+  bool _isAIMessageTriggered = false; // AI 메시지 재생성 중복 방지
 
   @override
   void initState() {
@@ -508,6 +511,86 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     return 1;
   }
 
+  /// Builds a simple text summary of check-in for AI context.
+  ///
+  /// This provides the LLM with today's check-in information to generate
+  /// a more contextually relevant message.
+  String _buildCheckinSummary(DailyCheckin checkin) {
+    final parts = <String>[];
+
+    // Meal condition - switch로 명시적 변환 (enum.name 사용 시 hot reload 오류 방지)
+    parts.add('식사: ${_conditionLevelToKorean(checkin.mealCondition)}');
+
+    // Hydration
+    parts.add('수분: ${_hydrationLevelToKorean(checkin.hydrationLevel)}');
+
+    // GI comfort
+    parts.add('속 편안함: ${_giComfortLevelToKorean(checkin.giComfort)}');
+
+    // Energy
+    parts.add('에너지: ${_energyLevelToKorean(checkin.energyLevel)}');
+
+    // Mood
+    parts.add('기분: ${_moodLevelToKorean(checkin.mood)}');
+
+    return parts.join(', ');
+  }
+
+  String _conditionLevelToKorean(ConditionLevel level) {
+    switch (level) {
+      case ConditionLevel.good:
+        return '좋음';
+      case ConditionLevel.moderate:
+        return '보통';
+      case ConditionLevel.difficult:
+        return '힘듦';
+    }
+  }
+
+  String _hydrationLevelToKorean(HydrationLevel level) {
+    switch (level) {
+      case HydrationLevel.good:
+        return '충분';
+      case HydrationLevel.moderate:
+        return '보통';
+      case HydrationLevel.poor:
+        return '부족';
+    }
+  }
+
+  String _giComfortLevelToKorean(GiComfortLevel level) {
+    switch (level) {
+      case GiComfortLevel.good:
+        return '좋음';
+      case GiComfortLevel.uncomfortable:
+        return '불편';
+      case GiComfortLevel.veryUncomfortable:
+        return '많이 불편';
+    }
+  }
+
+  String _energyLevelToKorean(EnergyLevel level) {
+    switch (level) {
+      case EnergyLevel.good:
+        return '활기';
+      case EnergyLevel.normal:
+        return '보통';
+      case EnergyLevel.tired:
+        return '피곤';
+    }
+  }
+
+  String _moodLevelToKorean(MoodLevel level) {
+    switch (level) {
+      case MoodLevel.good:
+        return '좋음';
+      case MoodLevel.neutral:
+        return '보통';
+      case MoodLevel.low:
+        return '저조';
+    }
+  }
+
   Widget _buildCompletionPage(BuildContext context, DailyCheckinState state) {
     final l10n = L10n.of(context);
     final consecutiveDays = state.context?.consecutiveDays ?? 0;
@@ -534,6 +617,23 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
             redFlag: savedCheckin.redFlagDetected!,
             message: message,
           );
+        });
+      }
+
+      // AI 메시지 재생성 트리거 (Phase 5 - 체크인 완료 시)
+      // Widget Lifecycle 규칙 준수: addPostFrameCallback 사용 (BUG-20251202-153023)
+      if (!_isAIMessageTriggered) {
+        _isAIMessageTriggered = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+
+          // 체크인 데이터 요약 생성 (간단한 요약)
+          final checkinSummary = _buildCheckinSummary(savedCheckin);
+
+          // AI 메시지 재생성 호출
+          ref
+              .read(aIMessageProvider.notifier)
+              .regenerateForCheckin(checkinSummary: checkinSummary);
         });
       }
     }

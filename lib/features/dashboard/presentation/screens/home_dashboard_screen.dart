@@ -4,12 +4,10 @@ import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';
-import 'package:n06/features/dashboard/presentation/widgets/emotional_greeting_widget.dart';
-import 'package:n06/features/dashboard/presentation/widgets/encouraging_progress_widget.dart';
-import 'package:n06/features/dashboard/presentation/widgets/hopeful_schedule_widget.dart';
-import 'package:n06/features/dashboard/presentation/widgets/celebratory_report_widget.dart';
-import 'package:n06/features/dashboard/presentation/widgets/journey_timeline_widget.dart';
-import 'package:n06/features/dashboard/presentation/widgets/celebratory_badge_widget.dart';
+import 'package:n06/features/dashboard/application/notifiers/ai_message_notifier.dart';
+import 'package:n06/features/dashboard/presentation/widgets/greeting_section.dart';
+import 'package:n06/features/dashboard/presentation/widgets/status_summary_section.dart';
+import 'package:n06/features/dashboard/presentation/widgets/ai_message_section.dart';
 
 class HomeDashboardScreen extends ConsumerWidget {
   const HomeDashboardScreen({super.key});
@@ -17,6 +15,7 @@ class HomeDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboardState = ref.watch(dashboardNotifierProvider);
+    final aiMessageState = ref.watch(aIMessageProvider);
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -102,28 +101,17 @@ class HomeDashboardScreen extends ConsumerWidget {
               children: [
                 SizedBox(height: 24), // lg spacing from top
 
-                // Emotional Greeting Widget
-                EmotionalGreetingWidget(dashboardData: dashboardData),
+                // Section 1: 인사 (GreetingSection)
+                GreetingSection(dashboardData: dashboardData),
                 SizedBox(height: 24), // lg spacing between sections
 
-                // Encouraging Progress Widget
-                EncouragingProgressWidget(weeklyProgress: dashboardData.weeklyProgress),
+                // Section 2: 상태 요약 (StatusSummarySection)
+                StatusSummarySection(dashboardData: dashboardData),
                 SizedBox(height: 24),
 
-                // Hopeful Schedule Widget
-                HopefulScheduleWidget(schedule: dashboardData.nextSchedule),
-                SizedBox(height: 24),
-
-                // Celebratory Report Widget (tappable)
-                CelebratoryReportWidget(summary: dashboardData.weeklySummary),
-                SizedBox(height: 24),
-
-                // Journey Timeline Widget
-                JourneyTimelineWidget(events: dashboardData.timeline),
-                SizedBox(height: 24),
-
-                // Celebratory Badge Widget
-                CelebratoryBadgeWidget(badges: dashboardData.badges),
+                // Section 3: AI 메시지 (AIMessageSection)
+                // Phase 5: AI 메시지 상태를 watch하여 전달
+                _buildAIMessageSection(aiMessageState),
                 SizedBox(height: 24), // Bottom padding
               ],
             ),
@@ -131,6 +119,41 @@ class HomeDashboardScreen extends ConsumerWidget {
         ),
       ),
       // Note: BottomNavigationBar is provided by ScaffoldWithBottomNav wrapper
+    );
+  }
+
+  /// Builds AI message section based on notifier state.
+  ///
+  /// States:
+  /// - loading: Shows skeleton with "메시지 준비 중..."
+  /// - error: Shows last successful message (fallback from notifier) or default message
+  /// - data: Shows generated message
+  ///
+  /// Error handling strategy (per spec.md):
+  /// - AIMessageNotifier._generateNewMessage() catches errors and returns
+  ///   _repository.getLatestMessage() as fallback
+  /// - If that also fails (no previous messages), returns null
+  /// - Screen displays null as default message: "오늘도 함께해요."
+  Widget _buildAIMessageSection(AsyncValue<dynamic> aiMessageState) {
+    return aiMessageState.when(
+      loading: () => const AIMessageSection(isLoading: true),
+      error: (error, stackTrace) {
+        // On error, show default fallback message
+        // Note: The notifier already tried to return last successful message,
+        // but if that also failed, we show default message here
+        return const AIMessageSection(
+          isLoading: false,
+          message: null, // Will use default message: "오늘도 함께해요."
+        );
+      },
+      data: (aiMessage) {
+        // Show generated message if available, otherwise default message
+        final messageText = aiMessage?.message;
+        return AIMessageSection(
+          isLoading: false,
+          message: messageText,
+        );
+      },
     );
   }
 }
