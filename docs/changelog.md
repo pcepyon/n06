@@ -21,6 +21,16 @@
 
 ## 2025-12-07
 
+- [fix] AI 메시지 체크인 후 재생성 및 네비게이션 복귀 시 미표시 버그 수정
+  - **문제 1**: 데일리 체크인 완료 후 AI 메시지가 재생성되지 않음
+    - **원인**: autoDispose provider가 화면 전환 시 dispose되어 regenerateForCheckin 호출 실패
+    - **해결**: `@Riverpod(keepAlive: true)` 적용하여 provider 유지
+  - **문제 2**: 다른 페이지 갔다가 홈 버튼으로 복귀 시 메시지 영역 비어있음
+    - **원인**: AIMessageSection의 `_showMessage`가 initState에서 초기화되지 않음
+    - **해결**: initState에서 로딩 상태가 아니면 `_showMessage = true` 설정
+  - `lib/features/dashboard/application/notifiers/ai_message_notifier.dart`
+  - `lib/features/dashboard/presentation/widgets/ai_message_section.dart`
+
 - [fix] StatusSummarySection 컨디션 요약 위젯 미표시 버그 수정
   - **원인**: `authNotifierProvider`를 별도 watch하여 타이밍 이슈 발생, userId가 null이면 위젯 미렌더링
   - **해결**: `DashboardData`에 `userId` 필드 추가, 이미 검증된 userId 사용

@@ -23,7 +23,7 @@ part 'ai_message_notifier.g.dart';
 /// - Dependencies captured in build()
 /// - keepAlive + mounted checks in mutations
 /// - No ref access after async gaps
-@riverpod
+@Riverpod(keepAlive: true)
 class AIMessageNotifier extends _$AIMessageNotifier {
   // ✅ ref.watch로 인해 build()가 여러 번 호출될 수 있으므로 late (final 제거)
   late AIMessageRepository _repository;

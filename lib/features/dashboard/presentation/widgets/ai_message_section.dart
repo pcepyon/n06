@@ -27,6 +27,16 @@ class _AIMessageSectionState extends State<AIMessageSection> {
   bool _showMessage = false;
 
   @override
+  void initState() {
+    super.initState();
+    // 위젯 생성 시 로딩 상태가 아니면 메시지 바로 표시
+    // (다른 페이지에서 돌아올 때 이미 data 상태인 경우)
+    if (!widget.isLoading) {
+      _showMessage = true;
+    }
+  }
+
+  @override
   void didUpdateWidget(AIMessageSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Trigger fade-in animation when transitioning from loading to message
