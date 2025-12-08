@@ -19,6 +19,16 @@
 
 ---
 
+## 2025-12-08
+
+- [refactor] 대시보드 위젯 구조 개편 및 미사용 위젯 삭제
+  - **위젯 순서 재배치**: EmotionalGreeting → CelebratoryReport → HopefulSchedule → JourneyTimeline → AIMessage → CelebratoryBadge
+  - **삭제된 위젯** (3개):
+    - `GreetingSection` - 간소화된 인사 위젯
+    - `StatusSummarySection` - 상태 요약 위젯
+    - `EncouragingProgressWidget` - 진행률 위젯
+  - `lib/features/dashboard/presentation/screens/home_dashboard_screen.dart`
+
 ## 2025-12-07
 
 - [fix] AI 메시지 체크인 후 재생성 및 네비게이션 복귀 시 미표시 버그 수정
