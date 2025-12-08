@@ -1,8 +1,12 @@
+import 'package:n06/core/constants/badge_constants.dart';
+import 'package:n06/core/constants/weight_constants.dart';
 import 'package:n06/features/dashboard/domain/entities/user_badge.dart';
 import 'package:n06/features/tracking/domain/entities/dose_record.dart';
 
 class VerifyBadgeConditionsUseCase {
   /// 각 뱃지의 획득 조건을 검증하고 진행도를 계산합니다.
+  ///
+  /// SSOT: BadgeConstants, WeightConstants 사용
   List<UserBadge> execute({
     required List<UserBadge> currentBadges,
     required int continuousRecordDays,
@@ -16,48 +20,38 @@ class VerifyBadgeConditionsUseCase {
     for (final badge in currentBadges) {
       var updatedBadge = badge;
 
-      // 연속 7일 기록
-      if (badge.badgeId == 'streak_7') {
-        final progress = ((continuousRecordDays / 7) * 100).toInt().clamp(0, 100);
-        updatedBadge = badge.copyWith(
-          progressPercentage: progress,
-          status: continuousRecordDays >= 7 ? BadgeStatus.achieved : BadgeStatus.inProgress,
-          achievedAt: continuousRecordDays >= 7 && badge.achievedAt == null ? now : badge.achievedAt,
-          updatedAt: now,
-        );
+      // 연속 기록 뱃지 (7일, 30일)
+      for (final targetDays in BadgeConstants.streakBadgeDays) {
+        if (badge.badgeId == BadgeConstants.streakBadgeId(targetDays)) {
+          final progress = BadgeConstants.calculateStreakProgress(
+              continuousRecordDays, targetDays);
+          final isAchieved = BadgeConstants.isStreakBadgeConditionMet(
+              continuousRecordDays, targetDays);
+          updatedBadge = badge.copyWith(
+            progressPercentage: progress,
+            status: isAchieved ? BadgeStatus.achieved : BadgeStatus.inProgress,
+            achievedAt:
+                isAchieved && badge.achievedAt == null ? now : badge.achievedAt,
+            updatedAt: now,
+          );
+        }
       }
 
-      // 연속 30일 기록
-      if (badge.badgeId == 'streak_30') {
-        final progress = ((continuousRecordDays / 30) * 100).toInt().clamp(0, 100);
-        updatedBadge = badge.copyWith(
-          progressPercentage: progress,
-          status: continuousRecordDays >= 30 ? BadgeStatus.achieved : BadgeStatus.inProgress,
-          achievedAt: continuousRecordDays >= 30 && badge.achievedAt == null ? now : badge.achievedAt,
-          updatedAt: now,
-        );
-      }
-
-      // 체중 5% 감량
-      if (badge.badgeId == 'weight_5percent') {
-        final progress = ((weightLossPercentage / 5) * 100).toInt().clamp(0, 100);
-        updatedBadge = badge.copyWith(
-          progressPercentage: progress,
-          status: weightLossPercentage >= 5.0 ? BadgeStatus.achieved : BadgeStatus.inProgress,
-          achievedAt: weightLossPercentage >= 5.0 && badge.achievedAt == null ? now : badge.achievedAt,
-          updatedAt: now,
-        );
-      }
-
-      // 체중 10% 감량
-      if (badge.badgeId == 'weight_10percent') {
-        final progress = ((weightLossPercentage / 10) * 100).toInt().clamp(0, 100);
-        updatedBadge = badge.copyWith(
-          progressPercentage: progress,
-          status: weightLossPercentage >= 10.0 ? BadgeStatus.achieved : BadgeStatus.inProgress,
-          achievedAt: weightLossPercentage >= 10.0 && badge.achievedAt == null ? now : badge.achievedAt,
-          updatedAt: now,
-        );
+      // 체중 감량 뱃지 (5%, 10%)
+      for (final targetPercent in WeightConstants.weightLossMilestonePercents) {
+        if (badge.badgeId == BadgeConstants.weightLossBadgeId(targetPercent)) {
+          final progress = BadgeConstants.calculateWeightLossProgress(
+              weightLossPercentage, targetPercent);
+          final isAchieved = BadgeConstants.isWeightLossBadgeConditionMet(
+              weightLossPercentage, targetPercent);
+          updatedBadge = badge.copyWith(
+            progressPercentage: progress,
+            status: isAchieved ? BadgeStatus.achieved : BadgeStatus.inProgress,
+            achievedAt:
+                isAchieved && badge.achievedAt == null ? now : badge.achievedAt,
+            updatedAt: now,
+          );
+        }
       }
 
       // 첫 투여 완료
@@ -65,7 +59,8 @@ class VerifyBadgeConditionsUseCase {
         updatedBadge = badge.copyWith(
           progressPercentage: hasFirstDose ? 100 : 0,
           status: hasFirstDose ? BadgeStatus.achieved : BadgeStatus.locked,
-          achievedAt: hasFirstDose && badge.achievedAt == null ? now : badge.achievedAt,
+          achievedAt:
+              hasFirstDose && badge.achievedAt == null ? now : badge.achievedAt,
           updatedAt: now,
         );
       }

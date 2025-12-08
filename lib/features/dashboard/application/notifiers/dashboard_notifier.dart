@@ -1,3 +1,5 @@
+import 'package:n06/core/constants/milestone_constants.dart';
+import 'package:n06/core/constants/weight_constants.dart';
 import 'package:n06/features/dashboard/domain/entities/dashboard_data.dart';
 import 'package:n06/features/dashboard/domain/entities/dashboard_message_type.dart';
 import 'package:n06/features/dashboard/domain/entities/next_schedule.dart';
@@ -5,7 +7,6 @@ import 'package:n06/features/dashboard/domain/entities/timeline_event.dart';
 import 'package:n06/features/dashboard/domain/entities/user_badge.dart';
 import 'package:n06/features/dashboard/domain/entities/weekly_summary.dart';
 import 'package:n06/features/dashboard/domain/repositories/badge_repository.dart';
-import 'package:n06/features/dashboard/domain/usecases/calculate_continuous_record_days_usecase.dart';
 import 'package:n06/features/dashboard/domain/usecases/calculate_current_week_usecase.dart';
 import 'package:n06/features/dashboard/domain/usecases/calculate_weight_goal_estimate_usecase.dart';
 import 'package:n06/features/dashboard/domain/usecases/calculate_weekly_progress_usecase.dart';
@@ -44,7 +45,6 @@ class DashboardNotifier extends _$DashboardNotifier {
   late BadgeRepository _badgeRepository;
   late DailyCheckinRepository _dailyCheckinRepository;
 
-  final _calculateContinuousRecordDays = CalculateContinuousRecordDaysUseCase();
   final _calculateCurrentWeek = CalculateCurrentWeekUseCase();
   final _calculateWeeklyProgress = CalculateWeeklyProgressUseCase();
   final _calculateWeightGoalEstimate = CalculateWeightGoalEstimateUseCase();
@@ -111,9 +111,9 @@ class DashboardNotifier extends _$DashboardNotifier {
       DateTime.now(),
     );
 
-    // 연속 기록일 계산 (증상 로그는 빈 리스트)
-    final continuousRecordDays = _calculateContinuousRecordDays.execute(
-        weights, []);
+    // 연속 기록일 계산 - DailyCheckin SSOT 사용
+    final continuousRecordDays =
+        await _dailyCheckinRepository.getConsecutiveDays(userId);
 
     // 현재 주차 계산
     final currentWeek =
@@ -139,7 +139,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     final userBadges = await _badgeRepository.getUserBadges(userId);
     final currentWeightKg = weights.isNotEmpty
         ? weights.reduce((a, b) => a.logDate.isAfter(b.logDate) ? a : b).weightKg
-        : profile.targetWeight.value + 5;
+        : profile.targetWeight.value + WeightConstants.defaultWeightOffset;
     final startWeightKg = weights.isNotEmpty
         ? weights
             .reduce((a, b) => a.logDate.isBefore(b.logDate) ? a : b)
@@ -213,7 +213,7 @@ class DashboardNotifier extends _$DashboardNotifier {
         ? weights
             .reduce((a, b) => a.logDate.isAfter(b.logDate) ? a : b)
             .weightKg
-        : profile.targetWeight.value + 5.0;
+        : profile.targetWeight.value + WeightConstants.defaultWeightOffset;
 
     // 목표 체중 도달 예상일 계산
     final goalEstimateDate = _calculateWeightGoalEstimate.execute(
@@ -471,7 +471,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     final sortedCheckins = List<DailyCheckin>.from(checkins)
       ..sort((a, b) => a.checkinDate.compareTo(b.checkinDate));
 
-    const milestones = [3, 7, 14, 21, 30, 60, 90];
+    final milestones = MilestoneConstants.streakDays;
     final achievedMilestones = <int, DateTime>{};
 
     int consecutiveDays = 0;
@@ -543,13 +543,13 @@ class DashboardNotifier extends _$DashboardNotifier {
     }
 
     // 우선순위 2: 체중 감량 진행
-    if (weightLossPercentage >= 10.0) {
+    if (weightLossPercentage >= WeightConstants.secondMilestonePercent) {
       return InsightMessageData(
         type: DashboardMessageType.insightWeight10Percent,
       );
     }
 
-    if (weightLossPercentage >= 5.0) {
+    if (weightLossPercentage >= WeightConstants.firstMilestonePercent) {
       return InsightMessageData(
         type: DashboardMessageType.insightWeight5Percent,
       );

@@ -1,3 +1,4 @@
+import 'package:n06/core/constants/milestone_constants.dart';
 import 'package:n06/features/daily_checkin/domain/repositories/daily_checkin_repository.dart';
 import 'package:n06/features/daily_checkin/domain/entities/milestone_type.dart';
 import 'package:n06/features/daily_checkin/domain/entities/encouragement_message_type.dart';
@@ -79,7 +80,7 @@ class ConsecutiveDaysService {
       return null;
     }
 
-    final isSpecial = days >= 30;
+    final isSpecial = MilestoneConstants.isSpecialMilestone(days);
 
     return MilestoneInfo(
       days: days,
@@ -145,6 +146,6 @@ class ConsecutiveDaysService {
     );
   }
 
-  // Milestone list (sorted)
-  static const List<int> _milestones = [3, 7, 14, 21, 30, 60, 90];
+  // Milestone list from SSOT
+  static List<int> get _milestones => MilestoneConstants.streakDays;
 }

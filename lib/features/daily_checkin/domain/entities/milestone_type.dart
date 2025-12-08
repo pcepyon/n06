@@ -1,3 +1,5 @@
+import 'package:n06/core/constants/milestone_constants.dart';
+
 /// Milestone type for consecutive check-in days
 ///
 /// This enum represents different milestone achievements in the check-in streak.
@@ -15,25 +17,25 @@ enum MilestoneType {
 }
 
 /// Extension to map milestone days to MilestoneType
+///
+/// Uses MilestoneConstants.streakDays as the single source of truth.
 extension MilestoneTypeExtension on int {
+  /// 일수 → MilestoneType 매핑 테이블
+  static const _daysToType = {
+    3: MilestoneType.threeDays,
+    7: MilestoneType.sevenDays,
+    14: MilestoneType.fourteenDays,
+    21: MilestoneType.twentyOneDays,
+    30: MilestoneType.thirtyDays,
+    60: MilestoneType.sixtyDays,
+    90: MilestoneType.ninetyDays,
+  };
+
   MilestoneType? toMilestoneType() {
-    switch (this) {
-      case 3:
-        return MilestoneType.threeDays;
-      case 7:
-        return MilestoneType.sevenDays;
-      case 14:
-        return MilestoneType.fourteenDays;
-      case 21:
-        return MilestoneType.twentyOneDays;
-      case 30:
-        return MilestoneType.thirtyDays;
-      case 60:
-        return MilestoneType.sixtyDays;
-      case 90:
-        return MilestoneType.ninetyDays;
-      default:
-        return null;
+    // SSOT 검증: MilestoneConstants.streakDays에 포함된 경우에만 변환
+    if (!MilestoneConstants.isMilestone(this)) {
+      return null;
     }
+    return _daysToType[this];
   }
 }

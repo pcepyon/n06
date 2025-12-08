@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:n06/core/constants/badge_constants.dart';
+import 'package:n06/core/constants/weight_constants.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/core/extensions/l10n_extension.dart';
@@ -17,26 +19,30 @@ class _BadgeMetadata {
     required this.description,
   });
 
+  // Badge ID constants from SSOT
+  static final _streak7 =
+      BadgeConstants.streakBadgeId(BadgeConstants.streakBadgeDays[0]);
+  static final _streak30 =
+      BadgeConstants.streakBadgeId(BadgeConstants.streakBadgeDays[1]);
+  static final _weight5 =
+      BadgeConstants.weightLossBadgeId(WeightConstants.firstMilestonePercent);
+  static final _weight10 =
+      BadgeConstants.weightLossBadgeId(WeightConstants.secondMilestonePercent);
+
   static _BadgeMetadata fromBadgeId(BuildContext context, String badgeId) {
     IconData icon;
-    switch (badgeId) {
-      case 'streak_7':
-        icon = Icons.local_fire_department;
-        break;
-      case 'streak_30':
-        icon = Icons.whatshot;
-        break;
-      case 'weight_5percent':
-        icon = Icons.trending_down;
-        break;
-      case 'weight_10percent':
-        icon = Icons.scale;
-        break;
-      case 'first_dose':
-        icon = Icons.check_circle;
-        break;
-      default:
-        icon = Icons.emoji_events;
+    if (badgeId == _streak7) {
+      icon = Icons.local_fire_department;
+    } else if (badgeId == _streak30) {
+      icon = Icons.whatshot;
+    } else if (badgeId == _weight5) {
+      icon = Icons.trending_down;
+    } else if (badgeId == _weight10) {
+      icon = Icons.scale;
+    } else if (badgeId == 'first_dose') {
+      icon = Icons.check_circle;
+    } else {
+      icon = Icons.emoji_events;
     }
 
     return _BadgeMetadata(
