@@ -1108,9 +1108,9 @@
   "@dashboard_report_weight": {
     "description": "Weight report label"
   },
-  "dashboard_report_symptom": "적응기",
+  "dashboard_report_symptom": "증상",
   "@dashboard_report_symptom": {
-    "description": "Symptom report label (reframed as adaptation period)"
+    "description": "Symptom report label"
   },
   "dashboard_report_dose_value": "{count}회 투여 완료",
   "@dashboard_report_dose_value": {
@@ -1146,9 +1146,15 @@
   "@dashboard_report_symptom_none": {
     "description": "No symptom report value"
   },
-  "dashboard_report_symptom_mild": "가벼운 적응기를 잘 보냈어요",
+  "dashboard_report_symptom_mild": "{count}건의 가벼운 증상, 잘 이겨냈어요",
   "@dashboard_report_symptom_mild": {
-    "description": "Mild symptom report value (1-2 times)"
+    "description": "Mild symptom report value (1-2 times)",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
   },
   "dashboard_report_symptom_moderate": "{count}건의 증상을 잘 견뎌냈어요",
   "@dashboard_report_symptom_moderate": {
@@ -1160,9 +1166,15 @@
       }
     }
   },
-  "dashboard_report_symptom_adapting": "적응 중이에요, 잘하고 있어요!",
+  "dashboard_report_symptom_adapting": "{count}건의 증상, 잘 버티고 있어요!",
   "@dashboard_report_symptom_adapting": {
-    "description": "High symptom report value (6+ times)"
+    "description": "High symptom report value (6+ times)",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "7"
+      }
+    }
   },
   "dashboard_report_adherence": "투여 순응도",
   "@dashboard_report_adherence": {

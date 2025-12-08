@@ -21,6 +21,12 @@
 
 ## 2025-12-08
 
+- [fix] 주간 요약 증상 표시 수정 - 날짜 기준에서 개수 기준으로 변경
+  - **라벨 변경**: "적응기" → "증상" (Adaptation → Symptoms)
+  - **메시지 수정**: 모든 메시지에 실제 증상 개수(count) 표시
+  - `lib/features/dashboard/presentation/widgets/celebratory_report_widget.dart`
+  - `lib/l10n/app_ko.arb`, `lib/l10n/app_en.arb`
+
 - [fix] 성취 뱃지 위젯 '목표 확인하기' 버튼 기능 구현
   - **빈 상태 버튼**: 클릭 시 달성 가능한 7개 뱃지 목표를 바텀시트로 표시
   - **주간 요약 수정**: 증상 개수 계산 시 체크인 데이터 연결

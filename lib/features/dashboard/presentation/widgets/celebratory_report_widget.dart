@@ -54,11 +54,11 @@ class _CelebratoryReportWidgetState extends State<CelebratoryReportWidget> {
         if (count == 0) {
           return l10n.dashboard_report_symptom_none;
         } else if (count <= 2) {
-          return l10n.dashboard_report_symptom_mild;
+          return l10n.dashboard_report_symptom_mild(count);
         } else if (count <= 5) {
           return l10n.dashboard_report_symptom_moderate(count);
         } else {
-          return l10n.dashboard_report_symptom_adapting;
+          return l10n.dashboard_report_symptom_adapting(count);
         }
       case 'adherence':
         // This is not used in the current code, but keeping for compatibility

@@ -1108,9 +1108,9 @@
   "@dashboard_report_weight": {
     "description": "Weight report label"
   },
-  "dashboard_report_symptom": "Adaptation",
+  "dashboard_report_symptom": "Symptoms",
   "@dashboard_report_symptom": {
-    "description": "Symptom report label (reframed as adaptation period)"
+    "description": "Symptom report label"
   },
   "dashboard_report_dose_value": "{count} doses completed",
   "@dashboard_report_dose_value": {
@@ -1146,9 +1146,15 @@
   "@dashboard_report_symptom_none": {
     "description": "No symptom report value"
   },
-  "dashboard_report_symptom_mild": "Handled the adaptation period well",
+  "dashboard_report_symptom_mild": "Managed {count} mild symptoms well",
   "@dashboard_report_symptom_mild": {
-    "description": "Mild symptom report value (1-2 times)"
+    "description": "Mild symptom report value (1-2 times)",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
   },
   "dashboard_report_symptom_moderate": "Managed {count} symptoms well",
   "@dashboard_report_symptom_moderate": {
@@ -1160,9 +1166,15 @@
       }
     }
   },
-  "dashboard_report_symptom_adapting": "Adapting well, you're doing great!",
+  "dashboard_report_symptom_adapting": "Managed {count} symptoms, keep going!",
   "@dashboard_report_symptom_adapting": {
-    "description": "High symptom report value (6+ times)"
+    "description": "High symptom report value (6+ times)",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "7"
+      }
+    }
   },
   "dashboard_report_adherence": "Dose Adherence",
   "@dashboard_report_adherence": {
