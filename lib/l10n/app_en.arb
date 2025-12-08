@@ -1088,6 +1088,14 @@
   "@dashboard_badge_empty_button": {
     "description": "Empty badge state button"
   },
+  "dashboard_badge_goals_title": "Available Badges",
+  "@dashboard_badge_goals_title": {
+    "description": "Badge goals bottom sheet title"
+  },
+  "dashboard_badge_goals_subtitle": "Achieve these goals to earn badges",
+  "@dashboard_badge_goals_subtitle": {
+    "description": "Badge goals bottom sheet subtitle"
+  },
   "dashboard_report_title": "Last Week Summary",
   "@dashboard_report_title": {
     "description": "Weekly report section title"

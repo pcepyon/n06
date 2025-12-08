@@ -133,7 +133,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     final nextSchedule = _calculateNextSchedule(activePlan, weights, profile, doseRecords);
 
     // 주간 요약
-    final weeklySummary = _calculateWeeklySummary(weights, [], doseRecords, activePlan);
+    final weeklySummary = _calculateWeeklySummary(weights, checkins, doseRecords, activePlan);
 
     // 뱃지 조회 및 검증
     final userBadges = await _badgeRepository.getUserBadges(userId);
@@ -240,7 +240,7 @@ class DashboardNotifier extends _$DashboardNotifier {
 
   WeeklySummary _calculateWeeklySummary(
     List<WeightLog> weights,
-    List<dynamic> symptoms,
+    List<DailyCheckin> checkins,
     List<DoseRecord> doseRecords,
     onboarding_dosage_plan.DosagePlan activePlan,
   ) {
@@ -257,10 +257,17 @@ class DashboardNotifier extends _$DashboardNotifier {
         ? recentWeights.last.weightKg - recentWeights.first.weightKg
         : 0.0;
 
-    // 지난 7일간 증상 개수
-    final symptomCount = symptoms
-        .where((s) => s.logDate.isAfter(sevenDaysAgo))
-        .length;
+    // 지난 7일간 증상 개수 (체크인의 symptomDetails에서 추출)
+    final recentCheckins = checkins
+        .where((c) => c.checkinDate.isAfter(sevenDaysAgo))
+        .toList();
+
+    int symptomCount = 0;
+    for (final checkin in recentCheckins) {
+      if (checkin.symptomDetails != null) {
+        symptomCount += checkin.symptomDetails!.length;
+      }
+    }
 
     // 지난 7일간 투여 기록 개수
     final recentDoseRecords = doseRecords

@@ -403,6 +403,137 @@ class _DashedBorderPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+/// Show all available badge goals in a bottom sheet
+void _showAllBadgeGoals(BuildContext context) {
+  final allBadgeIds = [
+    BadgeConstants.firstDoseBadgeId,
+    BadgeConstants.streakBadgeId(BadgeConstants.streakBadgeDays[0]),
+    BadgeConstants.streakBadgeId(BadgeConstants.streakBadgeDays[1]),
+    BadgeConstants.weightProgressBadgeId(BadgeConstants.weightProgressBadgePercents[0]),
+    BadgeConstants.weightProgressBadgeId(BadgeConstants.weightProgressBadgePercents[1]),
+    BadgeConstants.weightProgressBadgeId(BadgeConstants.weightProgressBadgePercents[2]),
+    BadgeConstants.weightProgressBadgeId(BadgeConstants.weightProgressBadgePercents[3]),
+  ];
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (context) {
+      return DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) {
+          return Container(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.neutral300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  context.l10n.dashboard_badge_goals_title,
+                  style: AppTypography.heading2,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  context.l10n.dashboard_badge_goals_subtitle,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Expanded(
+                  child: ListView.separated(
+                    controller: scrollController,
+                    itemCount: allBadgeIds.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 16),
+                    itemBuilder: (context, index) {
+                      final badgeId = allBadgeIds[index];
+                      final metadata = _BadgeMetadata.fromBadgeId(context, badgeId);
+                      return _BadgeGoalItem(metadata: metadata);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+/// Badge goal item for the goals list
+class _BadgeGoalItem extends StatelessWidget {
+  final _BadgeMetadata metadata;
+
+  const _BadgeGoalItem({required this.metadata});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.primary.withValues(alpha: 0.1),
+            ),
+            child: Icon(
+              metadata.icon,
+              size: 24,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  metadata.name,
+                  style: AppTypography.labelLarge.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  metadata.description,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Empty state with encouraging message (Headspace style)
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
@@ -446,9 +577,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {
-                // Navigate to achievements screen or show goal list
-              },
+              onPressed: () => _showAllBadgeGoals(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.surface,

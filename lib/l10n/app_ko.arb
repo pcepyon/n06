@@ -1088,6 +1088,14 @@
   "@dashboard_badge_empty_button": {
     "description": "Empty badge state button"
   },
+  "dashboard_badge_goals_title": "달성 가능한 뱃지",
+  "@dashboard_badge_goals_title": {
+    "description": "Badge goals bottom sheet title"
+  },
+  "dashboard_badge_goals_subtitle": "아래 목표를 달성하면 뱃지를 받을 수 있어요",
+  "@dashboard_badge_goals_subtitle": {
+    "description": "Badge goals bottom sheet subtitle"
+  },
   "dashboard_report_title": "지난주 요약",
   "@dashboard_report_title": {
     "description": "Weekly report section title"

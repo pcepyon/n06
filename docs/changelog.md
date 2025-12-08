@@ -21,6 +21,12 @@
 
 ## 2025-12-08
 
+- [fix] 성취 뱃지 위젯 '목표 확인하기' 버튼 기능 구현
+  - **빈 상태 버튼**: 클릭 시 달성 가능한 7개 뱃지 목표를 바텀시트로 표시
+  - **주간 요약 수정**: 증상 개수 계산 시 체크인 데이터 연결
+  - `lib/features/dashboard/presentation/widgets/celebratory_badge_widget.dart`
+  - `lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
+
 - [fix] 대시보드 위젯 로직 검증 및 SSOT 통합 수정
   - **뱃지 시스템**: badge_definitions 시드 데이터 추가, first_dose 상수 SSOT 이동
   - **체중 마일스톤**: 절대 감량률(5%,10%) → 목표 진행률(25%,50%,75%,100%)로 단순화
