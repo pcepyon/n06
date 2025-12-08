@@ -92,9 +92,18 @@ class LLMContextBuilder {
       dosagePlan.userId,
     );
 
-    // Calculate days since escalation
+    // Calculate days since escalation (날짜만 비교, 시간 제외)
     final daysSinceEscalation = latestEscalationDate != null
-        ? DateTime.now().difference(latestEscalationDate).inDays
+        ? (() {
+            final now = DateTime.now();
+            final nowDate = DateTime(now.year, now.month, now.day);
+            final escalationDate = DateTime(
+              latestEscalationDate.year,
+              latestEscalationDate.month,
+              latestEscalationDate.day,
+            );
+            return nowDate.difference(escalationDate).inDays;
+          })()
         : null;
 
     // Calculate days until next escalation

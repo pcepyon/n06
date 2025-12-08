@@ -133,7 +133,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     final nextSchedule = _calculateNextSchedule(activePlan, weights, profile, doseRecords);
 
     // 주간 요약
-    final weeklySummary = _calculateWeeklySummary(weights, [], doseRecords);
+    final weeklySummary = _calculateWeeklySummary(weights, [], doseRecords, activePlan);
 
     // 뱃지 조회 및 검증
     final userBadges = await _badgeRepository.getUserBadges(userId);
@@ -145,14 +145,18 @@ class DashboardNotifier extends _$DashboardNotifier {
             .reduce((a, b) => a.logDate.isBefore(b.logDate) ? a : b)
             .weightKg
         : currentWeightKg;
-    final weightLossPercentage = startWeightKg > 0
-        ? ((startWeightKg - currentWeightKg) / startWeightKg) * 100
-        : 0.0;
+
+    // 목표 체중까지의 진행률 계산 (0-100%)
+    final weightProgressPercentage = WeightConstants.calculateProgressToGoal(
+      currentWeight: currentWeightKg,
+      startWeight: startWeightKg,
+      targetWeight: profile.targetWeight.value,
+    );
 
     final updatedBadges = _verifyBadgeConditions.execute(
       currentBadges: userBadges,
       continuousRecordDays: continuousRecordDays,
-      weightLossPercentage: weightLossPercentage,
+      weightProgressPercentage: weightProgressPercentage,
       hasFirstDose: doseRecords.isNotEmpty,
       allDoseRecords: doseRecords,
     );
@@ -179,7 +183,7 @@ class DashboardNotifier extends _$DashboardNotifier {
       timeline: timeline,
       insightMessageData: _generateInsightMessageData(
         continuousRecordDays,
-        weightLossPercentage,
+        weightProgressPercentage,
         weeklyProgress,
       ),
     );
@@ -238,6 +242,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     List<WeightLog> weights,
     List<dynamic> symptoms,
     List<DoseRecord> doseRecords,
+    onboarding_dosage_plan.DosagePlan activePlan,
   ) {
     final now = DateTime.now();
     final sevenDaysAgo = now.subtract(Duration(days: 7));
@@ -262,8 +267,22 @@ class DashboardNotifier extends _$DashboardNotifier {
         .where((d) => d.administeredAt.isAfter(sevenDaysAgo))
         .toList();
 
-    // 순응도 계산 (임시: 기록이 있으면 85%, 없으면 0%)
-    final adherencePercentage = recentDoseRecords.isNotEmpty ? 85.0 : 0.0;
+    // 순응도 계산
+    // 주간 예상 투여 횟수 = 7일 / 투여 주기
+    // 예: cycleDays=7 → 주 1회, cycleDays=3 → 주 2-3회
+    final daysInWeek = 7;
+    final expectedDosesPerWeek = activePlan.cycleDays > 0
+        ? (daysInWeek / activePlan.cycleDays).ceil()
+        : 1;
+
+    // 실제 투여 횟수
+    final actualDoses = recentDoseRecords.length;
+
+    // 순응도 = (실제 투여 횟수 / 예상 투여 횟수) * 100
+    // 0-100% 범위로 클램핑
+    final adherencePercentage = expectedDosesPerWeek > 0
+        ? (actualDoses / expectedDosesPerWeek * 100).clamp(0.0, 100.0)
+        : 0.0;
 
     return WeeklySummary(
       doseCompletedCount: recentDoseRecords.length,
@@ -325,7 +344,8 @@ class DashboardNotifier extends _$DashboardNotifier {
       final totalLossNeeded = startWeight - targetWeight;
 
       if (totalLossNeeded > 0) {
-        for (final milestone in [0.25, 0.50, 0.75, 1.0]) {
+        for (final milestonePercent in WeightConstants.weightProgressMilestones) {
+          final milestone = milestonePercent / 100.0;
           final targetLoss = totalLossNeeded * milestone;
           final milestoneWeight = startWeight - targetLoss;
 
@@ -342,11 +362,11 @@ class DashboardNotifier extends _$DashboardNotifier {
           if (firstLogBelowMilestone != null) {
             events.add(
               TimelineEvent(
-                id: 'milestone_${(milestone * 100).toInt()}',
+                id: 'milestone_$milestonePercent',
                 dateTime: firstLogBelowMilestone.logDate,
                 eventType: TimelineEventType.weightMilestone,
                 titleMessageType: DashboardMessageType.timelineWeightMilestone,
-                milestonePercent: (milestone * 100).toInt(),
+                milestonePercent: milestonePercent,
                 weightKg: firstLogBelowMilestone.weightKg.toStringAsFixed(1),
               ),
             );
@@ -525,7 +545,7 @@ class DashboardNotifier extends _$DashboardNotifier {
 
   InsightMessageData? _generateInsightMessageData(
     int continuousRecordDays,
-    double weightLossPercentage,
+    double weightProgressPercentage,
     dynamic weeklyProgress,
   ) {
     // 우선순위 1: 연속 기록일 달성
@@ -542,22 +562,28 @@ class DashboardNotifier extends _$DashboardNotifier {
       );
     }
 
-    // 우선순위 2: 체중 감량 진행
-    if (weightLossPercentage >= WeightConstants.secondMilestonePercent) {
+    // 우선순위 2: 목표 체중 진행률
+    if (weightProgressPercentage >= 100) {
       return InsightMessageData(
-        type: DashboardMessageType.insightWeight10Percent,
+        type: DashboardMessageType.insightWeightGoalReached,
       );
     }
 
-    if (weightLossPercentage >= WeightConstants.firstMilestonePercent) {
+    if (weightProgressPercentage >= 75) {
       return InsightMessageData(
-        type: DashboardMessageType.insightWeight5Percent,
+        type: DashboardMessageType.insightWeight75Percent,
       );
     }
 
-    if (weightLossPercentage >= 1.0) {
+    if (weightProgressPercentage >= 50) {
       return InsightMessageData(
-        type: DashboardMessageType.insightWeight1Percent,
+        type: DashboardMessageType.insightWeight50Percent,
+      );
+    }
+
+    if (weightProgressPercentage >= 25) {
+      return InsightMessageData(
+        type: DashboardMessageType.insightWeight25Percent,
       );
     }
 

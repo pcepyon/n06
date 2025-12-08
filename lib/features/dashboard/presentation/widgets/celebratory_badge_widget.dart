@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:n06/core/constants/badge_constants.dart';
-import 'package:n06/core/constants/weight_constants.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/core/extensions/l10n_extension.dart';
@@ -24,10 +23,14 @@ class _BadgeMetadata {
       BadgeConstants.streakBadgeId(BadgeConstants.streakBadgeDays[0]);
   static final _streak30 =
       BadgeConstants.streakBadgeId(BadgeConstants.streakBadgeDays[1]);
-  static final _weight5 =
-      BadgeConstants.weightLossBadgeId(WeightConstants.firstMilestonePercent);
-  static final _weight10 =
-      BadgeConstants.weightLossBadgeId(WeightConstants.secondMilestonePercent);
+  static final _weight25 =
+      BadgeConstants.weightProgressBadgeId(BadgeConstants.weightProgressBadgePercents[0]);
+  static final _weight50 =
+      BadgeConstants.weightProgressBadgeId(BadgeConstants.weightProgressBadgePercents[1]);
+  static final _weight75 =
+      BadgeConstants.weightProgressBadgeId(BadgeConstants.weightProgressBadgePercents[2]);
+  static final _weight100 =
+      BadgeConstants.weightProgressBadgeId(BadgeConstants.weightProgressBadgePercents[3]);
 
   static _BadgeMetadata fromBadgeId(BuildContext context, String badgeId) {
     IconData icon;
@@ -35,11 +38,15 @@ class _BadgeMetadata {
       icon = Icons.local_fire_department;
     } else if (badgeId == _streak30) {
       icon = Icons.whatshot;
-    } else if (badgeId == _weight5) {
+    } else if (badgeId == _weight25) {
       icon = Icons.trending_down;
-    } else if (badgeId == _weight10) {
+    } else if (badgeId == _weight50) {
+      icon = Icons.show_chart;
+    } else if (badgeId == _weight75) {
+      icon = Icons.trending_down;
+    } else if (badgeId == _weight100) {
       icon = Icons.scale;
-    } else if (badgeId == 'first_dose') {
+    } else if (badgeId == BadgeConstants.firstDoseBadgeId) {
       icon = Icons.check_circle;
     } else {
       icon = Icons.emoji_events;

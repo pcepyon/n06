@@ -37,12 +37,14 @@ extension DashboardMessageTypeExtension on DashboardMessageType {
         return l10n.dashboard_insight30DaysStreak;
       case DashboardMessageType.insightWeeklyStreak:
         return l10n.dashboard_insightWeeklyStreakWithDays(0); // Default, use toLocalizedString on InsightMessageData for actual value
-      case DashboardMessageType.insightWeight10Percent:
-        return l10n.dashboard_insightWeight10Percent;
-      case DashboardMessageType.insightWeight5Percent:
-        return l10n.dashboard_insightWeight5Percent;
-      case DashboardMessageType.insightWeight1Percent:
-        return l10n.dashboard_insightWeight1Percent;
+      case DashboardMessageType.insightWeightGoalReached:
+        return l10n.dashboard_insightWeightGoalReached;
+      case DashboardMessageType.insightWeight75Percent:
+        return l10n.dashboard_insightWeight75Percent;
+      case DashboardMessageType.insightWeight50Percent:
+        return l10n.dashboard_insightWeight50Percent;
+      case DashboardMessageType.insightWeight25Percent:
+        return l10n.dashboard_insightWeight25Percent;
       case DashboardMessageType.insightKeepRecording:
         return l10n.dashboard_insightKeepRecordingWithDays(0); // Default, use toLocalizedString on InsightMessageData for actual value
       case DashboardMessageType.insightFirstRecord:

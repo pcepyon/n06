@@ -70,10 +70,12 @@ class DoseRecord extends Equatable {
     }
   }
 
-  /// Calculate days since administration
+  /// Calculate days since administration (날짜만 비교, 시간 제외)
   int daysSinceAdministration() {
     final now = DateTime.now();
-    return now.difference(administeredAt).inDays;
+    final nowDate = DateTime(now.year, now.month, now.day);
+    final doseDate = DateTime(administeredAt.year, administeredAt.month, administeredAt.day);
+    return nowDate.difference(doseDate).inDays;
   }
 
   @override

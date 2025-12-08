@@ -368,9 +368,18 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     // 연속 일수 계산
     final consecutiveDays = await _repository.getConsecutiveDays(userId);
 
-    // 마지막 체크인 이후 일수
+    // 마지막 체크인 이후 일수 (날짜만 비교, 시간 제외)
     final daysSinceLastCheckin = latestCheckin != null
-        ? DateTime.now().difference(latestCheckin.checkinDate).inDays
+        ? (() {
+            final now = DateTime.now();
+            final nowDate = DateTime(now.year, now.month, now.day);
+            final checkinDate = DateTime(
+              latestCheckin.checkinDate.year,
+              latestCheckin.checkinDate.month,
+              latestCheckin.checkinDate.day,
+            );
+            return nowDate.difference(checkinDate).inDays;
+          })()
         : 999;
 
     // 주사 다음날 여부 확인

@@ -21,6 +21,17 @@
 
 ## 2025-12-08
 
+- [fix] 대시보드 위젯 로직 검증 및 SSOT 통합 수정
+  - **뱃지 시스템**: badge_definitions 시드 데이터 추가, first_dose 상수 SSOT 이동
+  - **체중 마일스톤**: 절대 감량률(5%,10%) → 목표 진행률(25%,50%,75%,100%)로 단순화
+  - **순응도 계산**: 하드코딩 85% → 실제 계산 (실제투여/예상투여*100)
+  - **날짜 계산**: 6개 파일에서 시간 제외, 날짜만 비교하도록 수정
+  - `supabase/migrations/09_seed_badge_definitions.sql` (신규)
+  - `lib/core/constants/badge_constants.dart`
+  - `lib/core/constants/weight_constants.dart`
+  - `lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
+  - `lib/features/tracking/domain/entities/dose_record.dart`
+
 - [feat] 치료 여정 위젯 높이 제한 및 상세 화면 추가
   - **대시보드**: 최근 4개 이벤트만 표시, "N개 더보기" 버튼 추가
   - **상세 화면**: `/journey-detail` 경로로 전체 타임라인 확인 가능

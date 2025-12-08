@@ -1028,21 +1028,37 @@
   "@dashboard_badge_streak30_description": {
     "description": "Badge description for 30-day streak"
   },
-  "dashboard_badge_weight5percent_name": "5% 감량",
-  "@dashboard_badge_weight5percent_name": {
-    "description": "Badge name for 5% weight loss"
+  "dashboard_badge_weightProgress25_name": "25% 목표 달성",
+  "@dashboard_badge_weightProgress25_name": {
+    "description": "Badge name for 25% progress to goal weight"
   },
-  "dashboard_badge_weight5percent_description": "체중 5% 감량을 달성했습니다!",
-  "@dashboard_badge_weight5percent_description": {
-    "description": "Badge description for 5% weight loss"
+  "dashboard_badge_weightProgress25_description": "목표 체중까지 25% 달성했어요!",
+  "@dashboard_badge_weightProgress25_description": {
+    "description": "Badge description for 25% progress to goal weight"
   },
-  "dashboard_badge_weight10percent_name": "10% 감량",
-  "@dashboard_badge_weight10percent_name": {
-    "description": "Badge name for 10% weight loss"
+  "dashboard_badge_weightProgress50_name": "50% 목표 달성",
+  "@dashboard_badge_weightProgress50_name": {
+    "description": "Badge name for 50% progress to goal weight"
   },
-  "dashboard_badge_weight10percent_description": "체중 10% 감량을 달성했습니다!",
-  "@dashboard_badge_weight10percent_description": {
-    "description": "Badge description for 10% weight loss"
+  "dashboard_badge_weightProgress50_description": "목표 체중까지 50% 달성했어요!",
+  "@dashboard_badge_weightProgress50_description": {
+    "description": "Badge description for 50% progress to goal weight"
+  },
+  "dashboard_badge_weightProgress75_name": "75% 목표 달성",
+  "@dashboard_badge_weightProgress75_name": {
+    "description": "Badge name for 75% progress to goal weight"
+  },
+  "dashboard_badge_weightProgress75_description": "목표 체중까지 75% 달성했어요!",
+  "@dashboard_badge_weightProgress75_description": {
+    "description": "Badge description for 75% progress to goal weight"
+  },
+  "dashboard_badge_weightProgress100_name": "목표 달성!",
+  "@dashboard_badge_weightProgress100_name": {
+    "description": "Badge name for reaching goal weight (100%)"
+  },
+  "dashboard_badge_weightProgress100_description": "목표 체중을 달성했어요! 축하합니다!",
+  "@dashboard_badge_weightProgress100_description": {
+    "description": "Badge description for reaching goal weight (100%)"
   },
   "dashboard_badge_firstDose_name": "첫 투여",
   "@dashboard_badge_firstDose_name": {
@@ -6015,17 +6031,21 @@
       }
     }
   },
-  "dashboard_insightWeight10Percent": "놀라운 진전이에요! 목표의 10%를 달성했습니다. 계속 응원할게요!",
-  "@dashboard_insightWeight10Percent": {
-    "description": "Insight message for 10% weight loss achievement"
+  "dashboard_insightWeightGoalReached": "축하합니다! 목표 체중을 달성했습니다! 이제 건강하게 유지하세요!",
+  "@dashboard_insightWeightGoalReached": {
+    "description": "Insight message for reaching goal weight (100%)"
   },
-  "dashboard_insightWeight5Percent": "훌륭해요! 이미 목표의 5%에 도달했어요. 현재 추세라면 목표 달성 가능해요!",
-  "@dashboard_insightWeight5Percent": {
-    "description": "Insight message for 5% weight loss achievement"
+  "dashboard_insightWeight75Percent": "거의 다 왔어요! 목표까지 75%를 달성했습니다. 조금만 더 힘내세요!",
+  "@dashboard_insightWeight75Percent": {
+    "description": "Insight message for 75% progress to goal weight"
   },
-  "dashboard_insightWeight1Percent": "좋은 시작이에요! 이미 첫 감량 목표를 달성했습니다. 계속 유지하세요!",
-  "@dashboard_insightWeight1Percent": {
-    "description": "Insight message for 1% weight loss achievement"
+  "dashboard_insightWeight50Percent": "절반을 넘었어요! 목표까지 50%를 달성했습니다. 계속 응원할게요!",
+  "@dashboard_insightWeight50Percent": {
+    "description": "Insight message for 50% progress to goal weight"
+  },
+  "dashboard_insightWeight25Percent": "좋은 시작이에요! 목표까지 25%를 달성했습니다. 계속 유지하세요!",
+  "@dashboard_insightWeight25Percent": {
+    "description": "Insight message for 25% progress to goal weight"
   },
   "dashboard_insightKeepRecording": "{days}일 동안 꾸준히 기록해주셨어요. 오늘도 계속해주세요!",
   "@dashboard_insightKeepRecording": {

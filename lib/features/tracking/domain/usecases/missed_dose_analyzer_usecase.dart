@@ -41,6 +41,7 @@ class MissedDoseAnalyzerUseCase {
   ) {
     final completedScheduleIds = _getCompletedScheduleIds(records);
     final now = DateTime.now();
+    final nowDate = DateTime(now.year, now.month, now.day);
     final missedDoses = <MissedDose>[];
     bool hasLongMissed = false;
     int maxDaysElapsed = 0;
@@ -53,7 +54,13 @@ class MissedDoseAnalyzerUseCase {
 
       // Check if this schedule has a corresponding record
       if (!completedScheduleIds.contains(schedule.id)) {
-        final daysElapsed = now.difference(schedule.scheduledDate).inDays;
+        // 날짜만 비교, 시간 제외
+        final scheduleDate = DateTime(
+          schedule.scheduledDate.year,
+          schedule.scheduledDate.month,
+          schedule.scheduledDate.day,
+        );
+        final daysElapsed = nowDate.difference(scheduleDate).inDays;
         final message = _generateMissedDoseMessage(daysElapsed);
 
         missedDoses.add(MissedDose(

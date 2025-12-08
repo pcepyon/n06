@@ -8,20 +8,23 @@ abstract final class WeightConstants {
   /// 체중 기록이 없을 때 currentWeight = targetWeight + defaultWeightOffset
   static const double defaultWeightOffset = 5.0;
 
-  /// 체중 감량 마일스톤 퍼센트 목록
+  /// 목표 체중까지 진행률 마일스톤 (%)
   ///
-  /// 목표 체중 대비 감량 진행률 마일스톤
-  static const List<double> weightLossMilestonePercents = [5.0, 10.0];
+  /// 시작 체중에서 목표 체중까지의 진행도를 나타내는 마일스톤
+  /// 예: 25% = 목표까지 25% 진행, 100% = 목표 달성
+  static const List<int> weightProgressMilestones = [25, 50, 75, 100];
 
-  /// 첫 번째 마일스톤 (5% 감량)
-  static const double firstMilestonePercent = 5.0;
-
-  /// 두 번째 마일스톤 (10% 감량)
-  static const double secondMilestonePercent = 10.0;
-
-  /// 체중 마일스톤 달성 여부 확인
-  static bool isMilestoneAchieved(
-      double weightLossPercent, double milestonePercent) {
-    return weightLossPercent >= milestonePercent;
+  /// 목표 체중 진행률 계산
+  ///
+  /// 반환값: 0-100 (%)
+  static double calculateProgressToGoal({
+    required double currentWeight,
+    required double startWeight,
+    required double targetWeight,
+  }) {
+    if (startWeight <= targetWeight) return 0.0;
+    final totalLoss = startWeight - targetWeight;
+    final currentLoss = startWeight - currentWeight;
+    return ((currentLoss / totalLoss) * 100).clamp(0.0, 100.0);
   }
 }

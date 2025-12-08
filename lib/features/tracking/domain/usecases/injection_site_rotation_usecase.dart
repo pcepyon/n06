@@ -40,8 +40,15 @@ class InjectionSiteRotationUseCase {
       );
     }
 
+    // 날짜만 비교, 시간 제외
     final now = DateTime.now();
-    final daysSince = now.difference(lastSameSiteRecord.administeredAt).inDays;
+    final nowDate = DateTime(now.year, now.month, now.day);
+    final lastUsedDate = DateTime(
+      lastSameSiteRecord.administeredAt.year,
+      lastSameSiteRecord.administeredAt.month,
+      lastSameSiteRecord.administeredAt.day,
+    );
+    final daysSince = nowDate.difference(lastUsedDate).inDays;
 
     if (daysSince < minimumDaysInterval) {
       return RotationCheckResult(
@@ -62,6 +69,7 @@ class InjectionSiteRotationUseCase {
   /// Get site usage history for visualization (last 30 days)
   List<Map<String, dynamic>> getSiteHistory(List<DoseRecord> records) {
     final now = DateTime.now();
+    final nowDate = DateTime(now.year, now.month, now.day);
     final thirtyDaysAgo = now.subtract(Duration(days: historyDays));
 
     final recentRecords = records
@@ -72,10 +80,15 @@ class InjectionSiteRotationUseCase {
     final history = <Map<String, dynamic>>[];
 
     for (final record in recentRecords) {
+      final recordDate = DateTime(
+        record.administeredAt.year,
+        record.administeredAt.month,
+        record.administeredAt.day,
+      );
       history.add({
         'site': record.injectionSite,
         'date': record.administeredAt,
-        'daysAgo': now.difference(record.administeredAt).inDays,
+        'daysAgo': nowDate.difference(recordDate).inDays,
       });
     }
 

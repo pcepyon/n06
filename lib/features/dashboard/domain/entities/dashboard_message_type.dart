@@ -46,14 +46,17 @@ enum DashboardMessageType {
   /// 인사이트: 7일 이상 연속 기록
   insightWeeklyStreak,
 
-  /// 인사이트: 체중 감량 10% 달성
-  insightWeight10Percent,
+  /// 인사이트: 목표 체중 달성 (100%)
+  insightWeightGoalReached,
 
-  /// 인사이트: 체중 감량 5% 달성
-  insightWeight5Percent,
+  /// 인사이트: 목표 체중까지 75% 진행
+  insightWeight75Percent,
 
-  /// 인사이트: 체중 감량 1% 달성
-  insightWeight1Percent,
+  /// 인사이트: 목표 체중까지 50% 진행
+  insightWeight50Percent,
+
+  /// 인사이트: 목표 체중까지 25% 진행
+  insightWeight25Percent,
 
   /// 인사이트: 기록 지속 격려
   insightKeepRecording,
