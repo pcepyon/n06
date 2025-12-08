@@ -1012,19 +1012,19 @@
   "@dashboard_badge_title": {
     "description": "Badge section title"
   },
-  "dashboard_badge_streak7_name": "7일 연속",
+  "dashboard_badge_streak7_name": "7일 연속 기록",
   "@dashboard_badge_streak7_name": {
     "description": "Badge name for 7-day streak"
   },
-  "dashboard_badge_streak7_description": "7일 연속으로 투여를 완료했습니다!",
+  "dashboard_badge_streak7_description": "7일 연속으로 기록했어요!",
   "@dashboard_badge_streak7_description": {
     "description": "Badge description for 7-day streak"
   },
-  "dashboard_badge_streak30_name": "30일 연속",
+  "dashboard_badge_streak30_name": "30일 연속 기록",
   "@dashboard_badge_streak30_name": {
     "description": "Badge name for 30-day streak"
   },
-  "dashboard_badge_streak30_description": "30일 연속으로 투여를 완료했습니다!",
+  "dashboard_badge_streak30_description": "30일 연속으로 기록했어요!",
   "@dashboard_badge_streak30_description": {
     "description": "Badge description for 30-day streak"
   },

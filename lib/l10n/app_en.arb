@@ -1016,7 +1016,7 @@
   "@dashboard_badge_streak7_name": {
     "description": "Badge name for 7-day streak"
   },
-  "dashboard_badge_streak7_description": "Completed doses for 7 consecutive days!",
+  "dashboard_badge_streak7_description": "Logged for 7 consecutive days!",
   "@dashboard_badge_streak7_description": {
     "description": "Badge description for 7-day streak"
   },
@@ -1024,7 +1024,7 @@
   "@dashboard_badge_streak30_name": {
     "description": "Badge name for 30-day streak"
   },
-  "dashboard_badge_streak30_description": "Completed doses for 30 consecutive days!",
+  "dashboard_badge_streak30_description": "Logged for 30 consecutive days!",
   "@dashboard_badge_streak30_description": {
     "description": "Badge description for 30-day streak"
   },
