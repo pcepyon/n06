@@ -2,6 +2,7 @@ import 'package:n06/features/dashboard/domain/entities/dashboard_data.dart';
 import 'package:n06/features/dashboard/domain/entities/dashboard_message_type.dart';
 import 'package:n06/features/dashboard/domain/entities/next_schedule.dart';
 import 'package:n06/features/dashboard/domain/entities/timeline_event.dart';
+import 'package:n06/features/dashboard/domain/entities/user_badge.dart';
 import 'package:n06/features/dashboard/domain/entities/weekly_summary.dart';
 import 'package:n06/features/dashboard/domain/repositories/badge_repository.dart';
 import 'package:n06/features/dashboard/domain/usecases/calculate_continuous_record_days_usecase.dart';
@@ -9,6 +10,10 @@ import 'package:n06/features/dashboard/domain/usecases/calculate_current_week_us
 import 'package:n06/features/dashboard/domain/usecases/calculate_weight_goal_estimate_usecase.dart';
 import 'package:n06/features/dashboard/domain/usecases/calculate_weekly_progress_usecase.dart';
 import 'package:n06/features/dashboard/domain/usecases/verify_badge_conditions_usecase.dart';
+import 'package:n06/features/daily_checkin/domain/entities/daily_checkin.dart';
+import 'package:n06/features/daily_checkin/domain/repositories/daily_checkin_repository.dart';
+import 'package:n06/features/daily_checkin/application/providers.dart'
+    as checkin_providers;
 import 'package:n06/features/onboarding/domain/entities/user_profile.dart';
 import 'package:n06/features/onboarding/domain/repositories/profile_repository.dart';
 import 'package:n06/features/onboarding/domain/repositories/medication_repository.dart'
@@ -37,6 +42,7 @@ class DashboardNotifier extends _$DashboardNotifier {
   late onboarding_medication_repo.MedicationRepository _medicationRepository;
   late tracking_medication_repo.MedicationRepository _trackingMedicationRepository;
   late BadgeRepository _badgeRepository;
+  late DailyCheckinRepository _dailyCheckinRepository;
 
   final _calculateContinuousRecordDays = CalculateContinuousRecordDaysUseCase();
   final _calculateCurrentWeek = CalculateCurrentWeekUseCase();
@@ -62,6 +68,8 @@ class DashboardNotifier extends _$DashboardNotifier {
     _trackingMedicationRepository =
         ref.watch(tracking_providers.medicationRepositoryProvider);
     _badgeRepository = ref.watch(badgeRepositoryProvider);
+    _dailyCheckinRepository =
+        ref.watch(checkin_providers.dailyCheckinRepositoryProvider);
 
     return _loadDashboardData(userId);
   }
@@ -92,9 +100,16 @@ class DashboardNotifier extends _$DashboardNotifier {
       throw Exception(DashboardMessageType.errorActivePlanNotFound.toString());
     }
 
-    // 체중 기록, 투여 기록 조회
+    // 체중 기록, 투여 기록, 체크인 기록 조회
     final weights = await _trackingRepository.getWeightLogs(userId);
     final doseRecords = await _trackingMedicationRepository.getDoseRecords(activePlan.id);
+
+    // 체크인 기록 조회 (타임라인용)
+    final checkins = await _dailyCheckinRepository.getByDateRange(
+      userId,
+      DateTime(2024, 1, 1),
+      DateTime.now(),
+    );
 
     // 연속 기록일 계산 (증상 로그는 빈 리스트)
     final continuousRecordDays = _calculateContinuousRecordDays.execute(
@@ -143,7 +158,14 @@ class DashboardNotifier extends _$DashboardNotifier {
     );
 
     // 타임라인 생성
-    final timeline = _buildTimeline(activePlan, profile, weights);
+    final timeline = _buildTimeline(
+      activePlan: activePlan,
+      profile: profile,
+      weights: weights,
+      doseRecords: doseRecords,
+      checkins: checkins,
+      badges: updatedBadges,
+    );
 
     return DashboardData(
       userId: userId,
@@ -231,11 +253,14 @@ class DashboardNotifier extends _$DashboardNotifier {
     );
   }
 
-  List<TimelineEvent> _buildTimeline(
-    onboarding_dosage_plan.DosagePlan activePlan,
-    UserProfile profile,
-    List<WeightLog> weights,
-  ) {
+  List<TimelineEvent> _buildTimeline({
+    required onboarding_dosage_plan.DosagePlan activePlan,
+    required UserProfile profile,
+    required List<WeightLog> weights,
+    required List<DoseRecord> doseRecords,
+    required List<DailyCheckin> checkins,
+    required List<UserBadge> badges,
+  }) {
     final events = <TimelineEvent>[];
 
     // 1. 치료 시작일 이벤트 (항상 표시)
@@ -249,21 +274,25 @@ class DashboardNotifier extends _$DashboardNotifier {
       ),
     );
 
-    // 2. 용량 증량 이벤트 (escalationPlan이 있을 경우)
+    // 2. 용량 증량 이벤트 (escalationPlan이 있을 경우 - 미래 예정 제외)
     if (activePlan.escalationPlan != null &&
         activePlan.escalationPlan!.isNotEmpty) {
+      final now = DateTime.now();
       for (final step in activePlan.escalationPlan!) {
         final escalationDate = activePlan.startDate
             .add(Duration(days: step.weeksFromStart * 7));
-        events.add(
-          TimelineEvent(
-            id: 'escalation_${step.doseMg.toStringAsFixed(1)}',
-            dateTime: escalationDate,
-            eventType: TimelineEventType.escalation,
-            titleMessageType: DashboardMessageType.timelineEscalation,
-            doseMg: step.doseMg.toStringAsFixed(2),
-          ),
-        );
+        // 과거 이벤트만 표시
+        if (escalationDate.isBefore(now)) {
+          events.add(
+            TimelineEvent(
+              id: 'escalation_${step.doseMg.toStringAsFixed(1)}',
+              dateTime: escalationDate,
+              eventType: TimelineEventType.escalation,
+              titleMessageType: DashboardMessageType.timelineEscalation,
+              doseMg: step.doseMg.toStringAsFixed(2),
+            ),
+          );
+        }
       }
     }
 
@@ -306,10 +335,172 @@ class DashboardNotifier extends _$DashboardNotifier {
       }
     }
 
-    // 4. 정렬 (오래된 순서대로)
+    // 4. 첫 체중 기록 이벤트
+    if (weights.isNotEmpty) {
+      final firstWeight = weights.reduce(
+        (a, b) => a.logDate.isBefore(b.logDate) ? a : b,
+      );
+      events.add(
+        TimelineEvent(
+          id: 'first_weight',
+          dateTime: firstWeight.logDate,
+          eventType: TimelineEventType.firstWeightLog,
+          titleMessageType: DashboardMessageType.timelineFirstWeightLog,
+          weightKg: firstWeight.weightKg.toStringAsFixed(1),
+        ),
+      );
+    }
+
+    // 5. 첫 투여 기록 이벤트
+    if (doseRecords.isNotEmpty) {
+      final firstDose = doseRecords.reduce(
+        (a, b) => a.administeredAt.isBefore(b.administeredAt) ? a : b,
+      );
+      events.add(
+        TimelineEvent(
+          id: 'first_dose',
+          dateTime: firstDose.administeredAt,
+          eventType: TimelineEventType.firstDose,
+          titleMessageType: DashboardMessageType.timelineFirstDose,
+          doseMg: firstDose.actualDoseMg.toStringAsFixed(2),
+        ),
+      );
+    }
+
+    // 6. 용량 변경 이벤트 (새로운 용량 첫 투여)
+    if (doseRecords.isNotEmpty) {
+      // 용량별로 첫 투여 날짜 찾기
+      final doseFirstDates = <double, DoseRecord>{};
+      for (final record in doseRecords) {
+        final dose = record.actualDoseMg;
+        if (!doseFirstDates.containsKey(dose) ||
+            record.administeredAt.isBefore(doseFirstDates[dose]!.administeredAt)) {
+          doseFirstDates[dose] = record;
+        }
+      }
+
+      // 초기 용량(첫 투여)을 제외한 새로운 용량들만 이벤트로 추가
+      final sortedDoses = doseFirstDates.keys.toList()..sort();
+      if (sortedDoses.length > 1) {
+        // 첫 번째 용량 제외 (이미 firstDose로 표시됨)
+        for (var i = 1; i < sortedDoses.length; i++) {
+          final dose = sortedDoses[i];
+          final record = doseFirstDates[dose]!;
+          events.add(
+            TimelineEvent(
+              id: 'dose_change_${dose.toStringAsFixed(2)}',
+              dateTime: record.administeredAt,
+              eventType: TimelineEventType.doseChange,
+              titleMessageType: DashboardMessageType.timelineDoseChange,
+              doseMg: dose.toStringAsFixed(2),
+            ),
+          );
+        }
+      }
+    }
+
+    // 7. 첫 체크인 이벤트
+    if (checkins.isNotEmpty) {
+      final firstCheckin = checkins.reduce(
+        (a, b) => a.checkinDate.isBefore(b.checkinDate) ? a : b,
+      );
+      events.add(
+        TimelineEvent(
+          id: 'first_checkin',
+          dateTime: firstCheckin.checkinDate,
+          eventType: TimelineEventType.firstCheckin,
+          titleMessageType: DashboardMessageType.timelineFirstCheckin,
+        ),
+      );
+    }
+
+    // 8. 연속 체크인 마일스톤 이벤트 (3, 7, 14, 21, 30, 60, 90일)
+    _addCheckinMilestones(events, checkins);
+
+    // 9. 뱃지 달성 이벤트
+    for (final badge in badges) {
+      if (badge.status == BadgeStatus.achieved && badge.achievedAt != null) {
+        events.add(
+          TimelineEvent(
+            id: 'badge_${badge.badgeId}',
+            dateTime: badge.achievedAt!,
+            eventType: TimelineEventType.badgeAchievement,
+            titleMessageType: DashboardMessageType.timelineBadgeAchievement,
+            badgeId: badge.badgeId,
+            badgeName: badge.badgeId, // TODO: 실제 뱃지 이름 조회 필요
+          ),
+        );
+      }
+    }
+
+    // 10. 정렬 (오래된 순서대로)
     events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
     return events;
+  }
+
+  /// 연속 체크인 마일스톤 이벤트 추가
+  /// 마일스톤: 3, 7, 14, 21, 30, 60, 90일
+  void _addCheckinMilestones(
+    List<TimelineEvent> events,
+    List<DailyCheckin> checkins,
+  ) {
+    if (checkins.isEmpty) return;
+
+    // 날짜순 정렬 (오래된 순)
+    final sortedCheckins = List<DailyCheckin>.from(checkins)
+      ..sort((a, b) => a.checkinDate.compareTo(b.checkinDate));
+
+    const milestones = [3, 7, 14, 21, 30, 60, 90];
+    final achievedMilestones = <int, DateTime>{};
+
+    int consecutiveDays = 0;
+    DateTime? prevDate;
+
+    for (final checkin in sortedCheckins) {
+      final currentDate = DateTime(
+        checkin.checkinDate.year,
+        checkin.checkinDate.month,
+        checkin.checkinDate.day,
+      );
+
+      if (prevDate == null) {
+        consecutiveDays = 1;
+      } else {
+        final diff = currentDate.difference(prevDate).inDays;
+        if (diff == 1) {
+          consecutiveDays++;
+        } else if (diff > 1) {
+          consecutiveDays = 1; // 연속 끊김, 리셋
+        }
+        // diff == 0인 경우 (같은 날) 무시
+      }
+
+      // 마일스톤 달성 체크
+      for (final milestone in milestones) {
+        if (consecutiveDays >= milestone &&
+            !achievedMilestones.containsKey(milestone)) {
+          achievedMilestones[milestone] = currentDate;
+        }
+      }
+
+      if (currentDate != prevDate) {
+        prevDate = currentDate;
+      }
+    }
+
+    // 달성한 마일스톤들을 이벤트로 추가
+    for (final entry in achievedMilestones.entries) {
+      events.add(
+        TimelineEvent(
+          id: 'checkin_milestone_${entry.key}',
+          dateTime: entry.value,
+          eventType: TimelineEventType.checkinMilestone,
+          titleMessageType: DashboardMessageType.timelineCheckinMilestone,
+          checkinDays: entry.key,
+        ),
+      );
+    }
   }
 
   InsightMessageData? _generateInsightMessageData(

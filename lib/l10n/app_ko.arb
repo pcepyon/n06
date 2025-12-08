@@ -5883,6 +5883,102 @@
       }
     }
   },
+  "dashboard_timelineBadgeAchievement": "뱃지 획득",
+  "@dashboard_timelineBadgeAchievement": {
+    "description": "Timeline event title for badge achievement"
+  },
+  "dashboard_timelineBadgeAchievementDesc": "{badgeName} 뱃지를 획득했어요!",
+  "@dashboard_timelineBadgeAchievementDesc": {
+    "description": "Timeline event description for badge achievement",
+    "placeholders": {
+      "badgeName": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboard_timelineCheckinMilestone": "연속 체크인 {days}일",
+  "@dashboard_timelineCheckinMilestone": {
+    "description": "Timeline event title for checkin milestone",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboard_timelineCheckinMilestoneTitle": "연속 체크인 {days}일 달성",
+  "@dashboard_timelineCheckinMilestoneTitle": {
+    "description": "Timeline event title for checkin milestone with days",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboard_timelineCheckinMilestoneDesc": "{days}일 연속으로 체크인을 완료했어요!",
+  "@dashboard_timelineCheckinMilestoneDesc": {
+    "description": "Timeline event description for checkin milestone",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboard_timelineFirstCheckin": "첫 체크인",
+  "@dashboard_timelineFirstCheckin": {
+    "description": "Timeline event title for first checkin"
+  },
+  "dashboard_timelineFirstCheckinDesc": "건강 여정의 첫 발걸음을 시작했어요!",
+  "@dashboard_timelineFirstCheckinDesc": {
+    "description": "Timeline event description for first checkin"
+  },
+  "dashboard_timelineFirstWeightLog": "첫 체중 기록",
+  "@dashboard_timelineFirstWeightLog": {
+    "description": "Timeline event title for first weight log"
+  },
+  "dashboard_timelineFirstWeightLogDesc": "{weightKg}kg으로 체중 기록을 시작했어요",
+  "@dashboard_timelineFirstWeightLogDesc": {
+    "description": "Timeline event description for first weight log",
+    "placeholders": {
+      "weightKg": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboard_timelineFirstDose": "첫 투여",
+  "@dashboard_timelineFirstDose": {
+    "description": "Timeline event title for first dose"
+  },
+  "dashboard_timelineFirstDoseDesc": "{doseMg}mg으로 치료를 시작했어요",
+  "@dashboard_timelineFirstDoseDesc": {
+    "description": "Timeline event description for first dose",
+    "placeholders": {
+      "doseMg": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboard_timelineDoseChange": "용량 변경",
+  "@dashboard_timelineDoseChange": {
+    "description": "Timeline event title for dose change"
+  },
+  "dashboard_timelineDoseChangeTitle": "{doseMg}mg 첫 투여",
+  "@dashboard_timelineDoseChangeTitle": {
+    "description": "Timeline event title for dose change with dose",
+    "placeholders": {
+      "doseMg": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboard_timelineDoseChangeDesc": "새로운 용량 {doseMg}mg 투여 완료",
+  "@dashboard_timelineDoseChangeDesc": {
+    "description": "Timeline event description for dose change",
+    "placeholders": {
+      "doseMg": {
+        "type": "String"
+      }
+    }
+  },
   "dashboard_insight30DaysStreak": "대단해요! 30일 연속 기록을 달성했어요. 이대로라면 건강한 습관이 완성될 거예요!",
   "@dashboard_insight30DaysStreak": {
     "description": "Insight message for 30 days streak achievement"

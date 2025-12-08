@@ -21,6 +21,18 @@ extension DashboardMessageTypeExtension on DashboardMessageType {
         return l10n.dashboard_timelineEscalation;
       case DashboardMessageType.timelineWeightMilestone:
         return l10n.dashboard_timelineWeightMilestone(0); // Default, use getTitle on TimelineEvent for actual value
+      case DashboardMessageType.timelineBadgeAchievement:
+        return l10n.dashboard_timelineBadgeAchievement;
+      case DashboardMessageType.timelineCheckinMilestone:
+        return l10n.dashboard_timelineCheckinMilestone(0); // Default, use getTitle on TimelineEvent for actual value
+      case DashboardMessageType.timelineFirstCheckin:
+        return l10n.dashboard_timelineFirstCheckin;
+      case DashboardMessageType.timelineFirstWeightLog:
+        return l10n.dashboard_timelineFirstWeightLog;
+      case DashboardMessageType.timelineFirstDose:
+        return l10n.dashboard_timelineFirstDose;
+      case DashboardMessageType.timelineDoseChange:
+        return l10n.dashboard_timelineDoseChange;
       case DashboardMessageType.insight30DaysStreak:
         return l10n.dashboard_insight30DaysStreak;
       case DashboardMessageType.insightWeeklyStreak:
@@ -71,6 +83,18 @@ extension TimelineEventExtension on TimelineEvent {
         return l10n.dashboard_timelineEscalation;
       case DashboardMessageType.timelineWeightMilestone:
         return l10n.dashboard_timelineWeightMilestoneTitle(milestonePercent ?? 0);
+      case DashboardMessageType.timelineBadgeAchievement:
+        return l10n.dashboard_timelineBadgeAchievement;
+      case DashboardMessageType.timelineCheckinMilestone:
+        return l10n.dashboard_timelineCheckinMilestoneTitle(checkinDays ?? 0);
+      case DashboardMessageType.timelineFirstCheckin:
+        return l10n.dashboard_timelineFirstCheckin;
+      case DashboardMessageType.timelineFirstWeightLog:
+        return l10n.dashboard_timelineFirstWeightLog;
+      case DashboardMessageType.timelineFirstDose:
+        return l10n.dashboard_timelineFirstDose;
+      case DashboardMessageType.timelineDoseChange:
+        return l10n.dashboard_timelineDoseChangeTitle(doseMg ?? '0');
       default:
         return titleMessageType.toLocalizedString(context);
     }
@@ -87,6 +111,18 @@ extension TimelineEventExtension on TimelineEvent {
         return l10n.dashboard_timelineEscalationDesc(doseMg ?? '0');
       case DashboardMessageType.timelineWeightMilestone:
         return l10n.dashboard_timelineWeightMilestoneDesc(weightKg ?? '0');
+      case DashboardMessageType.timelineBadgeAchievement:
+        return l10n.dashboard_timelineBadgeAchievementDesc(badgeName ?? '');
+      case DashboardMessageType.timelineCheckinMilestone:
+        return l10n.dashboard_timelineCheckinMilestoneDesc(checkinDays ?? 0);
+      case DashboardMessageType.timelineFirstCheckin:
+        return l10n.dashboard_timelineFirstCheckinDesc;
+      case DashboardMessageType.timelineFirstWeightLog:
+        return l10n.dashboard_timelineFirstWeightLogDesc(weightKg ?? '0');
+      case DashboardMessageType.timelineFirstDose:
+        return l10n.dashboard_timelineFirstDoseDesc(doseMg ?? '0');
+      case DashboardMessageType.timelineDoseChange:
+        return l10n.dashboard_timelineDoseChangeDesc(doseMg ?? '0');
       default:
         return '';
     }

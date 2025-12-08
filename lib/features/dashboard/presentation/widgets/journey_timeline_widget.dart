@@ -20,12 +20,13 @@ class JourneyTimelineWidget extends StatelessWidget {
   });
 
   /// 마일스톤 이벤트 개수 계산
-  /// weightMilestone, badgeAchievement 타입만 카운트
+  /// 성취 관련 이벤트만 카운트 (체중 마일스톤, 뱃지, 체크인 마일스톤)
   int getMilestoneCount(List<TimelineEvent> events) {
     return events
         .where((e) =>
             e.eventType == TimelineEventType.weightMilestone ||
-            e.eventType == TimelineEventType.badgeAchievement)
+            e.eventType == TimelineEventType.badgeAchievement ||
+            e.eventType == TimelineEventType.checkinMilestone)
         .length;
   }
 
@@ -139,14 +140,23 @@ class _JourneyTimelineEventItem extends StatelessWidget {
     return DateTime.now().difference(eventDate).inHours < 24;
   }
 
-  /// 마일스톤 이벤트인지 확인
+  /// 마일스톤 이벤트인지 확인 (gold glow 효과 적용 대상)
   bool get isMilestone {
     return event.eventType == TimelineEventType.weightMilestone ||
-        event.eventType == TimelineEventType.badgeAchievement;
+        event.eventType == TimelineEventType.badgeAchievement ||
+        event.eventType == TimelineEventType.checkinMilestone;
+  }
+
+  /// "첫 기록" 이벤트인지 확인 (특별한 스타일 적용)
+  bool get isFirstEvent {
+    return event.eventType == TimelineEventType.firstCheckin ||
+        event.eventType == TimelineEventType.firstWeightLog ||
+        event.eventType == TimelineEventType.firstDose;
   }
 
   Color _getEventColor(TimelineEventType type) {
     switch (type) {
+      // 기존 이벤트
       case TimelineEventType.treatmentStart:
         return AppColors.info;
       case TimelineEventType.escalation:
@@ -154,7 +164,18 @@ class _JourneyTimelineEventItem extends StatelessWidget {
       case TimelineEventType.weightMilestone:
         return AppColors.success;
       case TimelineEventType.badgeAchievement:
-        return AppColors.gold;
+        return AppColors.achievement;
+      // 신규 이벤트
+      case TimelineEventType.checkinMilestone:
+        return AppColors.achievement; // 연속 체크인 - 성취
+      case TimelineEventType.firstCheckin:
+        return AppColors.history; // 첫 체크인 - 히스토리
+      case TimelineEventType.firstWeightLog:
+        return AppColors.history; // 첫 체중 기록 - 히스토리
+      case TimelineEventType.firstDose:
+        return AppColors.primary; // 첫 투여 - 건강/완료
+      case TimelineEventType.doseChange:
+        return AppColors.info; // 용량 변경 - 정보
     }
   }
 

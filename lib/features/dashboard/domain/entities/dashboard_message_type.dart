@@ -22,6 +22,24 @@ enum DashboardMessageType {
   /// 타임라인: 체중 마일스톤 (25%, 50%, 75%, 100%)
   timelineWeightMilestone,
 
+  /// 타임라인: 뱃지 달성
+  timelineBadgeAchievement,
+
+  /// 타임라인: 연속 체크인 마일스톤 (3, 7, 14, 21, 30, 60, 90일)
+  timelineCheckinMilestone,
+
+  /// 타임라인: 첫 체크인
+  timelineFirstCheckin,
+
+  /// 타임라인: 첫 체중 기록
+  timelineFirstWeightLog,
+
+  /// 타임라인: 첫 투여 기록
+  timelineFirstDose,
+
+  /// 타임라인: 용량 변경 (새로운 용량 첫 투여)
+  timelineDoseChange,
+
   /// 인사이트: 30일 연속 기록 달성
   insight30DaysStreak,
 

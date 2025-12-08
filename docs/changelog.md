@@ -21,6 +21,16 @@
 
 ## 2025-12-08
 
+- [feat] 치료 여정 타임라인 이벤트 확장 - 5개 신규 이벤트 타입 추가
+  - **연속 체크인 마일스톤**: 3, 7, 14, 21, 30, 60, 90일 달성 표시 (Gold)
+  - **뱃지 달성**: UserBadge.achievedAt 기반 이벤트 (Gold)
+  - **첫 기록 이벤트**: 첫 체크인, 첫 체중 기록, 첫 투여 (Purple/Green)
+  - **용량 변경**: 새로운 용량 첫 투여 시 표시 (Blue)
+  - 디자인 시스템 Feature Color 적용 (Achievement, History, Primary, Info)
+  - `lib/features/dashboard/domain/entities/timeline_event.dart`
+  - `lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
+  - `lib/features/dashboard/presentation/widgets/journey_timeline_widget.dart`
+
 - [refactor] 대시보드 위젯 구조 개편 및 미사용 위젯 삭제
   - **위젯 순서 재배치**: EmotionalGreeting → CelebratoryReport → HopefulSchedule → JourneyTimeline → AIMessage → CelebratoryBadge
   - **삭제된 위젯** (3개):
