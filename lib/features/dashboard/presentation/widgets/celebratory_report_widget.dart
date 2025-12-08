@@ -137,37 +137,43 @@ class _CelebratoryReportWidgetState extends State<CelebratoryReportWidget> {
 
             // Report Items Row - 축하의 언어로 변환
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _CelebratoryReportItem(
-                  icon: Icons.medication,
-                  iconColor: AppColors.primary,
-                  label: context.l10n.dashboard_report_dose,
-                  value: _getCelebratoryValue(
-                    context,
-                    'dose',
-                    widget.summary.doseCompletedCount,
+                Expanded(
+                  child: _CelebratoryReportItem(
+                    icon: Icons.medication,
+                    iconColor: AppColors.primary,
+                    label: context.l10n.dashboard_report_dose,
+                    value: _getCelebratoryValue(
+                      context,
+                      'dose',
+                      widget.summary.doseCompletedCount,
+                    ),
                   ),
                 ),
-                _CelebratoryReportItem(
-                  icon: Icons.monitor_weight,
-                  iconColor: AppColors.success,
-                  label: context.l10n.dashboard_report_weight,
-                  value: _getCelebratoryValue(
-                    context,
-                    'weight',
-                    widget.summary.weightChangeKg,
+                Expanded(
+                  child: _CelebratoryReportItem(
+                    icon: Icons.monitor_weight,
+                    iconColor: AppColors.success,
+                    label: context.l10n.dashboard_report_weight,
+                    value: _getCelebratoryValue(
+                      context,
+                      'weight',
+                      widget.summary.weightChangeKg,
+                    ),
                   ),
                 ),
                 // CRITICAL: 부작용 → 적응기, error → warning
-                _CelebratoryReportItem(
-                  icon: Icons.favorite_border, // 더 부드러운 아이콘
-                  iconColor: AppColors.warning, // NOT error!
-                  label: context.l10n.dashboard_report_symptom, // NOT "부작용"!
-                  value: _getCelebratoryValue(
-                    context,
-                    'symptom',
-                    widget.summary.symptomRecordCount,
+                Expanded(
+                  child: _CelebratoryReportItem(
+                    icon: Icons.favorite_border, // 더 부드러운 아이콘
+                    iconColor: AppColors.warning, // NOT error!
+                    label: context.l10n.dashboard_report_symptom, // NOT "부작용"!
+                    value: _getCelebratoryValue(
+                      context,
+                      'symptom',
+                      widget.summary.symptomRecordCount,
+                    ),
                   ),
                 ),
               ],
@@ -254,6 +260,8 @@ class _CelebratoryReportItem extends StatelessWidget {
         Text(
           label,
           style: AppTypography.caption,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 2),
         Text(
@@ -262,6 +270,8 @@ class _CelebratoryReportItem extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
           textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );

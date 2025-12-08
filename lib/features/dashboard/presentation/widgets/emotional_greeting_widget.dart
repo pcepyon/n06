@@ -56,7 +56,7 @@ class EmotionalGreetingWidget extends StatelessWidget {
     }
     // 마일스톤이 아니면 insightMessageData 타입에 따른 메시지 사용
     if (insightMessageData != null) {
-      return insightMessageData.type.toLocalizedString(context);
+      return insightMessageData.toLocalizedString(context);
     }
     return null;
   }

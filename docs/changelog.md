@@ -21,6 +21,13 @@
 
 ## 2025-12-08
 
+- [fix] 대시보드 위젯 레이아웃 및 격려 메시지 버그 수정
+  - **주간 요약 위젯 오버플로우**: Row에 Expanded 적용, 텍스트 overflow 처리
+  - **아이콘 정렬**: crossAxisAlignment.start로 상단 정렬 통일
+  - **격려 메시지 SSOT**: extension 호출 수정으로 실제 연속 기록일 표시
+  - `lib/features/dashboard/presentation/widgets/celebratory_report_widget.dart`
+  - `lib/features/dashboard/presentation/widgets/emotional_greeting_widget.dart`
+
 - [fix] 주간 요약 증상 표시 수정 - 날짜 기준에서 개수 기준으로 변경
   - **라벨 변경**: "적응기" → "증상" (Adaptation → Symptoms)
   - **메시지 수정**: 모든 메시지에 실제 증상 개수(count) 표시
