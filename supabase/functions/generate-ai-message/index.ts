@@ -8,25 +8,42 @@ const corsHeaders = {
 };
 
 // Instruction prompt based on llm-message-spec.md
-// Note: google/gemma-3n-e2b-it:free doesn't support system prompts
-const INSTRUCTION_PROMPT = `당신은 GLP-1 치료 여정을 함께하는 따뜻한 동반자입니다.
+const INSTRUCTION_PROMPT = `당신은 GLP-1 치료를 함께하는 친구입니다. 처음 만난 사람이 아니라, 이미 여러 번 대화한 사이예요.
 
-핵심 원칙:
-1. 판단하지 않습니다. 어떤 상황도 있는 그대로 인정합니다.
-2. 감정을 먼저 알아챕니다. 정보나 조언보다 공감이 먼저입니다.
-3. 정상화합니다. "당신만 그런 게 아니에요"라는 메시지를 전합니다.
-4. 해결책을 강요하지 않습니다. 제안은 부드럽게, 선택은 사용자에게.
+## 핵심 역할
+- 의학적 조언이 아닌 **감정적 지지와 격려**가 목적입니다
+- 사용자가 "이 사람은 내 상황을 알고 있고, 옆에서 응원해주고 있다"고 느끼게 해주세요
+- LLM이 생성한 느낌이 아닌, **친구가 건네는 한마디**처럼 자연스럽게
 
-톤:
-- 따뜻하지만 과하지 않게
-- 친구 같지만 가볍지 않게
-- 존댓말, 부드러운 종결어미 (~예요, ~죠)
-- 느낌표, 이모지, 과장된 칭찬 금지
+## 대화 연속성 (필수)
+- 최근 메시지들을 확인하고, **이전 대화와 연결**되도록 작성하세요
+- 매번 새로운 인사로 시작하지 마세요. 이어지는 대화처럼.
+- 같은 말 반복 금지. 이전에 했던 격려와 다른 각도로 접근하세요
 
-메시지 구조:
-[상황 인식] + [감정 인정] + [정상화/안심] + (선택: 부드러운 제안)
+## 상황 인식 방법
+- 데이터(숫자, 퍼센트)를 직접 언급하지 마세요
+- "14일째" 대신 "벌써 2주가 지났네요"
+- "85%" 대신 "꾸준히 기록하고 있어요"
+- "0.5kg 감소" 대신 "조금씩 변화가 보여요"
 
-길이: 2-4문장`;
+## 톤 (엄격히 준수)
+- 친구처럼 편안하게, 하지만 가볍지 않게
+- 존댓말 사용하되 형식적이지 않게 (~예요, ~죠)
+
+## 절대 금지
+- 이모지 (😊, ✨, 😉 등)
+- 느낌표 (!)
+- "안녕하세요", "~님" 으로 시작하는 인사
+- 과장된 칭찬 ("정말 대단해요", "놀라워요", "최고예요")
+- 의학적 정보나 조언 ("적응 기간", "부작용은 정상")
+- 질문으로 마무리 ("어떠세요?", "말씀해주세요")
+- 데이터 직접 언급 (숫자, 퍼센트, mg)
+
+## 메시지 구조
+[상황을 알고 있다는 신호] + [감정적 지지] + [따뜻한 마무리]
+
+## 길이
+2-4문장`;
 
 /**
  * Build user prompt from context data
@@ -36,38 +53,40 @@ function buildUserPrompt(
   healthData: any,
   recentMessages: string[]
 ): string {
-  let prompt = `사용자 상황:
+  let prompt = `## 사용자 상황 (참고용, 직접 언급 금지)
 - 이름: ${userContext.name}
-- 여정 ${userContext.journey_day}일째, ${userContext.current_week}주차
-- 현재 용량: ${userContext.current_dose_mg}mg
-- 마지막 투여: ${userContext.days_since_last_dose}일 전
-- 다음 투여: ${userContext.days_until_next_dose}일 후`;
+- 여정: ${userContext.journey_day}일째 (${userContext.current_week}주차)
+- 용량: ${userContext.current_dose_mg}mg
+- 투여 주기: 마지막 ${userContext.days_since_last_dose}일 전, 다음 ${userContext.days_until_next_dose}일 후`;
 
   if (userContext.days_since_escalation != null) {
-    prompt += `\n- 증량 후: ${userContext.days_since_escalation}일`;
+    prompt += `\n- 증량: ${userContext.days_since_escalation}일 전`;
   }
   if (userContext.next_escalation_in_days != null) {
     prompt += `\n- 다음 증량: ${userContext.next_escalation_in_days}일 후`;
   }
 
-  prompt += `\n\n건강 데이터:
-- 이번 주 체중 변화: ${healthData.weight_change_this_week_kg}kg
-- 체중 추세: ${healthData.weight_trend}
-- 전반적 컨디션: ${healthData.overall_condition}
+  prompt += `\n\n## 건강 상태 (참고용, 직접 언급 금지)
+- 체중 변화: ${healthData.weight_change_this_week_kg}kg (${healthData.weight_trend})
+- 컨디션: ${healthData.overall_condition}
 - 기록률: ${(healthData.completion_rate * 100).toFixed(0)}%`;
 
   if (healthData.top_concern) {
-    prompt += `\n- 주요 관심사: ${healthData.top_concern}`;
+    prompt += `\n- 주요 이슈: ${healthData.top_concern}`;
   }
   if (healthData.recent_checkin_summary) {
     prompt += `\n- 오늘 체크인: ${healthData.recent_checkin_summary}`;
   }
 
   if (recentMessages.length > 0) {
-    prompt += `\n\n최근 메시지 (톤 참고용):\n${recentMessages.join("\n")}`;
+    prompt += `\n\n## 이전 대화 (연속성 유지 필수, 반복 금지)
+${recentMessages.join("\n")}`;
   }
 
-  prompt += "\n\n위 상황에 맞는 공감 메시지를 작성해주세요.";
+  prompt += `\n\n---
+위 상황을 바탕으로, 이전 대화와 자연스럽게 이어지는 따뜻한 한마디를 작성해주세요.
+이모지, 느낌표, 인사말, 숫자 언급 없이.`;
+
   return prompt;
 }
 
@@ -135,12 +154,12 @@ serve(async (req) => {
       throw new Error("OPENROUTER_API_KEY not configured");
     }
 
-    // Build combined prompt (instruction + context) for models without system prompt support
-    const userPromptContent = `${INSTRUCTION_PROMPT}\n\n${buildUserPrompt(
+    // Build prompts - gpt-4o-mini supports system prompts
+    const userPromptContent = buildUserPrompt(
       user_context,
       health_data,
       recent_messages || []
-    )}`;
+    );
 
     const openrouterResponse = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
@@ -151,14 +170,18 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemma-3n-e2b-it:free",
+          model: "openai/gpt-4o-mini",
           messages: [
+            {
+              role: "system",
+              content: INSTRUCTION_PROMPT,
+            },
             {
               role: "user",
               content: userPromptContent,
             },
           ],
-          max_tokens: 200,
+          max_tokens: 300,
         }),
       }
     );
