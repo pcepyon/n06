@@ -1184,6 +1184,20 @@
       }
     }
   },
+  "dashboard_timeline_viewMore": "{count}개 더보기",
+  "@dashboard_timeline_viewMore": {
+    "description": "View more button text showing remaining event count",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_journeyDetail_title": "전체 여정",
+  "@dashboard_journeyDetail_title": {
+    "description": "Journey detail screen title"
+  },
   "checkin_greeting_morning": "좋은 아침이에요",
   "@checkin_greeting_morning": {
     "description": "Morning greeting (5-11 AM) - MEDICAL REVIEW REQUIRED"

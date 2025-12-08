@@ -25,6 +25,7 @@ import 'package:n06/features/tracking/presentation/screens/trend_dashboard_scree
 import 'package:n06/features/daily_checkin/presentation/screens/daily_checkin_screen.dart';
 import 'package:n06/features/daily_checkin/presentation/screens/share_report_screen.dart';
 import 'package:n06/features/guest_home/presentation/screens/guest_home_screen.dart';
+import 'package:n06/features/dashboard/presentation/screens/journey_detail_screen.dart';
 
 /// Listenable that notifies when auth state changes
 /// Used by GoRouter to re-evaluate redirect logic
@@ -405,6 +406,13 @@ final appRouter = GoRouter(
       path: '/share-report',
       name: 'share_report',
       builder: (context, state) => const ShareReportScreen(),
+    ),
+
+    /// Journey Detail (전체 여정 상세)
+    GoRoute(
+      path: '/journey-detail',
+      name: 'journey_detail',
+      builder: (context, state) => const JourneyDetailScreen(),
     ),
   ],
 );

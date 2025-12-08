@@ -433,8 +433,8 @@ class DashboardNotifier extends _$DashboardNotifier {
       }
     }
 
-    // 10. 정렬 (오래된 순서대로)
-    events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    // 10. 정렬 (최신순 - 최근 이벤트가 상단에 표시)
+    events.sort((a, b) => b.dateTime.compareTo(a.dateTime));
 
     return events;
   }

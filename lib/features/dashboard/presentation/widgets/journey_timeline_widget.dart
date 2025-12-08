@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/core/extensions/l10n_extension.dart';
@@ -11,8 +12,12 @@ import '../../domain/entities/timeline_event.dart';
 /// - 상단에 여정 요약 (Forest 스타일)
 /// - 마일스톤 이벤트 gold glow 효과 (Fitbit 스타일)
 /// - 24시간 내 이벤트에 NEW 뱃지 (Fitbit 스타일)
+/// - 최근 4개 이벤트만 표시, 나머지는 "더보기"로 이동
 class JourneyTimelineWidget extends StatelessWidget {
   final List<TimelineEvent> events;
+
+  /// 대시보드에 표시할 최대 이벤트 수
+  static const int maxDisplayCount = 4;
 
   const JourneyTimelineWidget({
     super.key,
@@ -44,6 +49,11 @@ class JourneyTimelineWidget extends StatelessWidget {
     final milestoneCount = getMilestoneCount(events);
     final weeksCount = getWeeksCount(events);
 
+    // 최근 4개만 표시 (events는 최신순 정렬)
+    final displayEvents = events.take(maxDisplayCount).toList();
+    final hasMore = events.length > maxDisplayCount;
+    final remainingCount = events.length - maxDisplayCount;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -64,11 +74,12 @@ class JourneyTimelineWidget extends StatelessWidget {
 
         if (events.isNotEmpty) const SizedBox(height: 16),
 
-        // Timeline Events
+        // Timeline Events (최근 4개만)
         Column(
-          children: List.generate(events.length, (index) {
-            final event = events[index];
-            final isLast = index == events.length - 1;
+          children: List.generate(displayEvents.length, (index) {
+            final event = displayEvents[index];
+            // 더보기 버튼이 있으면 마지막 아이템도 연결선 표시
+            final isLast = !hasMore && index == displayEvents.length - 1;
 
             return _JourneyTimelineEventItem(
               event: event,
@@ -76,7 +87,78 @@ class JourneyTimelineWidget extends StatelessWidget {
             );
           }),
         ),
+
+        // 더보기 버튼
+        if (hasMore)
+          _ViewMoreButton(
+            remainingCount: remainingCount,
+            totalCount: events.length,
+            onTap: () => context.push('/journey-detail'),
+          ),
       ],
+    );
+  }
+}
+
+/// 더보기 버튼 위젯
+class _ViewMoreButton extends StatelessWidget {
+  final int remainingCount;
+  final int totalCount;
+  final VoidCallback onTap;
+
+  const _ViewMoreButton({
+    required this.remainingCount,
+    required this.totalCount,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            // 연결선 (타임라인 dot 위치에 맞춤)
+            SizedBox(
+              width: 20,
+              child: Center(
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.neutral300,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            // 버튼 텍스트
+            Expanded(
+              child: Row(
+                children: [
+                  Text(
+                    context.l10n.dashboard_timeline_viewMore(remainingCount),
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 14,
+                    color: AppColors.primary,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -21,6 +21,14 @@
 
 ## 2025-12-08
 
+- [feat] 치료 여정 위젯 높이 제한 및 상세 화면 추가
+  - **대시보드**: 최근 4개 이벤트만 표시, "N개 더보기" 버튼 추가
+  - **상세 화면**: `/journey-detail` 경로로 전체 타임라인 확인 가능
+  - **정렬 순서 수정**: 오름차순 → 내림차순 (최신 이벤트 상단 표시)
+  - `lib/features/dashboard/presentation/widgets/journey_timeline_widget.dart`
+  - `lib/features/dashboard/presentation/screens/journey_detail_screen.dart`
+  - `lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
+
 - [refactor] AI 메시지 프롬프트 전면 개선
   - **모델 변경**: google/gemma-3n → openai/gpt-4o-mini
   - **핵심 변경**: 일반적 격려 → 구체적 상황에 반응
