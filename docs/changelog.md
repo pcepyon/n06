@@ -29,6 +29,17 @@
   - `lib/features/dashboard/presentation/screens/journey_detail_screen.dart`
   - `lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
 
+- [feat] AI 메시지 상황별 프롬프트 분기 추가
+  - **6가지 특수 상황 감지**: 첫 시작, 증량 직후, 오랜만에 복귀, 체중 정체기, 장기 사용자, 기록률 저조
+  - **동적 User Prompt**: 상황별 맞춤 지침 자동 추가
+  - `supabase/functions/generate-ai-message/index.ts`
+
+- [fix] 다음 투여일 계산 로직 수정
+  - **기존**: 무조건 내일로 하드코딩
+  - **수정**: 마지막 투여일 + cycleDays로 실제 계산
+  - **추가**: nextDoseMg도 현재 용량으로 계산
+  - `lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
+
 - [refactor] AI 메시지 프롬프트 전면 개선
   - **모델 변경**: google/gemma-3n → openai/gpt-4o-mini
   - **핵심 변경**: 일반적 격려 → 구체적 상황에 반응

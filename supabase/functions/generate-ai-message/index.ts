@@ -53,6 +53,74 @@ const INSTRUCTION_PROMPT = `당신은 GLP-1 치료를 함께하는 친구입니�
 2-3문장`;
 
 /**
+ * Detect special situation and return guidance
+ */
+function detectSpecialSituation(userContext: any, healthData: any): string | null {
+  // 우선순위 1: 첫 시작 (journey_day <= 1)
+  if (userContext.journey_day <= 1) {
+    return `## 🚨 특별 상황: 첫 시작
+이 사람은 오늘 막 치료를 시작했어요.
+- "잘 버텨왔다", "꾸준히 해왔다" 같은 말 금지 (아직 시작도 안 했으니까)
+- "시작한 것 자체가 용기예요"
+- "여기까지 오기까지 고민 많았을 텐데"
+- "첫 발을 내딛은 거예요"
+`;
+  }
+
+  // 우선순위 2: 증량 직후 (1-3일) - 가장 힘든 시기
+  if (userContext.days_since_escalation != null && userContext.days_since_escalation <= 3) {
+    return `## 🚨 특별 상황: 증량 직후 (힘든 시기)
+증량한 지 ${userContext.days_since_escalation}일째예요. 이때가 제일 힘들어요.
+- "지금이 제일 힘든 시기예요"
+- "버티기만 해도 충분해요"
+- "며칠만 지나면 나아져요"
+`;
+  }
+
+  // 우선순위 3: 오랜만에 복귀 (14일 이상 투여 공백)
+  if (userContext.days_since_last_dose >= 14) {
+    return `## 🚨 특별 상황: 오랜만에 복귀
+마지막 투여가 ${userContext.days_since_last_dose}일 전이에요. 한동안 쉬었다가 돌아온 거예요.
+- 판단하거나 이유 묻지 않기
+- "다시 와줬네요, 그것만으로도 충분해요"
+- "쉬어도 괜찮아요, 여기 있는 것만으로도"
+`;
+  }
+
+  // 우선순위 4: 체중 정체기 (2주 이상 + 변화 없음)
+  if (userContext.journey_day >= 14 && healthData.weight_change_this_week_kg === 0) {
+    return `## 🚨 특별 상황: 체중 정체기
+2주 이상 지났는데 체중 변화가 없어요. 답답할 수 있어요.
+- "정체기는 누구나 겪어요"
+- "답답하죠, 충분히 그럴 수 있어요"
+- 긍정적으로만 해석하지 말고 답답함을 인정해주기
+`;
+  }
+
+  // 우선순위 5: 장기 사용자 (90일 이상)
+  if (userContext.journey_day >= 90) {
+    return `## 🚨 특별 상황: 장기 사용자
+벌써 ${userContext.journey_day}일째, 3개월 이상 함께했어요.
+- "벌써 3개월이나 됐네요"
+- "여기까지 온 것 자체가 대단한 거예요"
+- 여정의 의미를 되돌아보게
+`;
+  }
+
+  // 우선순위 6: 기록률 저조 (20% 미만)
+  if (healthData.completion_rate < 0.2 && userContext.journey_day > 7) {
+    return `## 🚨 특별 상황: 기록을 잘 안 하는 사용자
+기록률이 낮아요. 압박하면 안 돼요.
+- "기록 안 해도 괜찮아요"
+- "여기 와준 것만으로도 충분해요"
+- 기록하라고 유도하지 않기
+`;
+  }
+
+  return null;
+}
+
+/**
  * Build user prompt from context data
  */
 function buildUserPrompt(
@@ -60,9 +128,15 @@ function buildUserPrompt(
   healthData: any,
   recentMessages: string[]
 ): string {
-  // 우선순위 1: 오늘 체크인 (가장 중요)
   let prompt = "";
 
+  // 특수 상황 감지 및 지침 추가
+  const specialSituation = detectSpecialSituation(userContext, healthData);
+  if (specialSituation) {
+    prompt += specialSituation + "\n";
+  }
+
+  // 오늘 체크인 (있을 때만)
   if (healthData.recent_checkin_summary) {
     prompt += `## 오늘 체크인 (이것에 반응해야 함)
 ${healthData.recent_checkin_summary}
@@ -70,18 +144,18 @@ ${healthData.recent_checkin_summary}
 `;
   }
 
-  // 우선순위 2: 투여 일정
+  // 투여 일정
   prompt += `## 투여 일정
 - 다음 투여: ${userContext.days_until_next_dose === 0 ? "오늘" : userContext.days_until_next_dose === 1 ? "내일" : `${userContext.days_until_next_dose}일 후`}`;
 
   if (userContext.days_since_escalation != null && userContext.days_since_escalation <= 7) {
-    prompt += `\n- 증량한 지 ${userContext.days_since_escalation}일째 (힘든 시기일 수 있음)`;
+    prompt += `\n- 증량한 지 ${userContext.days_since_escalation}일째`;
   }
 
-  // 우선순위 3: 여정 정보
+  // 여정 정보
   prompt += `\n\n## 여정 정보
-- ${userContext.current_week}주차
-- 체중 변화: ${healthData.weight_change_this_week_kg > 0 ? "증가" : healthData.weight_change_this_week_kg < 0 ? "감소 중" : "유지"}`;
+- ${userContext.current_week}주차 (${userContext.journey_day}일째)
+- 체중: ${healthData.weight_change_this_week_kg > 0 ? "증가" : healthData.weight_change_this_week_kg < 0 ? "감소 중" : "유지"}`;
 
   // 이전 대화
   if (recentMessages.length > 0) {
@@ -90,7 +164,7 @@ ${recentMessages.join("\n")}`;
   }
 
   prompt += `\n\n---
-위 상황 중 가장 눈에 띄는 것에 반응해주세요. 일반적인 격려 금지.`;
+위 상황 중 가장 눈에 띄는 것에 반응해주세요. 특별 상황이 있으면 그것을 우선으로.`;
 
   return prompt;
 }

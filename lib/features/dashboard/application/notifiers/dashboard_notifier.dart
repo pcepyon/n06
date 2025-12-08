@@ -130,7 +130,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     );
 
     // 다음 투여 일정
-    final nextSchedule = _calculateNextSchedule(activePlan, weights, profile);
+    final nextSchedule = _calculateNextSchedule(activePlan, weights, profile, doseRecords);
 
     // 주간 요약
     final weeklySummary = _calculateWeeklySummary(weights, [], doseRecords);
@@ -189,8 +189,24 @@ class DashboardNotifier extends _$DashboardNotifier {
     onboarding_dosage_plan.DosagePlan activePlan,
     List<WeightLog> weights,
     UserProfile profile,
+    List<DoseRecord> doseRecords,
   ) {
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // 다음 투여일 계산
+    DateTime nextDoseDate;
+    if (doseRecords.isEmpty) {
+      // 투여 기록이 없으면 → 오늘이 첫 투여일
+      nextDoseDate = today;
+    } else {
+      // 마지막 투여일 + cycleDays
+      final sortedRecords = List<DoseRecord>.from(doseRecords)
+        ..sort((a, b) => b.administeredAt.compareTo(a.administeredAt));
+      final lastDoseDate = sortedRecords.first.administeredAt;
+      final lastDoseDateOnly = DateTime(lastDoseDate.year, lastDoseDate.month, lastDoseDate.day);
+      nextDoseDate = lastDoseDateOnly.add(Duration(days: activePlan.cycleDays));
+    }
 
     // 현재 체중 가져오기
     final currentWeightKg = weights.isNotEmpty
@@ -206,9 +222,13 @@ class DashboardNotifier extends _$DashboardNotifier {
       weightLogs: weights,
     );
 
+    // 현재 용량 계산
+    final weeksElapsed = activePlan.getWeeksElapsed();
+    final currentDoseMg = activePlan.getCurrentDose(weeksElapsed: weeksElapsed);
+
     return NextSchedule(
-      nextDoseDate: now.add(Duration(days: 1)),
-      nextDoseMg: activePlan.initialDoseMg,
+      nextDoseDate: nextDoseDate,
+      nextDoseMg: currentDoseMg,
       nextEscalationDate: null,
       goalEstimateDate: goalEstimateDate,
     );
