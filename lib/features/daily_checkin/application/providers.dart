@@ -6,7 +6,6 @@ import 'package:n06/features/daily_checkin/infrastructure/repositories/supabase_
 import 'package:n06/features/daily_checkin/application/services/greeting_service.dart';
 import 'package:n06/features/daily_checkin/application/services/consecutive_days_service.dart';
 import 'package:n06/features/daily_checkin/application/services/weekly_comparison_service.dart';
-import 'package:n06/features/daily_checkin/application/services/red_flag_detector.dart';
 import 'package:n06/features/daily_checkin/application/services/weekly_report_generator.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/core/providers.dart';
@@ -47,12 +46,6 @@ WeeklyComparisonService weeklyComparisonService(Ref ref) {
     checkinRepository: checkinRepository,
     trackingRepository: trackingRepository,
   );
-}
-
-/// RedFlagDetector Provider
-@riverpod
-RedFlagDetector redFlagDetector(Ref ref) {
-  return RedFlagDetector();
 }
 
 /// WeeklyReportGenerator Provider

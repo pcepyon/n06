@@ -1,3 +1,4 @@
+import 'package:n06/core/domain/services/week_calculator.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:uuid/uuid.dart';
@@ -32,7 +33,7 @@ class RecalculateDoseScheduleUseCase {
 
     // Generate schedules
     while (currentDate.isBefore(endDate) || currentDate.isAtSameMomentAs(endDate)) {
-      final weeksElapsed = _calculateWeeksElapsed(plan.startDate, currentDate);
+      final weeksElapsed = WeekCalculator.weeksElapsed(plan.startDate, currentDate);
       final dose = plan.getCurrentDose(weeksElapsed: weeksElapsed);
 
       final schedule = DoseSchedule(
@@ -75,11 +76,5 @@ class RecalculateDoseScheduleUseCase {
     }
 
     return alignedDate;
-  }
-
-  /// Calculate weeks elapsed since plan start date
-  int _calculateWeeksElapsed(DateTime startDate, DateTime currentDate) {
-    final difference = currentDate.difference(startDate);
-    return (difference.inDays / 7).floor();
   }
 }

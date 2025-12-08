@@ -1,3 +1,4 @@
+import 'package:n06/core/domain/services/week_calculator.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 
 /// Data class representing the impact of a plan change
@@ -38,7 +39,7 @@ class AnalyzePlanChangeImpactUseCase {
         affectedScheduleCount: 0,
         changedFields: [],
         hasEscalationChange: false,
-        currentWeekElapsed: _calculateWeeksElapsed(newPlan.startDate, currentDate),
+        currentWeekElapsed: WeekCalculator.weeksElapsed(newPlan.startDate, currentDate),
       );
     }
 
@@ -49,7 +50,7 @@ class AnalyzePlanChangeImpactUseCase {
     final hasEscalationChange = _hasEscalationChanged(oldPlan, newPlan);
 
     // Calculate current week
-    final currentWeek = _calculateWeeksElapsed(newPlan.startDate, currentDate);
+    final currentWeek = WeekCalculator.weeksElapsed(newPlan.startDate, currentDate);
 
     // Generate warning message if needed
     String? warningMessage;
@@ -143,11 +144,5 @@ class AnalyzePlanChangeImpactUseCase {
   bool _isDoseChangeSignificant(double oldDose, double newDose) {
     final percentageChange = ((newDose - oldDose).abs() / oldDose * 100);
     return percentageChange > 20;
-  }
-
-  /// Calculate weeks elapsed since plan start
-  int _calculateWeeksElapsed(DateTime startDate, DateTime currentDate) {
-    final difference = currentDate.difference(startDate);
-    return (difference.inDays / 7).floor();
   }
 }

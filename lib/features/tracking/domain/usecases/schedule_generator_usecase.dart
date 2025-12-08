@@ -1,3 +1,4 @@
+import 'package:n06/core/domain/services/week_calculator.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
@@ -17,7 +18,7 @@ class ScheduleGeneratorUseCase {
     DateTime currentDate = plan.startDate.add(Duration(days: plan.cycleDays));
 
     while (!currentDate.isAfter(endDate)) {
-      final weeksElapsed = _calculateWeeksElapsed(plan.startDate, currentDate);
+      final weeksElapsed = WeekCalculator.weeksElapsed(plan.startDate, currentDate);
       final currentDose = plan.getCurrentDose(weeksElapsed: weeksElapsed);
 
       final schedule = DoseSchedule(
@@ -60,7 +61,7 @@ class ScheduleGeneratorUseCase {
 
     while (!currentDate.isAfter(endDate)) {
       final weeksElapsed =
-          _calculateWeeksElapsed(updatedPlan.startDate, currentDate);
+          WeekCalculator.weeksElapsed(updatedPlan.startDate, currentDate);
       final currentDose = updatedPlan.getCurrentDose(weeksElapsed: weeksElapsed);
 
       final schedule = DoseSchedule(
@@ -76,12 +77,6 @@ class ScheduleGeneratorUseCase {
     }
 
     return [...keepSchedules, ...newSchedules];
-  }
-
-  /// Calculate weeks elapsed since plan start date
-  int _calculateWeeksElapsed(DateTime startDate, DateTime currentDate) {
-    final difference = currentDate.difference(startDate);
-    return (difference.inDays / 7).ceil();
   }
 
   /// Generate unique ID for schedule

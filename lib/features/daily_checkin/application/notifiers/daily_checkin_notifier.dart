@@ -491,7 +491,7 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
       return 'Q4-1a'; // 변비 상세
     }
     // Q4-1a: 장폐색 Red Flag 체크
-    if (currentPath == 'Q4-1a' && (answer == '3-4' || answer == '5+')) {
+    if (currentPath == 'Q4-1a' && (answer == 'several' || answer == 'many')) {
       return 'Q4-1a-bloating'; // 빵빵함 정도
     }
     if (currentPath == 'Q4-1' && answer == 'diarrhea') {
@@ -592,12 +592,13 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     }
 
     // Q4-1a: 변비 상세
+    // questions.dart values: 'few', 'several', 'many'
     if (path == 'Q4-1a') {
-      final days = answer == '1-2'
+      final days = answer == 'few'
           ? 2
-          : answer == '3-4'
+          : answer == 'several'
               ? 4
-              : 6;
+              : 6; // 'many'
       details.add(SymptomDetail(
         type: SymptomType.constipation,
         severity: days >= 5 ? 3 : 2,
@@ -606,12 +607,13 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     }
 
     // Q4-1b: 설사 상세
+    // questions.dart values: 'few', 'several', 'many'
     if (path == 'Q4-1b') {
-      final frequency = answer == '2-3'
+      final frequency = answer == 'few'
           ? 3
-          : answer == '4-5'
+          : answer == 'several'
               ? 5
-              : 7;
+              : 7; // 'many'
       details.add(SymptomDetail(
         type: SymptomType.diarrhea,
         severity: frequency >= 6 ? 3 : 2,
@@ -757,8 +759,8 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     final constipationDays = state.derivedAnswers['Q4-1a'] as String?;
     final bloatingSeverity = state.derivedAnswers['Q4-1a-bloating'] as String?;
 
-    if ((constipationDays == '5+') &&
-        bloatingSeverity == 'severe_no_gas') {
+    if ((constipationDays == 'many') &&
+        bloatingSeverity == 'severe') {
       return RedFlagDetection(
         type: RedFlagType.bowelObstruction,
         severity: RedFlagSeverity.warning,
@@ -797,7 +799,7 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
 
     if ((symptoms == 'dyspnea' || symptoms == 'swelling') &&
         (decreasedUrine == 'decreased' || decreasedUrine == 'significantly_decreased') &&
-        (vomiting == 'multiple' || diarrhea == '6+')) {
+        (vomiting == 'multiple' || diarrhea == 'many')) {
       return RedFlagDetection(
         type: RedFlagType.renalImpairment,
         severity: RedFlagSeverity.warning,

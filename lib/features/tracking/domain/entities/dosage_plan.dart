@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:n06/core/domain/services/week_calculator.dart';
 
 class EscalationStep extends Equatable {
   final int weeksFromStart;
@@ -113,9 +114,7 @@ class DosagePlan extends Equatable {
 
   /// Calculate weeks elapsed since plan start
   int getWeeksElapsed() {
-    final now = DateTime.now();
-    final difference = now.difference(startDate);
-    return (difference.inDays / 7).ceil();
+    return WeekCalculator.weeksElapsed(startDate);
   }
 
   @override
