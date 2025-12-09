@@ -21,6 +21,13 @@
 
 ## 2025-12-09
 
+- [fix] CTA 체크리스트 섹션 인덱스 및 네비게이션 버그 수정
+  - **섹션 인덱스 수정**: evidence(0→2), journey(1→5), sideEffects(3→6) 올바른 페이지 매핑
+  - **"확인하러 가기" 버튼 추가**: 기존 비활성 "스크롤하여 확인" → 클릭 시 해당 섹션으로 이동
+  - `lib/features/guest_home/presentation/widgets/cta_checklist.dart`
+  - `lib/features/guest_home/presentation/widgets/cta_section.dart`
+  - `lib/features/guest_home/presentation/screens/guest_home_screen.dart`
+
 - [fix] 게스트홈 데모 UX 개선 및 버그 수정
   - **DailyCheckinDemo 크래시 수정**: SingleChildScrollView 내 Spacer() 사용으로 인한 unbounded height 에러 해결
   - **전환 애니메이션 추가**: 질문 간 FadeTransition으로 부드러운 전환, 진행률 표시, 완료 화면 추가

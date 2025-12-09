@@ -269,6 +269,7 @@ class _GuestHomeScreenState extends State<GuestHomeScreen>
             onCheckItem: _handleCheckItem,
             onSignUp: _handleSignUp,
             onLearnMore: _handleLearnMore,
+            onNavigateToSection: _goToPage,
           ),
         );
       default:

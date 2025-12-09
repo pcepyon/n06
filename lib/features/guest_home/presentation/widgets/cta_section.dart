@@ -15,6 +15,7 @@ class CtaSection extends StatefulWidget {
   final ValueChanged<String> onCheckItem;
   final VoidCallback? onSignUp;
   final VoidCallback? onLearnMore;
+  final ValueChanged<int>? onNavigateToSection;
 
   const CtaSection({
     super.key,
@@ -24,6 +25,7 @@ class CtaSection extends StatefulWidget {
     required this.onCheckItem,
     this.onSignUp,
     this.onLearnMore,
+    this.onNavigateToSection,
   });
 
   @override
@@ -144,6 +146,7 @@ class _CtaSectionState extends State<CtaSection>
                     checkedItems: widget.checkedItems,
                     onItemChecked: widget.onCheckItem,
                     allChecked: _allChecked,
+                    onNavigateToSection: widget.onNavigateToSection,
                   ),
                   const SizedBox(height: 20),
                   // Primary CTA Button with Pulse

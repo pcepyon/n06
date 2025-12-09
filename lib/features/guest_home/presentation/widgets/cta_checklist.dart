@@ -23,6 +23,7 @@ class CtaChecklist extends StatefulWidget {
   final Set<String> checkedItems;
   final ValueChanged<String> onItemChecked;
   final bool allChecked;
+  final ValueChanged<int>? onNavigateToSection;
 
   const CtaChecklist({
     super.key,
@@ -30,23 +31,28 @@ class CtaChecklist extends StatefulWidget {
     required this.checkedItems,
     required this.onItemChecked,
     required this.allChecked,
+    this.onNavigateToSection,
   });
 
+  /// 섹션 인덱스 매핑 (게스트홈 페이지 인덱스 기준)
+  /// 0: Welcome, 1: NotYourFault, 2: ScientificEvidence, 3: FoodNoise,
+  /// 4: HowItWorks, 5: JourneyPreview, 6: SideEffects, 7: AppFeatures,
+  /// 8: InjectionGuide, 9: CTA
   static const List<CtaCheckItem> items = [
     CtaCheckItem(
       id: 'evidence',
       label: '과학적 근거를 확인했습니다',
-      requiredSectionIndex: 0,
+      requiredSectionIndex: 2, // ScientificEvidenceSection
     ),
     CtaCheckItem(
       id: 'journey',
       label: '나의 여정을 이해했습니다',
-      requiredSectionIndex: 1,
+      requiredSectionIndex: 5, // JourneyPreviewSection
     ),
     CtaCheckItem(
       id: 'sideEffects',
       label: '부작용 대처법을 확인했습니다',
-      requiredSectionIndex: 3,
+      requiredSectionIndex: 6, // SideEffectsGuideSection
     ),
   ];
 
@@ -236,20 +242,42 @@ class _CtaChecklistState extends State<CtaChecklist>
                   ),
                 ),
               ),
-              // 상태 표시
+              // 상태 표시 - 클릭하면 해당 섹션으로 이동
               if (!canCheck)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.neutral200,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    '스크롤하여 확인',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textTertiary,
-                      fontSize: 10,
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    widget.onNavigateToSection?.call(item.requiredSectionIndex);
+                  },
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.arrow_back,
+                          size: 10,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '확인하러 가기',
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.primary,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
