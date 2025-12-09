@@ -135,8 +135,13 @@ class DashboardNotifier extends _$DashboardNotifier {
     // 주간 요약
     final weeklySummary = _calculateWeeklySummary(weights, checkins, doseRecords, activePlan);
 
-    // 뱃지 조회 및 검증
-    final userBadges = await _badgeRepository.getUserBadges(userId);
+    // 뱃지 조회 - 비어있으면 초기화
+    var userBadges = await _badgeRepository.getUserBadges(userId);
+    if (userBadges.isEmpty) {
+      await _badgeRepository.initializeUserBadges(userId);
+      userBadges = await _badgeRepository.getUserBadges(userId);
+    }
+
     final currentWeightKg = weights.isNotEmpty
         ? weights.reduce((a, b) => a.logDate.isAfter(b.logDate) ? a : b).weightKg
         : profile.targetWeight.value + WeightConstants.defaultWeightOffset;
@@ -160,6 +165,9 @@ class DashboardNotifier extends _$DashboardNotifier {
       hasFirstDose: doseRecords.isNotEmpty,
       allDoseRecords: doseRecords,
     );
+
+    // 뱃지 상태 변경 시 DB에 저장
+    await _syncBadgesToDatabase(userBadges, updatedBadges);
 
     // 타임라인 생성
     final timeline = _buildTimeline(
@@ -605,6 +613,25 @@ class DashboardNotifier extends _$DashboardNotifier {
     return InsightMessageData(
       type: DashboardMessageType.insightFirstRecord,
     );
+  }
+
+  /// 뱃지 상태 변경 시 DB에 동기화
+  Future<void> _syncBadgesToDatabase(
+    List<UserBadge> oldBadges,
+    List<UserBadge> newBadges,
+  ) async {
+    for (final newBadge in newBadges) {
+      final oldBadge = oldBadges.firstWhere(
+        (b) => b.badgeId == newBadge.badgeId,
+        orElse: () => newBadge,
+      );
+
+      // 상태나 진행률이 변경된 경우에만 업데이트
+      if (oldBadge.status != newBadge.status ||
+          oldBadge.progressPercentage != newBadge.progressPercentage) {
+        await _badgeRepository.updateBadgeProgress(newBadge);
+      }
+    }
   }
 }
 

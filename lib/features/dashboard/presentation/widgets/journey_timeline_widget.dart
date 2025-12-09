@@ -25,13 +25,18 @@ class JourneyTimelineWidget extends StatelessWidget {
   });
 
   /// 마일스톤 이벤트 개수 계산
-  /// 성취 관련 이벤트만 카운트 (체중 마일스톤, 뱃지, 체크인 마일스톤)
+  /// 성취 관련 이벤트만 카운트:
+  /// - 체중 마일스톤, 뱃지 달성, 체크인 마일스톤
+  /// - 첫 기록 이벤트 (첫 투여, 첫 체중, 첫 체크인)
   int getMilestoneCount(List<TimelineEvent> events) {
     return events
         .where((e) =>
             e.eventType == TimelineEventType.weightMilestone ||
             e.eventType == TimelineEventType.badgeAchievement ||
-            e.eventType == TimelineEventType.checkinMilestone)
+            e.eventType == TimelineEventType.checkinMilestone ||
+            e.eventType == TimelineEventType.firstDose ||
+            e.eventType == TimelineEventType.firstWeightLog ||
+            e.eventType == TimelineEventType.firstCheckin)
         .length;
   }
 

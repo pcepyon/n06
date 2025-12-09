@@ -74,7 +74,7 @@ class UserBadgeDto {
       id: entity.id,
       userId: entity.userId,
       badgeId: entity.badgeId,
-      status: entity.status.toString().split('.').last,
+      status: _statusToString(entity.status),
       progressPercentage: entity.progressPercentage,
       achievedAt: entity.achievedAt,
       createdAt: entity.createdAt,
@@ -82,10 +82,29 @@ class UserBadgeDto {
     );
   }
 
+  /// Dart enum (camelCase) → DB string (snake_case)
+  static String _statusToString(BadgeStatus status) {
+    switch (status) {
+      case BadgeStatus.locked:
+        return 'locked';
+      case BadgeStatus.inProgress:
+        return 'in_progress';
+      case BadgeStatus.achieved:
+        return 'achieved';
+    }
+  }
+
+  /// DB string (snake_case) → Dart enum (camelCase)
   static BadgeStatus _stringToStatus(String value) {
-    return BadgeStatus.values.firstWhere(
-      (e) => e.toString().split('.').last == value,
-      orElse: () => BadgeStatus.locked,
-    );
+    switch (value) {
+      case 'locked':
+        return BadgeStatus.locked;
+      case 'in_progress':
+        return BadgeStatus.inProgress;
+      case 'achieved':
+        return BadgeStatus.achieved;
+      default:
+        return BadgeStatus.locked;
+    }
   }
 }

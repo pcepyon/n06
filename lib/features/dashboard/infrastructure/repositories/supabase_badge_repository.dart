@@ -68,10 +68,10 @@ class SupabaseBadgeRepository implements BadgeRepository {
     final badgeDefinitions = await getBadgeDefinitions();
 
     // Create user badges for all definitions
+    // id는 DB에서 UUID 자동 생성 (DEFAULT uuid_generate_v4())
     final now = DateTime.now();
     final userBadges = badgeDefinitions.map((definition) {
       return {
-        'id': '${userId}_${definition.id}',
         'user_id': userId,
         'badge_id': definition.id,
         'status': 'locked',
@@ -82,6 +82,7 @@ class SupabaseBadgeRepository implements BadgeRepository {
     }).toList();
 
     // Upsert to handle cases where some badges might already exist
+    // UNIQUE(user_id, badge_id) 제약조건 활용
     await _supabase.from('user_badges').upsert(
       userBadges,
       onConflict: 'user_id,badge_id',

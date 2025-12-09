@@ -126,9 +126,9 @@ class _BadgeGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        crossAxisSpacing: 16, // md gap
-        mainAxisSpacing: 16, // md gap
-        childAspectRatio: 0.8, // Adjust for label below circle
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: 0.75, // 56px circle + 4px gap + label (2 lines)
       ),
       itemCount: badges.length,
       itemBuilder: (context, index) {
@@ -179,6 +179,7 @@ class _BadgeItemState extends State<_BadgeItem> {
         curve: Curves.easeOut,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             // Badge Circle
             _buildBadgeCircle(
@@ -188,32 +189,33 @@ class _BadgeItemState extends State<_BadgeItem> {
               metadata: metadata,
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
 
-            // Badge Label
-            Text(
-              metadata.name,
-              style: AppTypography.labelSmall.copyWith(
-                color: AppColors.neutral700,
+            // Badge Label + Progress
+            Flexible(
+              child: Text(
+                !isAchieved && !isLocked
+                    ? '${metadata.name}\n${(progress * 100).toInt()}%'
+                    : metadata.name,
+                style: AppTypography.labelSmall.copyWith(
+                  color: AppColors.neutral700,
+                  fontSize: 11,
+                  height: 1.2,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
-
-            // Progress Text (only for In Progress)
-            if (!isAchieved && !isLocked) ...[
-              const SizedBox(height: 4),
-              Text(
-                '${(progress * 100).toInt()}%',
-                style: AppTypography.caption,
-              ),
-            ],
           ],
         ),
       ),
     );
   }
+
+  /// 뱃지 원 크기 상수
+  static const double _circleSize = 56.0;
+  static const double _iconSize = 24.0;
 
   Widget _buildBadgeCircle({
     required bool isAchieved,
@@ -227,12 +229,12 @@ class _BadgeItemState extends State<_BadgeItem> {
         painter: _DashedBorderPainter(
           color: AppColors.primary,
           strokeWidth: 2,
-          dashWidth: 5,
-          dashSpace: 3,
+          dashWidth: 4,
+          dashSpace: 2,
         ),
         child: Container(
-          width: 80,
-          height: 80,
+          width: _circleSize,
+          height: _circleSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppColors.primary.withValues(alpha: 0.05),
@@ -240,7 +242,7 @@ class _BadgeItemState extends State<_BadgeItem> {
           child: Center(
             child: Icon(
               metadata.icon,
-              size: 32,
+              size: _iconSize,
               color: AppColors.primary,
             ),
           ),
@@ -259,13 +261,13 @@ class _BadgeItemState extends State<_BadgeItem> {
       // Achieved state
       backgroundColor = AppColors.gold;
       borderColor = AppColors.gold;
-      borderWidth = 3;
+      borderWidth = 2;
       iconColor = AppColors.surface;
       boxShadow = [
         BoxShadow(
           color: AppColors.gold.withValues(alpha: 0.2),
-          blurRadius: 8,
-          offset: const Offset(0, 4),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
         ),
       ];
       gradient = const LinearGradient(
@@ -292,8 +294,8 @@ class _BadgeItemState extends State<_BadgeItem> {
     }
 
     return Container(
-      width: 80,
-      height: 80,
+      width: _circleSize,
+      height: _circleSize,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: gradient == null ? backgroundColor : null,
@@ -306,7 +308,7 @@ class _BadgeItemState extends State<_BadgeItem> {
       child: Center(
         child: Icon(
           metadata.icon,
-          size: 32,
+          size: _iconSize,
           color: iconColor,
         ),
       ),
