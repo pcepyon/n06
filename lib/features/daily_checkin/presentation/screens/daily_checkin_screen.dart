@@ -16,7 +16,7 @@ import 'package:n06/features/daily_checkin/presentation/widgets/feedback_card.da
 import 'package:n06/features/daily_checkin/presentation/widgets/progress_indicator.dart';
 import 'package:n06/features/daily_checkin/presentation/widgets/question_card.dart';
 import 'package:n06/features/daily_checkin/presentation/widgets/weight_input_section.dart';
-import 'package:n06/features/daily_checkin/presentation/widgets/derived_question_sheet.dart';
+import 'package:n06/features/daily_checkin/presentation/constants/derived_questions_map.dart';
 import 'package:n06/features/daily_checkin/presentation/widgets/red_flag_guidance_dialog.dart';
 import 'package:n06/features/daily_checkin/presentation/utils/red_flag_localizations.dart';
 import 'package:n06/features/daily_checkin/presentation/utils/feedback_l10n_mapper.dart';
@@ -39,7 +39,6 @@ class DailyCheckinScreen extends ConsumerStatefulWidget {
 
 class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
   bool _isInitialized = false;
-  bool _isDerivedSheetOpen = false;
   Timer? _feedbackTimer; // 피드백 타이머 (BUG-20251202-TIMER)
   String? _lastPendingFeedback;
   bool _isRedFlagDialogShown = false; // Red Flag 다이얼로그 중복 표시 방지
@@ -87,18 +86,20 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
         );
   }
 
-  Future<void> _handleDerivedAnswer(String path, String answer) async {
-    await ref
-        .read(dailyCheckinProvider.notifier)
-        .submitDerivedAnswer(path, answer);
+  Future<void> _handleDerivedAnswer(
+    String path,
+    AnswerOption option,
+  ) async {
+    // 피드백 포함하여 파생 질문 답변 제출
+    await ref.read(dailyCheckinProvider.notifier).submitDerivedAnswer(
+          path,
+          option.value,
+          feedback:
+              option.getFeedback != null ? option.getFeedback!(context.l10n) : null,
+        );
   }
 
   void _handleGoBack() {
-    // 바텀시트가 열려있으면 먼저 닫기 (BUG-20251202-175417)
-    if (_isDerivedSheetOpen) {
-      Navigator.of(context).pop();
-      _isDerivedSheetOpen = false;
-    }
     ref.read(dailyCheckinProvider.notifier).goBack();
   }
 
@@ -206,9 +207,9 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
       });
     }
 
-    // 파생 질문이 활성화된 경우
+    // 파생 질문이 활성화된 경우 (인라인으로 표시)
     if (state.currentDerivedPath != null) {
-      return _buildDerivedQuestionPage(context, state.currentDerivedPath!);
+      return _buildDerivedQuestionPage(context, state.currentDerivedPath!, state);
     }
 
     // 완료 화면
@@ -456,59 +457,100 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
     );
   }
 
-  Widget _buildDerivedQuestionPage(BuildContext context, String path) {
-    // 파생 질문을 바텀시트로 표시 (중복 열기 방지, BUG-20251202-175417)
-    if (!_isDerivedSheetOpen) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        if (!mounted) return;
-        _isDerivedSheetOpen = true;
-        final openedPath = path; // 바텀시트 열 때의 경로 저장
+  /// 파생 질문을 인라인으로 표시 (모달 대신 전체 화면)
+  ///
+  /// 메인 질문과 동일한 UX로 피드백 표시 및 자동 전환 지원
+  Widget _buildDerivedQuestionPage(
+    BuildContext context,
+    String path,
+    DailyCheckinState state,
+  ) {
+    final l10n = L10n.of(context);
+    final derivedQuestion = getDerivedQuestion(path);
 
-        // 바텀시트가 완전히 닫힌 후 답변을 반환받음 (BUG-20251202-224803)
-        final selectedAnswer = await showDerivedQuestionSheet(
-          context: context,
-          path: path,
-          onAnswerSelected: (answer) {
-            Navigator.of(context).pop(answer);
-          },
-        );
+    if (derivedQuestion == null) {
+      return Center(
+        child: Text(l10n.checkin_error_questionNotFound),
+      );
+    }
 
-        // 바텀시트가 닫힌 후
+    final selectedAnswer = state.derivedAnswers[path] as String?;
+
+    // 피드백이 표시 대기 중이면 자동 전환 (메인 질문과 동일 로직)
+    if (state.pendingFeedback != null &&
+        _feedbackTimer == null &&
+        _lastPendingFeedback != state.pendingFeedback) {
+      _lastPendingFeedback = state.pendingFeedback;
+      _feedbackTimer = Timer(const Duration(seconds: 2), () {
         if (mounted) {
-          _isDerivedSheetOpen = false;
-
-          if (selectedAnswer != null) {
-            // 답변이 선택된 경우: 바텀시트가 완전히 닫힌 후에만 상태 업데이트
-            await _handleDerivedAnswer(openedPath, selectedAnswer);
-          } else {
-            // 답변 없이 닫힌 경우 (스와이프 다운 등): 동기화
-            final currentPath = ref.read(dailyCheckinProvider).value?.currentDerivedPath;
-            if (currentPath == openedPath) {
-              ref.read(dailyCheckinProvider.notifier).goBack();
-            }
-          }
+          _feedbackTimer = null;
+          ref.read(dailyCheckinProvider.notifier).dismissFeedbackAndProceed();
         }
       });
+    } else if (state.pendingFeedback == null) {
+      _feedbackTimer?.cancel();
+      _feedbackTimer = null;
+      _lastPendingFeedback = null;
     }
 
-    // 이전 질문 화면 유지 (백그라운드)
-    final currentQuestion = _getQuestionIndexFromPath(path);
-    if (currentQuestion >= 1 && currentQuestion <= 6) {
-      final state = ref.read(dailyCheckinProvider).value;
-      if (state != null) {
-        return _buildQuestionPage(context, currentQuestion - 1, state);
-      }
-    }
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          const Spacer(),
+          // 질문 카드
+          QuestionCard(
+            emoji: derivedQuestion.getEmoji(l10n),
+            question: derivedQuestion.getQuestion(l10n),
+          ),
+          const SizedBox(height: 32),
+          // 답변 버튼들
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
+            children: derivedQuestion.options.map((option) {
+              final isSelected = selectedAnswer == option.value;
+              // 파생 질문에서는 긍정/부정 구분 없이 중립 스타일
+              const isPositive = false;
 
-    return const Center(child: CircularProgressIndicator());
-  }
-
-  int _getQuestionIndexFromPath(String path) {
-    final match = RegExp(r'Q(\d+)').firstMatch(path);
-    if (match != null) {
-      return int.parse(match.group(1)!);
-    }
-    return 1;
+              return AnswerButton(
+                emoji: option.getEmoji(l10n),
+                text: option.getText(l10n),
+                isSelected: isSelected,
+                isPositive: isPositive,
+                onTap: () async => await _handleDerivedAnswer(path, option),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 24),
+          // 피드백 카드 (pendingFeedback 표시)
+          if (state.pendingFeedback != null)
+            FeedbackCard.direct(
+              message: state.pendingFeedback!,
+              tone: FeedbackTone.positive,
+            )
+          else if (selectedAnswer != null)
+            Builder(
+              builder: (context) {
+                final selectedOption = derivedQuestion.options.firstWhere(
+                  (opt) => opt.value == selectedAnswer,
+                  orElse: () => derivedQuestion.options.first,
+                );
+                final feedback = selectedOption.getFeedback;
+                if (feedback != null) {
+                  return FeedbackCard.direct(
+                    message: feedback(l10n),
+                    tone: FeedbackTone.positive,
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          const Spacer(),
+        ],
+      ),
+    );
   }
 
   /// Builds a simple text summary of check-in for AI context.

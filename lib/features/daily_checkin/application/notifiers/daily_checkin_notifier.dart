@@ -238,7 +238,12 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
   }
 
   /// 파생 질문 답변
-  Future<void> submitDerivedAnswer(String path, String answer) async {
+  /// [feedback] 파라미터는 Presentation Layer에서 전달 (인라인 피드백 표시용)
+  Future<void> submitDerivedAnswer(
+    String path,
+    String answer, {
+    String? feedback,
+  }) async {
     final currentState = state.value ?? const DailyCheckinState();
 
     final newDerivedAnswers = Map<String, dynamic>.from(
@@ -255,18 +260,28 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     // 다음 파생 질문 또는 메인 질문으로
     final nextDerivedPath = _getNextDerivedPath(path, answer);
 
-    if (nextDerivedPath != null) {
-      // 추가 파생 질문
+    if (nextDerivedPath != null && feedback != null) {
+      // 다음 파생 질문이 있고 피드백이 있으면: 피드백 표시 후 파생 질문으로 진행
+      state = AsyncValue.data(
+        currentState.copyWith(
+          derivedAnswers: newDerivedAnswers,
+          symptomDetails: newSymptomDetails,
+          pendingFeedback: feedback,
+          pendingDerivedPath: nextDerivedPath,
+        ),
+      );
+    } else if (nextDerivedPath != null) {
+      // 다음 파생 질문으로 (피드백 없음)
       state = AsyncValue.data(
         currentState.copyWith(
           derivedAnswers: newDerivedAnswers,
           symptomDetails: newSymptomDetails,
           currentDerivedPath: nextDerivedPath,
-          clearPendingDerivedPath: true, // BUG-20251209-DERIVEDFEEDBACK: 안전을 위해 클리어
+          clearPendingDerivedPath: true,
         ),
       );
-    } else {
-      // 메인 질문으로 복귀
+    } else if (feedback != null) {
+      // 메인 질문으로 복귀하기 전 피드백 표시
       final currentQuestion = _getQuestionIndexFromPath(path);
       final nextStep = currentQuestion < 6 ? currentQuestion + 1 : currentQuestion;
 
@@ -274,8 +289,24 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
         currentState.copyWith(
           derivedAnswers: newDerivedAnswers,
           symptomDetails: newSymptomDetails,
-          clearCurrentDerivedPath: true, // BUG-20251202-231014
-          clearPendingDerivedPath: true, // BUG-20251209-DERIVEDFEEDBACK: 안전을 위해 클리어
+          pendingFeedback: feedback,
+          // 피드백 표시 후 메인 질문으로 이동하도록 플래그 설정
+          clearCurrentDerivedPath: true,
+          clearPendingDerivedPath: true,
+          currentStep: nextStep,
+        ),
+      );
+    } else {
+      // 메인 질문으로 복귀 (피드백 없음)
+      final currentQuestion = _getQuestionIndexFromPath(path);
+      final nextStep = currentQuestion < 6 ? currentQuestion + 1 : currentQuestion;
+
+      state = AsyncValue.data(
+        currentState.copyWith(
+          derivedAnswers: newDerivedAnswers,
+          symptomDetails: newSymptomDetails,
+          clearCurrentDerivedPath: true,
+          clearPendingDerivedPath: true,
           currentStep: nextStep,
         ),
       );
@@ -515,8 +546,9 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     if (currentPath == 'Q3-1' && answer == 'abdominal_pain') {
       return 'Q3-2'; // 복통 위치
     }
+    // Q3-2: 복통 위치 → 통증 강도 (questions.dart value: 'upper', 'general')
     if (currentPath == 'Q3-2' &&
-        (answer == 'upper_abdomen' || answer == 'periumbilical')) {
+        (answer == 'upper' || answer == 'general')) {
       return 'Q3-3'; // 상복부 통증 상세
     }
     // Q3-3: 췌장염 Red Flag 체크
@@ -524,11 +556,11 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
       return 'Q3-3-radiation'; // 등 방사통 체크
     }
     if (currentPath == 'Q3-3-radiation' &&
-        (answer == 'slight' || answer == 'definite')) {
+        (answer == 'slight' || answer == 'definite' || answer == 'yes')) {
       return 'Q3-3-duration'; // 지속 시간 체크
     }
-    // Q3-4: 담낭염 Red Flag 체크
-    if (currentPath == 'Q3-2' && answer == 'right_upper_quadrant') {
+    // Q3-4: 담낭염 Red Flag 체크 (questions.dart value: 'right_upper')
+    if (currentPath == 'Q3-2' && answer == 'right_upper') {
       return 'Q3-4'; // 우상복부 통증 상세
     }
     if (currentPath == 'Q3-4' && (answer == 'moderate' || answer == 'severe')) {
@@ -607,12 +639,13 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     }
 
     // Q1-1b: 구토 횟수
+    // questions.dart values: 'no', 'once', 'several'
     if (path == 'Q1-1b') {
-      final vomitCount = answer == 'none'
+      final vomitCount = answer == 'no'
           ? 0
-          : answer == 'once_twice'
-              ? 2
-              : 4;
+          : answer == 'once'
+              ? 1
+              : 3; // 'several'
       if (vomitCount > 0) {
         details.add(SymptomDetail(
           type: SymptomType.vomiting,
@@ -746,9 +779,10 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     final radiationToBack = state.derivedAnswers['Q3-3-radiation'] as String?;
     final duration = state.derivedAnswers['Q3-3-duration'] as String?;
 
-    if ((painLocation == 'upper_abdomen' || painLocation == 'periumbilical') &&
+    // questions.dart value: 'upper', 'general' (not 'upper_abdomen', 'periumbilical')
+    if ((painLocation == 'upper' || painLocation == 'general') &&
         (painSeverity == 'moderate' || painSeverity == 'severe') &&
-        (radiationToBack == 'slight' || radiationToBack == 'definite') &&
+        (radiationToBack == 'slight' || radiationToBack == 'definite' || radiationToBack == 'yes') &&
         (duration == 'hours' || duration == 'all_day')) {
       return RedFlagDetection(
         type: RedFlagType.pancreatitis,
@@ -771,10 +805,12 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     final feverChills = state.derivedAnswers['Q3-4-fever'] as String?;
     final vomiting = state.derivedAnswers['Q1-1b'] as String?;
 
-    if (painLocation == 'right_upper_quadrant' &&
+    // questions.dart value: 'right_upper' (not 'right_upper_quadrant')
+    // questions.dart vomiting values: 'no', 'once', 'several'
+    if (painLocation == 'right_upper' &&
         (painSeverity == 'moderate' || painSeverity == 'severe') &&
-        ((feverChills == 'slight' || feverChills == 'definite') ||
-            (vomiting == 'once_twice' || vomiting == 'multiple'))) {
+        ((feverChills == 'slight' || feverChills == 'definite' || feverChills == 'yes') ||
+            (vomiting == 'once' || vomiting == 'several'))) {
       return RedFlagDetection(
         type: RedFlagType.cholecystitis,
         severity: RedFlagSeverity.urgent,
@@ -791,8 +827,9 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     final cannotKeepFluids = state.derivedAnswers['Q2-1'] as String?;
     final vomiting = state.derivedAnswers['Q1-1b'] as String?;
 
+    // questions.dart vomiting values: 'no', 'once', 'several'
     if (cannotKeepFluids == 'cannot_keep' ||
-        (vomiting == 'multiple' && hydration == 'poor')) {
+        (vomiting == 'several' && hydration == 'poor')) {
       return RedFlagDetection(
         type: RedFlagType.severeDehydration,
         severity: RedFlagSeverity.urgent,
@@ -846,9 +883,11 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     final vomiting = state.derivedAnswers['Q1-1b'] as String?;
     final diarrhea = state.derivedAnswers['Q4-1b'] as String?;
 
+    // questions.dart vomiting values: 'no', 'once', 'several'
+    // questions.dart diarrhea values: 'few', 'several', 'many'
     if ((symptoms == 'dyspnea' || symptoms == 'swelling') &&
         (decreasedUrine == 'decreased' || decreasedUrine == 'significantly_decreased') &&
-        (vomiting == 'multiple' || diarrhea == 'many')) {
+        (vomiting == 'several' || diarrhea == 'many')) {
       return RedFlagDetection(
         type: RedFlagType.renalImpairment,
         severity: RedFlagSeverity.warning,
