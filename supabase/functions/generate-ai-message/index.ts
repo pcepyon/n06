@@ -54,10 +54,39 @@ const INSTRUCTION_PROMPT = `당신은 GLP-1 치료를 함께하는 친구입니�
 
 /**
  * Detect special situation and return guidance
+ *
+ * 우선순위 (llm-message-spec.md 기준):
+ * 1. 긴급 상황: Red Flag 발생
+ * 2. 첫 시작: 치료 시작 당일
+ * 3. 전환점: 증량 직후 (1-3일)
+ * 4. 감정적 순간: 오랜만에 복귀 (체크인 7일+ 공백)
+ * 5. 감정적 순간: 체중 정체기 (2주+)
+ * 6. 장기 사용자: 90일+
+ * 7. 기록률 저조: 20% 미만
  */
 function detectSpecialSituation(userContext: any, healthData: any): string | null {
-  // 우선순위 1: 첫 시작 (journey_day <= 1)
-  if (userContext.journey_day <= 1) {
+  // 우선순위 1: Red Flag 발생 (긴급 상황) - 스펙 최우선
+  if (healthData.has_red_flag) {
+    const redFlagTypeKorean: Record<string, string> = {
+      pancreatitis: "복통",
+      cholecystitis: "담낭 관련 증상",
+      severeDehydration: "탈수 증상",
+      bowelObstruction: "배변 문제",
+      hypoglycemia: "저혈당 증상",
+      renalImpairment: "신장 관련 증상",
+    };
+    const symptomKorean = redFlagTypeKorean[healthData.red_flag_type] || "증상";
+    return `## 🚨 특별 상황: 긴급 (Red Flag)
+체크인에서 ${symptomKorean}이 감지됐어요. 신중하게 접근해야 해요.
+- 놀라게 하지 말고 차분하게
+- "몸에서 신호를 보내고 있어요"
+- "의료진과 상담해보는 게 좋을 것 같아요"
+- 무섭지 않게, 하지만 명확하게 행동 제안
+`;
+  }
+
+  // 우선순위 2: 첫 시작 (journey_day === 0, 치료 시작 당일만)
+  if (userContext.journey_day === 0) {
     return `## 🚨 특별 상황: 첫 시작
 이 사람은 오늘 막 치료를 시작했어요.
 - "잘 버텨왔다", "꾸준히 해왔다" 같은 말 금지 (아직 시작도 안 했으니까)
@@ -67,7 +96,7 @@ function detectSpecialSituation(userContext: any, healthData: any): string | nul
 `;
   }
 
-  // 우선순위 2: 증량 직후 (1-3일) - 가장 힘든 시기
+  // 우선순위 3: 증량 직후 (1-3일) - 가장 힘든 시기
   if (userContext.days_since_escalation != null && userContext.days_since_escalation <= 3) {
     return `## 🚨 특별 상황: 증량 직후 (힘든 시기)
 증량한 지 ${userContext.days_since_escalation}일째예요. 이때가 제일 힘들어요.
@@ -77,17 +106,18 @@ function detectSpecialSituation(userContext: any, healthData: any): string | nul
 `;
   }
 
-  // 우선순위 3: 오랜만에 복귀 (14일 이상 투여 공백)
-  if (userContext.days_since_last_dose >= 14) {
+  // 우선순위 4: 오랜만에 복귀 (체크인 7일 이상 공백)
+  // 기존: days_since_last_dose (투여 공백) → 변경: days_since_last_checkin (체크인 공백)
+  if (healthData.days_since_last_checkin >= 7) {
     return `## 🚨 특별 상황: 오랜만에 복귀
-마지막 투여가 ${userContext.days_since_last_dose}일 전이에요. 한동안 쉬었다가 돌아온 거예요.
+마지막 체크인이 ${healthData.days_since_last_checkin}일 전이에요. 한동안 쉬었다가 돌아온 거예요.
 - 판단하거나 이유 묻지 않기
 - "다시 와줬네요, 그것만으로도 충분해요"
 - "쉬어도 괜찮아요, 여기 있는 것만으로도"
 `;
   }
 
-  // 우선순위 4: 체중 정체기 (2주 이상 + 변화 없음)
+  // 우선순위 5: 체중 정체기 (2주 이상 + 변화 없음)
   if (userContext.journey_day >= 14 && healthData.weight_change_this_week_kg === 0) {
     return `## 🚨 특별 상황: 체중 정체기
 2주 이상 지났는데 체중 변화가 없어요. 답답할 수 있어요.
@@ -97,7 +127,7 @@ function detectSpecialSituation(userContext: any, healthData: any): string | nul
 `;
   }
 
-  // 우선순위 5: 장기 사용자 (90일 이상)
+  // 우선순위 6: 장기 사용자 (90일 이상)
   if (userContext.journey_day >= 90) {
     return `## 🚨 특별 상황: 장기 사용자
 벌써 ${userContext.journey_day}일째, 3개월 이상 함께했어요.
@@ -107,7 +137,7 @@ function detectSpecialSituation(userContext: any, healthData: any): string | nul
 `;
   }
 
-  // 우선순위 6: 기록률 저조 (20% 미만)
+  // 우선순위 7: 기록률 저조 (20% 미만)
   if (healthData.completion_rate < 0.2 && userContext.journey_day > 7) {
     return `## 🚨 특별 상황: 기록을 잘 안 하는 사용자
 기록률이 낮아요. 압박하면 안 돼요.

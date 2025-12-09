@@ -113,6 +113,15 @@ class HealthData extends Equatable {
   /// Summary of today's check-in (nullable, only for post-checkin trigger)
   final String? recentCheckinSummary;
 
+  /// Whether today's check-in detected a Red Flag (urgent medical attention)
+  final bool hasRedFlag;
+
+  /// Red Flag type if detected (e.g., 'pancreatitis', 'severeDehydration')
+  final String? redFlagType;
+
+  /// Days since last check-in (for "return after break" detection)
+  final int daysSinceLastCheckin;
+
   const HealthData({
     required this.weightChangeThisWeekKg,
     required this.weightTrend,
@@ -120,6 +129,9 @@ class HealthData extends Equatable {
     required this.completionRate,
     this.topConcern,
     this.recentCheckinSummary,
+    this.hasRedFlag = false,
+    this.redFlagType,
+    this.daysSinceLastCheckin = 0,
   });
 
   Map<String, dynamic> toJson() {
@@ -130,6 +142,9 @@ class HealthData extends Equatable {
       'completion_rate': completionRate,
       'top_concern': topConcern,
       'recent_checkin_summary': recentCheckinSummary,
+      'has_red_flag': hasRedFlag,
+      'red_flag_type': redFlagType,
+      'days_since_last_checkin': daysSinceLastCheckin,
     };
   }
 
@@ -141,6 +156,9 @@ class HealthData extends Equatable {
         completionRate,
         topConcern,
         recentCheckinSummary,
+        hasRedFlag,
+        redFlagType,
+        daysSinceLastCheckin,
       ];
 }
 

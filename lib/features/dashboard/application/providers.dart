@@ -1,3 +1,4 @@
+import 'package:n06/features/daily_checkin/application/providers.dart' as checkin_providers;
 import 'package:n06/features/dashboard/application/services/llm_context_builder.dart';
 import 'package:n06/features/dashboard/domain/repositories/ai_message_repository.dart';
 import 'package:n06/features/dashboard/domain/repositories/badge_repository.dart';
@@ -25,8 +26,10 @@ AIMessageRepository aiMessageRepository(Ref ref) {
 LLMContextBuilder llmContextBuilder(Ref ref) {
   final medicationRepository = ref.watch(tracking_providers.medicationRepositoryProvider);
   final trackingRepository = ref.watch(tracking_providers.trackingRepositoryProvider);
+  final dailyCheckinRepository = ref.watch(checkin_providers.dailyCheckinRepositoryProvider);
   return LLMContextBuilder(
     medicationRepository: medicationRepository,
     trackingRepository: trackingRepository,
+    dailyCheckinRepository: dailyCheckinRepository,
   );
 }
