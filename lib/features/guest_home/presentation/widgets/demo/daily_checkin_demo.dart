@@ -27,11 +27,18 @@ class DailyCheckinDemo extends StatefulWidget {
   State<DailyCheckinDemo> createState() => _DailyCheckinDemoState();
 }
 
-class _DailyCheckinDemoState extends State<DailyCheckinDemo> {
+class _DailyCheckinDemoState extends State<DailyCheckinDemo>
+    with SingleTickerProviderStateMixin {
   int _currentQuestionIndex = 0;
   String? _selectedAnswer;
   String? _feedbackMessage;
   Timer? _feedbackTimer;
+  bool _isTransitioning = false;
+  bool _isComplete = false;
+
+  // 애니메이션 컨트롤러 (질문 전환용)
+  late final AnimationController _transitionController;
+  late final Animation<double> _fadeAnimation;
 
   // 더미 질문 데이터 (간소화된 3개 질문)
   late final List<_DemoQuestion> _demoQuestions;
@@ -39,6 +46,18 @@ class _DailyCheckinDemoState extends State<DailyCheckinDemo> {
   @override
   void initState() {
     super.initState();
+
+    // 전환 애니메이션 설정
+    _transitionController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _transitionController,
+      curve: Curves.easeInOut,
+    );
+    _transitionController.value = 1.0; // 초기 상태는 보이는 상태
+
     _demoQuestions = [
       // Q1. 식사 질문
       _DemoQuestion(
@@ -130,76 +149,204 @@ class _DailyCheckinDemoState extends State<DailyCheckinDemo> {
   @override
   void dispose() {
     _feedbackTimer?.cancel();
+    _transitionController.dispose();
     super.dispose();
   }
 
   void _handleAnswerSelected(_DemoAnswerOption option) {
+    // 이미 전환 중이면 무시
+    if (_isTransitioning) return;
+
     setState(() {
       _selectedAnswer = option.value;
       _feedbackMessage = option.getFeedback(context.l10n);
     });
 
-    // 2초 후 자동 전환
+    // 1.5초 후 자동 전환 (피드백 읽을 시간)
     _feedbackTimer?.cancel();
-    _feedbackTimer = Timer(const Duration(seconds: 2), () {
+    _feedbackTimer = Timer(const Duration(milliseconds: 1500), () {
       if (!mounted) return;
-
-      if (_currentQuestionIndex < _demoQuestions.length - 1) {
-        // 다음 질문으로
-        setState(() {
-          _currentQuestionIndex++;
-          _selectedAnswer = null;
-          _feedbackMessage = null;
-        });
-      } else {
-        // 완료
-        widget.onComplete?.call();
-      }
+      _transitionToNext();
     });
+  }
+
+  Future<void> _transitionToNext() async {
+    if (_isTransitioning) return;
+    _isTransitioning = true;
+
+    // 페이드 아웃
+    await _transitionController.reverse();
+
+    if (!mounted) return;
+
+    if (_currentQuestionIndex < _demoQuestions.length - 1) {
+      // 다음 질문으로
+      setState(() {
+        _currentQuestionIndex++;
+        _selectedAnswer = null;
+        _feedbackMessage = null;
+      });
+
+      // 페이드 인
+      await _transitionController.forward();
+    } else {
+      // 완료 상태로 전환
+      setState(() {
+        _selectedAnswer = null;
+        _feedbackMessage = null;
+        _isComplete = true;
+      });
+
+      // 페이드 인 (완료 화면 표시)
+      await _transitionController.forward();
+
+      widget.onComplete?.call();
+    }
+
+    _isTransitioning = false;
   }
 
   @override
   Widget build(BuildContext context) {
+    // 완료 상태면 완료 화면 표시
+    if (_isComplete) {
+      return _buildCompletionView();
+    }
+
     final currentQuestion = _demoQuestions[_currentQuestionIndex];
 
+    // Note: SingleChildScrollView 내부에서 사용되므로 Spacer 대신 SizedBox 사용
     return Padding(
       padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          const Spacer(),
-          // 질문 카드
-          QuestionCard(
-            emoji: currentQuestion.emoji,
-            question: currentQuestion.getQuestion(context.l10n),
-          ),
-          const SizedBox(height: 32),
-          // 답변 버튼들
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            alignment: WrapAlignment.center,
-            children: currentQuestion.options.map((option) {
-              final isSelected = _selectedAnswer == option.value;
-
-              return AnswerButton(
-                emoji: option.emoji,
-                text: option.getText(context.l10n),
-                isSelected: isSelected,
-                isPositive: option.isPositive,
-                onTap: () => _handleAnswerSelected(option),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 24),
-          // 피드백 카드
-          if (_feedbackMessage != null)
-            FeedbackCard.direct(
-              message: _feedbackMessage!,
-              tone: FeedbackTone.positive,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Column(
+          children: [
+            // 진행률 표시
+            _buildProgressIndicator(),
+            const SizedBox(height: 24),
+            // 질문 카드
+            QuestionCard(
+              emoji: currentQuestion.emoji,
+              question: currentQuestion.getQuestion(context.l10n),
             ),
-          const Spacer(),
-        ],
+            const SizedBox(height: 32),
+            // 답변 버튼들
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              children: currentQuestion.options.map((option) {
+                final isSelected = _selectedAnswer == option.value;
+
+                return AnswerButton(
+                  emoji: option.emoji,
+                  text: option.getText(context.l10n),
+                  isSelected: isSelected,
+                  isPositive: option.isPositive,
+                  onTap: () => _handleAnswerSelected(option),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+            // 피드백 카드 (애니메이션 적용)
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              child: _feedbackMessage != null
+                  ? FeedbackCard.direct(
+                      message: _feedbackMessage!,
+                      tone: FeedbackTone.positive,
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 32),
+          ],
+        ),
       ),
+    );
+  }
+
+  /// 완료 화면
+  Widget _buildCompletionView() {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Column(
+          children: [
+            const SizedBox(height: 32),
+            // 완료 이모지
+            const Text(
+              '🎉',
+              style: TextStyle(fontSize: 64),
+            ),
+            const SizedBox(height: 24),
+            // 완료 메시지
+            Text(
+              '체험 완료!',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '매일 이렇게 간단한 체크인으로\n나의 컨디션을 기록할 수 있어요',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Colors.grey[600],
+                    height: 1.5,
+                  ),
+            ),
+            const SizedBox(height: 32),
+            // 완료된 진행률 표시
+            _buildCompletedProgressIndicator(),
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 완료된 진행률 표시 위젯
+  Widget _buildCompletedProgressIndicator() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(_demoQuestions.length, (index) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: const Color(0xFF10B981), // Green (모두 완료)
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+      }),
+    );
+  }
+
+  /// 진행률 표시 위젯
+  Widget _buildProgressIndicator() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(_demoQuestions.length, (index) {
+        final isCompleted = index < _currentQuestionIndex;
+        final isCurrent = index == _currentQuestionIndex;
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: isCurrent ? 24 : 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: isCompleted || isCurrent
+                ? const Color(0xFF10B981) // Green
+                : const Color(0xFFE5E7EB), // Gray
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+      }),
     );
   }
 }

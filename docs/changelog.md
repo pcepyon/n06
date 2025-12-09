@@ -21,6 +21,14 @@
 
 ## 2025-12-09
 
+- [fix] 게스트홈 데모 UX 개선 및 버그 수정
+  - **DailyCheckinDemo 크래시 수정**: SingleChildScrollView 내 Spacer() 사용으로 인한 unbounded height 에러 해결
+  - **전환 애니메이션 추가**: 질문 간 FadeTransition으로 부드러운 전환, 진행률 표시, 완료 화면 추가
+  - **의료진 공유하기 데모 분리**: "진료실에서 말문이 막혀도" 기능에 ShareReportDemo 연결 (기존 TrendReportDemo에서 분리)
+  - `lib/features/guest_home/presentation/widgets/demo/daily_checkin_demo.dart`
+  - `lib/features/guest_home/presentation/widgets/demo/share_report_demo.dart` (신규)
+  - `lib/features/guest_home/presentation/widgets/app_features_section.dart`
+
 - [feat] 게스트 체험 통합 시스템 구현
   - **게스트홈 확장 (6→10섹션)**: 당신탓아니에요, Food Noise, 작동원리, 주사가이드 추가
   - **체험 기능**: 6개 데모 위젯으로 비로그인 앱 체험 제공 (데이터 저장 없음)

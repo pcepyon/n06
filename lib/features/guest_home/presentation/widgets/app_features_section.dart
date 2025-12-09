@@ -7,6 +7,7 @@ import 'package:n06/features/guest_home/data/guest_home_content.dart';
 import 'package:n06/features/guest_home/domain/entities/app_feature_data.dart';
 import 'package:n06/features/guest_home/presentation/widgets/demo/demo_bottom_sheet.dart';
 import 'package:n06/features/guest_home/presentation/widgets/demo/dose_calendar_demo.dart';
+import 'package:n06/features/guest_home/presentation/widgets/demo/share_report_demo.dart';
 import 'package:n06/features/guest_home/presentation/widgets/demo/trend_report_demo.dart';
 
 /// 앱 기능 소개 섹션
@@ -97,8 +98,9 @@ class _ScrollRevealFeatureCard extends StatefulWidget {
       case 'schedule':
         return const DoseCalendarDemo();
       case 'record':
-      case 'report':
         return const TrendReportDemo();
+      case 'report':
+        return const ShareReportDemo();
       default:
         return null;
     }
@@ -110,8 +112,9 @@ class _ScrollRevealFeatureCard extends StatefulWidget {
       case 'schedule':
         return '투여 캘린더 체험';
       case 'record':
-      case 'report':
         return '트렌드 리포트 체험';
+      case 'report':
+        return '의료진 공유하기 체험';
       default:
         return null;
     }
