@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/guest_home/data/guest_home_content.dart';
@@ -357,10 +356,6 @@ class _ScrollRevealFeatureCardState extends State<_ScrollRevealFeatureCard>
                                     context: context,
                                     title: demoTitle,
                                     child: demoWidget,
-                                    onCtaTap: () {
-                                      Navigator.pop(context);
-                                      context.go('/login');
-                                    },
                                   );
                                 }
                               },

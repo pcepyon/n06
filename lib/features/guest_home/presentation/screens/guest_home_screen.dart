@@ -157,6 +157,7 @@ class _GuestHomeScreenState extends State<GuestHomeScreen>
             visitedSections: _visitedSections,
             scrollProgress: _scrollProgress,
             onSectionTap: _onSectionTap,
+            onSignUpTap: _handleSignUp,
           ),
           // 페이지 콘텐츠
           Expanded(

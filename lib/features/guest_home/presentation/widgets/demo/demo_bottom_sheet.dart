@@ -5,13 +5,12 @@ import 'package:n06/core/presentation/theme/app_typography.dart';
 /// 데모 바텀시트를 표시하는 함수
 ///
 /// 80% 높이의 바텀시트에 데모 콘텐츠를 표시하고,
-/// 하단에 "내 기록 시작하기" CTA 배너를 고정합니다.
+/// 하단에 "닫기" 버튼을 고정합니다.
 ///
 /// Parameters:
 /// - [context]: BuildContext
 /// - [child]: 바텀시트 내부에 표시할 위젯
 /// - [title]: 바텀시트 상단 타이틀
-/// - [onCtaTap]: "내 기록 시작하기" 버튼 클릭 시 콜백 (로그인/회원가입 화면으로 이동)
 ///
 /// Returns:
 /// - Future that completes when the bottom sheet is closed
@@ -24,17 +23,12 @@ import 'package:n06/core/presentation/theme/app_typography.dart';
 ///   child: DailyCheckinDemo(
 ///     onComplete: () => Navigator.pop(context),
 ///   ),
-///   onCtaTap: () {
-///     Navigator.pop(context);
-///     context.go('/signin');
-///   },
 /// );
 /// ```
 Future<void> showDemoBottomSheet({
   required BuildContext context,
   required Widget child,
   required String title,
-  VoidCallback? onCtaTap,
 }) async {
   await showModalBottomSheet(
     context: context,
@@ -44,7 +38,6 @@ Future<void> showDemoBottomSheet({
     backgroundColor: Colors.transparent,
     builder: (context) => DemoBottomSheetContent(
       title: title,
-      onCtaTap: onCtaTap,
       child: child,
     ),
   );
@@ -56,17 +49,15 @@ Future<void> showDemoBottomSheet({
 /// - 드래그 핸들 (상단 중앙)
 /// - 헤더 (타이틀 + X 버튼)
 /// - 스크롤 가능한 콘텐츠 영역
-/// - 하단 고정 CTA 배너 (항상 표시)
+/// - 하단 고정 닫기 버튼 (항상 표시)
 class DemoBottomSheetContent extends StatelessWidget {
   final String title;
   final Widget child;
-  final VoidCallback? onCtaTap;
 
   const DemoBottomSheetContent({
     super.key,
     required this.title,
     required this.child,
-    this.onCtaTap,
   });
 
   @override
@@ -90,8 +81,8 @@ class DemoBottomSheetContent extends StatelessWidget {
               child: child,
             ),
           ),
-          // 하단 고정 CTA 배너
-          _buildCtaBanner(context),
+          // 하단 고정 닫기 버튼
+          _buildCloseButton(context),
         ],
       ),
     );
@@ -143,17 +134,11 @@ class DemoBottomSheetContent extends StatelessWidget {
     );
   }
 
-  /// 하단 고정 CTA 배너
-  ///
-  /// 스타일:
-  /// - 배경: Primary color 10% tint
-  /// - 아이콘 + 텍스트: "내 기록으로 직접 시작해보세요"
-  /// - 버튼: "내 기록 시작하기" (FilledButton)
-  /// - SafeArea 적용 (하단)
-  Widget _buildCtaBanner(BuildContext context) {
+  /// 하단 고정 닫기 버튼
+  Widget _buildCloseButton(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1), // Primary 10% tint
+        color: Theme.of(context).colorScheme.surface,
         border: const Border(
           top: BorderSide(
             color: AppColors.borderLight,
@@ -165,61 +150,26 @@ class DemoBottomSheetContent extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 아이콘 + 안내 텍스트
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.edit_note_rounded,
-                      color: AppColors.primary,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      '내 기록으로 직접 시작해보세요',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.neutral700,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // CTA 버튼
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: onCtaTap,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(0, 52),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    '내 기록 시작하기',
-                    style: AppTypography.labelLarge.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.neutral700,
+                minimumSize: const Size(0, 52),
+                side: const BorderSide(color: AppColors.border),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-            ],
+              child: Text(
+                '닫기',
+                style: AppTypography.labelLarge.copyWith(
+                  color: AppColors.neutral700,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
         ),
       ),

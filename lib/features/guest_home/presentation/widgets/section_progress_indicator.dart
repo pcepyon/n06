@@ -29,6 +29,7 @@ class SectionProgressIndicator extends StatelessWidget {
   final Set<int> visitedSections;
   final ValueChanged<int> onSectionTap;
   final double scrollProgress;
+  final VoidCallback? onSignUpTap;
 
   const SectionProgressIndicator({
     super.key,
@@ -36,6 +37,7 @@ class SectionProgressIndicator extends StatelessWidget {
     required this.visitedSections,
     required this.onSectionTap,
     this.scrollProgress = 0.0,
+    this.onSignUpTap,
   });
 
   @override
@@ -57,6 +59,11 @@ class SectionProgressIndicator extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // 상단 헤더 (회원가입 버튼 포함)
+            if (onSignUpTap != null) ...[
+              _buildHeader(),
+              const SizedBox(height: 8),
+            ],
             // 진행률 바
             _buildProgressBar(),
             const SizedBox(height: 12),
@@ -65,6 +72,46 @@ class SectionProgressIndicator extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // 앱 로고/타이틀
+        Row(
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primary, AppColors.primaryHover],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.auto_awesome,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '체험 모드',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        // 회원가입 버튼 (강조)
+        _SignUpButton(onTap: onSignUpTap),
+      ],
     );
   }
 
@@ -197,6 +244,90 @@ class _SectionDot extends StatelessWidget {
               child: Text(section.label),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 회원가입 버튼 (눈에 띄는 스타일)
+class _SignUpButton extends StatefulWidget {
+  final VoidCallback? onTap;
+
+  const _SignUpButton({this.onTap});
+
+  @override
+  State<_SignUpButton> createState() => _SignUpButtonState();
+}
+
+class _SignUpButtonState extends State<_SignUpButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _pulseAnimation,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          widget.onTap?.call();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.primary, AppColors.primaryHover],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.4),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.person_add_outlined,
+                color: Colors.white,
+                size: 16,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '시작하기',
+                style: AppTypography.labelMedium.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
