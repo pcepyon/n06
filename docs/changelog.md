@@ -21,6 +21,15 @@
 
 ## 2025-12-09
 
+- [feat] 게스트 체험 통합 시스템 구현
+  - **게스트홈 확장 (6→10섹션)**: 당신탓아니에요, Food Noise, 작동원리, 주사가이드 추가
+  - **체험 기능**: 6개 데모 위젯으로 비로그인 앱 체험 제공 (데이터 저장 없음)
+  - **온보딩 축소 (14→5스크린)**: 교육 콘텐츠를 게스트홈으로 이동, 개인화 설정만 유지
+  - **스타일 통일**: 온보딩에 게스트홈 스타일 적용 (도트 네비게이션, Scale+Fade 전환, Confetti)
+  - `lib/features/guest_home/presentation/widgets/demo/` (7개 파일)
+  - `lib/features/guest_home/presentation/widgets/*_section.dart` (4개 신규)
+  - `lib/features/onboarding/presentation/screens/onboarding_screen.dart`
+
 - [fix] 파생 질문 피드백 표시 중 화면 전환 타이밍 버그 수정
   - **중간 파생 질문**: 피드백이 현재 질문이 아닌 다음 질문 화면에서 표시되던 문제 해결
   - **마지막 파생 질문**: 피드백 표시 중 즉시 다음 메인 질문으로 전환되고, 피드백 닫히면 선택 없이 건너뛰던 문제 해결

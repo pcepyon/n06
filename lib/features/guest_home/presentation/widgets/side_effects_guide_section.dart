@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/guest_home/data/guest_home_content.dart';
 import 'package:n06/features/guest_home/domain/entities/symptom_preview_data.dart';
+import 'package:n06/features/guest_home/presentation/widgets/demo/demo_bottom_sheet.dart';
+import 'package:n06/features/guest_home/presentation/widgets/demo/daily_checkin_demo.dart';
 
 /// 부작용 대처 가이드 섹션
 /// P0 인터랙션: Expandable Card with Content Reveal
@@ -74,6 +77,36 @@ class _SideEffectsGuideSectionState extends State<SideEffectsGuideSection> {
                 symptom: GuestHomeContent.symptomPreviews[index],
                 isExpanded: _expandedIndex == index,
                 onTap: () => _toggleExpand(index),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        // 체험하기 버튼
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Center(
+            child: OutlinedButton.icon(
+              onPressed: () => showDemoBottomSheet(
+                context: context,
+                title: '데일리 체크인 체험',
+                child: DailyCheckinDemo(
+                  onComplete: () {},
+                ),
+                onCtaTap: () {
+                  Navigator.pop(context);
+                  context.go('/login');
+                },
+              ),
+              icon: const Icon(Icons.play_arrow, size: 18),
+              label: const Text('체험하기'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary, width: 1.5),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
               ),
             ),
           ),

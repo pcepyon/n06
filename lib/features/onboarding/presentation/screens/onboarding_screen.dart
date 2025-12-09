@@ -1,39 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:n06/core/extensions/l10n_extension.dart';
-import 'package:n06/features/onboarding/presentation/widgets/common/journey_progress_indicator.dart';
+import 'package:confetti/confetti.dart';
+import 'package:n06/core/presentation/theme/app_colors.dart';
+import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/onboarding/application/notifiers/onboarding_notifier.dart';
 import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
-// PART 1: 공감과 희망
-import 'package:n06/features/onboarding/presentation/widgets/education/welcome_screen.dart';
-import 'package:n06/features/onboarding/presentation/widgets/education/not_your_fault_screen.dart';
-import 'package:n06/features/onboarding/presentation/widgets/education/evidence_screen.dart';
-// PART 2: 이해와 확신
-import 'package:n06/features/onboarding/presentation/widgets/education/food_noise_screen.dart';
-import 'package:n06/features/onboarding/presentation/widgets/education/how_it_works_screen.dart';
-import 'package:n06/features/onboarding/presentation/widgets/education/journey_roadmap_screen.dart';
-import 'package:n06/features/onboarding/presentation/widgets/education/side_effects_screen.dart';
-// PART 3: 설정
+// Form Widgets
 import 'package:n06/features/onboarding/presentation/widgets/basic_profile_form.dart';
 import 'package:n06/features/onboarding/presentation/widgets/weight_goal_form.dart';
 import 'package:n06/features/onboarding/presentation/widgets/dosage_plan_form.dart';
 import 'package:n06/features/onboarding/presentation/widgets/summary_screen.dart';
-// PART 4: 준비와 시작
-import 'package:n06/features/onboarding/presentation/widgets/preparation/injection_guide_screen.dart';
-import 'package:n06/features/onboarding/presentation/widgets/preparation/app_features_screen.dart';
-import 'package:n06/features/onboarding/presentation/widgets/preparation/commitment_screen.dart';
+import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 
-/// Part 구분
-enum OnboardingPart {
-  empathy, // 1-3 (공감과 희망)
-  understanding, // 4-7 (이해와 확신)
-  setup, // 8-11 (설정)
-  preparation // 12-14 (준비와 시작)
-}
-
-/// 온보딩 14단계 화면 네비게이션
+/// 온보딩 5단계 화면 네비게이션
 ///
 /// [isReviewMode]: true일 경우 리뷰 모드로 동작
 /// - 기존 프로필 데이터를 불러와 입력 폼에 표시
@@ -55,30 +36,30 @@ class OnboardingScreen extends ConsumerStatefulWidget {
   ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  late PageController _pageController;
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with TickerProviderStateMixin {
   int _currentStep = 0;
-  static const int _totalSteps = 14;
+  static const int _totalSteps = 5;
+  final Set<int> _visitedSteps = {0};
 
-  // PART 1-2 스킵 가능 여부
-  bool _canSkipEducation = false;
-
-  // Step 1 데이터 (기본 프로필)
+  // Form data
   String _name = '';
-
-  // Step 2 데이터 (체중 목표)
   double _currentWeight = 0;
   double _targetWeight = 0;
   int? _targetPeriodWeeks;
-
-  // Step 3 데이터 (투여 계획)
   String _medicationName = '';
   DateTime _startDate = DateTime.now();
   int _cycleDays = 7;
   double _initialDose = 0.25;
 
-  // [4] Food Noise 데이터
-  int? _initialFoodNoiseLevel;
+  // Page transition animation
+  late final AnimationController _pageTransitionController;
+  late final Animation<double> _scaleAnimation;
+  late final Animation<double> _fadeAnimation;
+  bool _isTransitioning = false;
+  bool _transitionForward = true;
+
+  // Confetti controller for completion screen
+  late final ConfettiController _confettiController;
 
   /// 유효한 userId를 반환 (widget.userId 우선, 없으면 authProvider에서 조회)
   String get _effectiveUserId {
@@ -92,23 +73,40 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
-    _loadEducationCompletedFlag();
+
+    // Page transition animation
+    _pageTransitionController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.92,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _pageTransitionController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _pageTransitionController,
+      curve: Curves.easeOut,
+    );
+
+    _pageTransitionController.value = 1.0;
+
+    // Confetti controller
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
+
     if (widget.isReviewMode) {
       _loadExistingProfileData();
     }
   }
 
-  Future<void> _loadEducationCompletedFlag() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _canSkipEducation = prefs.getBool('education_completed') ?? false;
-    });
-  }
-
   /// 리뷰 모드: 기존 프로필 및 투여 계획 데이터를 로드하여 초기값으로 설정
   Future<void> _loadExistingProfileData() async {
-    // 1. 프로필 데이터 로드 (watch 대신 read - 초기 로드 용도)
     final profileState = ref.read(profileNotifierProvider);
     profileState.whenData((profile) {
       if (profile != null && mounted) {
@@ -121,7 +119,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       }
     });
 
-    // 2. 투여 계획 데이터 로드 (Application 계층 통해 접근)
     final userId = _effectiveUserId;
     if (userId.isNotEmpty) {
       final dosagePlan = await ref
@@ -140,187 +137,76 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _pageTransitionController.dispose();
+    _confettiController.dispose();
     super.dispose();
+  }
+
+  /// 페이지 전환 (스케일 + 페이드 애니메이션)
+  Future<void> _goToPage(int pageIndex) async {
+    if (_isTransitioning || pageIndex == _currentStep) return;
+    if (pageIndex < 0 || pageIndex >= _totalSteps) return;
+
+    _isTransitioning = true;
+    _transitionForward = pageIndex > _currentStep;
+
+    // Fade out
+    await _pageTransitionController.reverse();
+
+    setState(() {
+      _currentStep = pageIndex;
+      _visitedSteps.add(pageIndex);
+    });
+
+    HapticFeedback.selectionClick();
+
+    // Fade in
+    await _pageTransitionController.forward();
+    _isTransitioning = false;
+
+    // Trigger confetti on completion screen
+    if (pageIndex == 4) {
+      _confettiController.play();
+    }
   }
 
   void _nextStep() {
     if (_currentStep < _totalSteps - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      _goToPage(_currentStep + 1);
     }
   }
 
-  void _onStepChanged(int index) {
-    setState(() {
-      _currentStep = index;
-    });
-  }
-
-  /// Part 1-2 스킵 → Part 3 설정 시작 (8번째 스크린, index 7)
-  void _skipToSetup() {
-    _pageController.animateToPage(
-      7,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+  void _previousStep() {
+    if (_currentStep > 0) {
+      _goToPage(_currentStep - 1);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isReviewMode ? context.l10n.onboarding_screen_titleReview : context.l10n.onboarding_screen_title),
-        elevation: 0,
-        leading: _currentStep == 0
-            ? (widget.isReviewMode
-                ? IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  )
-                : null)
-            : IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () {
-                  if (_currentStep > 0) {
-                    _pageController.previousPage(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  }
-                },
-              ),
-      ),
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // 여정 진행 표시기
-          JourneyProgressIndicator(
-            currentStep: _currentStep,
-            totalSteps: _totalSteps,
-          ),
-          // 페이지 뷰
+          // Dot Navigation Indicator (5 dots)
+          _buildDotNavigator(),
+          // Page Content with animation
           Expanded(
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: _onStepChanged,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                // ===== PART 1: 공감과 희망 (1-3) =====
-                // [1] 환영
-                WelcomeScreen(
-                  onNext: _nextStep,
-                  onSkip: _canSkipEducation ? _skipToSetup : null,
-                ),
-                // [2] 당신 탓 아니에요
-                NotYourFaultScreen(
-                  onNext: _nextStep,
-                  onSkip: _canSkipEducation ? _skipToSetup : null,
-                ),
-                // [3] 변화의 증거들
-                EvidenceScreen(
-                  onNext: _nextStep,
-                  onSkip: _canSkipEducation ? _skipToSetup : null,
-                ),
+            child: AnimatedBuilder(
+              animation: _pageTransitionController,
+              builder: (context, child) {
+                final scale = _transitionForward
+                    ? _scaleAnimation.value
+                    : 2.0 - _scaleAnimation.value;
 
-                // ===== PART 2: 이해와 확신 (4-7) =====
-                // [4] Food Noise
-                FoodNoiseScreen(
-                  onNext: _nextStep,
-                  onSkip: _canSkipEducation ? _skipToSetup : null,
-                  onFoodNoiseLevelChanged: (level) =>
-                      _initialFoodNoiseLevel = level,
-                ),
-                // [5] 작동 원리
-                HowItWorksScreen(
-                  onNext: _nextStep,
-                  onSkip: _canSkipEducation ? _skipToSetup : null,
-                ),
-                // [6] 여정 로드맵
-                JourneyRoadmapScreen(
-                  onNext: _nextStep,
-                  onSkip: _canSkipEducation ? _skipToSetup : null,
-                ),
-                // [7] 적응과 대처
-                SideEffectsScreen(
-                  onNext: _nextStep,
-                  onSkip: _canSkipEducation ? _skipToSetup : null,
-                ),
-
-                // ===== PART 3: 설정 (8-11) =====
-                // [8] 기본 프로필
-                BasicProfileForm(
-                  onNameChanged: (name) => _name = name,
-                  onNext: _nextStep,
-                  isReviewMode: widget.isReviewMode,
-                  initialName: widget.isReviewMode ? _name : null,
-                ),
-                // [9] 체중 목표
-                WeightGoalForm(
-                  onDataChanged: (current, target, period) {
-                    _currentWeight = current;
-                    _targetWeight = target;
-                    _targetPeriodWeeks = period;
-                  },
-                  onNext: _nextStep,
-                  isReviewMode: widget.isReviewMode,
-                  initialCurrentWeight: widget.isReviewMode ? _currentWeight : null,
-                  initialTargetWeight: widget.isReviewMode ? _targetWeight : null,
-                  initialTargetPeriod: widget.isReviewMode ? _targetPeriodWeeks : null,
-                ),
-                // [10] 투여 계획
-                DosagePlanForm(
-                  onDataChanged: (medication, date, cycle, dose) {
-                    _medicationName = medication;
-                    _startDate = date;
-                    _cycleDays = cycle;
-                    _initialDose = dose;
-                  },
-                  onNext: _nextStep,
-                  isReviewMode: widget.isReviewMode,
-                  initialMedicationName: widget.isReviewMode ? _medicationName : null,
-                  initialStartDate: widget.isReviewMode ? _startDate : null,
-                  initialDose: widget.isReviewMode ? _initialDose : null,
-                ),
-                // [11] 요약 확인
-                SummaryScreen(
-                  userId: _effectiveUserId,
-                  name: _name,
-                  currentWeight: _currentWeight,
-                  targetWeight: _targetWeight,
-                  targetPeriodWeeks: _targetPeriodWeeks,
-                  medicationName: _medicationName,
-                  startDate: _startDate,
-                  cycleDays: _cycleDays,
-                  initialDose: _initialDose,
-                  onComplete: _nextStep,
-                  isReviewMode: widget.isReviewMode,
-                ),
-
-                // ===== PART 4: 준비와 시작 (12-14) =====
-                // [12] 주사 가이드
-                InjectionGuideScreen(
-                  onNext: _nextStep,
-                ),
-                // [13] 앱 사용법
-                AppFeaturesScreen(
-                  onNext: _nextStep,
-                ),
-                // [14] 약속과 시작
-                CommitmentScreen(
-                  name: _name,
-                  currentWeight: _currentWeight,
-                  targetWeight: _targetWeight,
-                  startDate: _startDate,
-                  medicationName: _medicationName,
-                  initialDose: _initialDose,
-                  onComplete: widget.isReviewMode
-                      ? _completeReview
-                      : _completeOnboarding,
-                  isReviewMode: widget.isReviewMode,
-                ),
-              ],
+                return Transform.scale(
+                  scale: scale.clamp(0.92, 1.0),
+                  child: Opacity(
+                    opacity: _fadeAnimation.value,
+                    child: _buildCurrentPage(),
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -328,22 +214,194 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
+  Widget _buildDotNavigator() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Progress bar
+            Container(
+              height: 3,
+              decoration: BoxDecoration(
+                color: AppColors.neutral200,
+                borderRadius: BorderRadius.circular(1.5),
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: constraints.maxWidth * (_currentStep / (_totalSteps - 1)),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppColors.primary, AppColors.primaryHover],
+                      ),
+                      borderRadius: BorderRadius.circular(1.5),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Dots
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(_totalSteps, (index) {
+                return _buildDot(index);
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDot(int index) {
+    final isActive = index == _currentStep;
+    final isVisited = _visitedSteps.contains(index);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        _goToPage(index);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: isActive ? 32 : 24,
+              height: isActive ? 32 : 24,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? AppColors.primary
+                    : isVisited
+                        ? AppColors.primary.withValues(alpha: 0.2)
+                        : AppColors.neutral200,
+                shape: BoxShape.circle,
+                border: isVisited && !isActive
+                    ? Border.all(color: AppColors.primary, width: 2)
+                    : null,
+                boxShadow: isActive
+                    ? [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Center(
+                child: Text(
+                  '${index + 1}',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: isActive
+                        ? Colors.white
+                        : isVisited
+                            ? AppColors.primary
+                            : AppColors.textTertiary,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrentPage() {
+    switch (_currentStep) {
+      case 0:
+        return _WelcomeScreen(onNext: _nextStep);
+      case 1:
+        return _PageWrapper(
+          showBackButton: true,
+          onBack: _previousStep,
+          child: BasicProfileForm(
+            onNameChanged: (name) => _name = name,
+            onNext: _nextStep,
+            isReviewMode: widget.isReviewMode,
+            initialName: widget.isReviewMode ? _name : null,
+          ),
+        );
+      case 2:
+        return _PageWrapper(
+          showBackButton: true,
+          onBack: _previousStep,
+          child: WeightGoalForm(
+            onDataChanged: (current, target, period) {
+              _currentWeight = current;
+              _targetWeight = target;
+              _targetPeriodWeeks = period;
+            },
+            onNext: _nextStep,
+            isReviewMode: widget.isReviewMode,
+            initialCurrentWeight: widget.isReviewMode ? _currentWeight : null,
+            initialTargetWeight: widget.isReviewMode ? _targetWeight : null,
+            initialTargetPeriod: widget.isReviewMode ? _targetPeriodWeeks : null,
+          ),
+        );
+      case 3:
+        return _PageWrapper(
+          showBackButton: true,
+          onBack: _previousStep,
+          child: DosagePlanForm(
+            onDataChanged: (medication, date, cycle, dose) {
+              _medicationName = medication;
+              _startDate = date;
+              _cycleDays = cycle;
+              _initialDose = dose;
+            },
+            onNext: _nextStep,
+            isReviewMode: widget.isReviewMode,
+            initialMedicationName: widget.isReviewMode ? _medicationName : null,
+            initialStartDate: widget.isReviewMode ? _startDate : null,
+            initialDose: widget.isReviewMode ? _initialDose : null,
+          ),
+        );
+      case 4:
+        return _CompletionScreen(
+          confettiController: _confettiController,
+          userId: _effectiveUserId,
+          name: _name,
+          currentWeight: _currentWeight,
+          targetWeight: _targetWeight,
+          targetPeriodWeeks: _targetPeriodWeeks,
+          medicationName: _medicationName,
+          startDate: _startDate,
+          cycleDays: _cycleDays,
+          initialDose: _initialDose,
+          onComplete: widget.isReviewMode ? _completeReview : _completeOnboarding,
+          isReviewMode: widget.isReviewMode,
+          onBack: _previousStep,
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
   /// 온보딩 완료 처리 (신규 사용자)
   Future<void> _completeOnboarding() async {
-    // education_completed 플래그 저장
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('education_completed', true);
-
-    // initial_food_noise_level 저장 (선택)
-    if (_initialFoodNoiseLevel != null) {
-      await prefs.setInt('initial_food_noise_level', _initialFoodNoiseLevel!);
-    }
-
-    // 완료 콜백 또는 홈으로 이동
-    if (mounted) {
-      if (widget.onComplete != null) {
-        widget.onComplete!();
-      }
+    if (mounted && widget.onComplete != null) {
+      widget.onComplete!();
     }
   }
 
@@ -352,5 +410,186 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (mounted) {
       Navigator.of(context).pop();
     }
+  }
+}
+
+/// Welcome Screen (Index 0)
+class _WelcomeScreen extends StatelessWidget {
+  final VoidCallback onNext;
+
+  const _WelcomeScreen({required this.onNext});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(32.0),
+      child: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '이제 내 여정을\n시작해볼까요?',
+                    style: AppTypography.heading1,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '간단한 설정으로 맞춤형 여정을 시작하세요.',
+                    style: AppTypography.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SafeArea(
+            top: false,
+            child: GabiumButton(
+              text: '시작하기',
+              onPressed: onNext,
+              variant: GabiumButtonVariant.primary,
+              size: GabiumButtonSize.medium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Page Wrapper with optional back button
+class _PageWrapper extends StatelessWidget {
+  final Widget child;
+  final bool showBackButton;
+  final VoidCallback? onBack;
+
+  const _PageWrapper({
+    required this.child,
+    this.showBackButton = false,
+    this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        if (showBackButton)
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: onBack,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        Expanded(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: child,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Completion Screen with Confetti (Index 4)
+class _CompletionScreen extends ConsumerWidget {
+  final ConfettiController confettiController;
+  final String userId;
+  final String name;
+  final double currentWeight;
+  final double targetWeight;
+  final int? targetPeriodWeeks;
+  final String medicationName;
+  final DateTime startDate;
+  final int cycleDays;
+  final double initialDose;
+  final VoidCallback onComplete;
+  final bool isReviewMode;
+  final VoidCallback onBack;
+
+  const _CompletionScreen({
+    required this.confettiController,
+    required this.userId,
+    required this.name,
+    required this.currentWeight,
+    required this.targetWeight,
+    required this.targetPeriodWeeks,
+    required this.medicationName,
+    required this.startDate,
+    required this.cycleDays,
+    required this.initialDose,
+    required this.onComplete,
+    required this.isReviewMode,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Stack(
+      children: [
+        Column(
+          children: [
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: onBack,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: SummaryScreen(
+                  userId: userId,
+                  name: name,
+                  currentWeight: currentWeight,
+                  targetWeight: targetWeight,
+                  targetPeriodWeeks: targetPeriodWeeks,
+                  medicationName: medicationName,
+                  startDate: startDate,
+                  cycleDays: cycleDays,
+                  initialDose: initialDose,
+                  onComplete: onComplete,
+                  isReviewMode: isReviewMode,
+                ),
+              ),
+            ),
+          ],
+        ),
+        // Confetti
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConfettiWidget(
+            confettiController: confettiController,
+            blastDirectionality: BlastDirectionality.explosive,
+            shouldLoop: false,
+            colors: const [
+              AppColors.primary,
+              AppColors.secondary,
+              AppColors.success,
+              AppColors.info,
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

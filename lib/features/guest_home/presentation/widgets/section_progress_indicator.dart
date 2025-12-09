@@ -5,10 +5,15 @@ import 'package:n06/core/presentation/theme/app_typography.dart';
 
 /// 게스트 홈 섹션 정보
 enum GuestHomeSection {
-  evidence(label: '과학', icon: Icons.science_outlined),
-  journey(label: '여정', icon: Icons.timeline_outlined),
-  features(label: '기능', icon: Icons.apps_outlined),
-  sideEffects(label: '부작용', icon: Icons.health_and_safety_outlined),
+  welcome(label: '환영', icon: Icons.waving_hand_outlined),
+  notYourFault(label: '위로', icon: Icons.favorite_outline),
+  scientificEvidence(label: '과학', icon: Icons.science_outlined),
+  foodNoise(label: '식욕', icon: Icons.restaurant_outlined),
+  howItWorks(label: '원리', icon: Icons.lightbulb_outline),
+  journeyPreview(label: '여정', icon: Icons.timeline_outlined),
+  sideEffectsGuide(label: '부작용', icon: Icons.health_and_safety_outlined),
+  appFeatures(label: '기능', icon: Icons.apps_outlined),
+  injectionGuide(label: '주사', icon: Icons.medical_services_outlined),
   cta(label: '시작', icon: Icons.rocket_launch_outlined);
 
   final String label;

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/guest_home/data/guest_home_content.dart';
 import 'package:n06/features/guest_home/domain/entities/app_feature_data.dart';
+import 'package:n06/features/guest_home/presentation/widgets/demo/demo_bottom_sheet.dart';
+import 'package:n06/features/guest_home/presentation/widgets/demo/dose_calendar_demo.dart';
+import 'package:n06/features/guest_home/presentation/widgets/demo/trend_report_demo.dart';
 
 /// 앱 기능 소개 섹션
 /// P0 인터랙션: Staggered Card Entry, Press State with Depth, Expandable Details
@@ -86,6 +90,32 @@ class _ScrollRevealFeatureCard extends StatefulWidget {
   @override
   State<_ScrollRevealFeatureCard> createState() =>
       _ScrollRevealFeatureCardState();
+
+  /// 특정 기능에 대한 데모 위젯 반환
+  static Widget? _getDemoWidget(String featureId) {
+    switch (featureId) {
+      case 'schedule':
+        return const DoseCalendarDemo();
+      case 'record':
+      case 'report':
+        return const TrendReportDemo();
+      default:
+        return null;
+    }
+  }
+
+  /// 특정 기능에 대한 데모 타이틀 반환
+  static String? _getDemoTitle(String featureId) {
+    switch (featureId) {
+      case 'schedule':
+        return '투여 캘린더 체험';
+      case 'record':
+      case 'report':
+        return '트렌드 리포트 체험';
+      default:
+        return null;
+    }
+  }
 }
 
 class _ScrollRevealFeatureCardState extends State<_ScrollRevealFeatureCard>
@@ -311,6 +341,37 @@ class _ScrollRevealFeatureCardState extends State<_ScrollRevealFeatureCard>
                             ),
                           ],
                         ),
+                        // 체험하기 버튼 (특정 기능에만 표시)
+                        if (_ScrollRevealFeatureCard._getDemoWidget(widget.feature.id) != null) ...[
+                          const SizedBox(height: 12),
+                          Center(
+                            child: TextButton.icon(
+                              onPressed: () {
+                                final demoWidget = _ScrollRevealFeatureCard._getDemoWidget(widget.feature.id);
+                                final demoTitle = _ScrollRevealFeatureCard._getDemoTitle(widget.feature.id);
+                                if (demoWidget != null && demoTitle != null) {
+                                  showDemoBottomSheet(
+                                    context: context,
+                                    title: demoTitle,
+                                    child: demoWidget,
+                                    onCtaTap: () {
+                                      Navigator.pop(context);
+                                      context.go('/login');
+                                    },
+                                  );
+                                }
+                              },
+                              icon: const Icon(Icons.play_arrow, size: 16),
+                              label: const Text('체험하기'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                textStyle: AppTypography.labelSmall.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

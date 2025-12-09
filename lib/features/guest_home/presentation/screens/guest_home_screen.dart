@@ -3,10 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/features/guest_home/presentation/widgets/welcome_section.dart';
+import 'package:n06/features/guest_home/presentation/widgets/not_your_fault_section.dart';
 import 'package:n06/features/guest_home/presentation/widgets/scientific_evidence_section.dart';
+import 'package:n06/features/guest_home/presentation/widgets/food_noise_section.dart';
+import 'package:n06/features/guest_home/presentation/widgets/how_it_works_section.dart';
 import 'package:n06/features/guest_home/presentation/widgets/journey_preview_section.dart';
 import 'package:n06/features/guest_home/presentation/widgets/app_features_section.dart';
 import 'package:n06/features/guest_home/presentation/widgets/side_effects_guide_section.dart';
+import 'package:n06/features/guest_home/presentation/widgets/injection_guide_section.dart';
 import 'package:n06/features/guest_home/presentation/widgets/cta_section.dart';
 import 'package:n06/features/guest_home/presentation/widgets/section_progress_indicator.dart';
 
@@ -27,10 +31,10 @@ class GuestHomeScreen extends StatefulWidget {
 
 class _GuestHomeScreenState extends State<GuestHomeScreen>
     with TickerProviderStateMixin {
-  // 현재 페이지 인덱스 (0: Welcome, 1-5: 각 섹션)
+  // 현재 페이지 인덱스 (0-9: 각 섹션)
   int _currentPageIndex = 0;
 
-  // 방문한 섹션들 (Progress Bar 용, Welcome 제외하고 0-4)
+  // 방문한 섹션들 (Progress Bar 용, 0-9)
   final Set<int> _visitedSections = {};
 
   // CTA 체크된 아이템들
@@ -81,7 +85,7 @@ class _GuestHomeScreenState extends State<GuestHomeScreen>
   /// 페이지 전환 (스케일 + 페이드 애니메이션)
   Future<void> _goToPage(int pageIndex) async {
     if (_isTransitioning || pageIndex == _currentPageIndex) return;
-    if (pageIndex < 0 || pageIndex > 5) return;
+    if (pageIndex < 0 || pageIndex > 9) return;
 
     _isTransitioning = true;
     _transitionForward = pageIndex > _currentPageIndex;
@@ -91,10 +95,8 @@ class _GuestHomeScreenState extends State<GuestHomeScreen>
 
     setState(() {
       _currentPageIndex = pageIndex;
-      // 섹션 방문 기록 (Welcome 제외)
-      if (pageIndex > 0) {
-        _visitedSections.add(pageIndex - 1);
-      }
+      // 섹션 방문 기록
+      _visitedSections.add(pageIndex);
     });
 
     HapticFeedback.selectionClick();
@@ -106,15 +108,15 @@ class _GuestHomeScreenState extends State<GuestHomeScreen>
 
   /// 다음 페이지로 이동
   void _goToNextPage() {
-    if (_currentPageIndex < 5) {
+    if (_currentPageIndex < 9) {
       _goToPage(_currentPageIndex + 1);
     }
   }
 
   /// Progress Bar 섹션 탭 핸들러
   void _onSectionTap(int sectionIndex) {
-    // Progress Bar의 섹션 인덱스는 0-4, 페이지 인덱스는 1-5
-    _goToPage(sectionIndex + 1);
+    // Progress Bar의 섹션 인덱스와 페이지 인덱스가 동일 (0-9)
+    _goToPage(sectionIndex);
   }
 
   void _handleSignUp() {
@@ -122,8 +124,8 @@ class _GuestHomeScreenState extends State<GuestHomeScreen>
   }
 
   void _handleLearnMore() {
-    // 부작용 가이드 섹션으로 이동 (페이지 인덱스 4)
-    _goToPage(4);
+    // 부작용 가이드 섹션으로 이동 (페이지 인덱스 6)
+    _goToPage(6);
     HapticFeedback.lightImpact();
   }
 
@@ -137,11 +139,11 @@ class _GuestHomeScreenState extends State<GuestHomeScreen>
     });
   }
 
-  /// 현재 페이지에 해당하는 Progress Bar 섹션 인덱스 (-1: Welcome)
-  int get _currentSectionIndex => _currentPageIndex - 1;
+  /// 현재 페이지에 해당하는 Progress Bar 섹션 인덱스
+  int get _currentSectionIndex => _currentPageIndex;
 
   /// 전체 스크롤 진행률 (페이지 기반)
-  double get _scrollProgress => _currentPageIndex / 5;
+  double get _scrollProgress => _currentPageIndex / 9;
 
   @override
   Widget build(BuildContext context) {
@@ -196,17 +198,15 @@ class _GuestHomeScreenState extends State<GuestHomeScreen>
           key: const ValueKey('page_1'),
           showNextButton: true,
           onNext: _goToNextPage,
-          child: ScientificEvidenceSection(
-            isVisible: _visitedSections.contains(0) || _currentPageIndex == 1,
-          ),
+          child: const NotYourFaultSection(),
         );
       case 2:
         return _PageWrapper(
           key: const ValueKey('page_2'),
           showNextButton: true,
           onNext: _goToNextPage,
-          child: JourneyPreviewSection(
-            isVisible: _visitedSections.contains(1) || _currentPageIndex == 2,
+          child: ScientificEvidenceSection(
+            isVisible: _visitedSections.contains(2) || _currentPageIndex == 2,
           ),
         );
       case 3:
@@ -214,26 +214,56 @@ class _GuestHomeScreenState extends State<GuestHomeScreen>
           key: const ValueKey('page_3'),
           showNextButton: true,
           onNext: _goToNextPage,
-          child: AppFeaturesSection(
-            isVisible: _visitedSections.contains(2) || _currentPageIndex == 3,
-          ),
+          child: const FoodNoiseSection(),
         );
       case 4:
         return _PageWrapper(
           key: const ValueKey('page_4'),
           showNextButton: true,
           onNext: _goToNextPage,
-          child: SideEffectsGuideSection(
-            isVisible: _visitedSections.contains(3) || _currentPageIndex == 4,
-          ),
+          child: const HowItWorksSection(),
         );
       case 5:
         return _PageWrapper(
           key: const ValueKey('page_5'),
+          showNextButton: true,
+          onNext: _goToNextPage,
+          child: JourneyPreviewSection(
+            isVisible: _visitedSections.contains(5) || _currentPageIndex == 5,
+          ),
+        );
+      case 6:
+        return _PageWrapper(
+          key: const ValueKey('page_6'),
+          showNextButton: true,
+          onNext: _goToNextPage,
+          child: SideEffectsGuideSection(
+            isVisible: _visitedSections.contains(6) || _currentPageIndex == 6,
+          ),
+        );
+      case 7:
+        return _PageWrapper(
+          key: const ValueKey('page_7'),
+          showNextButton: true,
+          onNext: _goToNextPage,
+          child: AppFeaturesSection(
+            isVisible: _visitedSections.contains(7) || _currentPageIndex == 7,
+          ),
+        );
+      case 8:
+        return _PageWrapper(
+          key: const ValueKey('page_8'),
+          showNextButton: true,
+          onNext: _goToNextPage,
+          child: const InjectionGuideSection(),
+        );
+      case 9:
+        return _PageWrapper(
+          key: const ValueKey('page_9'),
           showNextButton: false,
           onNext: null,
           child: CtaSection(
-            isVisible: _visitedSections.contains(4) || _currentPageIndex == 5,
+            isVisible: _visitedSections.contains(9) || _currentPageIndex == 9,
             visitedSections: _visitedSections,
             checkedItems: _checkedItems,
             onCheckItem: _handleCheckItem,
