@@ -21,6 +21,12 @@
 
 ## 2025-12-10
 
+- [feat] 데일리 체크인 페이지 전환 애니메이션 추가
+  - **페이드 인 애니메이션**: 모든 페이지 전환 시 300ms easeInOut 애니메이션 적용
+  - **적용 범위**: 체중 입력, 메인 질문(Q1-Q6), 파생 질문, 완료 화면 모든 전환
+  - **상태 변화 감지**: 스텝/파생경로/완료상태 변경 시 자동 트리거
+  - `lib/features/daily_checkin/presentation/screens/daily_checkin_screen.dart`
+
 - [refactor] 온보딩 다시보기 기능 제거
   - **설정 화면**: "온보딩 다시보기" 메뉴 항목 삭제 (앱 소개 다시보기는 유지)
   - **라우터**: `/onboarding/review` 경로 삭제

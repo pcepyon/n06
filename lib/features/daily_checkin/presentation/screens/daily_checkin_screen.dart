@@ -37,18 +37,39 @@ class DailyCheckinScreen extends ConsumerStatefulWidget {
   ConsumerState<DailyCheckinScreen> createState() => _DailyCheckinScreenState();
 }
 
-class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
+class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen>
+    with SingleTickerProviderStateMixin {
   bool _isInitialized = false;
   Timer? _feedbackTimer; // 피드백 타이머 (BUG-20251202-TIMER)
   String? _lastPendingFeedback;
   bool _isRedFlagDialogShown = false; // Red Flag 다이얼로그 중복 표시 방지
   bool _isDuplicateDialogShown = false; // 중복 체크인 다이얼로그 중복 표시 방지
   bool _isAIMessageTriggered = false; // AI 메시지 재생성 중복 방지
+  bool _isTransitioning = false; // 페이지 전환 중 플래그
+
+  // 페이지 전환 애니메이션 컨트롤러
+  late final AnimationController _transitionController;
+  late final Animation<double> _fadeAnimation;
+
+  // 이전 상태 추적 (전환 감지용)
+  int? _previousStep;
+  String? _previousDerivedPath;
+  bool? _previousIsComplete;
 
   @override
   void initState() {
     super.initState();
-    // 체크인 시작은 didChangeDependencies에서
+
+    // 전환 애니메이션 설정
+    _transitionController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _transitionController,
+      curve: Curves.easeInOut,
+    );
+    _transitionController.value = 1.0; // 초기 상태는 보이는 상태
   }
 
   @override
@@ -66,6 +87,7 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
   @override
   void dispose() {
     _feedbackTimer?.cancel(); // 타이머 정리 (BUG-20251202-TIMER)
+    _transitionController.dispose();
     super.dispose();
   }
 
@@ -207,29 +229,101 @@ class _DailyCheckinScreenState extends ConsumerState<DailyCheckinScreen> {
       });
     }
 
+    // 페이지 전환 감지 및 애니메이션 트리거
+    _detectAndAnimateTransition(state);
+
     // 파생 질문이 활성화된 경우 (인라인으로 표시)
     if (state.currentDerivedPath != null) {
-      return _buildDerivedQuestionPage(context, state.currentDerivedPath!, state);
+      return FadeTransition(
+        opacity: _fadeAnimation,
+        child: _buildDerivedQuestionPage(context, state.currentDerivedPath!, state),
+      );
     }
 
     // 완료 화면
     if (state.isComplete) {
-      return _buildCompletionPage(context, state);
+      return FadeTransition(
+        opacity: _fadeAnimation,
+        child: _buildCompletionPage(context, state),
+      );
     }
 
     // 체중 입력 (Step 0)
     if (state.currentStep == 0) {
-      return _buildWeightInputPage(state);
+      return FadeTransition(
+        opacity: _fadeAnimation,
+        child: _buildWeightInputPage(state),
+      );
     }
 
     // 메인 질문 (Step 1-6)
     if (state.currentStep >= 1 && state.currentStep <= 6) {
       final questionIndex = state.currentStep - 1;
-      return _buildQuestionPage(context, questionIndex, state);
+      return FadeTransition(
+        opacity: _fadeAnimation,
+        child: _buildQuestionPage(context, questionIndex, state),
+      );
     }
 
     // 기본 인사 화면
-    return _buildGreetingPage(context, state);
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: _buildGreetingPage(context, state),
+    );
+  }
+
+  /// 페이지 전환 감지 및 애니메이션 실행
+  ///
+  /// build() 내에서 호출되므로, 실제 애니메이션 트리거는
+  /// addPostFrameCallback을 통해 build 외부에서 실행됩니다.
+  void _detectAndAnimateTransition(DailyCheckinState state) {
+    final currentStep = state.currentStep;
+    final currentDerivedPath = state.currentDerivedPath;
+    final currentIsComplete = state.isComplete;
+
+    // 최초 빌드 시 이전 상태 초기화
+    if (_previousStep == null) {
+      _previousStep = currentStep;
+      _previousDerivedPath = currentDerivedPath;
+      _previousIsComplete = currentIsComplete;
+      return;
+    }
+
+    // 전환 감지: 스텝, 파생 질문 경로, 완료 상태 중 하나라도 변경되면 전환
+    final hasStepChanged = _previousStep != currentStep;
+    final hasDerivedPathChanged = _previousDerivedPath != currentDerivedPath;
+    final hasCompletionChanged = _previousIsComplete != currentIsComplete;
+
+    if ((hasStepChanged || hasDerivedPathChanged || hasCompletionChanged) &&
+        !_isTransitioning) {
+      // build() 외부에서 애니메이션 실행 (BUG-20251202-153023 패턴 준수)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _triggerTransitionAnimation();
+        }
+      });
+    }
+
+    // 이전 상태 업데이트
+    _previousStep = currentStep;
+    _previousDerivedPath = currentDerivedPath;
+    _previousIsComplete = currentIsComplete;
+  }
+
+  /// 페이드 인 전환 애니메이션 실행
+  ///
+  /// 상태가 이미 변경된 후 호출되므로, 새 콘텐츠를 페이드 인합니다.
+  Future<void> _triggerTransitionAnimation() async {
+    if (_isTransitioning) return;
+    _isTransitioning = true;
+
+    // 페이드 인 (이미 상태가 변경된 후이므로 바로 페이드 인)
+    _transitionController.value = 0.0;
+    await _transitionController.forward();
+
+    // async gap 후 mounted 체크 (BUG-20251205 패턴 준수)
+    if (!mounted) return;
+    _isTransitioning = false;
   }
 
   void _showDuplicateCheckinDialog() {
