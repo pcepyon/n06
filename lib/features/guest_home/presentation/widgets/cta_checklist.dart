@@ -134,14 +134,14 @@ class _CtaChecklistState extends State<CtaChecklist>
           if (widget.allChecked) ...[
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: AppColors.successBackground,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  const Text('✨', style: TextStyle(fontSize: 14)),
+                  const Text('✨', style: TextStyle(fontSize: 16)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -251,10 +251,10 @@ class _CtaChecklistState extends State<CtaChecklist>
                   },
                   child: Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(6),
                       border: Border.all(
                         color: AppColors.primary.withValues(alpha: 0.3),
                         width: 1,
@@ -265,7 +265,7 @@ class _CtaChecklistState extends State<CtaChecklist>
                       children: [
                         Icon(
                           Icons.arrow_back,
-                          size: 10,
+                          size: 12,
                           color: AppColors.primary,
                         ),
                         const SizedBox(width: 4),
@@ -273,7 +273,6 @@ class _CtaChecklistState extends State<CtaChecklist>
                           '확인하러 가기',
                           style: AppTypography.caption.copyWith(
                             color: AppColors.primary,
-                            fontSize: 10,
                             fontWeight: FontWeight.w500,
                           ),
                         ),

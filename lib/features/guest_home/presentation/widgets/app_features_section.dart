@@ -332,8 +332,8 @@ class _ScrollRevealFeatureCardState extends State<_ScrollRevealFeatureCard>
                         // 격려 메시지
                         Row(
                           children: [
-                            const Text('💚', style: TextStyle(fontSize: 12)),
-                            const SizedBox(width: 4),
+                            const Text('💚', style: TextStyle(fontSize: 14)),
+                            const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 widget.feature.encouragement,

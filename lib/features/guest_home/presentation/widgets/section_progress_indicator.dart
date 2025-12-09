@@ -192,7 +192,7 @@ class _SectionDot extends StatelessWidget {
                         ? AppColors.textSecondary
                         : AppColors.textTertiary,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                fontSize: isActive ? 11 : 10,
+                fontSize: isActive ? 12 : 11,
               ),
               child: Text(section.label),
             ),

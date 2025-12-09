@@ -275,7 +275,7 @@ class _EvidenceCardState extends State<EvidenceCard>
                                 },
                                 child: Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.all(8),
+                                  padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
                                     color: AppColors.neutral100,
                                     borderRadius: BorderRadius.circular(8),
@@ -283,8 +283,8 @@ class _EvidenceCardState extends State<EvidenceCard>
                                   child: Row(
                                     children: [
                                       const Text('📚',
-                                          style: TextStyle(fontSize: 12)),
-                                      const SizedBox(width: 6),
+                                          style: TextStyle(fontSize: 14)),
+                                      const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
                                           '${widget.data.source} · ${widget.data.sourceDetail}',
@@ -303,7 +303,7 @@ class _EvidenceCardState extends State<EvidenceCard>
                                       if (widget.data.sourceUrl != null)
                                         Icon(
                                           Icons.open_in_new,
-                                          size: 12,
+                                          size: 14,
                                           color: AppColors.primary,
                                         ),
                                     ],
@@ -322,7 +322,6 @@ class _EvidenceCardState extends State<EvidenceCard>
                         '탭하여 자세히 보기',
                         style: AppTypography.caption.copyWith(
                           color: AppColors.textTertiary,
-                          fontSize: 11,
                         ),
                       ),
                     ),
