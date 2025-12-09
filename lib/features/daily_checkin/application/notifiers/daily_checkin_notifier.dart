@@ -43,6 +43,9 @@ class DailyCheckinState {
   /// 표시 대기 중인 피드백 메시지 (BUG-20251202-175417)
   final String? pendingFeedback;
 
+  /// 피드백 표시 후 진행할 파생 질문 경로 (BUG-20251209-DERIVEDFEEDBACK)
+  final String? pendingDerivedPath;
+
   /// 오늘 이미 체크인이 존재하는지 여부 (수정 확인용)
   final bool hasExistingCheckinToday;
 
@@ -60,6 +63,7 @@ class DailyCheckinState {
     this.savedCheckin,
     this.context,
     this.pendingFeedback,
+    this.pendingDerivedPath,
     this.hasExistingCheckinToday = false,
     this.duplicateCheckConfirmed = false,
   });
@@ -76,6 +80,8 @@ class DailyCheckinState {
     DailyCheckin? savedCheckin,
     CheckinContext? context,
     String? pendingFeedback,
+    String? pendingDerivedPath,
+    bool clearPendingDerivedPath = false, // BUG-20251209-DERIVEDFEEDBACK: null 설정 지원
     bool? hasExistingCheckinToday,
     bool? duplicateCheckConfirmed,
   }) {
@@ -93,6 +99,10 @@ class DailyCheckinState {
       savedCheckin: savedCheckin ?? this.savedCheckin,
       context: context ?? this.context,
       pendingFeedback: pendingFeedback,
+      // BUG-20251209-DERIVEDFEEDBACK: clearPendingDerivedPath가 true면 null로 설정
+      pendingDerivedPath: clearPendingDerivedPath
+          ? null
+          : (pendingDerivedPath ?? this.pendingDerivedPath),
       hasExistingCheckinToday: hasExistingCheckinToday ?? this.hasExistingCheckinToday,
       duplicateCheckConfirmed: duplicateCheckConfirmed ?? this.duplicateCheckConfirmed,
     );
@@ -179,8 +189,18 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     // 파생 질문이 필요한지 확인
     final needsDerived = _needsDerivedQuestion(questionIndex, answer);
 
-    if (needsDerived) {
-      // 파생 질문으로 분기
+    if (needsDerived && feedback != null) {
+      // 파생 질문이 필요하고 피드백이 있으면: 피드백 표시 대기 + 파생 경로 저장 (BUG-20251209-DERIVEDFEEDBACK)
+      final derivedPath = _getDerivedPath(questionIndex);
+      state = AsyncValue.data(
+        currentState.copyWith(
+          answers: newAnswers,
+          pendingFeedback: feedback,
+          pendingDerivedPath: derivedPath, // 피드백 후 진행할 파생 경로
+        ),
+      );
+    } else if (needsDerived) {
+      // 파생 질문으로 분기 (피드백 없음)
       final derivedPath = _getDerivedPath(questionIndex);
       state = AsyncValue.data(
         currentState.copyWith(
@@ -242,6 +262,7 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
           derivedAnswers: newDerivedAnswers,
           symptomDetails: newSymptomDetails,
           currentDerivedPath: nextDerivedPath,
+          clearPendingDerivedPath: true, // BUG-20251209-DERIVEDFEEDBACK: 안전을 위해 클리어
         ),
       );
     } else {
@@ -254,6 +275,7 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
           derivedAnswers: newDerivedAnswers,
           symptomDetails: newSymptomDetails,
           clearCurrentDerivedPath: true, // BUG-20251202-231014
+          clearPendingDerivedPath: true, // BUG-20251209-DERIVEDFEEDBACK: 안전을 위해 클리어
           currentStep: nextStep,
         ),
       );
@@ -263,6 +285,18 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
   /// 피드백 확인 후 다음 질문으로 진행 (BUG-20251202-175417)
   Future<void> dismissFeedbackAndProceed() async {
     final currentState = state.value ?? const DailyCheckinState();
+
+    // pendingDerivedPath가 있으면 파생 질문으로 진행 (BUG-20251209-DERIVEDFEEDBACK)
+    if (currentState.pendingDerivedPath != null) {
+      state = AsyncValue.data(
+        currentState.copyWith(
+          pendingFeedback: null,
+          currentDerivedPath: currentState.pendingDerivedPath,
+          clearPendingDerivedPath: true,
+        ),
+      );
+      return;
+    }
 
     // Q6 피드백 후에는 체크인 완료 (BUG-20251202-Q6FINISH)
     if (currentState.currentStep == 6) {
@@ -289,12 +323,18 @@ class DailyCheckinNotifier extends _$DailyCheckinNotifier {
     if (currentState.currentDerivedPath != null) {
       // 파생 질문에서 메인 질문으로
       state = AsyncValue.data(
-        currentState.copyWith(clearCurrentDerivedPath: true), // BUG-20251202-231014
+        currentState.copyWith(
+          clearCurrentDerivedPath: true, // BUG-20251202-231014
+          clearPendingDerivedPath: true, // BUG-20251209-DERIVEDFEEDBACK: 뒤로 가기 시 대기 중인 파생 경로도 클리어
+        ),
       );
     } else if (currentState.currentStep > 0) {
       // 이전 메인 질문으로
       state = AsyncValue.data(
-        currentState.copyWith(currentStep: currentState.currentStep - 1),
+        currentState.copyWith(
+          currentStep: currentState.currentStep - 1,
+          clearPendingDerivedPath: true, // BUG-20251209-DERIVEDFEEDBACK: 뒤로 가기 시 대기 중인 파생 경로도 클리어
+        ),
       );
     }
   }
