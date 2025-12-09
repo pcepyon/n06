@@ -6224,5 +6224,170 @@
   "tracking_updatePlan_error_permissionError": "권한이 없습니다",
   "@tracking_updatePlan_error_permissionError": {
     "description": "Permission error when updating dosage plan"
+  },
+
+  "checkin_derived_feedbackBloating": "복부 팽만감은 일시적이에요. 가스가 차면 가볍게 움직여보세요",
+  "@checkin_derived_feedbackBloating": {
+    "description": "Feedback for bloating symptom selection"
+  },
+  "checkin_derived_feedbackNauseaModerate": "중간 정도 메스꺼움은 흔해요. 생강차나 페퍼민트가 도움이 될 수 있어요",
+  "@checkin_derived_feedbackNauseaModerate": {
+    "description": "Feedback for moderate nausea"
+  },
+  "checkin_derived_feedbackNauseaSevere": "심한 메스꺼움은 힘드시죠. 조금만 참으시면 곧 나아질 거예요",
+  "@checkin_derived_feedbackNauseaSevere": {
+    "description": "Feedback for severe nausea"
+  },
+  "checkin_derived_feedbackVomitingNone": "다행이에요. 메스꺼움만 있는 건 흔한 증상이에요",
+  "@checkin_derived_feedbackVomitingNone": {
+    "description": "Feedback for no vomiting"
+  },
+  "checkin_derived_feedbackVomitingOnce": "힘드셨죠. 물을 조금씩 자주 마셔보세요",
+  "@checkin_derived_feedbackVomitingOnce": {
+    "description": "Feedback for vomiting once"
+  },
+  "checkin_derived_feedbackVomitingSeveral": "여러 번 구토는 탈수에 주의해야 해요. 이온음료를 조금씩 드세요",
+  "@checkin_derived_feedbackVomitingSeveral": {
+    "description": "Feedback for vomiting several times"
+  },
+  "checkin_derived_feedbackCannotKeep": "수분을 유지하기 어려우시군요. 얼음을 물고 계시거나 조금씩 마셔보세요",
+  "@checkin_derived_feedbackCannotKeep": {
+    "description": "Feedback for cannot keep fluids"
+  },
+  "checkin_derived_feedbackPainUpper": "윗배 통증이 있으시군요. 좀 더 자세히 알려주세요",
+  "@checkin_derived_feedbackPainUpper": {
+    "description": "Feedback for upper abdominal pain"
+  },
+  "checkin_derived_feedbackPainRightUpper": "오른쪽 윗배 통증이 있으시군요. 좀 더 자세히 알려주세요",
+  "@checkin_derived_feedbackPainRightUpper": {
+    "description": "Feedback for right upper abdominal pain"
+  },
+  "checkin_derived_feedbackPainGeneral": "배 주변 불편함은 장이 적응하는 과정일 수 있어요",
+  "@checkin_derived_feedbackPainGeneral": {
+    "description": "Feedback for general abdominal discomfort"
+  },
+  "checkin_derived_feedbackPainMild": "가벼운 통증은 몸이 적응하는 과정에서 나타날 수 있어요",
+  "@checkin_derived_feedbackPainMild": {
+    "description": "Feedback for mild pain"
+  },
+  "checkin_derived_feedbackPainModerate": "중간 정도 통증이시군요. 따뜻한 찜질이 도움이 될 수 있어요",
+  "@checkin_derived_feedbackPainModerate": {
+    "description": "Feedback for moderate pain"
+  },
+  "checkin_derived_feedbackPainSevere": "심한 통증이시군요. 좀 더 자세히 확인해볼게요",
+  "@checkin_derived_feedbackPainSevere": {
+    "description": "Feedback for severe pain (leads to red flag check)"
+  },
+  "checkin_derived_feedbackRadiationNo": "다행이에요. 통증이 한 곳에만 있으면 대부분 괜찮아요",
+  "@checkin_derived_feedbackRadiationNo": {
+    "description": "Feedback for pain not radiating to back"
+  },
+  "checkin_derived_feedbackFeverNo": "열이 없다니 다행이에요. 통증이 계속되면 병원에 연락해주세요",
+  "@checkin_derived_feedbackFeverNo": {
+    "description": "Feedback for no fever"
+  },
+  "checkin_derived_feedbackFeverYes": "열이 있으시군요. 오늘 중으로 병원에서 확인받아 보세요",
+  "@checkin_derived_feedbackFeverYes": {
+    "description": "Feedback for fever present"
+  },
+  "checkin_derived_feedbackConstipationFew": "1-2일 변비는 흔해요. 물과 섬유질을 충분히 드세요",
+  "@checkin_derived_feedbackConstipationFew": {
+    "description": "Feedback for 1-2 days constipation"
+  },
+  "checkin_derived_feedbackConstipationSeveral": "3-4일째 변비시군요. 수분 섭취와 가벼운 운동이 도움이 돼요",
+  "@checkin_derived_feedbackConstipationSeveral": {
+    "description": "Feedback for 3-4 days constipation"
+  },
+  "checkin_derived_feedbackConstipationMany": "5일 이상 변비시군요. 배가 많이 빵빵한지 확인해볼게요",
+  "@checkin_derived_feedbackConstipationMany": {
+    "description": "Feedback for 5+ days constipation (leads to bloating check)"
+  },
+  "checkin_derived_feedbackBloatingMild": "가벼운 팽만감은 금방 나아질 거예요",
+  "@checkin_derived_feedbackBloatingMild": {
+    "description": "Feedback for mild bloating"
+  },
+  "checkin_derived_feedbackBloatingModerate": "중간 정도 팽만감이시군요. 가스가 나오고 있다면 괜찮아요",
+  "@checkin_derived_feedbackBloatingModerate": {
+    "description": "Feedback for moderate bloating"
+  },
+  "checkin_derived_feedbackBloatingSevere": "많이 불편하시죠. 가스가 잘 나오는지 확인해볼게요",
+  "@checkin_derived_feedbackBloatingSevere": {
+    "description": "Feedback for severe bloating (leads to obstruction check)"
+  },
+  "checkin_derived_feedbackDiarrheaFew": "2-3회 설사는 흔해요. 수분 섭취를 충분히 해주세요",
+  "@checkin_derived_feedbackDiarrheaFew": {
+    "description": "Feedback for 2-3 times diarrhea"
+  },
+  "checkin_derived_feedbackDiarrheaSeveral": "4-5회 설사시군요. 이온음료로 전해질을 보충해주세요",
+  "@checkin_derived_feedbackDiarrheaSeveral": {
+    "description": "Feedback for 4-5 times diarrhea"
+  },
+  "checkin_derived_feedbackDiarrheaMany": "설사가 잦으시네요. 탈수에 주의하시고 수분 섭취를 꼭 해주세요",
+  "@checkin_derived_feedbackDiarrheaMany": {
+    "description": "Feedback for 6+ times diarrhea"
+  },
+  "checkin_derived_feedbackDizziness": "어지러움이 있으시군요. 천천히 일어나시고 수분을 충분히 드세요",
+  "@checkin_derived_feedbackDizziness": {
+    "description": "Feedback for dizziness"
+  },
+  "checkin_derived_feedbackColdSweat": "식은땀이 나시군요. 당분을 드시면서 쉬어주세요",
+  "@checkin_derived_feedbackColdSweat": {
+    "description": "Feedback for cold sweat"
+  },
+  "checkin_derived_feedbackDyspnea": "숨이 차시군요. 좀 더 자세히 확인해볼게요",
+  "@checkin_derived_feedbackDyspnea": {
+    "description": "Feedback for dyspnea"
+  },
+  "checkin_derived_feedbackSwelling": "붓기가 있으시군요. 좀 더 자세히 확인해볼게요",
+  "@checkin_derived_feedbackSwelling": {
+    "description": "Feedback for swelling"
+  },
+  "checkin_derived_feedbackHypoglycemiaNo": "다행이에요. 피로와 어지러움은 수분 부족일 수 있어요",
+  "@checkin_derived_feedbackHypoglycemiaNo": {
+    "description": "Feedback for no hypoglycemia symptoms"
+  },
+  "checkin_derived_feedbackHypoglycemiaYes": "저혈당 증상이 의심돼요. 좀 더 확인해볼게요",
+  "@checkin_derived_feedbackHypoglycemiaYes": {
+    "description": "Feedback for possible hypoglycemia"
+  },
+  "checkin_derived_feedbackTremorNo": "다행이에요. 수분과 영양을 충분히 섭취해주세요",
+  "@checkin_derived_feedbackTremorNo": {
+    "description": "Feedback for no tremor"
+  },
+  "checkin_derived_feedbackTremorYes": "손떨림이 있으시군요. 당분을 드시면서 쉬어주세요",
+  "@checkin_derived_feedbackTremorYes": {
+    "description": "Feedback for tremor present"
+  },
+  "checkin_derived_feedbackUrineNormal": "소변량이 정상이시군요. 수분 섭취를 유지해주세요",
+  "@checkin_derived_feedbackUrineNormal": {
+    "description": "Feedback for normal urine output"
+  },
+  "checkin_derived_feedbackUrineDecreased": "소변량이 줄었군요. 수분 섭취를 늘려보세요",
+  "@checkin_derived_feedbackUrineDecreased": {
+    "description": "Feedback for decreased urine output"
+  },
+  "checkin_derived_feedbackWeightGainNo": "체중은 안정적이시군요. 붓기가 불편하시면 병원에 문의해주세요",
+  "@checkin_derived_feedbackWeightGainNo": {
+    "description": "Feedback for no significant weight gain"
+  },
+  "checkin_derived_feedbackWeightGainYes": "최근 체중이 늘었군요. 붓기와 함께라면 확인이 필요할 수 있어요",
+  "@checkin_derived_feedbackWeightGainYes": {
+    "description": "Feedback for significant weight gain"
+  },
+  "checkin_derived_feedbackNausea": "메스꺼움이 있으시군요. 흔한 증상이에요. 좀 더 자세히 확인해볼게요",
+  "@checkin_derived_feedbackNausea": {
+    "description": "Feedback for nausea selection (triggers derived)"
+  },
+  "checkin_derived_feedbackConstipation": "변비가 있으시군요. 수분과 섬유질이 도움이 돼요. 좀 더 자세히 확인해볼게요",
+  "@checkin_derived_feedbackConstipation": {
+    "description": "Feedback for constipation selection (triggers derived)"
+  },
+  "checkin_derived_feedbackDiarrhea": "설사가 있으시군요. 수분 보충이 중요해요. 좀 더 자세히 확인해볼게요",
+  "@checkin_derived_feedbackDiarrhea": {
+    "description": "Feedback for diarrhea selection (triggers derived)"
+  },
+  "checkin_derived_feedbackAbdominalPain": "복통이 있으시군요. 위치를 확인해볼게요",
+  "@checkin_derived_feedbackAbdominalPain": {
+    "description": "Feedback for abdominal pain selection (triggers derived)"
   }
 }

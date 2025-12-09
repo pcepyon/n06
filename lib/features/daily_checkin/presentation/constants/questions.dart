@@ -311,6 +311,7 @@ class DerivedQuestions {
         getEmoji: _getMealDerivedNauseaEmoji,
         getText: _getMealDerivedNausea,
         value: 'nausea',
+        getFeedback: _getMealFeedbackNausea,
         triggersDerived: true,
       ),
       AnswerOption(
@@ -344,12 +345,14 @@ class DerivedQuestions {
         getEmoji: _getGiComfortDerivedPainEmoji,
         getText: _getGiComfortDerivedPain,
         value: 'abdominal_pain',
+        getFeedback: _getGiComfortFeedbackAbdominalPain,
         triggersDerived: true,
       ),
       AnswerOption(
         getEmoji: _getGiComfortDerivedBloatingEmoji,
         getText: _getGiComfortDerivedBloating,
         value: 'bloating',
+        getFeedback: _getGiComfortFeedbackBloating,
       ),
     ],
   );
@@ -364,12 +367,14 @@ class DerivedQuestions {
         getEmoji: _getBowelDerivedConstipationEmoji,
         getText: _getBowelDerivedConstipation,
         value: 'constipation',
+        getFeedback: _getBowelFeedbackConstipation,
         triggersDerived: true,
       ),
       AnswerOption(
         getEmoji: _getBowelDerivedDiarrheaEmoji,
         getText: _getBowelDerivedDiarrhea,
         value: 'diarrhea',
+        getFeedback: _getBowelFeedbackDiarrhea,
         triggersDerived: true,
       ),
     ],
@@ -385,12 +390,14 @@ class DerivedQuestions {
         getEmoji: _getEnergyDerivedDizzinessEmoji,
         getText: _getEnergyDerivedDizziness,
         value: 'dizziness',
+        getFeedback: _getEnergyFeedbackDizziness,
         triggersDerived: true,
       ),
       AnswerOption(
         getEmoji: _getEnergyDerivedColdSweatEmoji,
         getText: _getEnergyDerivedColdSweat,
         value: 'cold_sweat',
+        getFeedback: _getEnergyFeedbackColdSweat,
         triggersDerived: true,
       ),
       AnswerOption(
@@ -403,12 +410,14 @@ class DerivedQuestions {
         getEmoji: _getEnergyDerivedDyspneaEmoji,
         getText: _getEnergyDerivedDyspnea,
         value: 'dyspnea',
+        getFeedback: _getEnergyFeedbackDyspnea,
         triggersDerived: true,
       ),
       AnswerOption(
         getEmoji: _getEnergyDerivedSwellingEmoji,
         getText: _getEnergyDerivedSwelling,
         value: 'swelling',
+        getFeedback: _getEnergyFeedbackSwelling,
         triggersDerived: true,
       ),
     ],
@@ -430,12 +439,14 @@ class DerivedQuestions {
         getEmoji: _getNauseaModerateEmoji,
         getText: _getNauseaModerate,
         value: 'moderate',
+        getFeedback: _getNauseaFeedbackModerate,
         triggersDerived: true,
       ),
       AnswerOption(
         getEmoji: _getNauseaSevereEmoji,
         getText: _getNauseaSevere,
         value: 'severe',
+        getFeedback: _getNauseaFeedbackSevere,
         triggersDerived: true,
       ),
     ],
@@ -451,16 +462,19 @@ class DerivedQuestions {
         getEmoji: _getVomitingNoEmoji,
         getText: _getVomitingNo,
         value: 'no',
+        getFeedback: _getVomitingFeedbackNone,
       ),
       AnswerOption(
         getEmoji: _getVomitingOnceEmoji,
         getText: _getVomitingOnce,
         value: 'once',
+        getFeedback: _getVomitingFeedbackOnce,
       ),
       AnswerOption(
         getEmoji: _getVomitingSeveralEmoji,
         getText: _getVomitingSeveral,
         value: 'several',
+        getFeedback: _getVomitingFeedbackSeveral,
       ),
     ],
   );
@@ -487,7 +501,7 @@ class DerivedQuestions {
         getEmoji: _getHydrationDerivedCannotKeepEmoji,
         getText: _getHydrationDerivedCannotKeep,
         value: 'cannot_keep',
-        // No feedback for cannotKeep
+        getFeedback: _getHydrationFeedbackCannotKeep,
       ),
     ],
   );
@@ -502,23 +516,27 @@ class DerivedQuestions {
         getEmoji: _getPainLocationUpperEmoji,
         getText: _getPainLocationUpper,
         value: 'upper',
+        getFeedback: _getPainFeedbackUpper,
         triggersDerived: true,
       ),
       AnswerOption(
         getEmoji: _getPainLocationRightUpperEmoji,
         getText: _getPainLocationRightUpper,
         value: 'right_upper',
+        getFeedback: _getPainFeedbackRightUpper,
         triggersDerived: true,
       ),
       AnswerOption(
         getEmoji: _getPainLocationLowerEmoji,
         getText: _getPainLocationLower,
         value: 'lower',
+        getFeedback: _getPainFeedbackLower,
       ),
       AnswerOption(
         getEmoji: _getPainLocationGeneralEmoji,
         getText: _getPainLocationGeneral,
         value: 'general',
+        getFeedback: _getPainFeedbackGeneral,
       ),
     ],
   );
@@ -533,16 +551,19 @@ class DerivedQuestions {
         getEmoji: _getPainSeverityMildEmoji,
         getText: _getPainSeverityMild,
         value: 'mild',
+        getFeedback: _getPainSeverityFeedbackMild,
       ),
       AnswerOption(
         getEmoji: _getPainSeverityModerateEmoji,
         getText: _getPainSeverityModerate,
         value: 'moderate',
+        getFeedback: _getPainSeverityFeedbackModerate,
       ),
       AnswerOption(
         getEmoji: _getPainSeveritySevereEmoji,
         getText: _getPainSeveritySevere,
         value: 'severe',
+        getFeedback: _getPainSeverityFeedbackSevere,
         triggersDerived: true,
       ),
     ],
@@ -558,7 +579,7 @@ class DerivedQuestions {
         getEmoji: _getRadiationNoEmoji,
         getText: _getRadiationNo,
         value: 'no',
-        // No feedback for radiationNo
+        getFeedback: _getRadiationFeedbackNo,
       ),
       AnswerOption(
         getEmoji: _getRadiationYesEmoji,
@@ -598,16 +619,19 @@ class DerivedQuestions {
         getEmoji: _getPainSeverityMildEmoji,
         getText: _getPainSeverityMild,
         value: 'mild',
+        getFeedback: _getPainSeverityFeedbackMild,
       ),
       AnswerOption(
         getEmoji: _getPainSeverityModerateEmoji,
         getText: _getPainSeverityModerate,
         value: 'moderate',
+        getFeedback: _getPainSeverityFeedbackModerate,
       ),
       AnswerOption(
         getEmoji: _getPainSeveritySevereEmoji,
         getText: _getPainSeveritySevere,
         value: 'severe',
+        getFeedback: _getPainSeverityFeedbackSevere,
         triggersDerived: true,
       ),
     ],
@@ -623,11 +647,13 @@ class DerivedQuestions {
         getEmoji: _getFeverNoEmoji,
         getText: _getFeverNo,
         value: 'no',
+        getFeedback: _getFeverFeedbackNo,
       ),
       AnswerOption(
         getEmoji: _getFeverYesEmoji,
         getText: _getFeverYes,
         value: 'yes',
+        getFeedback: _getFeverFeedbackYes,
       ),
     ],
   );
@@ -642,17 +668,20 @@ class DerivedQuestions {
         getEmoji: _getConstipationFewEmoji,
         getText: _getConstipationFew,
         value: 'few',
+        getFeedback: _getConstipationFeedbackFew,
       ),
       AnswerOption(
         getEmoji: _getConstipationSeveralEmoji,
         getText: _getConstipationSeveral,
         value: 'several',
+        getFeedback: _getConstipationFeedbackSeveral,
         triggersDerived: true,
       ),
       AnswerOption(
         getEmoji: _getConstipationManyEmoji,
         getText: _getConstipationMany,
         value: 'many',
+        getFeedback: _getConstipationFeedbackMany,
         triggersDerived: true,
       ),
     ],
@@ -668,16 +697,19 @@ class DerivedQuestions {
         getEmoji: _getBloatingMildEmoji,
         getText: _getBloatingMild,
         value: 'mild',
+        getFeedback: _getBloatingSeverityFeedbackMild,
       ),
       AnswerOption(
         getEmoji: _getBloatingModerateEmoji,
         getText: _getBloatingModerate,
         value: 'moderate',
+        getFeedback: _getBloatingSeverityFeedbackModerate,
       ),
       AnswerOption(
         getEmoji: _getBloatingSevereEmoji,
         getText: _getBloatingSevere,
         value: 'severe',
+        getFeedback: _getBloatingSeverityFeedbackSevere,
       ),
     ],
   );
@@ -692,16 +724,19 @@ class DerivedQuestions {
         getEmoji: _getDiarrheaFewEmoji,
         getText: _getDiarrheaFew,
         value: 'few',
+        getFeedback: _getDiarrheaFeedbackFew,
       ),
       AnswerOption(
         getEmoji: _getDiarrheaSeveralEmoji,
         getText: _getDiarrheaSeveral,
         value: 'several',
+        getFeedback: _getDiarrheaFeedbackSeveral,
       ),
       AnswerOption(
         getEmoji: _getDiarrheaManyEmoji,
         getText: _getDiarrheaMany,
         value: 'many',
+        getFeedback: _getDiarrheaFeedbackMany,
       ),
     ],
   );
@@ -716,11 +751,13 @@ class DerivedQuestions {
         getEmoji: _getHypoglycemiaNoEmoji,
         getText: _getHypoglycemiaNo,
         value: 'no',
+        getFeedback: _getHypoglycemiaFeedbackNo,
       ),
       AnswerOption(
         getEmoji: _getHypoglycemiaYesEmoji,
         getText: _getHypoglycemiaYes,
         value: 'yes',
+        getFeedback: _getHypoglycemiaFeedbackYes,
         triggersDerived: true,
       ),
     ],
@@ -736,11 +773,13 @@ class DerivedQuestions {
         getEmoji: _getTremorNoEmoji,
         getText: _getTremorNo,
         value: 'no',
+        getFeedback: _getTremorFeedbackNo,
       ),
       AnswerOption(
         getEmoji: _getTremorYesEmoji,
         getText: _getTremorYes,
         value: 'yes',
+        getFeedback: _getTremorFeedbackYes,
         triggersDerived: true,
       ),
     ],
@@ -795,11 +834,13 @@ class DerivedQuestions {
         getEmoji: _getUrineOutputNormalEmoji,
         getText: _getUrineOutputNormal,
         value: 'normal',
+        getFeedback: _getUrineOutputFeedbackNormal,
       ),
       AnswerOption(
         getEmoji: _getUrineOutputDecreasedEmoji,
         getText: _getUrineOutputDecreased,
         value: 'decreased',
+        getFeedback: _getUrineOutputFeedbackDecreased,
         triggersDerived: true,
       ),
     ],
@@ -815,11 +856,13 @@ class DerivedQuestions {
         getEmoji: _getWeightGainNoEmoji,
         getText: _getWeightGainNo,
         value: 'no',
+        getFeedback: _getWeightGainFeedbackNo,
       ),
       AnswerOption(
         getEmoji: _getWeightGainYesEmoji,
         getText: _getWeightGainYes,
         value: 'yes',
+        getFeedback: _getWeightGainFeedbackYes,
       ),
     ],
   );
@@ -990,4 +1033,82 @@ class DerivedQuestions {
   static String _getWeightGainNo(L10n l10n) => l10n.checkin_energy_weightGainNo;
   static String _getWeightGainYesEmoji(L10n l10n) => l10n.checkin_energy_weightGainSignificantEmoji;
   static String _getWeightGainYes(L10n l10n) => l10n.checkin_energy_weightGainSignificant;
+
+  // === Derived Question Feedback Getters ===
+
+  // GI Comfort bloating feedback
+  static String _getGiComfortFeedbackBloating(L10n l10n) => l10n.checkin_derived_feedbackBloating;
+
+  // Nausea severity feedback
+  static String _getNauseaFeedbackModerate(L10n l10n) => l10n.checkin_derived_feedbackNauseaModerate;
+  static String _getNauseaFeedbackSevere(L10n l10n) => l10n.checkin_derived_feedbackNauseaSevere;
+
+  // Vomiting feedback
+  static String _getVomitingFeedbackNone(L10n l10n) => l10n.checkin_derived_feedbackVomitingNone;
+  static String _getVomitingFeedbackOnce(L10n l10n) => l10n.checkin_derived_feedbackVomitingOnce;
+  static String _getVomitingFeedbackSeveral(L10n l10n) => l10n.checkin_derived_feedbackVomitingSeveral;
+
+  // Hydration cannot keep feedback
+  static String _getHydrationFeedbackCannotKeep(L10n l10n) => l10n.checkin_derived_feedbackCannotKeep;
+
+  // Pain location feedback
+  static String _getPainFeedbackUpper(L10n l10n) => l10n.checkin_derived_feedbackPainUpper;
+  static String _getPainFeedbackRightUpper(L10n l10n) => l10n.checkin_derived_feedbackPainRightUpper;
+  static String _getPainFeedbackLower(L10n l10n) => l10n.checkin_giComfort_feedbackPainLower;
+  static String _getPainFeedbackGeneral(L10n l10n) => l10n.checkin_derived_feedbackPainGeneral;
+
+  // Pain severity feedback
+  static String _getPainSeverityFeedbackMild(L10n l10n) => l10n.checkin_derived_feedbackPainMild;
+  static String _getPainSeverityFeedbackModerate(L10n l10n) => l10n.checkin_derived_feedbackPainModerate;
+  static String _getPainSeverityFeedbackSevere(L10n l10n) => l10n.checkin_derived_feedbackPainSevere;
+
+  // Radiation to back feedback
+  static String _getRadiationFeedbackNo(L10n l10n) => l10n.checkin_derived_feedbackRadiationNo;
+
+  // Fever feedback
+  static String _getFeverFeedbackNo(L10n l10n) => l10n.checkin_derived_feedbackFeverNo;
+  static String _getFeverFeedbackYes(L10n l10n) => l10n.checkin_derived_feedbackFeverYes;
+
+  // Constipation feedback
+  static String _getConstipationFeedbackFew(L10n l10n) => l10n.checkin_derived_feedbackConstipationFew;
+  static String _getConstipationFeedbackSeveral(L10n l10n) => l10n.checkin_derived_feedbackConstipationSeveral;
+  static String _getConstipationFeedbackMany(L10n l10n) => l10n.checkin_derived_feedbackConstipationMany;
+
+  // Bloating severity feedback
+  static String _getBloatingSeverityFeedbackMild(L10n l10n) => l10n.checkin_derived_feedbackBloatingMild;
+  static String _getBloatingSeverityFeedbackModerate(L10n l10n) => l10n.checkin_derived_feedbackBloatingModerate;
+  static String _getBloatingSeverityFeedbackSevere(L10n l10n) => l10n.checkin_derived_feedbackBloatingSevere;
+
+  // Diarrhea feedback
+  static String _getDiarrheaFeedbackFew(L10n l10n) => l10n.checkin_derived_feedbackDiarrheaFew;
+  static String _getDiarrheaFeedbackSeveral(L10n l10n) => l10n.checkin_derived_feedbackDiarrheaSeveral;
+  static String _getDiarrheaFeedbackMany(L10n l10n) => l10n.checkin_derived_feedbackDiarrheaMany;
+
+  // Energy symptoms feedback
+  static String _getEnergyFeedbackDizziness(L10n l10n) => l10n.checkin_derived_feedbackDizziness;
+  static String _getEnergyFeedbackColdSweat(L10n l10n) => l10n.checkin_derived_feedbackColdSweat;
+  static String _getEnergyFeedbackDyspnea(L10n l10n) => l10n.checkin_derived_feedbackDyspnea;
+  static String _getEnergyFeedbackSwelling(L10n l10n) => l10n.checkin_derived_feedbackSwelling;
+
+  // Hypoglycemia feedback
+  static String _getHypoglycemiaFeedbackNo(L10n l10n) => l10n.checkin_derived_feedbackHypoglycemiaNo;
+  static String _getHypoglycemiaFeedbackYes(L10n l10n) => l10n.checkin_derived_feedbackHypoglycemiaYes;
+
+  // Tremor feedback
+  static String _getTremorFeedbackNo(L10n l10n) => l10n.checkin_derived_feedbackTremorNo;
+  static String _getTremorFeedbackYes(L10n l10n) => l10n.checkin_derived_feedbackTremorYes;
+
+  // Urine output feedback
+  static String _getUrineOutputFeedbackNormal(L10n l10n) => l10n.checkin_derived_feedbackUrineNormal;
+  static String _getUrineOutputFeedbackDecreased(L10n l10n) => l10n.checkin_derived_feedbackUrineDecreased;
+
+  // Weight gain feedback
+  static String _getWeightGainFeedbackNo(L10n l10n) => l10n.checkin_derived_feedbackWeightGainNo;
+  static String _getWeightGainFeedbackYes(L10n l10n) => l10n.checkin_derived_feedbackWeightGainYes;
+
+  // Additional derived question feedback (for triggersDerived options)
+  static String _getMealFeedbackNausea(L10n l10n) => l10n.checkin_derived_feedbackNausea;
+  static String _getGiComfortFeedbackAbdominalPain(L10n l10n) => l10n.checkin_derived_feedbackAbdominalPain;
+  static String _getBowelFeedbackConstipation(L10n l10n) => l10n.checkin_derived_feedbackConstipation;
+  static String _getBowelFeedbackDiarrhea(L10n l10n) => l10n.checkin_derived_feedbackDiarrhea;
 }
