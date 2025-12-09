@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:confetti/confetti.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
-import 'package:n06/features/onboarding/application/notifiers/onboarding_notifier.dart';
-import 'package:n06/features/profile/application/notifiers/profile_notifier.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 // Form Widgets
 import 'package:n06/features/onboarding/presentation/widgets/basic_profile_form.dart';
@@ -15,21 +13,14 @@ import 'package:n06/features/onboarding/presentation/widgets/summary_screen.dart
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
 
 /// 온보딩 5단계 화면 네비게이션
-///
-/// [isReviewMode]: true일 경우 리뷰 모드로 동작
-/// - 기존 프로필 데이터를 불러와 입력 폼에 표시
-/// - 입력값 수정은 가능하나 DB에 저장하지 않음
-/// - Summary 화면에서 "완료" 버튼으로 표시 (저장 없이 종료)
 class OnboardingScreen extends ConsumerStatefulWidget {
   final String? userId;
   final VoidCallback? onComplete;
-  final bool isReviewMode;
 
   const OnboardingScreen({
     super.key,
     this.userId,
     this.onComplete,
-    this.isReviewMode = false,
   });
 
   @override
@@ -99,40 +90,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 3),
     );
-
-    if (widget.isReviewMode) {
-      _loadExistingProfileData();
-    }
-  }
-
-  /// 리뷰 모드: 기존 프로필 및 투여 계획 데이터를 로드하여 초기값으로 설정
-  Future<void> _loadExistingProfileData() async {
-    final profileState = ref.read(profileNotifierProvider);
-    profileState.whenData((profile) {
-      if (profile != null && mounted) {
-        setState(() {
-          _name = profile.userName ?? '';
-          _currentWeight = profile.currentWeight.value;
-          _targetWeight = profile.targetWeight.value;
-          _targetPeriodWeeks = profile.targetPeriodWeeks;
-        });
-      }
-    });
-
-    final userId = _effectiveUserId;
-    if (userId.isNotEmpty) {
-      final dosagePlan = await ref
-          .read(onboardingNotifierProvider.notifier)
-          .getActiveDosagePlan(userId);
-      if (dosagePlan != null && mounted) {
-        setState(() {
-          _medicationName = dosagePlan.medicationName;
-          _startDate = dosagePlan.startDate;
-          _cycleDays = dosagePlan.cycleDays;
-          _initialDose = dosagePlan.initialDoseMg;
-        });
-      }
-    }
   }
 
   @override
@@ -338,8 +295,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
           child: BasicProfileForm(
             onNameChanged: (name) => _name = name,
             onNext: _nextStep,
-            isReviewMode: widget.isReviewMode,
-            initialName: widget.isReviewMode ? _name : null,
           ),
         );
       case 2:
@@ -353,10 +308,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
               _targetPeriodWeeks = period;
             },
             onNext: _nextStep,
-            isReviewMode: widget.isReviewMode,
-            initialCurrentWeight: widget.isReviewMode ? _currentWeight : null,
-            initialTargetWeight: widget.isReviewMode ? _targetWeight : null,
-            initialTargetPeriod: widget.isReviewMode ? _targetPeriodWeeks : null,
           ),
         );
       case 3:
@@ -371,10 +322,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
               _initialDose = dose;
             },
             onNext: _nextStep,
-            isReviewMode: widget.isReviewMode,
-            initialMedicationName: widget.isReviewMode ? _medicationName : null,
-            initialStartDate: widget.isReviewMode ? _startDate : null,
-            initialDose: widget.isReviewMode ? _initialDose : null,
           ),
         );
       case 4:
@@ -389,8 +336,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
           startDate: _startDate,
           cycleDays: _cycleDays,
           initialDose: _initialDose,
-          onComplete: widget.isReviewMode ? _completeReview : _completeOnboarding,
-          isReviewMode: widget.isReviewMode,
+          onComplete: _completeOnboarding,
           onBack: _previousStep,
         );
       default:
@@ -398,17 +344,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
     }
   }
 
-  /// 온보딩 완료 처리 (신규 사용자)
+  /// 온보딩 완료 처리
   Future<void> _completeOnboarding() async {
     if (mounted && widget.onComplete != null) {
       widget.onComplete!();
-    }
-  }
-
-  /// 리뷰 모드 완료 처리 (DB 저장 없이 종료)
-  void _completeReview() {
-    if (mounted) {
-      Navigator.of(context).pop();
     }
   }
 }
@@ -515,7 +454,6 @@ class _CompletionScreen extends ConsumerWidget {
   final int cycleDays;
   final double initialDose;
   final VoidCallback onComplete;
-  final bool isReviewMode;
   final VoidCallback onBack;
 
   const _CompletionScreen({
@@ -530,7 +468,6 @@ class _CompletionScreen extends ConsumerWidget {
     required this.cycleDays,
     required this.initialDose,
     required this.onComplete,
-    required this.isReviewMode,
     required this.onBack,
   });
 
@@ -568,7 +505,6 @@ class _CompletionScreen extends ConsumerWidget {
                   cycleDays: cycleDays,
                   initialDose: initialDose,
                   onComplete: onComplete,
-                  isReviewMode: isReviewMode,
                 ),
               ),
             ),

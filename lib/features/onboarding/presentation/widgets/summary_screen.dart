@@ -21,7 +21,6 @@ class SummaryScreen extends ConsumerWidget {
   final int cycleDays;
   final double initialDose;
   final VoidCallback? onComplete;
-  final bool isReviewMode;
 
   const SummaryScreen({
     super.key,
@@ -35,7 +34,6 @@ class SummaryScreen extends ConsumerWidget {
     required this.cycleDays,
     required this.initialDose,
     this.onComplete,
-    this.isReviewMode = false,
   });
 
   @override
@@ -51,15 +49,15 @@ class SummaryScreen extends ConsumerWidget {
             const SizedBox(height: 16), // md
             // Encouragement Message
             Text(
-              isReviewMode ? context.l10n.onboarding_summary_titleReview : context.l10n.onboarding_summary_titleReady,
+              context.l10n.onboarding_summary_titleReady,
               style: AppTypography.bodyLarge.copyWith(
                 fontWeight: FontWeight.w500,
-                color: isReviewMode ? AppColors.textTertiary : AppColors.primary,
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 8), // sm
             Text(
-              isReviewMode ? context.l10n.onboarding_summary_sectionTitleReview : context.l10n.onboarding_summary_sectionTitle,
+              context.l10n.onboarding_summary_sectionTitle,
               style: AppTypography.heading2,
             ),
             const SizedBox(height: 24), // lg
@@ -92,19 +90,7 @@ class SummaryScreen extends ConsumerWidget {
             const SizedBox(height: 24), // lg
 
             // Loading/Error/Success States
-            // 리뷰 모드: 저장 없이 다음 단계로 이동
-            if (isReviewMode)
-              GabiumButton(
-                text: context.l10n.onboarding_common_nextButton,
-                onPressed: () {
-                  if (onComplete != null) {
-                    onComplete!();
-                  }
-                },
-                variant: GabiumButtonVariant.primary,
-                size: GabiumButtonSize.medium,
-              )
-            else if (onboardingState.isLoading)
+            if (onboardingState.isLoading)
               const Center(
                 child: SizedBox(
                   width: 48,

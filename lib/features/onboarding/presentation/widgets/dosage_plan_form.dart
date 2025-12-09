@@ -13,19 +13,11 @@ import 'package:n06/features/tracking/domain/entities/medication.dart';
 class DosagePlanForm extends ConsumerStatefulWidget {
   final Function(String, DateTime, int, double) onDataChanged;
   final VoidCallback onNext;
-  final bool isReviewMode;
-  final String? initialMedicationName;
-  final DateTime? initialStartDate;
-  final double? initialDose;
 
   const DosagePlanForm({
     super.key,
     required this.onDataChanged,
     required this.onNext,
-    this.isReviewMode = false,
-    this.initialMedicationName,
-    this.initialStartDate,
-    this.initialDose,
   });
 
   @override
@@ -42,28 +34,7 @@ class _DosagePlanFormState extends ConsumerState<DosagePlanForm> {
   @override
   void initState() {
     super.initState();
-    _startDate = widget.initialStartDate ?? DateTime.now();
-  }
-
-  /// 리뷰 모드에서 초기값 설정
-  void _initializeReviewMode(List<Medication> medications) {
-    if (!widget.isReviewMode || widget.initialMedicationName == null) return;
-    if (_selectedMedication != null) return; // 이미 초기화됨
-
-    // 약물 이름으로 매칭 (fallback 포함)
-    final medication = Medication.findByDisplayName(
-      medications,
-      widget.initialMedicationName!,
-    );
-
-    if (medication != null) {
-      _selectedMedication = medication;
-      _selectedDose = widget.initialDose ?? medication.startDose;
-      // 리뷰 모드에서 초기값이 있으면 부모에게 즉시 알림
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _notifyParent();
-      });
-    }
+    _startDate = DateTime.now();
   }
 
   /// 부모에게 현재 선택된 데이터를 전달
@@ -134,16 +105,13 @@ class _DosagePlanFormState extends ConsumerState<DosagePlanForm> {
           ),
         ),
         data: (medications) {
-          // 리뷰 모드 초기화
-          _initializeReviewMode(medications);
-
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 16), // md
                 Text(
-                  widget.isReviewMode ? context.l10n.onboarding_dosagePlan_titleReview : context.l10n.onboarding_dosagePlan_title,
+                  context.l10n.onboarding_dosagePlan_title,
                   style: AppTypography.heading2,
                 ),
                 const SizedBox(height: 16), // md

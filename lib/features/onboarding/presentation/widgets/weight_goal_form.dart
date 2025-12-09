@@ -10,19 +10,11 @@ import 'package:n06/features/onboarding/presentation/widgets/validation_alert.da
 class WeightGoalForm extends StatefulWidget {
   final Function(double, double, int?) onDataChanged;
   final VoidCallback onNext;
-  final bool isReviewMode;
-  final double? initialCurrentWeight;
-  final double? initialTargetWeight;
-  final int? initialTargetPeriod;
 
   const WeightGoalForm({
     super.key,
     required this.onDataChanged,
     required this.onNext,
-    this.isReviewMode = false,
-    this.initialCurrentWeight,
-    this.initialTargetWeight,
-    this.initialTargetPeriod,
   });
 
   @override
@@ -40,38 +32,17 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
   double? _weeklyGoal;
   bool _hasWarning = false;
   String? _errorMessage;
-  bool _goalAchieved = false;
 
   @override
   void initState() {
     super.initState();
-    // 리뷰 모드: 초기값 설정
-    _currentWeightController = TextEditingController(
-      text: widget.initialCurrentWeight != null && widget.initialCurrentWeight! > 0
-          ? widget.initialCurrentWeight.toString()
-          : '',
-    );
-    _targetWeightController = TextEditingController(
-      text: widget.initialTargetWeight != null && widget.initialTargetWeight! > 0
-          ? widget.initialTargetWeight.toString()
-          : '',
-    );
-    _targetPeriodController = TextEditingController(
-      text: widget.initialTargetPeriod != null
-          ? widget.initialTargetPeriod.toString()
-          : '',
-    );
+    _currentWeightController = TextEditingController();
+    _targetWeightController = TextEditingController();
+    _targetPeriodController = TextEditingController();
 
     _currentWeightController.addListener(_recalculate);
     _targetWeightController.addListener(_recalculate);
     _targetPeriodController.addListener(_recalculate);
-
-    // 리뷰 모드에서 초기값이 있으면 계산 및 부모에게 알림
-    if (widget.isReviewMode) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _recalculate();
-      });
-    }
   }
 
   void _recalculate() {
@@ -83,7 +54,6 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
       _errorMessage = null;
       _weeklyGoal = null;
       _hasWarning = false;
-      _goalAchieved = false;
 
       if (_currentWeight == null || _targetWeight == null) {
         return;
@@ -111,16 +81,11 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
       }
 
       if (_targetWeight! >= _currentWeight!) {
-        // 리뷰 모드에서는 목표 달성 시 축하 메시지 표시 및 진행 허용
-        if (widget.isReviewMode) {
-          _goalAchieved = true;
-        } else {
-          _errorMessage = 'onboarding_weightGoal_errorTargetTooHigh';
-          return;
-        }
+        _errorMessage = 'onboarding_weightGoal_errorTargetTooHigh';
+        return;
       }
 
-      if (_targetPeriod != null && _targetPeriod! > 0 && !_goalAchieved) {
+      if (_targetPeriod != null && _targetPeriod! > 0) {
         _weeklyGoal = (_currentWeight! - _targetWeight!) / _targetPeriod!;
         _hasWarning = _weeklyGoal! > 1.0;
       }
@@ -237,9 +202,7 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
           children: [
             const SizedBox(height: 16), // md
             Text(
-              widget.isReviewMode
-                  ? context.l10n.onboarding_weightGoal_titleReview
-                  : context.l10n.onboarding_weightGoal_title,
+              context.l10n.onboarding_weightGoal_title,
               style: AppTypography.heading2,
             ),
             const SizedBox(height: 16), // md
@@ -280,15 +243,6 @@ class _WeightGoalFormState extends State<WeightGoalForm> {
               ValidationAlert(
                 type: ValidationAlertType.error,
                 message: _getErrorMessage(context, _errorMessage!),
-              ),
-              const SizedBox(height: 8), // sm
-            ],
-
-            // Goal Achieved Alert (리뷰 모드에서 목표 달성 시)
-            if (_goalAchieved && _errorMessage == null) ...[
-              ValidationAlert(
-                type: ValidationAlertType.success,
-                message: context.l10n.onboarding_weightGoal_goalAchieved,
               ),
               const SizedBox(height: 8), // sm
             ],

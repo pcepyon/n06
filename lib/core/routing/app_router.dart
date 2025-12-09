@@ -287,18 +287,6 @@ final appRouter = GoRouter(
       },
     ),
 
-    /// Onboarding Review (다시 보기) - without Bottom Nav
-    GoRoute(
-      path: '/onboarding/review',
-      name: 'onboarding_review',
-      builder: (context, state) {
-        return OnboardingScreen(
-          isReviewMode: true,
-          onComplete: () => context.pop(),
-        );
-      },
-    ),
-
     /// Root path redirects to home
     GoRoute(
       path: '/',

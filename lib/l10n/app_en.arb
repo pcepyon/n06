@@ -236,14 +236,6 @@
   "@settings_menu_copingGuideSubtitle": {
     "description": "Coping guide menu subtitle"
   },
-  "settings_menu_onboardingReview": "Review Onboarding",
-  "@settings_menu_onboardingReview": {
-    "description": "Onboarding review menu item"
-  },
-  "settings_menu_onboardingReviewSubtitle": "Review educational content about GLP-1 medications and side effects",
-  "@settings_menu_onboardingReviewSubtitle": {
-    "description": "Onboarding review menu subtitle"
-  },
   "settings_language_title": "Language",
   "@settings_language_title": {
     "description": "Language setting menu item"

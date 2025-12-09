@@ -156,11 +156,6 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => context.push('/coping-guide'),
             ),
             SettingsMenuItemImproved(
-              title: context.l10n.settings_menu_onboardingReview,
-              subtitle: context.l10n.settings_menu_onboardingReviewSubtitle,
-              onTap: () => context.push('/onboarding/review'),
-            ),
-            SettingsMenuItemImproved(
               title: '앱 소개 다시 보기',
               subtitle: '과학적 근거, 치료 여정, 부작용 가이드 등 앱 소개 콘텐츠',
               onTap: () => context.push('/guest?preview=true'),

@@ -19,6 +19,18 @@
 
 ---
 
+## 2025-12-10
+
+- [refactor] 온보딩 다시보기 기능 제거
+  - **설정 화면**: "온보딩 다시보기" 메뉴 항목 삭제 (앱 소개 다시보기는 유지)
+  - **라우터**: `/onboarding/review` 경로 삭제
+  - **온보딩 위젯**: `isReviewMode` 파라미터 및 관련 로직 제거 (OnboardingScreen, BasicProfileForm, WeightGoalForm, DosagePlanForm, SummaryScreen)
+  - **l10n**: `settings_menu_onboardingReview`, `settings_menu_onboardingReviewSubtitle` 키 삭제
+  - `lib/features/settings/presentation/screens/settings_screen.dart`
+  - `lib/core/routing/app_router.dart`
+  - `lib/features/onboarding/presentation/screens/onboarding_screen.dart`
+  - `lib/features/onboarding/presentation/widgets/*.dart`
+
 ## 2025-12-09
 
 - [fix] CTA 체크리스트 섹션 인덱스 및 네비게이션 버그 수정

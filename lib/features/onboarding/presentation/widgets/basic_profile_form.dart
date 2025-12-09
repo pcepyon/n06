@@ -10,15 +10,11 @@ import 'package:n06/features/authentication/presentation/widgets/gabium_text_fie
 class BasicProfileForm extends StatefulWidget {
   final Function(String) onNameChanged;
   final VoidCallback onNext;
-  final bool isReviewMode;
-  final String? initialName;
 
   const BasicProfileForm({
     super.key,
     required this.onNameChanged,
     required this.onNext,
-    this.isReviewMode = false,
-    this.initialName,
   });
 
   @override
@@ -32,15 +28,8 @@ class _BasicProfileFormState extends State<BasicProfileForm> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(
-      text: widget.initialName ?? '',
-    );
+    _nameController = TextEditingController();
     _nameController.addListener(_validateName);
-    // 리뷰 모드에서 초기값이 있으면 부모에게 알림
-    if (widget.isReviewMode && widget.initialName != null) {
-      widget.onNameChanged(widget.initialName!);
-      _validateName();
-    }
   }
 
   void _validateName() {
@@ -66,12 +55,8 @@ class _BasicProfileFormState extends State<BasicProfileForm> {
           children: [
             // Hero Section
             AuthHeroSection(
-              title: widget.isReviewMode
-                  ? context.l10n.onboarding_profile_titleReview
-                  : context.l10n.onboarding_profile_title,
-              subtitle: widget.isReviewMode
-                  ? context.l10n.onboarding_profile_subtitleReview
-                  : context.l10n.onboarding_profile_subtitle,
+              title: context.l10n.onboarding_profile_title,
+              subtitle: context.l10n.onboarding_profile_subtitle,
             ),
             const SizedBox(height: 24), // lg
 
