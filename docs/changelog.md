@@ -19,6 +19,15 @@
 
 ---
 
+## 2025-12-11
+
+- [fix] 의료진 데이터 공유 텍스트 형식 미리보기 기능 복구
+  - **문제**: i18n 리팩토링 후 `generateTextReport`가 deprecated 처리되고 `_textReport = null`로 설정되어 텍스트 미리보기가 빈 상태로 표시됨
+  - **해결**: `TextReportFormatter` 유틸리티 클래스 신규 생성 (i18n 지원)
+  - **수정된 파일**:
+    - `lib/features/daily_checkin/presentation/utils/text_report_formatter.dart` (신규)
+    - `lib/features/daily_checkin/presentation/screens/share_report_screen.dart`
+
 ## 2025-12-10
 
 - [fix] 주사 일정 화면 로딩 실패 및 마이그레이션 데이터 호환성 버그 수정

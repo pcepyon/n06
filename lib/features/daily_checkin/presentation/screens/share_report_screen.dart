@@ -9,6 +9,7 @@ import 'package:n06/features/daily_checkin/domain/entities/weekly_report.dart';
 import 'package:n06/features/daily_checkin/application/services/weekly_report_generator.dart';
 import 'package:n06/features/daily_checkin/application/providers.dart';
 import 'package:n06/features/daily_checkin/presentation/utils/weekly_report_i18n.dart';
+import 'package:n06/features/daily_checkin/presentation/utils/text_report_formatter.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 
 /// 주간 리포트 공유 화면
@@ -61,19 +62,28 @@ class _ShareReportScreenState extends ConsumerState<ShareReportScreen> {
         user: user,
       );
 
-      // Note: generateTextReport is deprecated, will be replaced with i18n version
-      // For now, we skip text report generation
-      // final textReport = generator.generateTextReport(report);
-
       setState(() {
         _report = report;
-        _textReport = null; // Temporarily null until we implement i18n text report
         _isLoading = false;
+      });
+
+      // 텍스트 리포트는 build 후 context가 유효할 때 생성
+      // initState에서 호출되면 context가 유효하지 않으므로 다음 프레임에서 생성
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _generateTextReport();
       });
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;
+      });
+    }
+  }
+
+  void _generateTextReport() {
+    if (_report != null && mounted) {
+      setState(() {
+        _textReport = TextReportFormatter.format(context, _report!);
       });
     }
   }
