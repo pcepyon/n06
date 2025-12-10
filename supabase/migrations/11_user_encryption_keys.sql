@@ -9,6 +9,17 @@
 -- - 통신 구간은 HTTPS로 암호화됨
 
 -- ============================================
+-- updated_at 자동 갱신 함수 (공통 유틸리티)
+-- ============================================
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================
 -- user_encryption_keys 테이블 생성
 -- ============================================
 CREATE TABLE IF NOT EXISTS public.user_encryption_keys (

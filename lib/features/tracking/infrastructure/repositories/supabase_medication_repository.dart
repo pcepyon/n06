@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:n06/core/encryption/domain/encryption_service.dart';
+import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
 import '../../domain/entities/dosage_plan.dart';
 import '../../domain/entities/dose_record.dart';
 import '../../domain/entities/dose_schedule.dart';
@@ -205,6 +206,9 @@ class SupabaseMedicationRepository implements MedicationRepository {
 
   @override
   Future<List<DoseSchedule>> getDoseSchedules(String planId) async {
+    // 암호화 서비스 초기화
+    await _ensureEncryptionInitialized(planId);
+
     final response = await _supabase
         .from('dose_schedules')
         .select()
@@ -212,14 +216,26 @@ class SupabaseMedicationRepository implements MedicationRepository {
         .order('scheduled_date', ascending: true);
 
     return (response as List)
-        .map((json) => DoseScheduleDto.fromJson(json).toEntity())
+        .map((json) => _decryptDoseScheduleFromJson(json))
         .toList();
   }
 
   @override
   Future<void> saveDoseSchedules(List<DoseSchedule> schedules) async {
-    final dtos = schedules.map((s) => DoseScheduleDto.fromEntity(s).toJson()).toList();
-    await _supabase.from('dose_schedules').insert(dtos);
+    if (schedules.isEmpty) return;
+
+    // 암호화 서비스 초기화
+    await _ensureEncryptionInitialized(schedules.first.dosagePlanId);
+
+    final encryptedDtos = schedules.map((s) {
+      final dto = DoseScheduleDto.fromEntity(s);
+      final json = dto.toJson();
+      // 암호화: scheduled_dose_mg
+      json['scheduled_dose_mg'] = _encryptionService.encryptDouble(s.scheduledDoseMg);
+      return json;
+    }).toList();
+
+    await _supabase.from('dose_schedules').insert(encryptedDtos);
   }
 
   @override
@@ -238,11 +254,41 @@ class SupabaseMedicationRepository implements MedicationRepository {
 
   @override
   Future<void> updateDoseSchedule(DoseSchedule schedule) async {
+    // 암호화 서비스 초기화
+    await _ensureEncryptionInitialized(schedule.dosagePlanId);
+
     final dto = DoseScheduleDto.fromEntity(schedule);
+    final json = dto.toJson();
+    // 암호화: scheduled_dose_mg
+    json['scheduled_dose_mg'] = _encryptionService.encryptDouble(schedule.scheduledDoseMg);
+
     await _supabase
         .from('dose_schedules')
-        .update(dto.toJson())
+        .update(json)
         .eq('id', schedule.id);
+  }
+
+  /// DoseSchedule JSON 복호화
+  DoseSchedule _decryptDoseScheduleFromJson(Map<String, dynamic> json) {
+    // notification_time 파싱
+    NotificationTime? notificationTime;
+    if (json['notification_time'] != null) {
+      final timeStr = json['notification_time'] as String;
+      final parts = timeStr.split(':');
+      notificationTime = NotificationTime(
+        hour: int.parse(parts[0]),
+        minute: int.parse(parts[1]),
+      );
+    }
+
+    return DoseSchedule(
+      id: json['id'] as String,
+      dosagePlanId: json['dosage_plan_id'] as String,
+      scheduledDate: DateTime.parse(json['scheduled_date'] as String).toLocal(),
+      scheduledDoseMg: _encryptionService.decryptDouble(json['scheduled_dose_mg'] as String?) ?? 0.0,
+      notificationTime: notificationTime,
+      createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+    );
   }
 
   // ============================================
@@ -375,6 +421,9 @@ class SupabaseMedicationRepository implements MedicationRepository {
     Map<String, dynamic> oldPlan,
     Map<String, dynamic> newPlan,
   ) async {
+    // 암호화 서비스 초기화
+    await _ensureEncryptionInitialized(planId);
+
     final history = PlanChangeHistory(
       id: const Uuid().v4(),
       dosagePlanId: planId,
@@ -384,11 +433,20 @@ class SupabaseMedicationRepository implements MedicationRepository {
     );
 
     final dto = PlanChangeHistoryDto.fromEntity(history);
-    await _supabase.from('plan_change_history').insert(dto.toJson());
+    final json = dto.toJson();
+
+    // 암호화: old_plan, new_plan
+    json['old_plan'] = _encryptionService.encryptJson(oldPlan);
+    json['new_plan'] = _encryptionService.encryptJson(newPlan);
+
+    await _supabase.from('plan_change_history').insert(json);
   }
 
   @override
   Future<List<PlanChangeHistory>> getPlanChangeHistory(String planId) async {
+    // 암호화 서비스 초기화
+    await _ensureEncryptionInitialized(planId);
+
     final response = await _supabase
         .from('plan_change_history')
         .select()
@@ -396,8 +454,19 @@ class SupabaseMedicationRepository implements MedicationRepository {
         .order('changed_at', ascending: false);
 
     return (response as List)
-        .map((json) => PlanChangeHistoryDto.fromJson(json).toEntity())
+        .map((json) => _decryptPlanChangeHistoryFromJson(json))
         .toList();
+  }
+
+  /// PlanChangeHistory JSON 복호화
+  PlanChangeHistory _decryptPlanChangeHistoryFromJson(Map<String, dynamic> json) {
+    return PlanChangeHistory(
+      id: json['id'] as String,
+      dosagePlanId: json['dosage_plan_id'] as String,
+      changedAt: DateTime.parse(json['changed_at'] as String).toLocal(),
+      oldPlan: _encryptionService.decryptJson(json['old_plan'] as String?) ?? {},
+      newPlan: _encryptionService.decryptJson(json['new_plan'] as String?) ?? {},
+    );
   }
 
   // ============================================
@@ -443,8 +512,10 @@ class SupabaseMedicationRepository implements MedicationRepository {
         .stream(primaryKey: ['id'])
         .eq('dosage_plan_id', planId)
         .order('scheduled_date', ascending: true)
-        .map((data) => data
-            .map((json) => DoseScheduleDto.fromJson(json).toEntity())
-            .toList());
+        .asyncMap((data) async {
+      // 암호화 서비스 초기화 (Stream에서는 asyncMap 사용)
+      await _ensureEncryptionInitialized(planId);
+      return data.map((json) => _decryptDoseScheduleFromJson(json)).toList();
+    });
   }
 }
