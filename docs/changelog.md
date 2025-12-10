@@ -21,6 +21,16 @@
 
 ## 2025-12-10
 
+- [fix] F021 암호화 서비스 initialize() 누락 버그 수정 (10개 메서드)
+  - **문제**: 일부 Repository 메서드에서 `_encryptionService.initialize(userId)` 호출 누락으로 EncryptionException 발생 가능
+  - **수정된 메서드**:
+    - `MedicationRepository`: getRecentDoseRecords, updateDoseRecord, getActiveDosagePlan, saveDosagePlan, updateDosagePlan, getDosagePlan, watchDoseRecords, watchActiveDosagePlan
+    - `DailyCheckinRepository`: getByDateRange
+    - `ProfileRepository`: watchUserProfile
+  - `lib/features/tracking/infrastructure/repositories/supabase_medication_repository.dart`
+  - `lib/features/daily_checkin/infrastructure/repositories/supabase_daily_checkin_repository.dart`
+  - `lib/features/onboarding/infrastructure/repositories/supabase_profile_repository.dart`
+
 - [feat] F021 Option A: 암호화 키 서버 저장 방식으로 변경 (다중 기기 지원)
   - **목적**: 암호화 키를 Supabase에 저장하여 다른 기기에서 로그인 시에도 암호화된 데이터 접근 가능
   - **변경사항**:
