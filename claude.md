@@ -129,11 +129,34 @@ Immutable service? → Provider
 Derived calculation? → Provider
 ```
 
-### "How to get userId?"
+### "How to get userId?" (BUG-20251210)
+```dart
+// ⚠️ AsyncNotifier build()에서 다른 AsyncNotifier 의존 시 반드시 .future 사용
+
+// ✅ AsyncNotifier.build() 내부 (ref.watch + .future 필수)
+@override
+Future<MyState> build() async {
+  final user = await ref.watch(authNotifierProvider.future);  // 로딩 완료 대기
+  final userId = user?.id;
+  if (userId == null) throw Exception('Not authenticated');
+  // ...
+}
+
+// ✅ 일반 메서드 내부 (ref.read 사용)
+Future<void> someMethod() async {
+  final userId = ref.read(authNotifierProvider).value?.id;
+  // ...
+}
+
+// ❌ 금지: build()에서 .value?.id 직접 접근
+@override
+Future<MyState> build() async {
+  final userId = ref.watch(authNotifierProvider).value?.id;  // 로딩 중 항상 null!
+  // → 무한 루프 또는 errorNotAuthenticated 발생
+}
 ```
-Standard: ref.read(authNotifierProvider).value?.id
-Special cases only: Onboarding flow, Dialog/Sheet components
-```
+**이유**: `authNotifierProvider`가 `AsyncLoading` 상태일 때 `.value`는 `null` 반환.
+`await ref.watch(provider.future)`는 로딩 완료까지 대기 후 값 반환.
 
 ---
 

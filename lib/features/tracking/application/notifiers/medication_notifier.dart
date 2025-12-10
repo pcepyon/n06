@@ -51,7 +51,9 @@ class MedicationNotifier extends _$MedicationNotifier {
     _injectionSiteRotationUseCase = ref.read(injectionSiteRotationUseCaseProvider);
     _missedDoseAnalyzerUseCase = ref.read(missedDoseAnalyzerUseCaseProvider);
 
-    final userId = ref.watch(authNotifierProvider).value?.id;
+    // BUG-20251210: ref.watch(provider.future)를 사용하여 비동기 완료를 기다림
+    final user = await ref.watch(authNotifierProvider.future);
+    final userId = user?.id;
     if (userId == null) {
       throw Exception('User not authenticated');
     }

@@ -66,7 +66,9 @@ WeeklyReportGenerator weeklyReportGenerator(Ref ref) {
 /// 오늘 체크인 여부 확인
 @riverpod
 Future<DailyCheckin?> todayCheckin(Ref ref) async {
-  final userId = ref.watch(authNotifierProvider).value?.id;
+  // BUG-20251210: ref.watch(provider.future)를 사용하여 비동기 완료를 기다림
+  final user = await ref.watch(authNotifierProvider.future);
+  final userId = user?.id;
   if (userId == null) return null;
 
   final repository = ref.watch(dailyCheckinRepositoryProvider);
@@ -78,7 +80,9 @@ Future<DailyCheckin?> todayCheckin(Ref ref) async {
 /// 연속 체크인 일수 조회
 @riverpod
 Future<int> consecutiveDays(Ref ref) async {
-  final userId = ref.watch(authNotifierProvider).value?.id;
+  // BUG-20251210: ref.watch(provider.future)를 사용하여 비동기 완료를 기다림
+  final user = await ref.watch(authNotifierProvider.future);
+  final userId = user?.id;
   if (userId == null) return 0;
 
   final repository = ref.watch(dailyCheckinRepositoryProvider);
@@ -88,7 +92,9 @@ Future<int> consecutiveDays(Ref ref) async {
 /// 컨텍스트 인사 정보 조회
 @riverpod
 Future<GreetingContext?> greetingContext(Ref ref) async {
-  final userId = ref.watch(authNotifierProvider).value?.id;
+  // BUG-20251210: ref.watch(provider.future)를 사용하여 비동기 완료를 기다림
+  final user = await ref.watch(authNotifierProvider.future);
+  final userId = user?.id;
   if (userId == null) return null;
 
   final greetingService = ref.watch(greetingServiceProvider);
@@ -98,7 +104,9 @@ Future<GreetingContext?> greetingContext(Ref ref) async {
 /// 마일스톤 정보 조회
 @riverpod
 Future<MilestoneInfo?> milestoneInfo(Ref ref) async {
-  final userId = ref.watch(authNotifierProvider).value?.id;
+  // BUG-20251210: ref.watch(provider.future)를 사용하여 비동기 완료를 기다림
+  final user = await ref.watch(authNotifierProvider.future);
+  final userId = user?.id;
   if (userId == null) return null;
 
   final service = ref.watch(consecutiveDaysServiceProvider);
@@ -108,7 +116,9 @@ Future<MilestoneInfo?> milestoneInfo(Ref ref) async {
 /// 주간 비교 결과 조회
 @riverpod
 Future<WeeklyComparison?> weeklyComparison(Ref ref) async {
-  final userId = ref.watch(authNotifierProvider).value?.id;
+  // BUG-20251210: ref.watch(provider.future)를 사용하여 비동기 완료를 기다림
+  final user = await ref.watch(authNotifierProvider.future);
+  final userId = user?.id;
   if (userId == null) return null;
 
   final service = ref.watch(weeklyComparisonServiceProvider);
@@ -118,7 +128,9 @@ Future<WeeklyComparison?> weeklyComparison(Ref ref) async {
 /// 전체 체크인 기록 조회 (기록 관리용)
 @riverpod
 Future<List<DailyCheckin>> allCheckins(Ref ref) async {
-  final userId = ref.watch(authNotifierProvider).value?.id;
+  // BUG-20251210: ref.watch(provider.future)를 사용하여 비동기 완료를 기다림
+  final user = await ref.watch(authNotifierProvider.future);
+  final userId = user?.id;
   if (userId == null) return [];
 
   final repository = ref.watch(dailyCheckinRepositoryProvider);

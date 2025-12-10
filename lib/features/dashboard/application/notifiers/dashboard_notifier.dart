@@ -53,8 +53,14 @@ class DashboardNotifier extends _$DashboardNotifier {
   @override
   Future<DashboardData> build() async {
     // 인증 상태에서 userId 가져오기
-    final authState = ref.watch(authNotifierProvider);
-    final userId = authState.value?.id;
+    // BUG-20251210: authNotifierProvider가 AsyncLoading 상태일 때 userId가 null이 되어
+    // errorNotAuthenticated 예외 발생 → 무한 루프 문제 해결
+    //
+    // 해결: ref.watch(provider.future)를 사용하여 비동기 완료를 기다림
+    // 이렇게 하면 authNotifierProvider가 AsyncLoading 상태일 때 이 provider도
+    // 자동으로 로딩 상태가 되고, 완료되면 다시 빌드됨
+    final user = await ref.watch(authNotifierProvider.future);
+    final userId = user?.id;
 
     if (userId == null) {
       throw Exception(DashboardMessageType.errorNotAuthenticated.toString());
@@ -75,8 +81,8 @@ class DashboardNotifier extends _$DashboardNotifier {
   }
 
   Future<void> refresh() async {
-    final authState = ref.watch(authNotifierProvider);
-    final userId = authState.value?.id;
+    final user = await ref.watch(authNotifierProvider.future);
+    final userId = user?.id;
 
     if (userId == null) {
       throw Exception(DashboardMessageType.errorNotAuthenticated.toString());

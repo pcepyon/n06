@@ -28,7 +28,9 @@ class TrackingNotifier extends _$TrackingNotifier {
 
   @override
   Future<TrackingState> build() async {
-    final userId = ref.watch(authNotifierProvider).value?.id;
+    // BUG-20251210: ref.watch(provider.future)를 사용하여 비동기 완료를 기다림
+    final user = await ref.watch(authNotifierProvider.future);
+    final userId = user?.id;
 
     // userId가 없으면 빈 상태 반환
     if (userId == null) {

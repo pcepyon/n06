@@ -24,14 +24,15 @@ class ProfileNotifier extends _$ProfileNotifier {
   @override
   Future<UserProfile?> build() async {
     // Load current user profile on initialization
-    final authState = ref.watch(authNotifierProvider);
+    // BUG-20251210: ref.watch(provider.future)를 사용하여 비동기 완료를 기다림
+    final user = await ref.watch(authNotifierProvider.future);
 
-    if (!authState.hasValue || authState.value == null) {
+    if (user == null) {
       return null;
     }
 
     try {
-      return await _repository.getUserProfile(authState.value!.id);
+      return await _repository.getUserProfile(user.id);
     } catch (e) {
       // Re-throw as AsyncValue will handle error state
       rethrow;

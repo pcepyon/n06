@@ -17,7 +17,9 @@ class NotificationNotifier extends _$NotificationNotifier {
 
   @override
   Future<NotificationSettings> build() async {
-    final userId = ref.watch(authNotifierProvider).value?.id;
+    // BUG-20251210: ref.watch(provider.future)를 사용하여 비동기 완료를 기다림
+    final user = await ref.watch(authNotifierProvider.future);
+    final userId = user?.id;
     if (userId == null) {
       throw Exception('User not authenticated');
     }

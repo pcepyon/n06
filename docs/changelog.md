@@ -21,6 +21,18 @@
 
 ## 2025-12-10
 
+- [fix] BUG-20251210: 앱 시작 시 인증 상태 로딩 중 무한 루프 버그 수정
+  - **문제**: `authNotifierProvider`가 `AsyncLoading` 상태일 때 `userId`가 `null`이 되어 `errorNotAuthenticated` 예외 발생 → Dashboard 무한 로딩 루프
+  - **원인**: `ref.watch(authNotifierProvider).value?.id`는 로딩 중 항상 `null` 반환
+  - **해결**: `await ref.watch(authNotifierProvider.future)` 패턴으로 변경하여 비동기 완료를 기다림
+  - **수정된 파일**:
+    - `lib/features/dashboard/application/notifiers/dashboard_notifier.dart`
+    - `lib/features/tracking/application/notifiers/tracking_notifier.dart`
+    - `lib/features/tracking/application/notifiers/medication_notifier.dart`
+    - `lib/features/profile/application/notifiers/profile_notifier.dart`
+    - `lib/features/notification/application/notifiers/notification_notifier.dart`
+    - `lib/features/daily_checkin/application/providers.dart` (6개 Provider)
+
 - [fix] F021 암호화 서비스 initialize() 누락 버그 수정 (10개 메서드)
   - **문제**: 일부 Repository 메서드에서 `_encryptionService.initialize(userId)` 호출 누락으로 EncryptionException 발생 가능
   - **수정된 메서드**:
