@@ -154,7 +154,7 @@ final appRouter = GoRouter(
       return '/guest';
     }
 
-    // Case 2: Logged in with valid session, on guest/login page → redirect to home
+    // Case 2: Logged in with valid session, on guest/login page → redirect appropriately
     // This handles the case where user opens app while already logged in
     // Exception: Allow preview mode for "앱 소개 다시보기" feature
     final isPreviewMode = state.uri.queryParameters['preview'] == 'true';
@@ -163,6 +163,19 @@ final appRouter = GoRouter(
         // Allow logged-in users to view guest home in preview mode
         return null;
       }
+
+      // BUG-20251210: 첫 로그인 유저는 onboarding으로 리디렉션
+      // user_profiles 테이블에 프로필이 없으면 첫 로그인으로 판단
+      // 참고: 이 체크는 동기적으로 수행할 수 없으므로,
+      // LoginScreen에서 네비게이션을 처리하도록 하고 여기서는 리디렉션하지 않음
+      // LoginScreen이 mounted 상태일 때만 네비게이션 처리됨
+      if (location == '/login') {
+        // /login 페이지에서는 리디렉션하지 않음
+        // LoginScreen에서 isFirstLogin 체크 후 직접 네비게이션 처리
+        return null;
+      }
+
+      // /guest에서는 /home으로 리디렉션 (기존 유저가 앱 재실행 시)
       if (kDebugMode) {
         developer.log(
           'Redirecting to /home: already authenticated with valid session',
