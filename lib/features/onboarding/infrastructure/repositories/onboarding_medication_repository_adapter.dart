@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:n06/core/encryption/domain/encryption_service.dart';
 import 'package:n06/features/onboarding/domain/repositories/medication_repository.dart';
 import 'package:n06/features/tracking/domain/entities/dosage_plan.dart';
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_medication_repository.dart';
@@ -12,8 +13,10 @@ import 'package:n06/features/tracking/infrastructure/repositories/supabase_medic
 class OnboardingMedicationRepositoryAdapter implements MedicationRepository {
   final SupabaseMedicationRepository _trackingRepo;
 
-  OnboardingMedicationRepositoryAdapter(SupabaseClient supabase)
-      : _trackingRepo = SupabaseMedicationRepository(supabase);
+  OnboardingMedicationRepositoryAdapter(
+    SupabaseClient supabase,
+    EncryptionService encryptionService,
+  ) : _trackingRepo = SupabaseMedicationRepository(supabase, encryptionService);
 
   @override
   Future<void> saveDosagePlan(DosagePlan plan) {

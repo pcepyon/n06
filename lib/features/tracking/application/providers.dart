@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/core/providers.dart';
+import 'package:n06/core/encryption/application/providers.dart';
 import 'package:n06/features/tracking/application/notifiers/weight_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/notifiers/dose_record_edit_notifier.dart';
 import 'package:n06/features/tracking/application/usecases/update_dosage_plan_usecase.dart';
@@ -34,7 +35,8 @@ part 'providers.g.dart';
 @riverpod
 MedicationRepository medicationRepository(Ref ref) {
   final supabase = ref.watch(supabaseProvider);
-  return SupabaseMedicationRepository(supabase);
+  final encryptionService = ref.watch(encryptionServiceProvider);
+  return SupabaseMedicationRepository(supabase, encryptionService);
 }
 
 @riverpod
@@ -52,7 +54,8 @@ DoseScheduleRepository doseScheduleRepository(Ref ref) {
 @riverpod
 TrackingRepository trackingRepository(Ref ref) {
   final supabase = ref.watch(supabaseProvider);
-  return SupabaseTrackingRepository(supabase);
+  final encryptionService = ref.watch(encryptionServiceProvider);
+  return SupabaseTrackingRepository(supabase, encryptionService);
 }
 
 @riverpod

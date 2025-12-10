@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/core/providers.dart';
+import 'package:n06/core/encryption/application/providers.dart';
 import 'package:n06/features/onboarding/domain/repositories/user_repository.dart';
 import 'package:n06/features/onboarding/domain/repositories/profile_repository.dart';
 import 'package:n06/features/onboarding/domain/repositories/medication_repository.dart';
@@ -23,14 +24,16 @@ UserRepository userRepository(Ref ref) {
 @riverpod
 ProfileRepository profileRepository(Ref ref) {
   final supabase = ref.watch(supabaseProvider);
-  return SupabaseProfileRepository(supabase);
+  final encryptionService = ref.watch(encryptionServiceProvider);
+  return SupabaseProfileRepository(supabase, encryptionService);
 }
 
 /// MedicationRepository Provider (uses tracking's Supabase repository)
 @riverpod
 MedicationRepository medicationRepository(Ref ref) {
   final supabase = ref.watch(supabaseProvider);
-  return OnboardingMedicationRepositoryAdapter(supabase);
+  final encryptionService = ref.watch(encryptionServiceProvider);
+  return OnboardingMedicationRepositoryAdapter(supabase, encryptionService);
 }
 
 /// ScheduleRepository Provider (uses tracking's Supabase repository)

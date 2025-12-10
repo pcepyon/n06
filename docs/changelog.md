@@ -21,6 +21,25 @@
 
 ## 2025-12-10
 
+- [feat] F021 Option A: 암호화 키 서버 저장 방식으로 변경 (다중 기기 지원)
+  - **목적**: 암호화 키를 Supabase에 저장하여 다른 기기에서 로그인 시에도 암호화된 데이터 접근 가능
+  - **변경사항**:
+    - `user_encryption_keys` 테이블 생성 (RLS 정책: 본인 키만 접근)
+    - `EncryptionService.initialize()` 시그니처 변경: `initialize(String userId)` (사용자별 키 관리)
+    - `AesEncryptionService`: flutter_secure_storage → Supabase 테이블로 키 저장 위치 변경
+    - Repository 메서드들에 `await _encryptionService.initialize(userId)` 호출 추가
+    - main.dart: 전역 초기화 제거 (사용자 로그인 후 Repository에서 초기화)
+  - **보안**: 통신은 HTTPS 암호화, RLS로 타 사용자 키 접근 차단
+  - **마이그레이션**: `supabase/migrations/11_user_encryption_keys.sql`
+  - `lib/core/encryption/domain/encryption_service.dart`
+  - `lib/core/encryption/infrastructure/aes_encryption_service.dart`
+  - `lib/core/encryption/application/providers.dart`
+  - `lib/main.dart`
+  - `lib/features/tracking/infrastructure/repositories/supabase_tracking_repository.dart`
+  - `lib/features/tracking/infrastructure/repositories/supabase_medication_repository.dart`
+  - `lib/features/daily_checkin/infrastructure/repositories/supabase_daily_checkin_repository.dart`
+  - `lib/features/onboarding/infrastructure/repositories/supabase_profile_repository.dart`
+
 - [feat] 데일리 체크인 페이지 전환 애니메이션 추가
   - **페이드 인 애니메이션**: 모든 페이지 전환 시 300ms easeInOut 애니메이션 적용
   - **적용 범위**: 체중 입력, 메인 질문(Q1-Q6), 파생 질문, 완료 화면 모든 전환

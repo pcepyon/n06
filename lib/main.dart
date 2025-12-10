@@ -215,6 +215,9 @@ Future<void> _initializeAndRunApp() async {
     }
     final sharedPreferences = await SharedPreferences.getInstance();
 
+    // Note: EncryptionService is now initialized per-user after login
+    // (not globally at app start) to support multi-device access
+
     if (kDebugMode) {
       developer.log('🎯 Launching app...', name: 'Main');
     }

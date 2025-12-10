@@ -62,10 +62,29 @@ prd ─────┬───→ requirements ───→ userflow
 | 018 | 비로그인 홈 | `docs/018-guest-home/spec.md` |
 | 019 | 데모 모드 | `docs/019-demo-mode/spec.md` |
 | 020 | 대시보드 개선 | `docs/020-dashboard-renewal/spec.md` |
+| 021 | 민감 정보 암호화 | `docs/021-sensitive-data-encryption/spec.md` |
 
 ---
 
 ## 최근 변경 사항
+
+### 2025-12-10: 암호화 키 서버 저장 방식 전환 (F021)
+
+**관련 문서**:
+- `docs/021-sensitive-data-encryption/spec.md` - 민감정보 암호화 스펙
+- `supabase/migrations/11_user_encryption_keys.sql` - 키 저장 테이블 마이그레이션
+
+**주요 변경**:
+1. **키 저장 위치**: 디바이스(Keychain/KeyStore) → Supabase user_encryption_keys 테이블
+2. **다중 기기 지원**: 로그인만 하면 어떤 기기에서든 암호화 데이터 접근 가능
+3. **초기화 시점**: 앱 시작 시(전역) → 사용자 로그인 후(Repository별)
+4. **보안**: RLS 정책으로 본인 키만 접근, HTTPS 통신 암호화
+
+**아키텍처 변경**:
+```
+[이전] main.dart → 전역 초기화 → Repository에서 사용
+[현재] Repository 메서드 → initialize(userId) → 사용
+```
 
 ### 2024-12: 게스트홈 + 온보딩 통합 개선
 

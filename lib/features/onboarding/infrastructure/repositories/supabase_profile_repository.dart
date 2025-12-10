@@ -1,22 +1,40 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:n06/core/encryption/domain/encryption_service.dart';
+import 'package:n06/features/onboarding/domain/value_objects/weight.dart';
 import '../../domain/entities/user_profile.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../dtos/user_profile_dto.dart';
 
 /// Supabase implementation of ProfileRepository
+///
+/// Encrypts sensitive fields:
+/// - target_weight_kg (user_profiles)
+/// - weight_kg (when reading from weight_logs for currentWeight)
 class SupabaseProfileRepository implements ProfileRepository {
   final SupabaseClient _supabase;
+  final EncryptionService _encryptionService;
 
-  SupabaseProfileRepository(this._supabase);
+  SupabaseProfileRepository(this._supabase, this._encryptionService);
 
   @override
   Future<void> saveUserProfile(UserProfile profile) async {
+    // 암호화 서비스 초기화
+    await _encryptionService.initialize(profile.userId);
+
     final dto = UserProfileDto.fromEntity(profile);
-    await _supabase.from('user_profiles').insert(dto.toJson());
+    final json = dto.toJson();
+
+    // 암호화: target_weight_kg
+    json['target_weight_kg'] = _encryptionService.encryptDouble(profile.targetWeight.value);
+
+    await _supabase.from('user_profiles').insert(json);
   }
 
   @override
   Future<UserProfile?> getUserProfile(String userId) async {
+    // 암호화 서비스 초기화
+    await _encryptionService.initialize(userId);
+
     // 1. user_profiles 테이블에서 프로필 조회
     final profileResponse = await _supabase
         .from('user_profiles')
@@ -38,6 +56,7 @@ class SupabaseProfileRepository implements ProfileRepository {
     }
 
     // 3. weight_logs 테이블에서 최신 체중 조회 (SSoT)
+    // 체중도 암호화되어 있으므로 복호화 필요
     final weightResponse = await _supabase
         .from('weight_logs')
         .select('weight_kg')
@@ -46,22 +65,44 @@ class SupabaseProfileRepository implements ProfileRepository {
         .limit(1)
         .maybeSingle();
 
-    // 4. DTO → Entity 변환 (조회한 데이터 조합)
-    final dto = UserProfileDto.fromJson(profileResponse);
-    return dto.toEntity(
+    // 4. 복호화 및 Entity 변환
+    final encryptedTargetWeight = profileResponse['target_weight_kg'] as String;
+    final targetWeightKg = _encryptionService.decryptDouble(encryptedTargetWeight) ?? 70.0;
+
+    double currentWeightKg = 70.0;
+    if (weightResponse != null) {
+      final encryptedCurrentWeight = weightResponse['weight_kg'] as String;
+      currentWeightKg = _encryptionService.decryptDouble(encryptedCurrentWeight) ?? 70.0;
+    }
+
+    return UserProfile(
+      userId: profileResponse['user_id'] as String,
       userName: userResponse['name'] as String,
-      currentWeightKg: weightResponse != null
-          ? (weightResponse['weight_kg'] as num).toDouble()
-          : 70.0, // 체중 기록이 없을 경우 기본값 (실제로는 온보딩에서 항상 입력)
+      targetWeight: Weight.create(targetWeightKg),
+      currentWeight: Weight.create(currentWeightKg),
+      targetPeriodWeeks: profileResponse['target_period_weeks'] as int?,
+      weeklyLossGoalKg: profileResponse['weekly_loss_goal_kg'] != null
+          ? (profileResponse['weekly_loss_goal_kg'] as num).toDouble()
+          : null,
+      weeklyWeightRecordGoal: profileResponse['weekly_weight_record_goal'] as int,
+      weeklySymptomRecordGoal: profileResponse['weekly_symptom_record_goal'] as int,
     );
   }
 
   @override
   Future<void> updateUserProfile(UserProfile profile) async {
+    // 암호화 서비스 초기화
+    await _encryptionService.initialize(profile.userId);
+
     final dto = UserProfileDto.fromEntity(profile);
+    final json = dto.toJson();
+
+    // 암호화: target_weight_kg
+    json['target_weight_kg'] = _encryptionService.encryptDouble(profile.targetWeight.value);
+
     await _supabase
         .from('user_profiles')
-        .update(dto.toJson())
+        .update(json)
         .eq('user_id', profile.userId);
 
     // ⚠️ 참고: currentWeight는 업데이트하지 않음!
@@ -70,8 +111,6 @@ class SupabaseProfileRepository implements ProfileRepository {
 
   @override
   Stream<UserProfile> watchUserProfile(String userId) {
-    // TODO: 실시간 스트림에서 3개 테이블 JOIN 구현 필요
-    // 현재는 user_profiles만 스트림 (userName, currentWeight는 null/0.0)
     return _supabase
         .from('user_profiles')
         .stream(primaryKey: ['id'])
@@ -80,6 +119,9 @@ class SupabaseProfileRepository implements ProfileRepository {
       if (data.isEmpty) {
         throw Exception('User profile not found for user: $userId');
       }
+
+      // 암호화 서비스 초기화 (Stream에서는 asyncMap 사용)
+      await _encryptionService.initialize(userId);
 
       // users, weight_logs 조회
       final userResponse = await _supabase
@@ -96,11 +138,28 @@ class SupabaseProfileRepository implements ProfileRepository {
           .limit(1)
           .maybeSingle();
 
-      return UserProfileDto.fromJson(data.first).toEntity(
+      // 복호화
+      final profileData = data.first;
+      final encryptedTargetWeight = profileData['target_weight_kg'] as String;
+      final targetWeightKg = _encryptionService.decryptDouble(encryptedTargetWeight) ?? 70.0;
+
+      double currentWeightKg = 70.0;
+      if (weightResponse != null) {
+        final encryptedCurrentWeight = weightResponse['weight_kg'] as String;
+        currentWeightKg = _encryptionService.decryptDouble(encryptedCurrentWeight) ?? 70.0;
+      }
+
+      return UserProfile(
+        userId: profileData['user_id'] as String,
         userName: userResponse?['name'] as String? ?? '',
-        currentWeightKg: weightResponse != null
-            ? (weightResponse['weight_kg'] as num).toDouble()
-            : 70.0, // 기본값
+        targetWeight: Weight.create(targetWeightKg),
+        currentWeight: Weight.create(currentWeightKg),
+        targetPeriodWeeks: profileData['target_period_weeks'] as int?,
+        weeklyLossGoalKg: profileData['weekly_loss_goal_kg'] != null
+            ? (profileData['weekly_loss_goal_kg'] as num).toDouble()
+            : null,
+        weeklyWeightRecordGoal: profileData['weekly_weight_record_goal'] as int,
+        weeklySymptomRecordGoal: profileData['weekly_symptom_record_goal'] as int,
       );
     });
   }
@@ -130,7 +189,7 @@ class SupabaseProfileRepository implements ProfileRepository {
       throw Exception('User profile not found for user: $userId');
     }
 
-    // Update goals
+    // Update goals (암호화 대상 아님)
     await _supabase.from('user_profiles').update({
       'weekly_weight_record_goal': weeklyWeightRecordGoal,
       'weekly_symptom_record_goal': weeklySymptomRecordGoal,

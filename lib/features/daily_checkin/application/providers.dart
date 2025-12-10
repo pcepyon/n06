@@ -9,6 +9,7 @@ import 'package:n06/features/daily_checkin/application/services/weekly_compariso
 import 'package:n06/features/daily_checkin/application/services/weekly_report_generator.dart';
 import 'package:n06/features/tracking/application/providers.dart';
 import 'package:n06/core/providers.dart';
+import 'package:n06/core/encryption/application/providers.dart';
 
 part 'providers.g.dart';
 
@@ -16,7 +17,8 @@ part 'providers.g.dart';
 @riverpod
 DailyCheckinRepository dailyCheckinRepository(Ref ref) {
   final supabase = ref.watch(supabaseProvider);
-  return SupabaseDailyCheckinRepository(supabase);
+  final encryptionService = ref.watch(encryptionServiceProvider);
+  return SupabaseDailyCheckinRepository(supabase, encryptionService);
 }
 
 /// GreetingService Provider

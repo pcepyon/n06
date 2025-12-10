@@ -1,15 +1,17 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:n06/core/encryption/domain/encryption_service.dart';
 import '../../domain/entities/weight_log.dart';
 import '../../domain/repositories/tracking_repository.dart';
 import '../dtos/weight_log_dto.dart';
 
 /// Supabase implementation of TrackingRepository
 ///
-/// Manages weight logs.
+/// Manages weight logs with encryption for sensitive data.
 class SupabaseTrackingRepository implements TrackingRepository {
   final SupabaseClient _supabase;
+  final EncryptionService _encryptionService;
 
-  SupabaseTrackingRepository(this._supabase);
+  SupabaseTrackingRepository(this._supabase, this._encryptionService);
 
   // ============================================
   // Weight Logs
@@ -17,17 +19,27 @@ class SupabaseTrackingRepository implements TrackingRepository {
 
   @override
   Future<void> saveWeightLog(WeightLog log) async {
+    // 암호화 서비스 초기화
+    await _encryptionService.initialize(log.userId);
+
     final dto = WeightLogDto.fromEntity(log);
+    final json = dto.toJson();
+
+    // 암호화: weight_kg
+    json['weight_kg'] = _encryptionService.encryptDouble(log.weightKg);
 
     // UNIQUE (user_id, log_date) constraint will automatically handle duplicates
     await _supabase.from('weight_logs').upsert(
-      dto.toJson(),
+      json,
       onConflict: 'user_id,log_date',
     );
   }
 
   @override
   Future<WeightLog?> getWeightLog(String userId, DateTime logDate) async {
+    // 암호화 서비스 초기화
+    await _encryptionService.initialize(userId);
+
     final response = await _supabase
         .from('weight_logs')
         .select()
@@ -36,7 +48,7 @@ class SupabaseTrackingRepository implements TrackingRepository {
         .maybeSingle();
 
     if (response == null) return null;
-    return WeightLogDto.fromJson(response).toEntity();
+    return _decryptWeightLogFromJson(response);
   }
 
   @override
@@ -48,7 +60,12 @@ class SupabaseTrackingRepository implements TrackingRepository {
         .maybeSingle();
 
     if (response == null) return null;
-    return WeightLogDto.fromJson(response).toEntity();
+
+    // 암호화 서비스 초기화 (응답에서 user_id 추출)
+    final userId = response['user_id'] as String;
+    await _encryptionService.initialize(userId);
+
+    return _decryptWeightLogFromJson(response);
   }
 
   @override
@@ -57,6 +74,9 @@ class SupabaseTrackingRepository implements TrackingRepository {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
+    // 암호화 서비스 초기화
+    await _encryptionService.initialize(userId);
+
     PostgrestFilterBuilder query = _supabase
         .from('weight_logs')
         .select()
@@ -72,7 +92,7 @@ class SupabaseTrackingRepository implements TrackingRepository {
     final response = await query.order('log_date', ascending: false);
 
     return (response as List)
-        .map((json) => WeightLogDto.fromJson(json).toEntity())
+        .map((json) => _decryptWeightLogFromJson(json))
         .toList();
   }
 
@@ -83,9 +103,20 @@ class SupabaseTrackingRepository implements TrackingRepository {
 
   @override
   Future<void> updateWeightLog(String id, double newWeight) async {
+    // userId를 먼저 조회
+    final existing = await _supabase
+        .from('weight_logs')
+        .select('user_id')
+        .eq('id', id)
+        .single();
+
+    final userId = existing['user_id'] as String;
+    await _encryptionService.initialize(userId);
+
+    // 직접 update 쿼리 - 암호화 필요
     await _supabase
         .from('weight_logs')
-        .update({'weight_kg': newWeight})
+        .update({'weight_kg': _encryptionService.encryptDouble(newWeight)})
         .eq('id', id);
   }
 
@@ -95,8 +126,19 @@ class SupabaseTrackingRepository implements TrackingRepository {
     double newWeight,
     DateTime newDate,
   ) async {
+    // userId를 먼저 조회
+    final existing = await _supabase
+        .from('weight_logs')
+        .select('user_id')
+        .eq('id', id)
+        .single();
+
+    final userId = existing['user_id'] as String;
+    await _encryptionService.initialize(userId);
+
+    // 직접 update 쿼리 - 암호화 필요
     await _supabase.from('weight_logs').update({
-      'weight_kg': newWeight,
+      'weight_kg': _encryptionService.encryptDouble(newWeight),
       'log_date': newDate.toIso8601String().split('T')[0],
     }).eq('id', id);
   }
@@ -108,9 +150,26 @@ class SupabaseTrackingRepository implements TrackingRepository {
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
         .order('log_date', ascending: false)
-        .map((data) => data
-            .map((json) => WeightLogDto.fromJson(json).toEntity())
-            .toList());
+        .asyncMap((data) async {
+      // 암호화 서비스 초기화 (스트림에서는 asyncMap 사용)
+      await _encryptionService.initialize(userId);
+      return data.map((json) => _decryptWeightLogFromJson(json)).toList();
+    });
+  }
+
+  /// JSON 응답에서 weight_kg 복호화 후 WeightLog 엔티티 생성
+  WeightLog _decryptWeightLogFromJson(Map<String, dynamic> json) {
+    // DB에서 암호화된 TEXT로 오는 weight_kg 복호화
+    final encryptedWeight = json['weight_kg'] as String;
+    final decryptedWeight = _encryptionService.decryptDouble(encryptedWeight);
+
+    return WeightLog(
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
+      logDate: DateTime.parse(json['log_date'] as String).toLocal(),
+      weightKg: decryptedWeight ?? 0.0,
+      createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+    );
   }
 
   // ============================================
