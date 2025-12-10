@@ -37,15 +37,17 @@ class MedicationState {
 
 @riverpod
 class MedicationNotifier extends _$MedicationNotifier {
-  // ✅ ref 의존성은 build()에서 한 번만 캡처 후 재사용
-  late final MedicationRepository _repository;
-  late final ScheduleGeneratorUseCase _scheduleGeneratorUseCase;
-  late final InjectionSiteRotationUseCase _injectionSiteRotationUseCase;
-  late final MissedDoseAnalyzerUseCase _missedDoseAnalyzerUseCase;
+  // ✅ ref 의존성은 build()에서 캡처 후 재사용
+  // ⚠️ late final 대신 late 사용: build()가 에러 후 재시도 시 재호출될 수 있음
+  late MedicationRepository _repository;
+  late ScheduleGeneratorUseCase _scheduleGeneratorUseCase;
+  late InjectionSiteRotationUseCase _injectionSiteRotationUseCase;
+  late MissedDoseAnalyzerUseCase _missedDoseAnalyzerUseCase;
 
   @override
   Future<MedicationState> build() async {
     // ✅ 모든 ref 의존성을 async 작업 전에 캡처
+    // build()가 재호출될 수 있으므로 late (non-final) 사용
     _repository = ref.read(medicationRepositoryProvider);
     _scheduleGeneratorUseCase = ref.read(scheduleGeneratorUseCaseProvider);
     _injectionSiteRotationUseCase = ref.read(injectionSiteRotationUseCaseProvider);

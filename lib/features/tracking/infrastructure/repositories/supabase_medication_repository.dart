@@ -185,17 +185,18 @@ class SupabaseMedicationRepository implements MedicationRepository {
     }).eq('id', recordId);
   }
 
-  /// DoseRecord JSON 복호화
+  /// DoseRecord JSON 복호화 (평문 fallback 지원)
   DoseRecord _decryptDoseRecordFromJson(Map<String, dynamic> json) {
     return DoseRecord(
       id: json['id'] as String,
       doseScheduleId: json['dose_schedule_id'] as String?,
       dosagePlanId: json['dosage_plan_id'] as String,
       administeredAt: DateTime.parse(json['administered_at'] as String).toLocal(),
-      actualDoseMg: _encryptionService.decryptDouble(json['actual_dose_mg'] as String?) ?? 0.0,
-      injectionSite: _encryptionService.decrypt(json['injection_site'] as String?),
+      // 마이그레이션된 평문 데이터와 암호화된 데이터 모두 처리
+      actualDoseMg: _encryptionService.decryptDoubleWithFallback(json['actual_dose_mg'] as String?) ?? 0.0,
+      injectionSite: _encryptionService.decryptWithFallback(json['injection_site'] as String?),
       isCompleted: json['is_completed'] as bool,
-      note: _encryptionService.decrypt(json['note'] as String?),
+      note: _encryptionService.decryptWithFallback(json['note'] as String?),
       createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
     );
   }
@@ -285,7 +286,8 @@ class SupabaseMedicationRepository implements MedicationRepository {
       id: json['id'] as String,
       dosagePlanId: json['dosage_plan_id'] as String,
       scheduledDate: DateTime.parse(json['scheduled_date'] as String).toLocal(),
-      scheduledDoseMg: _encryptionService.decryptDouble(json['scheduled_dose_mg'] as String?) ?? 0.0,
+      // 마이그레이션된 평문 데이터와 암호화된 데이터 모두 처리
+      scheduledDoseMg: _encryptionService.decryptDoubleWithFallback(json['scheduled_dose_mg'] as String?) ?? 0.0,
       notificationTime: notificationTime,
       createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
     );
@@ -379,13 +381,13 @@ class SupabaseMedicationRepository implements MedicationRepository {
     return _decryptDosagePlanFromJson(response);
   }
 
-  /// DosagePlan JSON 복호화
+  /// DosagePlan JSON 복호화 (평문 fallback 지원)
   DosagePlan _decryptDosagePlanFromJson(Map<String, dynamic> json) {
-    // escalation_plan 복호화
+    // escalation_plan 복호화 (평문 fallback)
     List<EscalationStep>? escalationPlan;
     final encryptedEscalation = json['escalation_plan'] as String?;
     if (encryptedEscalation != null) {
-      final decryptedList = _encryptionService.decryptJsonList(encryptedEscalation);
+      final decryptedList = _encryptionService.decryptJsonListWithFallback(encryptedEscalation);
       if (decryptedList != null) {
         escalationPlan = decryptedList.map((item) {
           final map = item as Map<String, dynamic>;
@@ -400,10 +402,11 @@ class SupabaseMedicationRepository implements MedicationRepository {
     return DosagePlan(
       id: json['id'] as String,
       userId: json['user_id'] as String,
-      medicationName: _encryptionService.decrypt(json['medication_name'] as String?) ?? '',
+      // 마이그레이션된 평문 데이터와 암호화된 데이터 모두 처리
+      medicationName: _encryptionService.decryptWithFallback(json['medication_name'] as String?) ?? '',
       startDate: DateTime.parse(json['start_date'] as String).toLocal(),
       cycleDays: json['cycle_days'] as int,
-      initialDoseMg: _encryptionService.decryptDouble(json['initial_dose_mg'] as String?) ?? 0.0,
+      initialDoseMg: _encryptionService.decryptDoubleWithFallback(json['initial_dose_mg'] as String?) ?? 0.0,
       escalationPlan: escalationPlan,
       isActive: json['is_active'] as bool,
       createdAt: DateTime.parse(json['created_at'] as String).toLocal(),

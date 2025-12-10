@@ -48,7 +48,8 @@ DosagePlanRepository dosagePlanRepository(Ref ref) {
 @riverpod
 DoseScheduleRepository doseScheduleRepository(Ref ref) {
   final supabase = ref.watch(supabaseProvider);
-  return SupabaseDoseScheduleRepository(supabase);
+  final encryptionService = ref.watch(encryptionServiceProvider);
+  return SupabaseDoseScheduleRepository(supabase, encryptionService);
 }
 
 @riverpod

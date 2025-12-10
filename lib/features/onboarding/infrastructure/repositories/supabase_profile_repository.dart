@@ -65,14 +65,14 @@ class SupabaseProfileRepository implements ProfileRepository {
         .limit(1)
         .maybeSingle();
 
-    // 4. 복호화 및 Entity 변환
+    // 4. 복호화 및 Entity 변환 (평문 fallback 지원)
     final encryptedTargetWeight = profileResponse['target_weight_kg'] as String;
-    final targetWeightKg = _encryptionService.decryptDouble(encryptedTargetWeight) ?? 70.0;
+    final targetWeightKg = _encryptionService.decryptDoubleWithFallback(encryptedTargetWeight) ?? 70.0;
 
     double currentWeightKg = 70.0;
     if (weightResponse != null) {
       final encryptedCurrentWeight = weightResponse['weight_kg'] as String;
-      currentWeightKg = _encryptionService.decryptDouble(encryptedCurrentWeight) ?? 70.0;
+      currentWeightKg = _encryptionService.decryptDoubleWithFallback(encryptedCurrentWeight) ?? 70.0;
     }
 
     return UserProfile(
@@ -138,15 +138,15 @@ class SupabaseProfileRepository implements ProfileRepository {
           .limit(1)
           .maybeSingle();
 
-      // 복호화
+      // 복호화 (평문 fallback 지원)
       final profileData = data.first;
       final encryptedTargetWeight = profileData['target_weight_kg'] as String;
-      final targetWeightKg = _encryptionService.decryptDouble(encryptedTargetWeight) ?? 70.0;
+      final targetWeightKg = _encryptionService.decryptDoubleWithFallback(encryptedTargetWeight) ?? 70.0;
 
       double currentWeightKg = 70.0;
       if (weightResponse != null) {
         final encryptedCurrentWeight = weightResponse['weight_kg'] as String;
-        currentWeightKg = _encryptionService.decryptDouble(encryptedCurrentWeight) ?? 70.0;
+        currentWeightKg = _encryptionService.decryptDoubleWithFallback(encryptedCurrentWeight) ?? 70.0;
       }
 
       return UserProfile(

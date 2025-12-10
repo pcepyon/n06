@@ -157,11 +157,11 @@ class SupabaseTrackingRepository implements TrackingRepository {
     });
   }
 
-  /// JSON 응답에서 weight_kg 복호화 후 WeightLog 엔티티 생성
+  /// JSON 응답에서 weight_kg 복호화 후 WeightLog 엔티티 생성 (평문 fallback 지원)
   WeightLog _decryptWeightLogFromJson(Map<String, dynamic> json) {
-    // DB에서 암호화된 TEXT로 오는 weight_kg 복호화
+    // DB에서 암호화된 TEXT로 오는 weight_kg 복호화 (마이그레이션된 평문 데이터 호환)
     final encryptedWeight = json['weight_kg'] as String;
-    final decryptedWeight = _encryptionService.decryptDouble(encryptedWeight);
+    final decryptedWeight = _encryptionService.decryptDoubleWithFallback(encryptedWeight);
 
     return WeightLog(
       id: json['id'] as String,

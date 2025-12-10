@@ -21,6 +21,31 @@
 
 ## 2025-12-10
 
+- [fix] 주사 일정 화면 로딩 실패 및 마이그레이션 데이터 호환성 버그 수정
+  - **문제 1**: `MedicationNotifier`에서 `late final` 필드 사용으로 인해 build() 재시도 시 `LateInitializationError` 발생
+  - **해결 1**: `late final` → `late`로 변경 (Provider build()는 에러 후 재호출될 수 있음)
+  - **문제 2**: 온보딩 시 `SupabaseDoseScheduleRepository.saveBatchSchedules()`가 `scheduled_dose_mg`를 평문으로 저장하는데, 조회 시 암호화된 데이터로 복호화 시도하여 `EncryptionException` 발생
+  - **해결 2**: `SupabaseDoseScheduleRepository`에 암호화 서비스 추가하여 저장/조회 시 암호화/복호화 적용
+  - **문제 3**: DB 마이그레이션 시 `USING column::TEXT`로 변환된 기존 데이터가 평문으로 남아있어 복호화 실패
+  - **해결 3**: 모든 암호화 대상 필드에 `WithFallback` 메서드 적용 - 평문 데이터와 암호화된 데이터 모두 호환 처리
+  - **추가된 EncryptionService 메서드**:
+    - `decryptWithFallback()` - 문자열 복호화 (평문 fallback)
+    - `decryptDoubleWithFallback()` - double 복호화 (평문 fallback)
+    - `decryptIntWithFallback()` - int 복호화 (평문 fallback)
+    - `decryptJsonListWithFallback()` - JSON List 복호화 (평문 fallback)
+  - **수정된 파일**:
+    - `lib/core/encryption/domain/encryption_service.dart`
+    - `lib/core/encryption/infrastructure/aes_encryption_service.dart`
+    - `lib/features/tracking/application/notifiers/medication_notifier.dart`
+    - `lib/features/tracking/infrastructure/repositories/supabase_medication_repository.dart`
+    - `lib/features/tracking/infrastructure/repositories/supabase_dose_schedule_repository.dart`
+    - `lib/features/tracking/infrastructure/repositories/supabase_tracking_repository.dart`
+    - `lib/features/tracking/application/providers.dart`
+    - `lib/features/onboarding/infrastructure/repositories/onboarding_schedule_repository_adapter.dart`
+    - `lib/features/onboarding/infrastructure/repositories/supabase_profile_repository.dart`
+    - `lib/features/onboarding/application/providers.dart`
+    - `lib/features/daily_checkin/infrastructure/repositories/supabase_daily_checkin_repository.dart`
+
 - [fix] 온보딩 화면 뒤로가기 버튼 위치를 AppBar로 이동
   - **문제**: 뒤로가기 버튼이 스텝 인디케이터 아래 콘텐츠 영역 내부에 배치되어 표준 UX 패턴 위반
   - **해결**: Scaffold AppBar leading 위치로 이동, `_PageWrapper`와 `_CompletionScreen` 단순화

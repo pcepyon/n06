@@ -256,13 +256,13 @@ class SupabaseDailyCheckinRepository implements DailyCheckinRepository {
     }
   }
 
-  /// JSON 응답에서 암호화된 필드 복호화 후 DailyCheckin 엔티티 생성
+  /// JSON 응답에서 암호화된 필드 복호화 후 DailyCheckin 엔티티 생성 (평문 fallback 지원)
   DailyCheckin _decryptDailyCheckinFromJson(Map<String, dynamic> json) {
-    // symptom_details 복호화
+    // symptom_details 복호화 (마이그레이션된 평문 JSON 데이터 호환)
     List<SymptomDetail>? symptomDetails;
     final encryptedSymptoms = json['symptom_details'] as String?;
     if (encryptedSymptoms != null) {
-      final decryptedList = _encryptionService.decryptJsonList(encryptedSymptoms);
+      final decryptedList = _encryptionService.decryptJsonListWithFallback(encryptedSymptoms);
       if (decryptedList != null) {
         symptomDetails = decryptedList.map((item) {
           final map = item as Map<String, dynamic>;
@@ -275,9 +275,9 @@ class SupabaseDailyCheckinRepository implements DailyCheckinRepository {
       }
     }
 
-    // appetite_score 복호화
+    // appetite_score 복호화 (마이그레이션된 평문 숫자 데이터 호환)
     final encryptedAppetite = json['appetite_score'] as String?;
-    final appetiteScore = _encryptionService.decryptInt(encryptedAppetite);
+    final appetiteScore = _encryptionService.decryptIntWithFallback(encryptedAppetite);
 
     // context는 암호화 대상이 아님 (JSONB 유지)
     CheckinContext? context;

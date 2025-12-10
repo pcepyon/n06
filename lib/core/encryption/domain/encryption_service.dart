@@ -30,6 +30,12 @@ abstract class EncryptionService {
   /// 복호화 실패 시 [EncryptionException] throw
   String? decrypt(String? cipherText);
 
+  /// 문자열 복호화 (평문 fallback)
+  ///
+  /// 마이그레이션으로 인해 평문 문자열이 존재할 수 있으므로,
+  /// 복호화 실패 시 원본 문자열을 그대로 반환합니다.
+  String? decryptWithFallback(String? cipherText);
+
   /// double 값 암호화 (편의 메서드)
   ///
   /// double을 문자열로 변환 후 암호화합니다.
@@ -40,6 +46,12 @@ abstract class EncryptionService {
   /// 암호문을 복호화 후 double로 변환합니다.
   double? decryptDouble(String? cipherText);
 
+  /// double 값 복호화 (평문 fallback)
+  ///
+  /// 마이그레이션으로 인해 평문 숫자 문자열이 존재할 수 있으므로,
+  /// 복호화 실패 시 평문으로 파싱을 시도합니다.
+  double? decryptDoubleWithFallback(String? cipherText);
+
   /// int 값 암호화 (편의 메서드)
   ///
   /// int를 문자열로 변환 후 암호화합니다.
@@ -49,6 +61,12 @@ abstract class EncryptionService {
   ///
   /// 암호문을 복호화 후 int로 변환합니다.
   int? decryptInt(String? cipherText);
+
+  /// int 값 복호화 (평문 fallback)
+  ///
+  /// 마이그레이션으로 인해 평문 숫자 문자열이 존재할 수 있으므로,
+  /// 복호화 실패 시 평문으로 파싱을 시도합니다.
+  int? decryptIntWithFallback(String? cipherText);
 
   /// JSON 암호화 (편의 메서드)
   ///
@@ -69,6 +87,12 @@ abstract class EncryptionService {
   ///
   /// 암호문을 복호화 후 List<dynamic>으로 변환합니다.
   List<dynamic>? decryptJsonList(String? cipherText);
+
+  /// JSON List 복호화 (평문 fallback)
+  ///
+  /// 마이그레이션으로 인해 평문 JSON 문자열이 존재할 수 있으므로,
+  /// 복호화 실패 시 평문으로 JSON 파싱을 시도합니다.
+  List<dynamic>? decryptJsonListWithFallback(String? cipherText);
 }
 
 /// 암호화 관련 예외

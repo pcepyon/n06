@@ -125,6 +125,18 @@ class AesEncryptionService implements EncryptionService {
   }
 
   @override
+  String? decryptWithFallback(String? cipherText) {
+    if (cipherText == null) return null;
+
+    try {
+      return decrypt(cipherText);
+    } catch (e) {
+      // 복호화 실패 시 평문으로 간주하여 원본 반환 (마이그레이션된 데이터)
+      return cipherText;
+    }
+  }
+
+  @override
   String? encryptDouble(double? value) {
     if (value == null) return null;
     return encrypt(value.toString());
@@ -144,6 +156,25 @@ class AesEncryptionService implements EncryptionService {
   }
 
   @override
+  double? decryptDoubleWithFallback(String? cipherText) {
+    if (cipherText == null) return null;
+
+    // 1. 먼저 평문 숫자인지 확인 (마이그레이션된 데이터)
+    final plainValue = double.tryParse(cipherText);
+    if (plainValue != null) {
+      return plainValue;
+    }
+
+    // 2. 암호화된 데이터로 복호화 시도
+    try {
+      return decryptDouble(cipherText);
+    } catch (e) {
+      // 복호화 실패하면 null 반환 (데이터 손상)
+      return null;
+    }
+  }
+
+  @override
   String? encryptInt(int? value) {
     if (value == null) return null;
     return encrypt(value.toString());
@@ -159,6 +190,25 @@ class AesEncryptionService implements EncryptionService {
       return int.parse(decrypted);
     } catch (e) {
       throw EncryptionException('복호화된 값을 int로 변환할 수 없습니다: $decrypted', originalError: e);
+    }
+  }
+
+  @override
+  int? decryptIntWithFallback(String? cipherText) {
+    if (cipherText == null) return null;
+
+    // 1. 먼저 평문 숫자인지 확인 (마이그레이션된 데이터)
+    final plainValue = int.tryParse(cipherText);
+    if (plainValue != null) {
+      return plainValue;
+    }
+
+    // 2. 암호화된 데이터로 복호화 시도
+    try {
+      return decryptInt(cipherText);
+    } catch (e) {
+      // 복호화 실패하면 null 반환 (데이터 손상)
+      return null;
     }
   }
 
@@ -199,6 +249,22 @@ class AesEncryptionService implements EncryptionService {
       return jsonDecode(decrypted) as List<dynamic>;
     } catch (e) {
       throw EncryptionException('복호화된 값을 JSON List로 변환할 수 없습니다', originalError: e);
+    }
+  }
+
+  @override
+  List<dynamic>? decryptJsonListWithFallback(String? cipherText) {
+    if (cipherText == null) return null;
+
+    try {
+      return decryptJsonList(cipherText);
+    } catch (e) {
+      // 복호화 실패 시 평문 JSON으로 파싱 시도 (마이그레이션된 데이터)
+      try {
+        return jsonDecode(cipherText) as List<dynamic>;
+      } catch (_) {
+        return null;
+      }
     }
   }
 }

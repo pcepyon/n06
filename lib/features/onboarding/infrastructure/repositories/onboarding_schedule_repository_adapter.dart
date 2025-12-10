@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:n06/core/encryption/domain/encryption_service.dart';
 import 'package:n06/features/onboarding/domain/repositories/schedule_repository.dart';
 import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 import 'package:n06/features/tracking/infrastructure/repositories/supabase_dose_schedule_repository.dart';
@@ -12,8 +13,8 @@ import 'package:n06/features/tracking/infrastructure/repositories/supabase_dose_
 class OnboardingScheduleRepositoryAdapter implements ScheduleRepository {
   final SupabaseDoseScheduleRepository _trackingRepo;
 
-  OnboardingScheduleRepositoryAdapter(SupabaseClient supabase)
-      : _trackingRepo = SupabaseDoseScheduleRepository(supabase);
+  OnboardingScheduleRepositoryAdapter(SupabaseClient supabase, EncryptionService encryptionService)
+      : _trackingRepo = SupabaseDoseScheduleRepository(supabase, encryptionService);
 
   @override
   Future<void> saveAll(List<DoseSchedule> schedules) {

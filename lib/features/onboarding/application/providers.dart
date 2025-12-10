@@ -40,7 +40,8 @@ MedicationRepository medicationRepository(Ref ref) {
 @riverpod
 ScheduleRepository scheduleRepository(Ref ref) {
   final supabase = ref.watch(supabaseProvider);
-  return OnboardingScheduleRepositoryAdapter(supabase);
+  final encryptionService = ref.watch(encryptionServiceProvider);
+  return OnboardingScheduleRepositoryAdapter(supabase, encryptionService);
 }
 
 /// CheckOnboardingStatusUseCase Provider
