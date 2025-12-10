@@ -184,6 +184,11 @@ class SettingsScreen extends ConsumerWidget {
               subtitle: context.l10n.common_legal_medicalDisclaimerSubtitle,
               onTap: () => _openUrl(LegalUrls.medicalDisclaimer),
             ),
+            SettingsMenuItemImproved(
+              title: context.l10n.common_legal_sensitiveInfoConsent,
+              subtitle: context.l10n.common_legal_sensitiveInfoConsentSubtitle,
+              onTap: () => _openUrl(LegalUrls.sensitiveInfoConsent),
+            ),
             const SizedBox(height: 24.0), // lg spacing after menu items
 
             // Logout section

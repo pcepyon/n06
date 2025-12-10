@@ -176,6 +176,14 @@
   "@common_legal_sectionTitle": {
     "description": "Legal section title in settings"
   },
+  "common_legal_sensitiveInfoConsent": "민감정보 수집·이용 동의",
+  "@common_legal_sensitiveInfoConsent": {
+    "description": "Sensitive info consent menu item"
+  },
+  "common_legal_sensitiveInfoConsentSubtitle": "건강정보 수집 및 이용에 관한 동의 내용을 확인합니다",
+  "@common_legal_sensitiveInfoConsentSubtitle": {
+    "description": "Sensitive info consent menu subtitle"
+  },
   "settings_screen_title": "설정",
   "@settings_screen_title": {
     "description": "Settings screen title"
@@ -568,6 +576,10 @@
   "@auth_signup_consentMarketing": {
     "description": "Marketing consent label (optional)"
   },
+  "auth_signup_consentSensitiveInfo": "민감정보(건강정보) 수집·이용에 동의합니다",
+  "@auth_signup_consentSensitiveInfo": {
+    "description": "Sensitive info consent label (required)"
+  },
   "auth_signup_button": "회원가입",
   "@auth_signup_button": {
     "description": "Signup button label"
@@ -576,7 +588,7 @@
   "@auth_signup_signinLink": {
     "description": "Sign in link text"
   },
-  "auth_signup_error_consentRequired": "이용약관과 개인정보 처리방침에 동의해주세요",
+  "auth_signup_error_consentRequired": "필수 약관에 모두 동의해주세요",
   "@auth_signup_error_consentRequired": {
     "description": "Consent required error message"
   },

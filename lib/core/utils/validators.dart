@@ -130,13 +130,15 @@ PasswordStrength getPasswordStrength(String password) {
 /// Parameters:
 /// - [termsOfService]: Required consent (must be true)
 /// - [privacyPolicy]: Required consent (must be true)
+/// - [sensitiveInfo]: Required consent for health data (must be true)
 /// - [marketingEmail]: Optional consent (default false)
 ///
-/// Returns true if both required consents are given
+/// Returns true if all required consents are given
 bool isValidConsent({
   required bool termsOfService,
   required bool privacyPolicy,
+  required bool sensitiveInfo,
   bool marketingEmail = false,
 }) {
-  return termsOfService && privacyPolicy;
+  return termsOfService && privacyPolicy && sensitiveInfo;
 }

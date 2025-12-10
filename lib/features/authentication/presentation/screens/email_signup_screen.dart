@@ -38,6 +38,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
 
   bool _agreeToTerms = false;
   bool _agreeToPrivacy = false;
+  bool _agreeToSensitiveInfo = false;
   bool _agreeToMarketing = false;
   bool _showPassword = false;
   bool _showConfirmPassword = false;
@@ -79,6 +80,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
     if (!isValidConsent(
       termsOfService: _agreeToTerms,
       privacyPolicy: _agreeToPrivacy,
+      sensitiveInfo: _agreeToSensitiveInfo,
     )) {
       if (!mounted) return;
       GabiumToast.showError(
@@ -286,6 +288,14 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
                       label: context.l10n.auth_signup_consentPrivacy,
                       isRequired: true,
                       onViewTap: () => _openUrl(LegalUrls.privacyPolicy),
+                    ),
+                    const SizedBox(height: 16),
+                    ConsentCheckbox(
+                      value: _agreeToSensitiveInfo,
+                      onChanged: (value) => setState(() => _agreeToSensitiveInfo = value),
+                      label: context.l10n.auth_signup_consentSensitiveInfo,
+                      isRequired: true,
+                      onViewTap: () => _openUrl(LegalUrls.sensitiveInfoConsent),
                     ),
                     const SizedBox(height: 16),
                     ConsentCheckbox(

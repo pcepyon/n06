@@ -176,6 +176,14 @@
   "@common_legal_sectionTitle": {
     "description": "Legal section title in settings"
   },
+  "common_legal_sensitiveInfoConsent": "Sensitive Information Consent",
+  "@common_legal_sensitiveInfoConsent": {
+    "description": "Sensitive info consent menu item"
+  },
+  "common_legal_sensitiveInfoConsentSubtitle": "Review consent for collection and use of health information",
+  "@common_legal_sensitiveInfoConsentSubtitle": {
+    "description": "Sensitive info consent menu subtitle"
+  },
   "settings_screen_title": "Settings",
   "@settings_screen_title": {
     "description": "Settings screen title"
@@ -568,6 +576,10 @@
   "@auth_signup_consentMarketing": {
     "description": "Marketing consent label (optional)"
   },
+  "auth_signup_consentSensitiveInfo": "I agree to the collection and use of sensitive information (health data)",
+  "@auth_signup_consentSensitiveInfo": {
+    "description": "Sensitive info consent label (required)"
+  },
   "auth_signup_button": "Sign Up",
   "@auth_signup_button": {
     "description": "Signup button label"
@@ -576,7 +588,7 @@
   "@auth_signup_signinLink": {
     "description": "Sign in link text"
   },
-  "auth_signup_error_consentRequired": "Please agree to the Terms of Service and Privacy Policy",
+  "auth_signup_error_consentRequired": "Please agree to all required terms",
   "@auth_signup_error_consentRequired": {
     "description": "Consent required error message"
   },

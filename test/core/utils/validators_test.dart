@@ -93,25 +93,67 @@ void main() {
   });
 
   group('Consent Validation', () {
-    test('isValidConsent - valid when both required consents given', () {
-      expect(isValidConsent(termsOfService: true, privacyPolicy: true), true);
+    test('isValidConsent - valid when all required consents given', () {
+      expect(
+        isValidConsent(
+          termsOfService: true,
+          privacyPolicy: true,
+          sensitiveInfo: true,
+        ),
+        true,
+      );
     });
 
     test('isValidConsent - invalid when terms not given', () {
-      expect(isValidConsent(termsOfService: false, privacyPolicy: true), false);
+      expect(
+        isValidConsent(
+          termsOfService: false,
+          privacyPolicy: true,
+          sensitiveInfo: true,
+        ),
+        false,
+      );
     });
 
     test('isValidConsent - invalid when privacy not given', () {
-      expect(isValidConsent(termsOfService: true, privacyPolicy: false), false);
+      expect(
+        isValidConsent(
+          termsOfService: true,
+          privacyPolicy: false,
+          sensitiveInfo: true,
+        ),
+        false,
+      );
+    });
+
+    test('isValidConsent - invalid when sensitive info not given', () {
+      expect(
+        isValidConsent(
+          termsOfService: true,
+          privacyPolicy: true,
+          sensitiveInfo: false,
+        ),
+        false,
+      );
     });
 
     test('isValidConsent - marketing email optional', () {
       expect(
-        isValidConsent(termsOfService: true, privacyPolicy: true, marketingEmail: true),
+        isValidConsent(
+          termsOfService: true,
+          privacyPolicy: true,
+          sensitiveInfo: true,
+          marketingEmail: true,
+        ),
         true,
       );
       expect(
-        isValidConsent(termsOfService: true, privacyPolicy: true, marketingEmail: false),
+        isValidConsent(
+          termsOfService: true,
+          privacyPolicy: true,
+          sensitiveInfo: true,
+          marketingEmail: false,
+        ),
         true,
       );
     });
