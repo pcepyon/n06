@@ -141,8 +141,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
 
   @override
   Widget build(BuildContext context) {
+    final showBackButton = _currentStep > 0;
+
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        leading: showBackButton
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _previousStep,
+              )
+            : null,
+        automaticallyImplyLeading: false,
+      ),
       body: Column(
         children: [
           // Dot Navigation Indicator (5 dots)
@@ -290,8 +303,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
         return _WelcomeScreen(onNext: _nextStep);
       case 1:
         return _PageWrapper(
-          showBackButton: true,
-          onBack: _previousStep,
           child: BasicProfileForm(
             onNameChanged: (name) => _name = name,
             onNext: _nextStep,
@@ -299,8 +310,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
         );
       case 2:
         return _PageWrapper(
-          showBackButton: true,
-          onBack: _previousStep,
           child: WeightGoalForm(
             onDataChanged: (current, target, period) {
               _currentWeight = current;
@@ -312,8 +321,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
         );
       case 3:
         return _PageWrapper(
-          showBackButton: true,
-          onBack: _previousStep,
           child: DosagePlanForm(
             onDataChanged: (medication, date, cycle, dose) {
               _medicationName = medication;
@@ -337,7 +344,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
           cycleDays: _cycleDays,
           initialDose: _initialDose,
           onComplete: _completeOnboarding,
-          onBack: _previousStep,
         );
       default:
         return const SizedBox.shrink();
@@ -399,44 +405,19 @@ class _WelcomeScreen extends StatelessWidget {
   }
 }
 
-/// Page Wrapper with optional back button
+/// Page Wrapper for form content
 class _PageWrapper extends StatelessWidget {
   final Widget child;
-  final bool showBackButton;
-  final VoidCallback? onBack;
 
   const _PageWrapper({
     required this.child,
-    this.showBackButton = false,
-    this.onBack,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        if (showBackButton)
-          SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: onBack,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        Expanded(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: child,
-          ),
-        ),
-      ],
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: child,
     );
   }
 }
@@ -454,7 +435,6 @@ class _CompletionScreen extends ConsumerWidget {
   final int cycleDays;
   final double initialDose;
   final VoidCallback onComplete;
-  final VoidCallback onBack;
 
   const _CompletionScreen({
     required this.confettiController,
@@ -468,47 +448,26 @@ class _CompletionScreen extends ConsumerWidget {
     required this.cycleDays,
     required this.initialDose,
     required this.onComplete,
-    required this.onBack,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Stack(
       children: [
-        Column(
-          children: [
-            SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: onBack,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: SummaryScreen(
-                  userId: userId,
-                  name: name,
-                  currentWeight: currentWeight,
-                  targetWeight: targetWeight,
-                  targetPeriodWeeks: targetPeriodWeeks,
-                  medicationName: medicationName,
-                  startDate: startDate,
-                  cycleDays: cycleDays,
-                  initialDose: initialDose,
-                  onComplete: onComplete,
-                ),
-              ),
-            ),
-          ],
+        SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: SummaryScreen(
+            userId: userId,
+            name: name,
+            currentWeight: currentWeight,
+            targetWeight: targetWeight,
+            targetPeriodWeeks: targetPeriodWeeks,
+            medicationName: medicationName,
+            startDate: startDate,
+            cycleDays: cycleDays,
+            initialDose: initialDose,
+            onComplete: onComplete,
+          ),
         ),
         // Confetti
         Align(

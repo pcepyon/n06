@@ -21,6 +21,11 @@
 
 ## 2025-12-10
 
+- [fix] 온보딩 화면 뒤로가기 버튼 위치를 AppBar로 이동
+  - **문제**: 뒤로가기 버튼이 스텝 인디케이터 아래 콘텐츠 영역 내부에 배치되어 표준 UX 패턴 위반
+  - **해결**: Scaffold AppBar leading 위치로 이동, `_PageWrapper`와 `_CompletionScreen` 단순화
+  - `lib/features/onboarding/presentation/screens/onboarding_screen.dart`
+
 - [fix] BUG-20251210: 앱 시작 시 인증 상태 로딩 중 무한 루프 버그 수정
   - **문제**: `authNotifierProvider`가 `AsyncLoading` 상태일 때 `userId`가 `null`이 되어 `errorNotAuthenticated` 예외 발생 → Dashboard 무한 로딩 루프
   - **원인**: `ref.watch(authNotifierProvider).value?.id`는 로딩 중 항상 `null` 반환
