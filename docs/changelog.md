@@ -21,6 +21,21 @@
 
 ## 2025-12-11
 
+- [feat] Apple 로그인 기능 추가
+  - **구현**: 카카오와 동일한 OIDC 패턴 (signInWithIdToken) 사용
+  - **의존성**: `sign_in_with_apple: ^6.1.3`, `crypto: ^3.0.6` 추가
+  - **iOS 설정**: `Runner.entitlements`에 Sign in with Apple capability 추가
+  - **UI**: iOS/macOS에서만 Apple 로그인 버튼 표시 (Platform.isIOS 체크)
+  - **수정된 파일**:
+    - `pubspec.yaml`
+    - `ios/Runner/Runner.entitlements` (신규)
+    - `ios/Runner.xcodeproj/project.pbxproj`
+    - `lib/features/authentication/domain/repositories/auth_repository.dart`
+    - `lib/features/authentication/infrastructure/repositories/supabase_auth_repository.dart`
+    - `lib/features/authentication/application/notifiers/auth_notifier.dart`
+    - `lib/features/authentication/presentation/screens/login_screen.dart`
+    - `lib/l10n/app_ko.arb`, `lib/l10n/app_en.arb`
+
 - [fix] 의료진 데이터 공유 텍스트 형식 미리보기 기능 복구
   - **문제**: i18n 리팩토링 후 `generateTextReport`가 deprecated 처리되고 `_textReport = null`로 설정되어 텍스트 미리보기가 빈 상태로 표시됨
   - **해결**: `TextReportFormatter` 유틸리티 클래스 신규 생성 (i18n 지원)

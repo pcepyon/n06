@@ -23,6 +23,16 @@ abstract class AuthRepository {
     required bool agreedToPrivacy,
   });
 
+  /// Login with Apple Sign In (iOS/macOS only)
+  ///
+  /// Returns authenticated [User] on success.
+  /// Uses native Sign in with Apple + Supabase signInWithIdToken (OIDC).
+  /// Throws exception on failure (user cancellation, network error, etc.)
+  Future<User> loginWithApple({
+    required bool agreedToTerms,
+    required bool agreedToPrivacy,
+  });
+
   /// Logout current user
   ///
   /// Clears all tokens and session data.

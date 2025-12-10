@@ -165,6 +165,83 @@ class AuthNotifier extends _$AuthNotifier {
     return false;
   }
 
+  /// Login with Apple Sign In (iOS/macOS only)
+  ///
+  /// [agreedToTerms] User agreed to terms of service
+  /// [agreedToPrivacy] User agreed to privacy policy
+  ///
+  /// Uses native Sign in with Apple + Supabase signInWithIdToken (OIDC).
+  /// Same pattern as Kakao login.
+  ///
+  /// Throws [OAuthCancelledException] if user cancels
+  /// Throws exceptions on failure
+  Future<bool> loginWithApple({
+    required bool agreedToTerms,
+    required bool agreedToPrivacy,
+  }) async {
+    if (kDebugMode) {
+      developer.log(
+        '🍎 loginWithApple called (terms: $agreedToTerms, privacy: $agreedToPrivacy)',
+        name: 'AuthNotifier',
+      );
+    }
+
+    state = const AsyncValue.loading();
+
+    if (kDebugMode) {
+      developer.log('⏳ State set to loading', name: 'AuthNotifier');
+    }
+
+    // Use try-catch instead of AsyncValue.guard (same pattern as Kakao)
+    try {
+      if (kDebugMode) {
+        developer.log('📞 Calling repository.loginWithApple()...', name: 'AuthNotifier');
+      }
+
+      final user = await _repository.loginWithApple(
+        agreedToTerms: agreedToTerms,
+        agreedToPrivacy: agreedToPrivacy,
+      );
+
+      if (kDebugMode) {
+        developer.log(
+          '✅ Repository returned user: ${user.id}',
+          name: 'AuthNotifier',
+        );
+      }
+
+      // CRITICAL FIX: Explicitly set state with AsyncValue.data
+      state = AsyncValue.data(user);
+
+      // Check if this is first login
+      final isFirstLogin = await _repository.isFirstLogin();
+
+      if (kDebugMode) {
+        developer.log(
+          '✅ Is first login: $isFirstLogin',
+          name: 'AuthNotifier',
+        );
+      }
+
+      return isFirstLogin;
+    } catch (error, stackTrace) {
+      // Set error state
+      state = AsyncValue.error(error, stackTrace);
+
+      if (kDebugMode) {
+        developer.log(
+          '❌ Apple login failed with error',
+          name: 'AuthNotifier',
+          error: error,
+          stackTrace: stackTrace,
+          level: 1000,
+        );
+      }
+
+      return false;
+    }
+  }
+
   /// Logout current user
   ///
   /// Always succeeds even if network request fails (local cleanup guaranteed)

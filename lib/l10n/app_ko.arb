@@ -490,6 +490,10 @@
   "@auth_login_naverButton": {
     "description": "Naver login button label"
   },
+  "auth_login_appleButton": "Apple로 로그인",
+  "@auth_login_appleButton": {
+    "description": "Apple login button label"
+  },
   "auth_login_divider": "또는",
   "@auth_login_divider": {
     "description": "Login options divider text"

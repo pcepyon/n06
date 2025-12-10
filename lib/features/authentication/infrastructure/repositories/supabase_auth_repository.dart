@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart' as kakao;
 import 'package:flutter_naver_login/flutter_naver_login.dart';
@@ -433,6 +436,178 @@ class SupabaseAuthRepository implements AuthRepository {
       }
       throw Exception('Naver login failed: $e');
     }
+  }
+
+  // ============================================
+  // Apple Login (Native SDK + Supabase OIDC)
+  // ============================================
+  //
+  // Apple은 OIDC를 지원하므로 Kakao와 동일한 signInWithIdToken() 패턴 사용.
+  // Edge Function 없이 직접 Supabase Auth와 연동 가능.
+  //
+  // 흐름:
+  // 1. Nonce 생성 (보안 필수)
+  // 2. Apple Native SDK로 로그인 → idToken 획득
+  // 3. signInWithIdToken(provider: apple, idToken, nonce)
+  // 4. DB 트리거 완료 대기
+  // 5. 프로필 업데이트 (Apple은 첫 로그인 시에만 이름 제공)
+  // 6. 동의 기록 저장
+  //
+  // 주의: Apple은 첫 로그인 이후 fullName을 제공하지 않음
+
+  @override
+  Future<domain.User> loginWithApple({
+    required bool agreedToTerms,
+    required bool agreedToPrivacy,
+  }) async {
+    try {
+      if (kDebugMode) {
+        developer.log(
+          'Starting Apple login...',
+          name: 'SupabaseAuthRepository',
+        );
+      }
+
+      // 1. Nonce 생성 (보안 필수 - CSRF 공격 방지)
+      final rawNonce = _supabase.auth.generateRawNonce();
+      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+      if (kDebugMode) {
+        developer.log(
+          'Generated nonce for Apple Sign In',
+          name: 'SupabaseAuthRepository',
+        );
+      }
+
+      // 2. Apple Native SDK로 로그인
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: hashedNonce,
+      );
+
+      final idToken = credential.identityToken;
+      if (idToken == null) {
+        throw Exception('Apple ID token is null');
+      }
+
+      if (kDebugMode) {
+        developer.log(
+          'Apple login successful, received ID token',
+          name: 'SupabaseAuthRepository',
+        );
+      }
+
+      // 3. Supabase에 ID Token 전달 (Kakao와 동일 패턴)
+      final authResponse = await _supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.apple,
+        idToken: idToken,
+        nonce: rawNonce,
+      );
+
+      if (authResponse.user == null) {
+        throw Exception('Supabase authentication failed');
+      }
+
+      if (kDebugMode) {
+        developer.log(
+          'Supabase session created. User ID: ${authResponse.user!.id}',
+          name: 'SupabaseAuthRepository',
+        );
+      }
+
+      // 4. DB 트리거 완료 대기 (기존 헬퍼 재사용)
+      await _waitForUserRecord(authResponse.user!.id);
+
+      // 5. 프로필 업데이트 (Apple은 첫 로그인 시에만 이름 제공)
+      // Note: credential.givenName, familyName은 첫 로그인 이후 null
+      final fullName = _buildAppleFullName(
+        credential.givenName,
+        credential.familyName,
+      );
+
+      if (fullName != null && fullName.isNotEmpty) {
+        await _updateUserProfile(
+          authResponse.user!.id,
+          fullName,
+          null, // Apple은 프로필 이미지를 제공하지 않음
+        );
+      }
+
+      // 6. 동의 기록 저장 (기존 헬퍼 재사용)
+      await _saveConsentRecord(
+        authResponse.user!.id,
+        agreedToTerms,
+        agreedToPrivacy,
+      );
+
+      if (kDebugMode) {
+        developer.log(
+          'Apple login complete. User ID: ${authResponse.user!.id}',
+          name: 'SupabaseAuthRepository',
+        );
+      }
+
+      // 7. domain.User 반환 (기존 헬퍼 재사용)
+      return await _mapToAppUser(authResponse.user!);
+    } on SignInWithAppleAuthorizationException catch (e) {
+      // 사용자가 로그인 취소한 경우
+      if (e.code == AuthorizationErrorCode.canceled) {
+        if (kDebugMode) {
+          developer.log(
+            'Apple login cancelled by user',
+            name: 'SupabaseAuthRepository',
+          );
+        }
+        throw Exception('Apple login cancelled');
+      }
+      if (kDebugMode) {
+        developer.log(
+          'Apple login authorization error: ${e.message}',
+          name: 'SupabaseAuthRepository',
+          error: e,
+        );
+      }
+      throw Exception('Apple login failed: ${e.message}');
+    } on AuthException catch (e) {
+      if (kDebugMode) {
+        developer.log(
+          'Apple login AuthException: ${e.message}',
+          name: 'SupabaseAuthRepository',
+          error: e,
+        );
+      }
+      throw Exception('Apple login failed: ${e.message}');
+    } catch (e) {
+      if (kDebugMode) {
+        developer.log(
+          'Apple login error: $e',
+          name: 'SupabaseAuthRepository',
+          error: e,
+        );
+      }
+      throw Exception('Apple login failed: $e');
+    }
+  }
+
+  /// Apple 이름 조합 헬퍼
+  ///
+  /// Apple은 givenName, familyName을 별도로 제공.
+  /// 한국어 이름의 경우 familyName + givenName 순서로 조합.
+  String? _buildAppleFullName(String? givenName, String? familyName) {
+    if (givenName == null && familyName == null) return null;
+
+    final parts = <String>[];
+    if (familyName != null && familyName.isNotEmpty) {
+      parts.add(familyName);
+    }
+    if (givenName != null && givenName.isNotEmpty) {
+      parts.add(givenName);
+    }
+
+    return parts.isEmpty ? null : parts.join(' ');
   }
 
   // ============================================

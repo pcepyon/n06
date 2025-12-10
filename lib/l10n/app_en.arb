@@ -490,6 +490,10 @@
   "@auth_login_naverButton": {
     "description": "Naver login button label"
   },
+  "auth_login_appleButton": "Sign in with Apple",
+  "@auth_login_appleButton": {
+    "description": "Apple login button label"
+  },
   "auth_login_divider": "or",
   "@auth_login_divider": {
     "description": "Login options divider text"

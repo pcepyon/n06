@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -365,6 +366,207 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _handleAppleLogin() async {
+    if (kDebugMode) {
+      developer.log(
+        '🍎 Apple login button clicked',
+        name: 'LoginScreen',
+      );
+    }
+
+    if (!_canLogin) {
+      if (kDebugMode) {
+        developer.log(
+          '⚠️ Login blocked - conditions not met',
+          name: 'LoginScreen',
+          level: 900,
+        );
+      }
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    if (kDebugMode) {
+      developer.log('🍎 Starting Apple login...', name: 'LoginScreen');
+    }
+
+    try {
+      final notifier = ref.read(authNotifierProvider.notifier);
+
+      if (kDebugMode) {
+        developer.log('🔄 Calling notifier.loginWithApple()...', name: 'LoginScreen');
+      }
+
+      final isFirstLogin = await notifier.loginWithApple(
+        agreedToTerms: _agreedToTerms,
+        agreedToPrivacy: _agreedToPrivacy,
+      );
+
+      if (kDebugMode) {
+        developer.log(
+          '✅ Login completed. First login: $isFirstLogin',
+          name: 'LoginScreen',
+        );
+      }
+
+      if (!mounted) {
+        if (kDebugMode) {
+          developer.log('⚠️ Widget unmounted', name: 'LoginScreen', level: 900);
+        }
+        return;
+      }
+
+      // Verify auth state before navigation
+      final authState = ref.read(authNotifierProvider);
+
+      // Check for errors first (before accessing value)
+      if (authState.hasError) {
+        if (kDebugMode) {
+          authState.whenOrNull(
+            error: (error, stack) {
+              developer.log(
+                '❌ Auth state has error after login',
+                name: 'LoginScreen',
+                error: error,
+                stackTrace: stack,
+                level: 1000,
+              );
+            },
+          );
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(context.l10n.auth_login_error_failed),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Safe to access value now (no error)
+      final user = authState.asData?.value;
+
+      if (user == null) {
+        if (kDebugMode) {
+          developer.log(
+            '❌ User is null after login',
+            name: 'LoginScreen',
+            level: 1000,
+          );
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(context.l10n.auth_login_error_userInfoFailed),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (kDebugMode) {
+        developer.log(
+          '✅ Auth state verified. User: ${user.id}',
+          name: 'LoginScreen',
+        );
+      }
+
+      if (mounted) {
+        if (isFirstLogin) {
+          if (kDebugMode) {
+            developer.log('🚀 Navigating to onboarding...', name: 'LoginScreen');
+          }
+          context.go('/onboarding', extra: user.id);
+        } else {
+          if (kDebugMode) {
+            developer.log('🏠 Navigating to home dashboard...', name: 'LoginScreen');
+          }
+          context.go('/home');
+        }
+      }
+    } on OAuthCancelledException catch (e, stack) {
+      if (kDebugMode) {
+        developer.log(
+          '🚫 OAuth cancelled by user',
+          name: 'LoginScreen',
+          error: e,
+          stackTrace: stack,
+          level: 900,
+        );
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.auth_login_error_cancelled),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } on MaxRetriesExceededException catch (e, stack) {
+      if (kDebugMode) {
+        developer.log(
+          '🌐 Network error - max retries exceeded',
+          name: 'LoginScreen',
+          error: e,
+          stackTrace: stack,
+          level: 1000,
+        );
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.auth_login_error_networkWithRetry),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: context.l10n.auth_login_error_retryButton,
+              textColor: Colors.white,
+              onPressed: () => _handleAppleLogin(),
+            ),
+          ),
+        );
+      }
+    } catch (e, stack) {
+      if (kDebugMode) {
+        developer.log(
+          '❌ Unexpected error during Apple login',
+          name: 'LoginScreen',
+          error: e,
+          stackTrace: stack,
+          level: 1000,
+        );
+      }
+      // Apple 로그인 취소 시 에러 메시지 표시 안 함
+      if (e.toString().contains('cancelled')) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(context.l10n.auth_login_error_cancelled),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.auth_login_error_unknown(e.toString())),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (kDebugMode) {
+          developer.log('🏁 Apple login process completed', name: 'LoginScreen');
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -475,6 +677,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 16),
 
                 // 4. Social Login Buttons
+                // Apple 로그인 버튼 (iOS/macOS only, 상단에 배치)
+                if (Platform.isIOS || Platform.isMacOS) ...[
+                  Builder(
+                    builder: (context) => SocialLoginButton(
+                      key: const Key('apple_login_button'),
+                      label: context.l10n.auth_login_appleButton,
+                      icon: Icons.apple,
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      isLoading: _isLoading,
+                      onPressed: _canLogin ? _handleAppleLogin : null,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 Builder(
                   builder: (context) => SocialLoginButton(
                     key: const Key('kakao_login_button'),
