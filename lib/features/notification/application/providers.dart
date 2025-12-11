@@ -15,8 +15,20 @@ NotificationRepository notificationRepository(Ref ref) {
   return SupabaseNotificationRepository(supabase);
 }
 
-/// Scheduler Provider
-@riverpod
-NotificationScheduler notificationScheduler(Ref ref) {
+/// Scheduler Instance Provider (싱글톤)
+/// 초기화 전에도 인스턴스에 접근 가능
+@Riverpod(keepAlive: true)
+LocalNotificationScheduler notificationSchedulerInstance(Ref ref) {
   return LocalNotificationScheduler(PermissionService());
+}
+
+/// Scheduler Provider (초기화 완료 보장)
+/// 알림 스케줄링 작업에 사용
+@Riverpod(keepAlive: true)
+Future<NotificationScheduler> notificationScheduler(Ref ref) async {
+  final scheduler = ref.watch(notificationSchedulerInstanceProvider);
+  if (!scheduler.isInitialized) {
+    await scheduler.initialize();
+  }
+  return scheduler;
 }

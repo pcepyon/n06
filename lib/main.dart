@@ -16,6 +16,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'firebase_options.dart';
 
 /// Global ScaffoldMessengerKey for displaying SnackBars above Dialogs/BottomSheets
@@ -201,6 +204,14 @@ Future<void> _initializeAndRunApp() async {
       nativeAppKey: '32dfc3999b53af153dbcefa7014093bc',
       loggingEnabled: true,  // Enable detailed debug logging
     );
+
+    // Initialize timezone for local notifications
+    if (kDebugMode) {
+      developer.log('🕐 Initializing timezone...', name: 'Main');
+    }
+    tz.initializeTimeZones();
+    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(timeZoneName));
 
     // Initialize locales for DateFormat
     if (kDebugMode) {

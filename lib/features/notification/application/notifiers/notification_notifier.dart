@@ -1,3 +1,4 @@
+import 'package:n06/features/notification/domain/services/notification_scheduler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:n06/features/notification/domain/entities/notification_settings.dart';
 import 'package:n06/features/notification/domain/value_objects/notification_time.dart';
@@ -12,8 +13,10 @@ part 'notification_notifier.g.dart';
 class NotificationNotifier extends _$NotificationNotifier {
   // ✅ 의존성을 late final 필드로 선언
   late final _repository = ref.read(notificationRepositoryProvider);
-  late final _scheduler = ref.read(notificationSchedulerProvider);
   late final _medicationRepository = ref.read(medicationRepositoryProvider);
+
+  // Scheduler는 비동기 초기화가 필요하므로 build()에서 캡처
+  late NotificationScheduler _scheduler;
 
   @override
   Future<NotificationSettings> build() async {
@@ -23,6 +26,9 @@ class NotificationNotifier extends _$NotificationNotifier {
     if (userId == null) {
       throw Exception('User not authenticated');
     }
+
+    // Scheduler 초기화 완료 대기
+    _scheduler = await ref.watch(notificationSchedulerProvider.future);
 
     final settings = await _repository.getNotificationSettings(userId);
 

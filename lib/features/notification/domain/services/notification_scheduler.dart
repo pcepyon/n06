@@ -3,6 +3,12 @@ import 'package:n06/features/tracking/domain/entities/dose_schedule.dart';
 
 /// 알림 스케줄링 계약
 abstract class NotificationScheduler {
+  /// 플러그인 초기화
+  Future<void> initialize();
+
+  /// 초기화 여부
+  bool get isInitialized;
+
   /// 알림 권한 확인
   Future<bool> checkPermission();
 

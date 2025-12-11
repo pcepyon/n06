@@ -17,9 +17,11 @@ class LocalNotificationScheduler implements NotificationScheduler {
   }
 
   /// 플러그인 초기화
+  @override
   Future<void> initialize() async {
+    // @mipmap/ic_launcher 사용 (기본 앱 아이콘)
     const AndroidInitializationSettings androidInitializationSettings =
-        AndroidInitializationSettings('app_icon');
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const DarwinInitializationSettings iOSInitializationSettings =
         DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -42,6 +44,7 @@ class LocalNotificationScheduler implements NotificationScheduler {
   }
 
   /// 초기화 여부
+  @override
   bool get isInitialized => _isInitialized;
 
   /// 알림 권한 확인
