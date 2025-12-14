@@ -462,7 +462,7 @@
   "@weeklyGoal_input_error_maximum": {
     "description": "Maximum value error message"
   },
-  "auth_login_heroTitle": "가비움",
+  "auth_login_heroTitle": "비우당",
   "@auth_login_heroTitle": {
     "description": "Login screen hero title"
   },
@@ -540,11 +540,11 @@
       }
     }
   },
-  "auth_signup_title": "가비움 시작하기",
+  "auth_signup_title": "비우당 시작하기",
   "@auth_signup_title": {
     "description": "Signup screen title"
   },
-  "auth_signup_heroTitle": "가비움과 함께 시작해요",
+  "auth_signup_heroTitle": "비우당과 함께 시작해요",
   "@auth_signup_heroTitle": {
     "description": "Signup screen hero title"
   },
@@ -650,7 +650,7 @@
   "@auth_signin_heroTitle": {
     "description": "Sign in screen hero title"
   },
-  "auth_signin_heroSubtitle": "가비움 계정으로 로그인해주세요",
+  "auth_signin_heroSubtitle": "비우당 계정으로 로그인해주세요",
   "@auth_signin_heroSubtitle": {
     "description": "Sign in screen hero subtitle"
   },
@@ -844,7 +844,7 @@
   "@auth_button_loading": {
     "description": "Loading state button text"
   },
-  "auth_heroDefault_title": "가비움",
+  "auth_heroDefault_title": "비우당",
   "@auth_heroDefault_title": {
     "description": "Default auth hero section title"
   },
@@ -3881,7 +3881,7 @@
   "@coping_screen_empty": {
     "description": "Coping guide screen empty message - MEDICAL REVIEW REQUIRED"
   },
-  "coping_detailed_appTitle": "가비움",
+  "coping_detailed_appTitle": "비우당",
   "@coping_detailed_appTitle": {
     "description": "Detailed guide screen app title - MEDICAL REVIEW REQUIRED"
   },

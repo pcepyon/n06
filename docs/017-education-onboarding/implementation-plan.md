@@ -877,7 +877,7 @@ lib/features/onboarding/presentation/widgets/
 **기존 코드 위치**: lib/features/onboarding/presentation/widgets/basic_profile_form.dart
 
 변경 전:
-- AuthHeroSection title: '가비움 온보딩을 시작하세요'
+- AuthHeroSection title: '비우당 온보딩을 시작하세요'
 - AuthHeroSection subtitle: '당신의 건강 관리 여정을 함께합니다'
 
 변경 후:

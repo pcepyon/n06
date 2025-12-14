@@ -19,6 +19,13 @@
 
 ---
 
+## 2025-12-14
+
+- [chore] 서비스명 변경: 가비움 → 비우당 (영문: Biwoodang)
+  - **로컬라이제이션**: `lib/l10n/app_ko.arb` (6곳)
+  - **법률 문서**: `docs/legal/` 4개 파일 (이용약관, 개인정보처리방침, 의료면책조항, 민감정보동의서)
+  - **내부 문서**: `docs/prd.md`, `docs/requirements.md`, `docs/018-guest-home/spec.md`, `docs/017-education-onboarding/implementation-plan.md`
+
 ## 2025-12-11
 
 - [feat] Apple 로그인 기능 추가
