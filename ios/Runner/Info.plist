@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>N06</string>
+	<string>비우당</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>n06</string>
+	<string>Biwoodang</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -45,6 +45,15 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- User Notification Permission -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<!-- App Tracking Transparency (ATT) - Required for iOS 14.5+ -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>비우당은 맞춤형 건강 관리 경험을 제공하고 앱 서비스 개선을 위해 사용자 활동 데이터를 수집합니다. 이 데이터는 광고 목적으로 사용되지 않습니다.</string>
 	<!-- Kakao & Naver URL Schemes -->
 	<key>LSApplicationQueriesSchemes</key>
 	<array>

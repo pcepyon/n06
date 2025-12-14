@@ -21,6 +21,16 @@
 
 ## 2025-12-14
 
+- [chore] 앱스토어 출시 준비: 앱 이름 변경, iOS 권한 설명, Android 릴리스 서명 설정
+  - **앱 표시 이름**: iOS `CFBundleDisplayName`/`CFBundleName`, Android `android:label` → "비우당"/"Biwoodang"
+  - **iOS 권한 설명**: `NSUserTrackingUsageDescription` (ATT), `UIBackgroundModes` (remote-notification) 추가
+  - **Android 릴리스 서명**: `signingConfigs.release` 설정, `key.properties` 템플릿 생성, ProGuard 난독화 활성화
+  - **수정 파일**:
+    - `ios/Runner/Info.plist`
+    - `android/app/src/main/AndroidManifest.xml`
+    - `android/app/build.gradle.kts`
+    - `android/key.properties` (신규)
+
 - [chore] 서비스명 변경: 가비움 → 비우당 (영문: Biwoodang)
   - **로컬라이제이션**: `lib/l10n/app_ko.arb` (6곳)
   - **법률 문서**: `docs/legal/` 4개 파일 (이용약관, 개인정보처리방침, 의료면책조항, 민감정보동의서)
