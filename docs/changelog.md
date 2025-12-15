@@ -19,6 +19,15 @@
 
 ---
 
+## 2025-12-15
+
+- [docs] SDD 문서 작성 가이드라인 추가 - AI 코딩 에이전트를 위한 명세 작성 베스트 프랙티스
+  - **핵심 내용**: 컨텍스트 엔지니어링, 의도 중심 명세, Few-shot 패턴, 에러 피드백 루프
+  - **학술적 근거**: Anthropic, Manus AI, ACM TOSEM 2024 연구 기반
+  - **수정 파일**:
+    - `docs/sdd-writing-guide.md` (신규)
+    - `docs/INDEX.md`
+
 ## 2025-12-14
 
 - [chore] 앱스토어 출시 준비: 앱 이름 변경, iOS 권한 설명, Android 릴리스 서명 설정

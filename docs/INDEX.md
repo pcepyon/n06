@@ -17,7 +17,7 @@
 | database | `docs/database.md` | schema, table, rls, migration | 테이블, 스키마, RLS |
 | techstack | `docs/techstack.md` | flutter, supabase, library, package | 기술 스택, 라이브러리 |
 | tdd | `docs/tdd.md` | test, mock, fake, red-green-refactor | 테스트 작성, TDD |
-| spec-guide | `docs/spec-writing-guide.md` | agent, prompt, context, spec | AI 에이전트용 문서 작성 |
+| sdd-guide | `docs/sdd-writing-guide.md` | agent, prompt, context, spec, sdd | AI 에이전트용 SDD 문서 작성 |
 
 ---
 
