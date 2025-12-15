@@ -95,14 +95,30 @@ class _CelebratoryReportWidgetState extends State<CelebratoryReportWidget> {
     final adherenceMessage = _getAdherenceMessage(context, widget.summary.adherencePercentage);
     final adherenceColor = _getAdherenceColor(widget.summary.adherencePercentage);
 
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        context.push('/trend-dashboard');
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedContainer(
+    final doseValue = _getCelebratoryValue(context, 'dose', widget.summary.doseCompletedCount);
+    final weightValue = _getCelebratoryValue(context, 'weight', widget.summary.weightChangeKg);
+    final symptomValue = _getCelebratoryValue(context, 'symptom', widget.summary.symptomRecordCount);
+    final adherencePercentage = '${widget.summary.adherencePercentage.toStringAsFixed(0)}%';
+
+    final semanticLabel = '${context.l10n.dashboard_report_title}. '
+        '${context.l10n.dashboard_report_dose} $doseValue. '
+        '${context.l10n.dashboard_report_weight} $weightValue. '
+        '${context.l10n.dashboard_report_symptom} $symptomValue. '
+        '${context.l10n.dashboard_report_adherence} $adherencePercentage${adherenceMessage.isNotEmpty ? ". $adherenceMessage" : ""}';
+
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      hint: context.l10n.a11y_trendDetail,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) {
+          setState(() => _isPressed = false);
+          context.push('/trend-dashboard');
+        },
+        onTapCancel: () => setState(() => _isPressed = false),
+        child: ExcludeSemantics(
+          child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
         transform: Matrix4.translationValues(0, _isPressed ? -2 : 0, 0),
@@ -226,6 +242,8 @@ class _CelebratoryReportWidgetState extends State<CelebratoryReportWidget> {
               ),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );

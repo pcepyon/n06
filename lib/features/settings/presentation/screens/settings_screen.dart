@@ -33,8 +33,14 @@ class SettingsScreen extends ConsumerWidget {
           surfaceTintColor: Colors.transparent,
           shadowColor: AppColors.neutral900.withValues(alpha: 0.06),
         ),
-        body: const Center(
-          child: CircularProgressIndicator(),
+        body: Builder(
+          builder: (context) => Semantics(
+            liveRegion: true,
+            label: context.l10n.a11y_loading,
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
         ),
       ),
       error: (error, stackTrace) {
@@ -69,10 +75,19 @@ class SettingsScreen extends ConsumerWidget {
             titleTextStyle: AppTypography.heading1,
           ),
           body: profileState.when(
-            loading: () => const Center(
-              child: CircularProgressIndicator(),
+            loading: () => Builder(
+              builder: (context) => Semantics(
+                liveRegion: true,
+                label: context.l10n.a11y_profileLoading,
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
             ),
-            error: (error, stackTrace) => _buildError(context, ref, error),
+            error: (error, stackTrace) => Semantics(
+              liveRegion: true,
+              child: _buildError(context, ref, error),
+            ),
             data: (profile) {
               if (profile == null) {
                 return _buildError(context, ref, Exception('Profile not found'));

@@ -19,6 +19,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:n06/core/services/analytics_service.dart';
 import 'firebase_options.dart';
 
 /// Global ScaffoldMessengerKey for displaying SnackBars above Dialogs/BottomSheets
@@ -242,6 +243,16 @@ Future<void> _initializeAndRunApp() async {
         child: const MyApp(),
       ),
     );
+
+    // Initialize Analytics after app is running
+    // This must happen after WidgetsFlutterBinding.ensureInitialized()
+    // and after the app becomes active (for ATT dialog to show properly)
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (kDebugMode) {
+        developer.log('📊 Initializing Analytics Service...', name: 'Main');
+      }
+      await AnalyticsService.initialize();
+    });
   } catch (error, stackTrace) {
     _logError('Initialization error', error, stackTrace);
     rethrow;
@@ -337,6 +348,10 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       theme: AppTheme.lightTheme.copyWith(
         extensions: [AppThemeExtension.light],
       ),
+      darkTheme: AppTheme.darkTheme.copyWith(
+        extensions: [AppThemeExtension.dark],
+      ),
+      themeMode: ThemeMode.system,
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       routerConfig: appRouter,
       // L10n Configuration

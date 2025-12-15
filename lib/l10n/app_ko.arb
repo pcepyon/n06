@@ -540,6 +540,10 @@
       }
     }
   },
+  "auth_login_error_urlOpenFailed": "링크를 열 수 없습니다. 브라우저 설정을 확인해주세요.",
+  "@auth_login_error_urlOpenFailed": {
+    "description": "Error message when URL cannot be opened"
+  },
   "auth_signup_title": "비우당 시작하기",
   "@auth_signup_title": {
     "description": "Signup screen title"
@@ -6397,5 +6401,17 @@
   "checkin_derived_feedbackAbdominalPain": "복통이 있으시군요. 위치를 확인해볼게요",
   "@checkin_derived_feedbackAbdominalPain": {
     "description": "Feedback for abdominal pain selection (triggers derived)"
+  },
+  "a11y_loading": "로딩 중",
+  "@a11y_loading": {
+    "description": "Accessibility label for loading state"
+  },
+  "a11y_profileLoading": "프로필 로딩 중",
+  "@a11y_profileLoading": {
+    "description": "Accessibility label for profile loading state"
+  },
+  "a11y_trendDetail": "상세 트렌드 보기",
+  "@a11y_trendDetail": {
+    "description": "Accessibility hint for trend dashboard button"
   }
 }

@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:n06/core/constants/legal_urls.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/core/extensions/l10n_extension.dart';
@@ -34,6 +36,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
 
   bool get _canLogin => _agreedToTerms && _agreedToPrivacy && !_isLoading;
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(context.l10n.auth_login_error_urlOpenFailed),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        developer.log(
+          'Failed to open URL: $url',
+          name: 'LoginScreen',
+          error: e,
+          level: 900,
+        );
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.auth_login_error_urlOpenFailed),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   Future<void> _handleKakaoLogin() async {
     if (kDebugMode) {
@@ -582,9 +619,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 // 1. Hero Section with Gabium branding
                 Builder(
-                  builder: (context) => AuthHeroSection(
-                    title: context.l10n.auth_login_heroTitle,
-                    subtitle: context.l10n.auth_login_heroSubtitle,
+                  builder: (context) => ExcludeSemantics(
+                    child: AuthHeroSection(
+                      title: context.l10n.auth_login_heroTitle,
+                      subtitle: context.l10n.auth_login_heroSubtitle,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -620,6 +659,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               : (val) {
                                   setState(() => _agreedToTerms = val);
                                 },
+                          onViewTap: () => _openUrl(LegalUrls.termsOfService),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -634,6 +674,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               : (val) {
                                   setState(() => _agreedToPrivacy = val);
                                 },
+                          onViewTap: () => _openUrl(LegalUrls.privacyPolicy),
                         ),
                       ),
                     ],
@@ -643,35 +684,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // 3. Helper Text Alert (if agreements not complete)
                 if (!_canLogin && !_isLoading)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.warning.withValues(alpha: 0.08),
-                      border: Border.all(
-                        color: AppColors.warning.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: AppColors.warning,
-                          size: 24,
+                  Semantics(
+                    liveRegion: true,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withValues(alpha: 0.08),
+                        border: Border.all(
+                          color: AppColors.warning.withValues(alpha: 0.2),
+                          width: 1,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Builder(
-                            builder: (context) => Text(
-                              context.l10n.auth_login_consentRequired,
-                              style: AppTypography.bodyLarge.copyWith(
-                                color: AppColors.warning,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: AppColors.warning,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Builder(
+                              builder: (context) => Text(
+                                context.l10n.auth_login_consentRequired,
+                                style: AppTypography.bodyLarge.copyWith(
+                                  color: AppColors.warning,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 const SizedBox(height: 16),

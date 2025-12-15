@@ -27,6 +27,7 @@ class GabiumButton extends StatelessWidget {
   final GabiumButtonVariant variant;
   final GabiumButtonSize size;
   final bool isLoading;
+  final String? semanticsLabel;
 
   const GabiumButton({
     super.key,
@@ -35,6 +36,7 @@ class GabiumButton extends StatelessWidget {
     this.variant = GabiumButtonVariant.primary,
     this.size = GabiumButtonSize.medium,
     this.isLoading = false,
+    this.semanticsLabel,
   });
 
   @override
@@ -42,33 +44,40 @@ class GabiumButton extends StatelessWidget {
     final buttonStyle = _getButtonStyle();
     final textStyle = _getTextStyle();
     final height = _getHeight();
+    final isEnabled = !isLoading && onPressed != null;
+    final label = semanticsLabel ?? text;
 
-    return SizedBox(
-      height: height,
-      width: variant == GabiumButtonVariant.ghost ? null : double.infinity,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: buttonStyle,
-        child: isLoading
-            ? Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(
-                    width: 16.0,
-                    height: 16.0,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+    return Semantics(
+      button: true,
+      enabled: isEnabled,
+      label: isLoading ? '${context.l10n.auth_button_loading}, $label' : label,
+      child: SizedBox(
+        height: height,
+        width: variant == GabiumButtonVariant.ghost ? null : double.infinity,
+        child: ElevatedButton(
+          onPressed: isLoading ? null : onPressed,
+          style: buttonStyle,
+          child: isLoading
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 16.0,
+                      height: 16.0,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8.0), // 스피너-텍스트 간격
-                  Text(
-                    context.l10n.auth_button_loading,
-                    style: textStyle,
-                  ),
-                ],
-              )
-            : Text(text, style: textStyle),
+                    const SizedBox(width: 8.0), // 스피너-텍스트 간격
+                    Text(
+                      context.l10n.auth_button_loading,
+                      style: textStyle,
+                    ),
+                  ],
+                )
+              : Text(text, style: textStyle),
+        ),
       ),
     );
   }

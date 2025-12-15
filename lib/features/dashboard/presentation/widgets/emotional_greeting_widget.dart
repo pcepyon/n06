@@ -69,61 +69,74 @@ class EmotionalGreetingWidget extends StatelessWidget {
       dashboardData.insightMessageData,
     );
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(
-          color: AppColors.neutral200,
-          width: 1,
+    final greeting = _getTimeBasedGreeting(context, dashboardData.userName);
+    final continuousDaysLabel = context.l10n.dashboard_greeting_continuousDays(dashboardData.continuousRecordDays);
+    final currentWeekLabel = context.l10n.dashboard_greeting_currentWeek(dashboardData.currentWeek);
+
+    return Semantics(
+      label: '$greeting. $continuousDaysLabel. $currentWeekLabel${encouragementMessage != null ? ". $encouragementMessage" : ""}',
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border.all(
+            color: AppColors.neutral200,
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.neutral900.withValues(alpha: 0.06),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.neutral900.withValues(alpha: 0.06),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 시간대별 따뜻한 인사
-          Text(
-            _getTimeBasedGreeting(context, dashboardData.userName),
-            style: AppTypography.display,
-          ),
-          const SizedBox(height: 16),
-          // 통계 Row (2 columns)
-          Row(
-            children: [
-              Expanded(
-                child: _EmotionalStatColumn(
-                  label: _getContinuousRecordLabel(
-                    context,
-                    dashboardData.continuousRecordDays,
-                  ),
-                  value: context.l10n.dashboard_greeting_continuousDays(dashboardData.continuousRecordDays),
-                  valueColor: AppColors.achievement,
-                ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 시간대별 따뜻한 인사
+            ExcludeSemantics(
+              child: Text(
+                greeting,
+                style: AppTypography.display,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _EmotionalStatColumn(
-                  label: context.l10n.dashboard_greeting_journeyWeek,
-                  value: context.l10n.dashboard_greeting_currentWeek(dashboardData.currentWeek),
-                  valueColor: AppColors.textPrimary,
-                ),
+            ),
+            const SizedBox(height: 16),
+            // 통계 Row (2 columns)
+            ExcludeSemantics(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _EmotionalStatColumn(
+                      label: _getContinuousRecordLabel(
+                        context,
+                        dashboardData.continuousRecordDays,
+                      ),
+                      value: continuousDaysLabel,
+                      valueColor: AppColors.achievement,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _EmotionalStatColumn(
+                      label: context.l10n.dashboard_greeting_journeyWeek,
+                      value: currentWeekLabel,
+                      valueColor: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // 격려 메시지 컨테이너 (존재할 경우)
+            if (encouragementMessage != null) ...[
+              const SizedBox(height: 16),
+              ExcludeSemantics(
+                child: _EncouragementContainer(message: encouragementMessage),
               ),
             ],
-          ),
-          // 격려 메시지 컨테이너 (존재할 경우)
-          if (encouragementMessage != null) ...[
-            const SizedBox(height: 16),
-            _EncouragementContainer(message: encouragementMessage),
           ],
-        ],
+        ),
       ),
     );
   }

@@ -540,6 +540,10 @@
       }
     }
   },
+  "auth_login_error_urlOpenFailed": "Cannot open link. Please check your browser settings.",
+  "@auth_login_error_urlOpenFailed": {
+    "description": "Error message when URL cannot be opened"
+  },
   "auth_signup_title": "Start with Gabium",
   "@auth_signup_title": {
     "description": "Signup screen title"
@@ -6232,5 +6236,17 @@
   "tracking_updatePlan_error_permissionError": "Permission denied",
   "@tracking_updatePlan_error_permissionError": {
     "description": "Permission error when updating dosage plan"
+  },
+  "a11y_loading": "Loading",
+  "@a11y_loading": {
+    "description": "Accessibility label for loading state"
+  },
+  "a11y_profileLoading": "Loading profile",
+  "@a11y_profileLoading": {
+    "description": "Accessibility label for profile loading state"
+  },
+  "a11y_trendDetail": "View detailed trend",
+  "@a11y_trendDetail": {
+    "description": "Accessibility hint for trend dashboard button"
   }
 }

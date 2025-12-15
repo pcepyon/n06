@@ -63,14 +63,20 @@ class _SettingsMenuItemImprovedState extends State<SettingsMenuItemImproved>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.enabled ? widget.onTap : null,
-      onTapDown: _handleTapDown,
-      onTapUp: _handleTapUp,
-      onTapCancel: _handleTapCancel,
-      child: MouseRegion(
-        cursor: widget.enabled ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
-        child: Container(
+    return Semantics(
+      button: true,
+      label: widget.title,
+      hint: widget.subtitle,
+      enabled: widget.enabled,
+      child: GestureDetector(
+        onTap: widget.enabled ? widget.onTap : null,
+        onTapDown: _handleTapDown,
+        onTapUp: _handleTapUp,
+        onTapCancel: _handleTapCancel,
+        child: MouseRegion(
+          cursor: widget.enabled ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
+          child: ExcludeSemantics(
+            child: Container(
           constraints: const BoxConstraints(minHeight: 44.0), // Minimum touch target
           padding: const EdgeInsets.symmetric(
             horizontal: 16.0, // md
@@ -137,6 +143,8 @@ class _SettingsMenuItemImprovedState extends State<SettingsMenuItemImproved>
                       : AppColors.textDisabled.withValues(alpha: 0.4),
                 ),
               ],
+            ),
+          ),
             ),
           ),
         ),

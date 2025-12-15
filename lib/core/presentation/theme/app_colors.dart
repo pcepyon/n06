@@ -150,4 +150,41 @@ abstract final class AppColors {
 
   /// Info 배경
   static const Color infoBackground = Color(0xFFEFF6FF); // Blue-50
+
+  // ============================================
+  // Dark Mode Specific Colors
+  // ============================================
+
+  /// Dark mode background
+  static const Color backgroundDark = neutral900;
+
+  /// Dark mode surface (card, dialog)
+  static const Color surfaceDark = neutral800;
+
+  /// Dark mode surface variant
+  static const Color surfaceVariantDark = neutral700;
+
+  /// Dark mode primary text
+  static const Color textPrimaryDark = neutral50;
+
+  /// Dark mode secondary text
+  static const Color textSecondaryDark = neutral400;
+
+  /// Dark mode tertiary text
+  static const Color textTertiaryDark = neutral500;
+
+  /// Dark mode disabled text
+  static const Color textDisabledDark = neutral600;
+
+  /// Dark mode border
+  static const Color borderDarkMode = neutral700;
+
+  /// Dark mode border light
+  static const Color borderLightDarkMode = neutral800;
+
+  /// Dark mode primary (lighter for better visibility)
+  static const Color primaryDark = Color(0xFF4ADE80); // Same as light mode (already bright)
+
+  /// Dark mode error (lighter for better visibility)
+  static const Color errorDark = Color(0xFFFCA5A5); // Red-300 for better contrast
 }

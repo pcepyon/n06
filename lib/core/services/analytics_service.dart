@@ -1,11 +1,19 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:io' show Platform;
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 
 /// Analytics and Crashlytics service for monitoring app usage and errors.
 ///
+/// This service respects App Tracking Transparency (ATT) on iOS.
+/// Analytics collection is enabled only after user consent.
+///
 /// Usage:
 /// ```dart
+/// // Initialize first (usually in main.dart)
+/// await AnalyticsService.initialize();
+///
 /// // Log screen view
 /// AnalyticsService.logScreenView('home_screen');
 ///
@@ -22,8 +30,69 @@ class AnalyticsService {
   static final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
   static final FirebaseCrashlytics _crashlytics = FirebaseCrashlytics.instance;
 
+  /// Whether analytics collection is enabled based on ATT status
+  static bool _isAnalyticsEnabled = false;
+
   // Private constructor to prevent instantiation
   AnalyticsService._();
+
+  /// Initialize analytics service and request ATT permission on iOS
+  ///
+  /// This method should be called once during app initialization.
+  /// On iOS, it requests App Tracking Transparency permission.
+  /// On Android, analytics is automatically enabled.
+  static Future<void> initialize() async {
+    if (kDebugMode) {
+      debugPrint('[AnalyticsService] Initializing...');
+    }
+
+    try {
+      if (Platform.isIOS) {
+        // Request ATT permission on iOS
+        final status = await AppTrackingTransparency.requestTrackingAuthorization();
+
+        if (kDebugMode) {
+          debugPrint('[AnalyticsService] ATT Status: $status');
+        }
+
+        // Enable analytics only if user authorized tracking
+        _isAnalyticsEnabled = status == TrackingStatus.authorized;
+      } else {
+        // On Android, analytics is enabled by default
+        _isAnalyticsEnabled = true;
+      }
+
+      // Configure Firebase Analytics based on consent
+      await _analytics.setAnalyticsCollectionEnabled(_isAnalyticsEnabled);
+
+      if (kDebugMode) {
+        debugPrint('[AnalyticsService] Analytics enabled: $_isAnalyticsEnabled');
+      }
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('[AnalyticsService] Failed to initialize: $e');
+        debugPrint('[AnalyticsService] StackTrace: $stackTrace');
+      }
+      // Disable analytics on error
+      _isAnalyticsEnabled = false;
+    }
+  }
+
+  /// Get current ATT status (iOS only)
+  ///
+  /// Returns null on Android or if ATT is not available.
+  static Future<TrackingStatus?> getTrackingStatus() async {
+    if (!Platform.isIOS) return null;
+
+    try {
+      return await AppTrackingTransparency.trackingAuthorizationStatus;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[AnalyticsService] Failed to get tracking status: $e');
+      }
+      return null;
+    }
+  }
 
   // ============================================================
   // Analytics Methods
@@ -35,6 +104,7 @@ class AnalyticsService {
       debugPrint('📊 [Analytics] Screen: $screenName');
       return;
     }
+    if (!_isAnalyticsEnabled) return;
     await _analytics.logScreenView(screenName: screenName);
   }
 
@@ -47,6 +117,7 @@ class AnalyticsService {
       debugPrint('📊 [Analytics] Event: $name, params: $parameters');
       return;
     }
+    if (!_isAnalyticsEnabled) return;
     await _analytics.logEvent(name: name, parameters: parameters);
   }
 
@@ -56,7 +127,10 @@ class AnalyticsService {
       debugPrint('📊 [Analytics] Set userId: $userId');
       return;
     }
-    await _analytics.setUserId(id: userId);
+    if (_isAnalyticsEnabled) {
+      await _analytics.setUserId(id: userId);
+    }
+    // Always set Crashlytics user ID (crash reporting is separate from analytics)
     await _crashlytics.setUserIdentifier(userId ?? '');
   }
 
@@ -69,6 +143,7 @@ class AnalyticsService {
       debugPrint('📊 [Analytics] Set property: $name = $value');
       return;
     }
+    if (!_isAnalyticsEnabled) return;
     await _analytics.setUserProperty(name: name, value: value);
   }
 

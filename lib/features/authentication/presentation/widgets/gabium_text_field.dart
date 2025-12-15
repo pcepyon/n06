@@ -16,6 +16,7 @@ class GabiumTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
+  final String? semanticsLabel;
 
   const GabiumTextField({
     super.key,
@@ -29,90 +30,107 @@ class GabiumTextField extends StatelessWidget {
     this.suffixIcon,
     this.validator,
     this.onChanged,
+    this.semanticsLabel,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Label
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text(
-            label,
-            style: AppTypography.labelMedium.copyWith(
-              color: AppColors.neutral700,
-            ),
-          ),
-        ),
+    final effectiveLabel = semanticsLabel ?? label;
+    final hasError = errorText != null && errorText!.isNotEmpty;
 
-        // Input field (48px 고정 높이)
-        SizedBox(
-          height: 48.0,
-          child: TextFormField(
-            controller: controller,
-            obscureText: obscureText,
-            keyboardType: keyboardType,
-            validator: validator,
-            onChanged: onChanged,
-            style: AppTypography.bodyLarge,
-            decoration: InputDecoration(
-              hintText: hint,
-              helperText: helperText,
-              errorText: errorText,
-              suffixIcon: suffixIcon,
-              filled: true,
-              fillColor: AppColors.surface,
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 12,
-                horizontal: 16,
-              ),
-              // Default border
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: AppColors.neutral300,
-                  width: 2,
-                ),
-              ),
-              // Focus border
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: AppColors.primary,
-                  width: 2,
-                ),
-              ),
-              // Error border
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: AppColors.error,
-                  width: 2,
-                ),
-              ),
-              // Focused error border
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: AppColors.error,
-                  width: 2,
-                ),
-              ),
-              // Error style
-              errorStyle: AppTypography.caption.copyWith(
-                color: AppColors.error,
-                fontWeight: FontWeight.w500,
-              ),
-              // Helper text style
-              helperStyle: AppTypography.caption.copyWith(
-                color: AppColors.textTertiary,
+    // Build semantics label with error if present
+    String buildSemanticsLabel() {
+      if (hasError) {
+        return '$effectiveLabel, 오류: $errorText';
+      }
+      return effectiveLabel;
+    }
+
+    return Semantics(
+      label: buildSemanticsLabel(),
+      hint: hint,
+      textField: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Label
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              label,
+              style: AppTypography.labelMedium.copyWith(
+                color: AppColors.neutral700,
               ),
             ),
           ),
-        ),
-      ],
+
+          // Input field (48px 고정 높이)
+          SizedBox(
+            height: 48.0,
+            child: TextFormField(
+              controller: controller,
+              obscureText: obscureText,
+              keyboardType: keyboardType,
+              validator: validator,
+              onChanged: onChanged,
+              style: AppTypography.bodyLarge,
+              decoration: InputDecoration(
+                hintText: hint,
+                helperText: helperText,
+                errorText: errorText,
+                suffixIcon: suffixIcon,
+                filled: true,
+                fillColor: AppColors.surface,
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
+                // Default border
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: AppColors.neutral300,
+                    width: 2,
+                  ),
+                ),
+                // Focus border
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
+                ),
+                // Error border
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: AppColors.error,
+                    width: 2,
+                  ),
+                ),
+                // Focused error border
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: AppColors.error,
+                    width: 2,
+                  ),
+                ),
+                // Error style
+                errorStyle: AppTypography.caption.copyWith(
+                  color: AppColors.error,
+                  fontWeight: FontWeight.w500,
+                ),
+                // Helper text style
+                helperStyle: AppTypography.caption.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

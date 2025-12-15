@@ -60,43 +60,52 @@ class HomeDashboardScreen extends ConsumerWidget {
         ),
       ),
       body: dashboardState.when(
-        loading: () => Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primary,
-            strokeWidth: 4.0,
+        loading: () => Semantics(
+          liveRegion: true,
+          label: context.l10n.dashboard_screen_title,
+          child: Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primary,
+              strokeWidth: 4.0,
+            ),
           ),
         ),
-        error: (error, stackTrace) => Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 60,
-                  color: AppColors.error,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  context.l10n.dashboard_error_loadFailed,
-                  style: AppTypography.heading3,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  context.l10n.dashboard_error_retryMessage,
-                  style: AppTypography.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    ref.invalidate(dashboardNotifierProvider);
-                  },
-                  child: Text(context.l10n.dashboard_error_retryButton),
-                ),
-              ],
+        error: (error, stackTrace) => Semantics(
+          liveRegion: true,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ExcludeSemantics(
+                    child: Icon(
+                      Icons.error_outline,
+                      size: 60,
+                      color: AppColors.error,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    context.l10n.dashboard_error_loadFailed,
+                    style: AppTypography.heading3,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    context.l10n.dashboard_error_retryMessage,
+                    style: AppTypography.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      ref.invalidate(dashboardNotifierProvider);
+                    },
+                    child: Text(context.l10n.dashboard_error_retryButton),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

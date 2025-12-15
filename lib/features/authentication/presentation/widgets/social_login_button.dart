@@ -46,35 +46,40 @@ class SocialLoginButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: isLoading ? null : onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor,
-        foregroundColor: foregroundColor,
-        disabledBackgroundColor: backgroundColor.withValues(alpha: 0.4),
-        elevation: 2,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 8,
+    return Semantics(
+      button: true,
+      label: label,
+      enabled: !isLoading && onPressed != null,
+      child: ElevatedButton.icon(
+        onPressed: isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: foregroundColor,
+          disabledBackgroundColor: backgroundColor.withValues(alpha: 0.4),
+          elevation: 2,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          minimumSize: const Size(double.infinity, 44),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ),
-        minimumSize: const Size(double.infinity, 44),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+        icon: isLoading
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(foregroundColor),
+                ),
+              )
+            : Icon(icon, size: 24),
+        label: Text(
+          label,
+          style: AppTypography.labelLarge.copyWith(color: foregroundColor),
         ),
-      ),
-      icon: isLoading
-          ? SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(foregroundColor),
-              ),
-            )
-          : Icon(icon, size: 24),
-      label: Text(
-        label,
-        style: AppTypography.labelLarge.copyWith(color: foregroundColor),
       ),
     );
   }

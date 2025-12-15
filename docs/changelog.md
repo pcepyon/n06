@@ -21,6 +21,86 @@
 
 ## 2025-12-15
 
+- [feat] 다크모드 테마 구현 (CRITICAL-4 해결)
+  - **목적**: 앱스토어 심사 거절 방지 - Human Interface Guidelines 다크모드 지원 필수
+  - **구현 내용**:
+    - `AppColors`에 다크모드용 시맨틱 색상 추가 (배경, 표면, 텍스트, 테두리 등)
+    - `AppTheme.darkTheme` getter 구현 (ColorScheme.dark 기반)
+    - `AppThemeExtension.dark` 상수 추가 (success, warning, info, gold, silver, bronze 다크 버전)
+    - main.dart에 `darkTheme` 및 `themeMode: ThemeMode.system` 설정
+    - 시스템 다크모드 설정 자동 감지 및 테마 전환
+  - **색상 매핑**:
+    - 배경: neutral900, 표면: neutral800
+    - 주요 텍스트: neutral50, 보조 텍스트: neutral400
+    - Primary: #4ADE80 (기존 유지), Error: #FCA5A5 (Red-300)
+  - **WCAG 대비율**: 다크모드에서 4.5:1 이상 텍스트 대비율 유지
+  - **수정 파일**:
+    - `lib/core/presentation/theme/app_colors.dart`
+    - `lib/core/presentation/theme/app_theme.dart`
+    - `lib/main.dart`
+
+- [feat] Privacy Policy 접근성 개선 - 로그인 화면에서 법적 문서 URL 열기 기능 추가 (CRITICAL-1 해결)
+  - **목적**: 앱스토어 심사 거절 방지 - 동의 전 법적 문서 확인 기능 필수 (App Review Guideline 준수)
+  - **구현 내용**:
+    - `login_screen.dart`에 `_openUrl()` 메서드 추가 (url_launcher 사용)
+    - ConsentCheckbox의 `onViewTap` 콜백에 `LegalUrls.termsOfService`, `LegalUrls.privacyPolicy` 연결
+    - URL 열기 실패 시 SnackBar로 사용자 피드백 제공
+    - 로컬라이제이션 키 추가: `auth_login_error_urlOpenFailed` (한글/영문)
+  - **수정 파일**:
+    - `lib/features/authentication/presentation/screens/login_screen.dart`
+    - `lib/l10n/app_ko.arb`
+    - `lib/l10n/app_en.arb`
+
+- [feat] Firebase Analytics ATT 구현 (CRITICAL-2 해결)
+  - **목적**: 앱스토어 심사 거절 방지 - iOS 14.5+ ATT 정책 준수
+  - **구현 내용**:
+    - `app_tracking_transparency` 패키지 추가
+    - `AnalyticsService.initialize()` 메서드 추가 - ATT 권한 요청 및 조건부 Analytics 활성화
+    - iOS: ATT 다이얼로그 표시, 거부 시 Analytics 비활성화
+    - Android: Analytics 자동 활성화 (ATT 불필요)
+    - 모든 Analytics 메서드에 enabled 체크 추가
+    - Crashlytics는 ATT와 무관하게 유지 (에러 추적은 별도 정책)
+  - **초기화 타이밍**: main.dart의 addPostFrameCallback으로 앱 활성화 후 실행
+  - **ATT 상태 유지**: 시스템 설정에 자동 저장 (앱 재시작 시에도 유지)
+  - **수정된 파일**:
+    - `lib/core/services/analytics_service.dart`
+    - `lib/main.dart`
+    - `pubspec.yaml`
+
+- [feat] 접근성/VoiceOver 지원 추가 (CRITICAL-3 해결)
+  - **목적**: 앱스토어 심사 거절 방지 - iOS VoiceOver/Android TalkBack 접근성 필수
+  - **구현 내용**:
+    - 핵심 위젯에 Semantics 래핑: GabiumButton, GabiumTextField, ConsentCheckbox, GabiumBottomNavigation
+    - 소셜 로그인 버튼, 설정 메뉴 아이템, 대시보드 위젯에 접근성 레이블 추가
+    - 44×44px 최소 터치 영역 준수 (Apple HIG)
+    - liveRegion으로 동적 콘텐츠 알림 (로딩 상태 등)
+    - ExcludeSemantics/MergeSemantics로 중복 안내 방지
+  - **접근성 문자열 추가**: a11y_loading, a11y_profileLoading, a11y_trendDetail
+  - **WCAG 준수**: 버튼 역할(button: true), 선택 상태(selected), 활성화 상태(enabled) 명시
+  - **수정 파일**:
+    - `lib/features/authentication/presentation/widgets/gabium_button.dart`
+    - `lib/features/authentication/presentation/widgets/gabium_text_field.dart`
+    - `lib/features/authentication/presentation/widgets/consent_checkbox.dart`
+    - `lib/features/authentication/presentation/widgets/social_login_button.dart`
+    - `lib/core/presentation/widgets/gabium_bottom_navigation.dart`
+    - `lib/features/dashboard/presentation/widgets/emotional_greeting_widget.dart`
+    - `lib/features/dashboard/presentation/widgets/celebratory_report_widget.dart`
+    - `lib/features/settings/presentation/widgets/settings_menu_item_improved.dart`
+    - `lib/features/settings/presentation/widgets/user_info_card.dart`
+    - `lib/l10n/app_ko.arb`, `lib/l10n/app_en.arb`
+
+- [feat] PrivacyInfo.xcprivacy 생성 (CRITICAL-5 해결)
+  - **목적**: 앱스토어 심사 거절 방지 - Apple Privacy Manifest 필수 (2024년 5월 이후)
+  - **구현 내용**:
+    - Apple 공식 plist 형식으로 Privacy Manifest 생성
+    - NSPrivacyTracking: false (ATT 기반 추적)
+    - NSPrivacyCollectedDataTypes: Health, Email, UserID, CrashData 선언
+    - 각 데이터 유형별 Linked/Tracking/Purposes 명시
+    - Xcode 프로젝트 Resources 빌드 페이즈에 포함
+  - **수정 파일**:
+    - `ios/Runner/PrivacyInfo.xcprivacy` (신규)
+    - `ios/Runner.xcodeproj/project.pbxproj`
+
 - [docs] SDD 문서 작성 가이드라인 추가 - AI 코딩 에이전트를 위한 명세 작성 베스트 프랙티스
   - **핵심 내용**: 컨텍스트 엔지니어링, 의도 중심 명세, Few-shot 패턴, 에러 피드백 루프
   - **학술적 근거**: Anthropic, Manus AI, ACM TOSEM 2024 연구 기반

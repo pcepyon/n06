@@ -138,36 +138,46 @@ class _BottomNavItemState extends State<_BottomNavItem> {
   @override
   Widget build(BuildContext context) {
     final color = widget.isActive ? AppColors.primary : AppColors.textTertiary;
+    final semanticsLabel = widget.isActive
+        ? '${widget.label}, 선택됨'
+        : widget.label;
 
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOut,
-        child: Container(
-          constraints: const BoxConstraints(minWidth: 56, minHeight: 56),
-          padding: const EdgeInsets.only(top: 8, bottom: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                widget.isActive ? widget.activeIcon : widget.icon,
-                size: 24,
-                color: color,
+    return Semantics(
+      label: semanticsLabel,
+      button: true,
+      selected: widget.isActive,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) {
+          setState(() => _isPressed = false);
+          widget.onTap();
+        },
+        onTapCancel: () => setState(() => _isPressed = false),
+        child: AnimatedScale(
+          scale: _isPressed ? 0.95 : 1.0,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          child: Container(
+            constraints: const BoxConstraints(minWidth: 56, minHeight: 56),
+            padding: const EdgeInsets.only(top: 8, bottom: 4),
+            child: ExcludeSemantics(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    widget.isActive ? widget.activeIcon : widget.icon,
+                    size: 24,
+                    color: color,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.label,
+                    style: AppTypography.labelSmall.copyWith(color: color),
+                  ),
+                ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                widget.label,
-                style: AppTypography.labelSmall.copyWith(color: color),
-              ),
-            ],
+            ),
           ),
         ),
       ),

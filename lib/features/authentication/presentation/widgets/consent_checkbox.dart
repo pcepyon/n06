@@ -34,6 +34,9 @@ class ConsentCheckbox extends StatelessWidget {
   /// 약관 보기 콜백 (null이면 보기 버튼 숨김)
   final VoidCallback? onViewTap;
 
+  /// 접근성 라벨 (null이면 label 사용)
+  final String? semanticsLabel;
+
   const ConsentCheckbox({
     super.key,
     required this.label,
@@ -41,97 +44,118 @@ class ConsentCheckbox extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.onViewTap,
+    this.semanticsLabel,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => onChanged(!value),
-      child: SizedBox(
-        height: 44,
-        child: Row(
-          children: [
-            // Checkbox (24x24px visual, 44x44px touch area)
-            SizedBox(
-              width: 24,
-              height: 24,
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: value ? AppColors.primary : AppColors.neutral400,
-                    width: 2,
+    final effectiveLabel = semanticsLabel ?? label;
+    final requiredSuffix = isRequired ? ', ${context.l10n.auth_consent_required}' : '';
+    final checkboxLabel = '$effectiveLabel$requiredSuffix';
+
+    return MergeSemantics(
+      child: Semantics(
+        label: checkboxLabel,
+        checked: value,
+        child: GestureDetector(
+          onTap: () => onChanged(!value),
+          child: SizedBox(
+            height: 44,
+            child: Row(
+              children: [
+                // Checkbox (24x24px visual, 44x44px touch area)
+                ExcludeSemantics(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: value ? AppColors.primary : AppColors.neutral400,
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                        color: value ? AppColors.primary : Colors.transparent,
+                      ),
+                      child: value
+                          ? const Icon(
+                              Icons.check,
+                              size: 16,
+                              color: Colors.white,
+                            )
+                          : null,
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(4),
-                  color: value ? AppColors.primary : Colors.transparent,
                 ),
-                child: value
-                    ? const Icon(
-                        Icons.check,
-                        size: 16,
-                        color: Colors.white,
-                      )
-                    : null,
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Label
-            Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.neutral700,
-                      ),
-                    ),
-                  ),
-                  if (isRequired)
-                    Builder(
-                      builder: (context) => Container(
-                        margin: const EdgeInsets.only(left: 8),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.error.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          context.l10n.auth_consent_required,
-                          style: AppTypography.labelSmall.copyWith(
-                            color: AppColors.error,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (onViewTap != null)
-                    Builder(
-                      builder: (context) => GestureDetector(
-                        onTap: onViewTap,
-                        child: Container(
-                          margin: const EdgeInsets.only(left: 8),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
+                const SizedBox(width: 8),
+                // Label
+                Expanded(
+                  child: ExcludeSemantics(
+                    child: Row(
+                      children: [
+                        Expanded(
                           child: Text(
-                            context.l10n.auth_consent_view,
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
+                            label,
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: AppColors.neutral700,
                             ),
                           ),
                         ),
-                      ),
+                        if (isRequired)
+                          Builder(
+                            builder: (context) => Container(
+                              margin: const EdgeInsets.only(left: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.error.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                context.l10n.auth_consent_required,
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: AppColors.error,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (onViewTap != null)
+                          Builder(
+                            builder: (context) => Semantics(
+                              button: true,
+                              label: '${context.l10n.auth_consent_view}, $effectiveLabel',
+                              child: GestureDetector(
+                                onTap: onViewTap,
+                                child: Container(
+                                  margin: const EdgeInsets.only(left: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  child: ExcludeSemantics(
+                                    child: Text(
+                                      context.l10n.auth_consent_view,
+                                      style: AppTypography.labelSmall.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w600,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
