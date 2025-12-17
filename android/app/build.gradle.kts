@@ -20,7 +20,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.glp1.n06"
-    compileSdk = 34
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -48,7 +48,7 @@ android {
     defaultConfig {
         applicationId = "com.glp1.n06"
         minSdk = flutter.minSdkVersion  // Required for Firebase 4.x
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35  // Google Play 2025 requirement
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

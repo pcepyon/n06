@@ -21,6 +21,17 @@
 
 ## 2025-12-17
 
+- [chore] 앱스토어 심사 요구사항 충족 - Privacy Manifest, 알림 권한, API 35
+  - **목적**: iOS App Store 및 Google Play Store 등록 요구사항 충족
+  - **수정 내용**:
+    - `PrivacyInfo.xcprivacy`: NSPrivacyAccessedAPITypes에 UserDefaults (CA92.1) 선언 추가
+    - `Info.plist`: NSUserNotificationsUsageDescription 알림 권한 설명 추가 (iOS 17+)
+    - `build.gradle.kts`: compileSdk/targetSdk를 35로 업그레이드 (Google Play 2025 요구사항)
+  - **수정 파일**:
+    - `ios/Runner/PrivacyInfo.xcprivacy`
+    - `ios/Runner/Info.plist`
+    - `android/app/build.gradle.kts`
+
 - [fix] Flutter 린트 경고 수정 - async gap에서 BuildContext 사용 및 deprecated Radio API
   - **목적**: 런타임 크래시 방지 및 Flutter 3.35+ API 호환성 확보
   - **수정 내용**:

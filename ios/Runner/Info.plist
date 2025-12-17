@@ -51,6 +51,9 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
+	<!-- Local Notification Permission - Required for iOS 17+ -->
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>비우당은 복약 알림과 건강 관리 리마인더를 제공하기 위해 알림 권한이 필요합니다.</string>
 	<!-- App Tracking Transparency (ATT) - Required for iOS 14.5+ -->
 	<key>NSUserTrackingUsageDescription</key>
 	<string>비우당은 맞춤형 건강 관리 경험을 제공하고 앱 서비스 개선을 위해 사용자 활동 데이터를 수집합니다. 이 데이터는 광고 목적으로 사용되지 않습니다.</string>
