@@ -485,44 +485,43 @@ class _DailyTrackingScreenState extends ConsumerState<DailyTrackingScreen> {
               isHighSeverity: true,
               child: Column(
                 children: [
-                  // Change 6: 라디오 버튼 Design System 적용
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RadioListTile<bool>(
-                          title: Text(
-                            context.l10n.tracking_dailyTracking_persistentYes,
-                            style: AppTypography.bodyLarge.copyWith(
-                              color: AppColors.textSecondary,
+                  // Change 6: 라디오 버튼 Design System 적용 (RadioGroup 사용)
+                  RadioGroup<bool>(
+                    groupValue: isPersistent,
+                    onChanged: (value) =>
+                        _handlePersistentChanged(symptom, value),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: RadioListTile<bool>(
+                            title: Text(
+                              context.l10n.tracking_dailyTracking_persistentYes,
+                              style: AppTypography.bodyLarge.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
+                            value: true,
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            activeColor: AppColors.primary,
                           ),
-                          value: true,
-                          groupValue: isPersistent,
-                          onChanged: (value) =>
-                              _handlePersistentChanged(symptom, value),
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                          activeColor: AppColors.primary,
                         ),
-                      ),
-                      Expanded(
-                        child: RadioListTile<bool>(
-                          title: Text(
-                            context.l10n.tracking_dailyTracking_persistentNo,
-                            style: AppTypography.bodyLarge.copyWith(
-                              color: AppColors.textSecondary,
+                        Expanded(
+                          child: RadioListTile<bool>(
+                            title: Text(
+                              context.l10n.tracking_dailyTracking_persistentNo,
+                              style: AppTypography.bodyLarge.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
+                            value: false,
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            activeColor: AppColors.primary,
                           ),
-                          value: false,
-                          groupValue: isPersistent,
-                          onChanged: (value) =>
-                              _handlePersistentChanged(symptom, value),
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                          activeColor: AppColors.primary,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),

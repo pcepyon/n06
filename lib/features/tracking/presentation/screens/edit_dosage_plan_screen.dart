@@ -214,18 +214,22 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
       );
 
       if (result.isSuccess) {
-        _showSuccessSnackBar(context.l10n.tracking_dosagePlan_updateSuccess);
         if (mounted) {
+          _showSuccessSnackBar(context.l10n.tracking_dosagePlan_updateSuccess);
           Navigator.of(context).pop();
         }
       } else {
-        final errorMsg = result.errorType != null
-            ? _getErrorMessage(result.errorType!)
-            : context.l10n.tracking_dosagePlan_updateFailed;
-        _showErrorSnackBar(errorMsg);
+        if (mounted) {
+          final errorMsg = result.errorType != null
+              ? _getErrorMessage(result.errorType!)
+              : context.l10n.tracking_dosagePlan_updateFailed;
+          _showErrorSnackBar(errorMsg);
+        }
       }
     } catch (e) {
-      _showErrorSnackBar(context.l10n.tracking_dosagePlan_updateError(e.toString()));
+      if (mounted) {
+        _showErrorSnackBar(context.l10n.tracking_dosagePlan_updateError(e.toString()));
+      }
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);

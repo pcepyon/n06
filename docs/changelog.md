@@ -19,6 +19,18 @@
 
 ---
 
+## 2025-12-17
+
+- [fix] Flutter 린트 경고 수정 - async gap에서 BuildContext 사용 및 deprecated Radio API
+  - **목적**: 런타임 크래시 방지 및 Flutter 3.35+ API 호환성 확보
+  - **수정 내용**:
+    - `edit_dosage_plan_screen.dart`: async gap 이후 모든 context 사용에 `mounted` 체크 추가
+    - `daily_tracking_screen.dart`: deprecated `RadioListTile.groupValue/onChanged` → `RadioGroup` 래퍼로 마이그레이션
+  - **해결된 경고**: 7개 (use_build_context_synchronously 3개, deprecated_member_use 4개)
+  - **수정 파일**:
+    - `lib/features/tracking/presentation/screens/edit_dosage_plan_screen.dart`
+    - `lib/features/tracking/presentation/screens/daily_tracking_screen.dart`
+
 ## 2025-12-15
 
 - [feat] 다크모드 테마 구현 (CRITICAL-4 해결)
