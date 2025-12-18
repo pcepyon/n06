@@ -19,6 +19,20 @@
 
 ---
 
+## 2025-12-18
+
+- [feat] 마케팅 랜딩페이지 추가 (Next.js + Vercel)
+  - **목적**: 앱스토어 출시 전 마케팅 페이지 구축
+  - **구현 내용**:
+    - Next.js 16 + Tailwind CSS v4 기반 랜딩페이지
+    - 커스텀 디자인 시스템 (Mint/Peach 컬러, Pretendard/Sora 폰트)
+    - 스크롤 애니메이션, 반응형 레이아웃
+    - 앱스토어 심사 대비 의학적 조언 표현 제거 (통계 주장, 대처법 등)
+    - 법적 문서 링크 연동 (이용약관, 개인정보처리방침, 의료 면책조항)
+  - **추가 파일**:
+    - `marketing/` - Next.js 프로젝트
+    - `vercel.json` - Vercel 배포 설정 (rootDirectory: marketing)
+
 ## 2025-12-17
 
 - [chore] 앱스토어 심사 요구사항 충족 - Privacy Manifest, 알림 권한, API 35
