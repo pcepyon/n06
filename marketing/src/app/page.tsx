@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 // Intersection Observer Hook for scroll animations
 function useInView(threshold = 0.1) {
@@ -66,10 +67,13 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-6 py-4">
           <div className="flex items-center justify-between">
             <a href="#" className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-mint-400 to-mint-600 shadow-soft">
-                <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+              <div className="relative h-10 w-10 overflow-hidden rounded-xl shadow-soft">
+                <Image
+                  src="/images/logo.png"
+                  alt="비우당 로고"
+                  fill
+                  className="object-cover"
+                />
               </div>
               <span className="font-display text-xl font-semibold text-warm-gray-800">비우당</span>
             </a>
@@ -126,7 +130,7 @@ export default function Home() {
                 className="group flex items-center gap-3 rounded-2xl bg-warm-gray-900 px-8 py-4 text-lg font-medium text-white shadow-soft-lg transition-all hover:bg-warm-gray-800 hover:scale-105"
               >
                 <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
                 </svg>
                 App Store 다운로드
                 <span className="transition-transform group-hover:translate-x-1">→</span>
@@ -143,63 +147,17 @@ export default function Home() {
           {/* App Preview */}
           <div className={`mt-16 relative ${heroRef.isInView ? 'animate-fade-up delay-500' : 'opacity-0'}`}>
             <div className="relative mx-auto w-[280px] sm:w-[320px]">
-              {/* Phone Frame */}
-              <div className="relative rounded-[3rem] bg-warm-gray-900 p-3 shadow-soft-lg">
+              {/* Phone Frame with Image */}
+              <div className="relative rounded-[3rem] bg-warm-gray-900 p-2 shadow-soft-lg">
                 <div className="overflow-hidden rounded-[2.5rem] bg-cream">
-                  {/* Mock App Screen */}
-                  <div className="aspect-[9/19] w-full bg-gradient-to-b from-mint-50 to-white p-6">
-                    {/* Status Bar */}
-                    <div className="flex items-center justify-between text-xs text-warm-gray-500">
-                      <span>9:41</span>
-                      <div className="flex gap-1">
-                        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
-                        </svg>
-                        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M17 4h-3V2h-4v2H7v18h10V4z"/>
-                        </svg>
-                      </div>
-                    </div>
-
-                    {/* Greeting */}
-                    <div className="mt-6">
-                      <p className="text-sm text-warm-gray-500">안녕하세요</p>
-                      <p className="text-xl font-semibold text-warm-gray-800">오늘도 잘하고 있어요</p>
-                    </div>
-
-                    {/* Progress Card */}
-                    <div className="mt-4 rounded-2xl bg-white p-4 shadow-soft">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-warm-gray-600">치료 진행률</span>
-                        <span className="text-2xl font-bold text-mint-600">67%</span>
-                      </div>
-                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-mint-100">
-                        <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-mint-400 to-mint-500" />
-                      </div>
-                      <p className="mt-2 text-xs text-warm-gray-500">8주차 / 12주</p>
-                    </div>
-
-                    {/* Next Dose */}
-                    <div className="mt-4 rounded-2xl bg-gradient-to-r from-mint-500 to-mint-600 p-4 text-white shadow-soft">
-                      <p className="text-sm opacity-90">다음 투여일</p>
-                      <p className="text-lg font-semibold">3일 후 (금요일)</p>
-                      <p className="mt-1 text-sm opacity-90">0.5mg · 복부 왼쪽</p>
-                    </div>
-
-                    {/* Quick Actions */}
-                    <div className="mt-4 grid grid-cols-3 gap-2">
-                      {[
-                        { icon: "⚖️", label: "체중" },
-                        { icon: "📋", label: "증상" },
-                        { icon: "💉", label: "투여" },
-                      ].map((item) => (
-                        <div key={item.label} className="flex flex-col items-center gap-1 rounded-xl bg-white p-3 shadow-soft">
-                          <span className="text-xl">{item.icon}</span>
-                          <span className="text-xs text-warm-gray-600">{item.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <Image
+                    src="/images/hero-app-mockup.png"
+                    alt="비우당 앱 실행 화면"
+                    width={320}
+                    height={640}
+                    className="h-full w-full object-cover"
+                    priority
+                  />
                 </div>
               </div>
 
@@ -295,9 +253,8 @@ export default function Home() {
             ].map((item, index) => (
               <div
                 key={item.title}
-                className={`group relative overflow-hidden rounded-3xl bg-white p-6 shadow-soft transition-all hover:shadow-soft-lg hover:-translate-y-1 ${
-                  painRef.isInView ? 'animate-fade-up' : 'opacity-0'
-                }`}
+                className={`group relative overflow-hidden rounded-3xl bg-white p-6 shadow-soft transition-all hover:shadow-soft-lg hover:-translate-y-1 ${painRef.isInView ? 'animate-fade-up' : 'opacity-0'
+                  }`}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <span className="text-4xl">{item.emoji}</span>
@@ -372,9 +329,8 @@ export default function Home() {
             ].map((item, index) => (
               <div
                 key={item.title}
-                className={`group relative overflow-hidden rounded-3xl bg-white p-8 shadow-soft-lg transition-all hover:-translate-y-2 ${
-                  solutionRef.isInView ? 'animate-fade-up' : 'opacity-0'
-                }`}
+                className={`group relative overflow-hidden rounded-3xl bg-white p-8 shadow-soft-lg transition-all hover:-translate-y-2 ${solutionRef.isInView ? 'animate-fade-up' : 'opacity-0'
+                  }`}
                 style={{ animationDelay: `${index * 150}ms` }}
               >
                 <div className={`inline-flex rounded-2xl bg-gradient-to-br ${item.gradient} p-4 text-white shadow-soft`}>
@@ -402,7 +358,7 @@ export default function Home() {
           <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1"/>
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#grid)" />
@@ -457,26 +413,23 @@ export default function Home() {
                         { day: "수", status: "오늘", dose: "0.25mg" },
                         { day: "금", status: "예정", dose: "0.5mg" },
                       ].map((item) => (
-                        <div key={item.day} className={`flex items-center justify-between rounded-xl p-3 ${
-                          item.status === "오늘" ? "bg-mint-500/20 ring-1 ring-mint-500/50" : "bg-warm-gray-700/50"
-                        }`}>
+                        <div key={item.day} className={`flex items-center justify-between rounded-xl p-3 ${item.status === "오늘" ? "bg-mint-500/20 ring-1 ring-mint-500/50" : "bg-warm-gray-700/50"
+                          }`}>
                           <div className="flex items-center gap-3">
-                            <span className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium ${
-                              item.status === "완료" ? "bg-mint-500 text-white" :
+                            <span className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium ${item.status === "완료" ? "bg-mint-500 text-white" :
                               item.status === "오늘" ? "bg-mint-400 text-warm-gray-900" :
-                              "bg-warm-gray-600 text-warm-gray-300"
-                            }`}>
+                                "bg-warm-gray-600 text-warm-gray-300"
+                              }`}>
                               {item.day}
                             </span>
                             <span className={`text-sm ${item.status === "오늘" ? "text-mint-300" : "text-warm-gray-400"}`}>
                               {item.dose}
                             </span>
                           </div>
-                          <span className={`text-xs ${
-                            item.status === "완료" ? "text-mint-400" :
+                          <span className={`text-xs ${item.status === "완료" ? "text-mint-400" :
                             item.status === "오늘" ? "text-mint-300 font-medium" :
-                            "text-warm-gray-500"
-                          }`}>
+                              "text-warm-gray-500"
+                            }`}>
                             {item.status}
                           </span>
                         </div>
@@ -513,27 +466,14 @@ export default function Home() {
               </div>
               <div className="flex-1">
                 <div className="relative rounded-3xl bg-gradient-to-br from-warm-gray-800 to-warm-gray-900 p-8 shadow-soft-lg">
-                  <div className="space-y-4">
-                    <div className="rounded-2xl bg-peach-500/10 p-4 ring-1 ring-peach-500/30">
-                      <div className="flex items-start gap-3">
-                        <span className="text-2xl">🤢</span>
-                        <div>
-                          <p className="font-medium text-peach-300">메스꺼움 기록됨</p>
-                          <p className="mt-1 text-sm text-warm-gray-400">오늘 오전 10:30</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="rounded-2xl bg-warm-gray-800/50 p-4">
-                      <p className="text-sm font-medium text-warm-gray-300">📋 기록된 정보</p>
-                      <ul className="mt-3 space-y-2 text-sm text-warm-gray-400">
-                        <li>• 강도: 중간</li>
-                        <li>• 지속 시간: 2시간</li>
-                        <li>• 투여 후 경과: 6시간</li>
-                      </ul>
-                      <p className="mt-4 text-xs text-mint-400">
-                        담당 의사에게 공유하여 상담받으세요
-                      </p>
-                    </div>
+                  <div className="overflow-hidden rounded-2xl bg-peach-50/10">
+                    <Image
+                      src="/images/feature-tracking.png"
+                      alt="증상 기록 인터페이스"
+                      width={500}
+                      height={400}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                 </div>
               </div>
@@ -659,21 +599,18 @@ export default function Home() {
               ].map((item, index) => (
                 <div
                   key={item.week}
-                  className={`relative flex flex-col md:flex-row ${
-                    index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
-                  } items-center gap-8 ${journeyRef.isInView ? 'animate-fade-up' : 'opacity-0'}`}
+                  className={`relative flex flex-col md:flex-row ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
+                    } items-center gap-8 ${journeyRef.isInView ? 'animate-fade-up' : 'opacity-0'}`}
                   style={{ animationDelay: `${index * 200}ms` }}
                 >
                   {/* Content Card */}
                   <div className={`flex-1 ${index % 2 === 0 ? 'md:text-right md:pr-12' : 'md:text-left md:pl-12'}`}>
-                    <div className={`inline-block rounded-2xl bg-white p-6 shadow-soft-lg text-left ${
-                      index % 2 === 0 ? 'md:ml-auto' : ''
-                    }`}>
-                      <div className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                        item.color === 'mint'
-                          ? 'bg-mint-100 text-mint-700'
-                          : 'bg-peach-100 text-peach-700'
+                    <div className={`inline-block rounded-2xl bg-white p-6 shadow-soft-lg text-left ${index % 2 === 0 ? 'md:ml-auto' : ''
                       }`}>
+                      <div className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${item.color === 'mint'
+                        ? 'bg-mint-100 text-mint-700'
+                        : 'bg-peach-100 text-peach-700'
+                        }`}>
                         {item.week}
                       </div>
                       <p className="mt-2 text-sm text-warm-gray-500">{item.emotion}</p>
@@ -684,11 +621,10 @@ export default function Home() {
                   </div>
 
                   {/* Center Dot */}
-                  <div className={`absolute left-1/2 -translate-x-1/2 hidden md:flex h-12 w-12 items-center justify-center rounded-full ${
-                    item.color === 'mint'
-                      ? 'bg-mint-500'
-                      : 'bg-peach-400'
-                  } text-white shadow-soft z-10`}>
+                  <div className={`absolute left-1/2 -translate-x-1/2 hidden md:flex h-12 w-12 items-center justify-center rounded-full ${item.color === 'mint'
+                    ? 'bg-mint-500'
+                    : 'bg-peach-400'
+                    } text-white shadow-soft z-10`}>
                     <span className="text-lg font-bold">{index + 1}</span>
                   </div>
 
@@ -747,9 +683,8 @@ export default function Home() {
             ].map((item, index) => (
               <div
                 key={item.title}
-                className={`rounded-3xl bg-white/10 p-8 text-center backdrop-blur-sm transition-transform hover:scale-105 ${
-                  statsRef.isInView ? 'animate-fade-up' : 'opacity-0'
-                }`}
+                className={`rounded-3xl bg-white/10 p-8 text-center backdrop-blur-sm transition-transform hover:scale-105 ${statsRef.isInView ? 'animate-fade-up' : 'opacity-0'
+                  }`}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <span className="text-5xl">{item.icon}</span>
@@ -784,7 +719,7 @@ export default function Home() {
                 className="group flex items-center gap-3 rounded-2xl bg-warm-gray-900 px-8 py-4 text-lg font-medium text-white shadow-soft-lg transition-all hover:bg-warm-gray-800 hover:scale-105"
               >
                 <svg className="h-7 w-7" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
                 </svg>
                 App Store에서 다운로드
                 <span className="transition-transform group-hover:translate-x-1">→</span>
@@ -794,7 +729,7 @@ export default function Home() {
                 className="group flex items-center gap-3 rounded-2xl border-2 border-warm-gray-200 bg-white px-8 py-4 text-lg font-medium text-warm-gray-700 transition-all hover:border-warm-gray-900"
               >
                 <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M3 20.5v-17c0-.59.34-1.11.84-1.35L13.69 12l-9.85 9.85c-.5-.25-.84-.76-.84-1.35zm13.81-5.38L6.05 21.34l8.49-8.49 2.27 2.27zm3.35-4.31c.34.27.59.69.59 1.19s-.22.9-.57 1.18l-2.29 1.32-2.5-2.5 2.5-2.5 2.27 1.31zM6.05 2.66l10.76 6.22-2.27 2.27L6.05 2.66z"/>
+                  <path d="M3 20.5v-17c0-.59.34-1.11.84-1.35L13.69 12l-9.85 9.85c-.5-.25-.84-.76-.84-1.35zm13.81-5.38L6.05 21.34l8.49-8.49 2.27 2.27zm3.35-4.31c.34.27.59.69.59 1.19s-.22.9-.57 1.18l-2.29 1.32-2.5-2.5 2.5-2.5 2.27 1.31zM6.05 2.66l10.76 6.22-2.27 2.27L6.05 2.66z" />
                 </svg>
                 Google Play에서 다운로드
               </a>
@@ -804,19 +739,19 @@ export default function Home() {
             <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-warm-gray-400">
               <div className="flex items-center gap-2">
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
                 </svg>
                 <span className="text-sm">의료 정보 보안</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                 </svg>
                 <span className="text-sm">무료 사용</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                 </svg>
                 <span className="text-sm">4.8 평점</span>
               </div>
