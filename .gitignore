@@ -232,6 +232,9 @@ $RECYCLE.BIN/
 # Add any project-specific ignores below this line
 TEST_SETUP_COMPLETE.md
 
+# App Store Screenshots
+docs/assets/
+
 # Claude Code skill logs
 .claude/skills/**/projects/**/*-implementation-log*.md
 .claude/debug-status/
