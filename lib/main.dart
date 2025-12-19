@@ -344,6 +344,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
       title: 'GLP-1 치료 관리',
       theme: AppTheme.lightTheme.copyWith(
         extensions: [AppThemeExtension.light],
