@@ -33,9 +33,16 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _agreedToTerms = false;
   bool _agreedToPrivacy = false;
+  bool _agreedToSensitiveInfo = false;
+  bool _agreedToMedicalDisclaimer = false;
   bool _isLoading = false;
 
-  bool get _canLogin => _agreedToTerms && _agreedToPrivacy && !_isLoading;
+  bool get _canLogin =>
+      _agreedToTerms &&
+      _agreedToPrivacy &&
+      _agreedToSensitiveInfo &&
+      _agreedToMedicalDisclaimer &&
+      !_isLoading;
 
   Future<void> _openUrl(String url) async {
     final uri = Uri.parse(url);
@@ -675,6 +682,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   setState(() => _agreedToPrivacy = val);
                                 },
                           onViewTap: () => _openUrl(LegalUrls.privacyPolicy),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Builder(
+                        builder: (context) => ConsentCheckbox(
+                          key: const Key('sensitive_info_checkbox'),
+                          label: context.l10n.auth_login_consentSensitiveInfo,
+                          isRequired: true,
+                          value: _agreedToSensitiveInfo,
+                          onChanged: _isLoading
+                              ? (val) {}
+                              : (val) {
+                                  setState(() => _agreedToSensitiveInfo = val);
+                                },
+                          onViewTap: () => _openUrl(LegalUrls.sensitiveInfoConsent),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Builder(
+                        builder: (context) => ConsentCheckbox(
+                          key: const Key('medical_disclaimer_checkbox'),
+                          label: context.l10n.auth_login_consentMedicalDisclaimer,
+                          isRequired: true,
+                          value: _agreedToMedicalDisclaimer,
+                          onChanged: _isLoading
+                              ? (val) {}
+                              : (val) {
+                                  setState(() => _agreedToMedicalDisclaimer = val);
+                                },
+                          onViewTap: () => _openUrl(LegalUrls.medicalDisclaimer),
                         ),
                       ),
                     ],

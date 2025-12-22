@@ -99,6 +99,7 @@ void main() {
           termsOfService: true,
           privacyPolicy: true,
           sensitiveInfo: true,
+          medicalDisclaimer: true,
         ),
         true,
       );
@@ -110,6 +111,7 @@ void main() {
           termsOfService: false,
           privacyPolicy: true,
           sensitiveInfo: true,
+          medicalDisclaimer: true,
         ),
         false,
       );
@@ -121,6 +123,7 @@ void main() {
           termsOfService: true,
           privacyPolicy: false,
           sensitiveInfo: true,
+          medicalDisclaimer: true,
         ),
         false,
       );
@@ -132,6 +135,19 @@ void main() {
           termsOfService: true,
           privacyPolicy: true,
           sensitiveInfo: false,
+          medicalDisclaimer: true,
+        ),
+        false,
+      );
+    });
+
+    test('isValidConsent - invalid when medical disclaimer not given', () {
+      expect(
+        isValidConsent(
+          termsOfService: true,
+          privacyPolicy: true,
+          sensitiveInfo: true,
+          medicalDisclaimer: false,
         ),
         false,
       );
@@ -143,6 +159,7 @@ void main() {
           termsOfService: true,
           privacyPolicy: true,
           sensitiveInfo: true,
+          medicalDisclaimer: true,
           marketingEmail: true,
         ),
         true,
@@ -152,6 +169,7 @@ void main() {
           termsOfService: true,
           privacyPolicy: true,
           sensitiveInfo: true,
+          medicalDisclaimer: true,
           marketingEmail: false,
         ),
         true,

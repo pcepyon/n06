@@ -478,6 +478,14 @@
   "@auth_login_consentPrivacy": {
     "description": "Privacy policy consent label"
   },
+  "auth_login_consentSensitiveInfo": "I agree to the collection and use of sensitive information (health data)",
+  "@auth_login_consentSensitiveInfo": {
+    "description": "Sensitive info consent label for login screen (required)"
+  },
+  "auth_login_consentMedicalDisclaimer": "I agree to the Medical Disclaimer",
+  "@auth_login_consentMedicalDisclaimer": {
+    "description": "Medical disclaimer consent label for login screen (required)"
+  },
   "auth_login_consentRequired": "Please agree to all terms to sign in with social login",
   "@auth_login_consentRequired": {
     "description": "Consent required warning message"
@@ -587,6 +595,10 @@
   "auth_signup_consentSensitiveInfo": "I agree to the collection and use of sensitive information (health data)",
   "@auth_signup_consentSensitiveInfo": {
     "description": "Sensitive info consent label (required)"
+  },
+  "auth_signup_consentMedicalDisclaimer": "I agree to the Medical Disclaimer",
+  "@auth_signup_consentMedicalDisclaimer": {
+    "description": "Medical disclaimer consent label for signup screen (required)"
   },
   "auth_signup_button": "Sign Up",
   "@auth_signup_button": {
