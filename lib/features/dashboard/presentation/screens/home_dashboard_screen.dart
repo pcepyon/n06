@@ -2,11 +2,14 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/core/extensions/l10n_extension.dart';
+import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';
 import 'package:n06/features/dashboard/application/notifiers/ai_message_notifier.dart';
+import 'package:n06/features/dashboard/domain/entities/dashboard_message_type.dart';
 import 'package:n06/features/dashboard/presentation/widgets/ai_message_section.dart';
 import 'package:n06/features/dashboard/presentation/widgets/emotional_greeting_widget.dart';
 import 'package:n06/features/dashboard/presentation/widgets/hopeful_schedule_widget.dart';
@@ -70,45 +73,72 @@ class HomeDashboardScreen extends ConsumerWidget {
             ),
           ),
         ),
-        error: (error, stackTrace) => Semantics(
-          liveRegion: true,
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ExcludeSemantics(
-                    child: Icon(
-                      Icons.error_outline,
-                      size: 60,
-                      color: AppColors.error,
+        error: (error, stackTrace) {
+          // BUG-20251222: 프로필이 없는 인증된 사용자를 온보딩으로 리디렉션
+          // 회원가입 후 온보딩을 완료하지 않고 앱을 재시작한 경우 발생
+          final errorString = error.toString();
+          if (errorString.contains(DashboardMessageType.errorProfileNotFound.name)) {
+            developer.log(
+              '🔄 Profile not found, redirecting to onboarding...',
+              name: 'Dashboard',
+            );
+            // 빌드 중 네비게이션 방지를 위해 addPostFrameCallback 사용
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (context.mounted) {
+                final userId = ref.read(authNotifierProvider).value?.id;
+                context.go('/onboarding', extra: userId);
+              }
+            });
+            // 리디렉션 중 로딩 표시
+            return Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+                strokeWidth: 4.0,
+              ),
+            );
+          }
+
+          // 기존 에러 UI (다른 에러의 경우)
+          return Semantics(
+            liveRegion: true,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ExcludeSemantics(
+                      child: Icon(
+                        Icons.error_outline,
+                        size: 60,
+                        color: AppColors.error,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    context.l10n.dashboard_error_loadFailed,
-                    style: AppTypography.heading3,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    context.l10n.dashboard_error_retryMessage,
-                    style: AppTypography.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      ref.invalidate(dashboardNotifierProvider);
-                    },
-                    child: Text(context.l10n.dashboard_error_retryButton),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    Text(
+                      context.l10n.dashboard_error_loadFailed,
+                      style: AppTypography.heading3,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      context.l10n.dashboard_error_retryMessage,
+                      style: AppTypography.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        ref.invalidate(dashboardNotifierProvider);
+                      },
+                      child: Text(context.l10n.dashboard_error_retryButton),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
         data: (dashboardData) => RefreshIndicator(
           color: AppColors.primary,
           backgroundColor: AppColors.surface,
