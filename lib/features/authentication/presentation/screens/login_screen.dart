@@ -747,18 +747,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: _canLogin ? _handleKakaoLogin : null,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Builder(
-                  builder: (context) => SocialLoginButton(
-                    key: const Key('naver_login_button'),
-                    label: context.l10n.auth_login_naverButton,
-                    icon: Icons.language,
-                    backgroundColor: const Color(0xFF03C75A),
-                    foregroundColor: Colors.white,
-                    isLoading: _isLoading,
-                    onPressed: _canLogin ? _handleNaverLogin : null,
-                  ),
-                ),
+                // TODO: 네이버 로그인 설정 완료 후 아래 주석 해제
+                // const SizedBox(height: 8),
+                // Builder(
+                //   builder: (context) => SocialLoginButton(
+                //     key: const Key('naver_login_button'),
+                //     label: context.l10n.auth_login_naverButton,
+                //     icon: Icons.language,
+                //     backgroundColor: const Color(0xFF03C75A),
+                //     foregroundColor: Colors.white,
+                //     isLoading: _isLoading,
+                //     onPressed: _canLogin ? _handleNaverLogin : null,
+                //   ),
+                // ),
 
                 const SizedBox(height: 24),
 

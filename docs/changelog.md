@@ -19,6 +19,13 @@
 
 ---
 
+## 2025-12-22
+
+- [chore] 네이버 로그인 버튼 임시 숨김 (설정 미완료)
+  - **목적**: 네이버 로그인 기능 설정이 완료되지 않아 UI에서 임시 비활성화
+  - **수정 파일**: `lib/features/authentication/presentation/screens/login_screen.dart`
+  - **복구 방법**: `TODO: 네이버 로그인 설정 완료 후` 주석 검색 → 주석 해제
+
 ## 2025-12-18
 
 - [feat] 마케팅 랜딩페이지 추가 (Next.js + Vercel)
