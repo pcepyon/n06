@@ -21,6 +21,21 @@
 
 ## 2025-12-22
 
+- [fix] OAuth 로그인 취소 후 다른 로그인 방법이 작동하지 않는 문제 수정 (BUG-20251222)
+  - **문제**: 카카오/애플 로그인을 시작했다가 취소하면 `authProvider`가 에러 상태로 남아있어서 이메일 로그인 화면이 에러 UI만 표시
+  - **원인**:
+    - 카카오 SDK 취소 시 `OAuthCancelledException`으로 변환하지 않음
+    - `AuthNotifier`가 취소 시에도 `AsyncValue.error` 상태를 설정함
+    - `EmailSigninScreen`이 `authProvider`의 에러 상태를 감지하면 에러 UI만 표시
+  - **해결**:
+    - `SupabaseAuthRepository`: 카카오/애플 SDK 취소 감지 → `OAuthCancelledException` throw
+    - `AuthNotifier`: 취소 시 에러 상태 대신 `AsyncValue.data(null)` 상태로 복구
+    - `EmailSigninScreen`: 에러 UI 분기 제거 → 항상 로그인 폼 표시
+  - **수정 파일**:
+    - `lib/features/authentication/infrastructure/repositories/supabase_auth_repository.dart`
+    - `lib/features/authentication/application/notifiers/auth_notifier.dart`
+    - `lib/features/authentication/presentation/screens/email_signin_screen.dart`
+
 - [chore] 네이버 로그인 버튼 임시 숨김 (설정 미완료)
   - **목적**: 네이버 로그인 기능 설정이 완료되지 않아 UI에서 임시 비활성화
   - **수정 파일**: `lib/features/authentication/presentation/screens/login_screen.dart`

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart' as kakao;
@@ -11,6 +12,7 @@ import 'package:flutter_naver_login/interface/types/naver_login_result.dart';
 import 'package:flutter_naver_login/interface/types/naver_login_status.dart';
 import '../../domain/entities/user.dart' as domain;
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/exceptions/auth_exceptions.dart';
 
 /// Supabase implementation of AuthRepository
 ///
@@ -254,6 +256,10 @@ class SupabaseAuthRepository implements AuthRepository {
         try {
           kakaoToken = await kakao.UserApi.instance.loginWithKakaoTalk();
         } catch (error) {
+          // BUG-20251222: 카카오톡 앱에서 취소한 경우 감지
+          if (_isKakaoUserCancellation(error)) {
+            throw OAuthCancelledException('Kakao login cancelled by user');
+          }
           // KakaoTalk 앱 로그인 실패 시 웹 로그인
           kakaoToken = await kakao.UserApi.instance.loginWithKakaoAccount();
         }
@@ -297,9 +303,39 @@ class SupabaseAuthRepository implements AuthRepository {
 
       // 6. domain.User로 변환
       return await _mapToAppUser(authResponse.user!);
+    } on OAuthCancelledException {
+      // BUG-20251222: 사용자 취소 예외는 그대로 rethrow
+      rethrow;
     } catch (e) {
+      // BUG-20251222: 외부 브라우저에서 뒤로 가기로 취소한 경우 감지
+      if (_isKakaoUserCancellation(e)) {
+        throw OAuthCancelledException('Kakao login cancelled by user');
+      }
       throw Exception('Kakao login failed: $e');
     }
+  }
+
+  /// BUG-20251222: 카카오 SDK 취소 예외 감지 헬퍼
+  ///
+  /// 카카오 SDK는 사용자 취소 시 다음 중 하나의 예외를 throw:
+  /// - PlatformException with code 'CANCELED' (공식 문서)
+  /// - KakaoAuthException (인증 관련 예외)
+  /// - 메시지에 'cancel' 또는 'CANCELED' 포함
+  bool _isKakaoUserCancellation(dynamic error) {
+    // PlatformException with code 'CANCELED' (Kakao SDK 공식 패턴)
+    if (error is PlatformException && error.code == 'CANCELED') {
+      return true;
+    }
+
+    // 에러 메시지에 cancel 또는 CANCELED 포함 확인
+    final errorString = error.toString().toLowerCase();
+    if (errorString.contains('cancel') ||
+        errorString.contains('canceled') ||
+        errorString.contains('cancelled')) {
+      return true;
+    }
+
+    return false;
   }
 
   // ============================================
@@ -553,7 +589,7 @@ class SupabaseAuthRepository implements AuthRepository {
       // 7. domain.User 반환 (기존 헬퍼 재사용)
       return await _mapToAppUser(authResponse.user!);
     } on SignInWithAppleAuthorizationException catch (e) {
-      // 사용자가 로그인 취소한 경우
+      // BUG-20251222: 사용자가 로그인 취소한 경우 OAuthCancelledException throw
       if (e.code == AuthorizationErrorCode.canceled) {
         if (kDebugMode) {
           developer.log(
@@ -561,7 +597,7 @@ class SupabaseAuthRepository implements AuthRepository {
             name: 'SupabaseAuthRepository',
           );
         }
-        throw Exception('Apple login cancelled');
+        throw OAuthCancelledException('Apple login cancelled by user');
       }
       if (kDebugMode) {
         developer.log(

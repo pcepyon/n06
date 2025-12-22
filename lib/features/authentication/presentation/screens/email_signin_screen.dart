@@ -248,21 +248,10 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
           ),
         ),
       ),
-      body: authState.maybeWhen(
-        error: (error, stackTrace) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 48, color: AppColors.error),
-              const SizedBox(height: 16),
-              Text(
-                context.l10n.auth_signin_error_title(error.toString()),
-                style: TextStyle(color: AppColors.error),
-              ),
-            ],
-          ),
-        ),
-        orElse: () => SingleChildScrollView(
+      // BUG-20251222: authProvider 에러 상태가 있어도 항상 폼 표시
+      // 개별 에러는 _handleSignin에서 GabiumToast로 처리됨
+      // 이전 OAuth 로그인 취소 등의 에러가 있어도 이메일 로그인 폼은 정상 표시
+      body: SingleChildScrollView(
           padding: const EdgeInsets.only(
             left: 16, // md
             right: 16, // md
@@ -341,7 +330,6 @@ class _EmailSigninScreenState extends ConsumerState<EmailSigninScreen> {
             ),
           ),
         ),
-      ),
     );
   }
 }

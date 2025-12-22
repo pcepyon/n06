@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Supabase, Session;
 import 'package:n06/features/authentication/domain/entities/user.dart' as entities;
 import 'package:n06/features/authentication/domain/repositories/auth_repository.dart';
+import 'package:n06/features/authentication/domain/exceptions/auth_exceptions.dart';
 import 'package:n06/features/authentication/application/providers.dart';
 import 'package:n06/features/authentication/infrastructure/repositories/supabase_auth_repository.dart';
 import 'package:n06/core/providers.dart';
@@ -121,6 +122,23 @@ class AuthNotifier extends _$AuthNotifier {
 
       return isFirstLogin;
 
+    } on OAuthCancelledException catch (e, stack) {
+      // BUG-20251222: 사용자 취소 시 에러 상태 설정하지 않음
+      // 이전 상태(null)로 복구하여 다른 화면에서 에러 UI가 표시되지 않도록 함
+      state = const AsyncValue.data(null);
+
+      if (kDebugMode) {
+        developer.log(
+          '🚫 Login cancelled by user',
+          name: 'AuthNotifier',
+          error: e,
+          stackTrace: stack,
+          level: 900,
+        );
+      }
+
+      // 취소 예외는 rethrow하여 UI에서 처리
+      rethrow;
     } catch (error, stackTrace) {
       // Set error state
       state = AsyncValue.error(error, stackTrace);
@@ -224,6 +242,21 @@ class AuthNotifier extends _$AuthNotifier {
       }
 
       return isFirstLogin;
+    } on OAuthCancelledException catch (e, stack) {
+      // BUG-20251222: 사용자 취소 시 에러 상태 설정하지 않음
+      state = const AsyncValue.data(null);
+
+      if (kDebugMode) {
+        developer.log(
+          '🚫 Apple login cancelled by user',
+          name: 'AuthNotifier',
+          error: e,
+          stackTrace: stack,
+          level: 900,
+        );
+      }
+
+      rethrow;
     } catch (error, stackTrace) {
       // Set error state
       state = AsyncValue.error(error, stackTrace);
