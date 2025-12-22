@@ -240,7 +240,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
                 obscureText: !_showPassword,
                 onChanged: _updatePasswordStrength,
                 validator: _validatePassword,
-                autovalidateMode: _autovalidateMode,
+                // autovalidateMode 제거: Form에서 상속받아 다른 필드와 동일하게 동작
                 suffixIcon: IconButton(
                   icon: Icon(
                     _showPassword ? Icons.visibility : Icons.visibility_off,

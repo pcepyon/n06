@@ -19,6 +19,14 @@
 
 ---
 
+## 2025-12-23
+
+- [fix] 회원가입 비밀번호 필드 유효성 검사 상태 갱신 버그 재수정
+  - **문제**: 회원가입 버튼 클릭 후 비밀번호 수정 시 오류 상태가 사라지지 않음
+  - **원인**: 비밀번호 필드에만 `autovalidateMode`를 직접 전달하여 Form 상속 방식과 충돌
+  - **해결**: `autovalidateMode` 직접 전달 제거, Form에서 상속받아 다른 필드와 동일하게 동작
+  - `lib/features/authentication/presentation/screens/email_signup_screen.dart`
+
 ## 2025-12-22
 
 - [fix] 회원가입 비밀번호 필드 유효성 검사 상태 갱신 안 되는 버그 수정
