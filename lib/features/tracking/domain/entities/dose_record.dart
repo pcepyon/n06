@@ -52,8 +52,10 @@ class DoseRecord extends Equatable {
   }
 
   void _validate() {
-    // Validate administered date is not in future
-    if (administeredAt.isAfter(DateTime.now())) {
+    // Validate administered date is not in future (날짜만 비교, 시간 제외)
+    final now = DateTime.now();
+    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    if (administeredAt.isAfter(todayEnd)) {
       throw ArgumentError('Administered date cannot be in the future');
     }
 

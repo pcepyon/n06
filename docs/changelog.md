@@ -21,6 +21,14 @@
 
 ## 2025-12-23
 
+- [fix] 오늘 날짜 투여 완료 기록 시 "미래 날짜" 오류 발생 버그 수정
+  - **문제**: 오늘 날짜의 투여를 기록하려 할 때 "미래 날짜에는 주사할 수 없다" 오류 발생
+  - **원인**: `DoseRecord._validate()`에서 `administeredAt.isAfter(DateTime.now())` 비교 시 **시간까지** 비교
+    - 투여 기록 다이얼로그에서 `administeredAt`을 해당 날짜 12:00(정오)로 고정 설정
+    - 현재 시각이 12시 이전이면 12:00 > now(08:00) → "미래"로 판정
+  - **해결**: 날짜만 비교하도록 변경 (`todayEnd = 오늘 23:59:59`, `administeredAt > todayEnd`일 때만 오류)
+  - `lib/features/tracking/domain/entities/dose_record.dart`
+
 - [fix] 회원가입 비밀번호 필드 유효성 검사 상태 갱신 버그 재수정
   - **문제**: 회원가입 버튼 클릭 후 비밀번호 수정 시 오류 상태가 사라지지 않음
   - **원인**: 비밀번호 필드에만 `autovalidateMode`를 직접 전달하여 Form 상속 방식과 충돌
