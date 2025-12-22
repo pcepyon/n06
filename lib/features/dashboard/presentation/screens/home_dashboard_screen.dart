@@ -9,6 +9,8 @@ import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/features/authentication/application/notifiers/auth_notifier.dart';
 import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';
 import 'package:n06/features/dashboard/application/notifiers/ai_message_notifier.dart';
+import 'package:n06/features/dashboard/domain/entities/ai_generated_message.dart';
+import 'package:n06/features/dashboard/domain/entities/dashboard_data.dart';
 import 'package:n06/features/dashboard/domain/entities/dashboard_message_type.dart';
 import 'package:n06/features/dashboard/presentation/widgets/ai_message_section.dart';
 import 'package:n06/features/dashboard/presentation/widgets/emotional_greeting_widget.dart';
@@ -62,125 +64,145 @@ class HomeDashboardScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: dashboardState.when(
-        loading: () => Semantics(
-          liveRegion: true,
-          label: context.l10n.dashboard_screen_title,
-          child: Center(
-            child: CircularProgressIndicator(
-              color: AppColors.primary,
-              strokeWidth: 4.0,
-            ),
-          ),
-        ),
-        error: (error, stackTrace) {
-          // BUG-20251222: 프로필이 없는 인증된 사용자를 온보딩으로 리디렉션
-          // 회원가입 후 온보딩을 완료하지 않고 앱을 재시작한 경우 발생
-          final errorString = error.toString();
-          if (errorString.contains(DashboardMessageType.errorProfileNotFound.name)) {
-            developer.log(
-              '🔄 Profile not found, redirecting to onboarding...',
-              name: 'Dashboard',
-            );
-            // 빌드 중 네비게이션 방지를 위해 addPostFrameCallback 사용
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (context.mounted) {
-                final userId = ref.read(authNotifierProvider).value?.id;
-                context.go('/onboarding', extra: userId);
-              }
-            });
-            // 리디렉션 중 로딩 표시
-            return Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-                strokeWidth: 4.0,
-              ),
-            );
+      body: _buildBody(context, ref, dashboardState, aiMessageState),
+    );
+  }
+
+  /// BUG-20251222: 프로필이 없는 인증된 사용자를 온보딩으로 리디렉션
+  /// Riverpod 3.0에서 자동 재시도 시 AsyncLoading 상태이지만 hasError가 true
+  /// when()의 loading 분기로 들어가므로 별도로 에러 체크 필요
+  Widget _buildBody(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<DashboardData> dashboardState,
+    AsyncValue<AIGeneratedMessage?> aiMessageState,
+  ) {
+    // 에러가 있으면 (로딩 중이든 아니든) 먼저 체크
+    if (dashboardState.hasError) {
+      final errorString = dashboardState.error.toString();
+      if (errorString.contains(DashboardMessageType.errorProfileNotFound.name)) {
+        developer.log(
+          '🔄 Profile not found, redirecting to onboarding...',
+          name: 'Dashboard',
+        );
+        // 빌드 중 네비게이션 방지를 위해 addPostFrameCallback 사용
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (context.mounted) {
+            final userId = ref.read(authNotifierProvider).value?.id;
+            context.go('/onboarding', extra: userId);
           }
+        });
+        // 리디렉션 중 로딩 표시
+        return Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+            strokeWidth: 4.0,
+          ),
+        );
+      }
 
-          // 기존 에러 UI (다른 에러의 경우)
-          return Semantics(
-            liveRegion: true,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ExcludeSemantics(
-                      child: Icon(
-                        Icons.error_outline,
-                        size: 60,
-                        color: AppColors.error,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      context.l10n.dashboard_error_loadFailed,
-                      style: AppTypography.heading3,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      context.l10n.dashboard_error_retryMessage,
-                      style: AppTypography.bodyMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        ref.invalidate(dashboardNotifierProvider);
-                      },
-                      child: Text(context.l10n.dashboard_error_retryButton),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-        data: (dashboardData) => RefreshIndicator(
-          color: AppColors.primary,
-          backgroundColor: AppColors.surface,
-          strokeWidth: 3.0,
-          displacement: 40.0,
-          onRefresh: () async {
-            await ref.read(dashboardNotifierProvider.notifier).refresh();
-          },
-          child: SingleChildScrollView(
-            physics: AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      // 다른 에러의 경우 에러 UI 표시
+      return Semantics(
+        liveRegion: true,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(height: 24),
-
-                // 1. EmotionalGreetingWidget - 감정적 인사
-                EmotionalGreetingWidget(dashboardData: dashboardData),
-                SizedBox(height: 24),
-
-                // 2. CelebratoryReportWidget - 주간 요약 (축하 관점)
-                CelebratoryReportWidget(summary: dashboardData.weeklySummary),
-                SizedBox(height: 24),
-
-                // 3. HopefulScheduleWidget - 일정 (희망적 프레이밍)
-                HopefulScheduleWidget(schedule: dashboardData.nextSchedule),
-                SizedBox(height: 24),
-
-                // 4. JourneyTimelineWidget - 여정 타임라인
-                JourneyTimelineWidget(events: dashboardData.timeline),
-                SizedBox(height: 24),
-
-                // 5. AIMessageSection - AI 메시지
-                _buildAIMessageSection(aiMessageState),
-                SizedBox(height: 24),
-
-                // 6. CelebratoryBadgeWidget - 뱃지 그리드
-                CelebratoryBadgeWidget(badges: dashboardData.badges),
-                SizedBox(height: 48),
+                ExcludeSemantics(
+                  child: Icon(
+                    Icons.error_outline,
+                    size: 60,
+                    color: AppColors.error,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  context.l10n.dashboard_error_loadFailed,
+                  style: AppTypography.heading3,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  context.l10n.dashboard_error_retryMessage,
+                  style: AppTypography.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    ref.invalidate(dashboardNotifierProvider);
+                  },
+                  child: Text(context.l10n.dashboard_error_retryButton),
+                ),
               ],
             ),
           ),
+        ),
+      );
+    }
+
+    // 로딩 중 (에러 없음)
+    if (dashboardState.isLoading) {
+      return Semantics(
+        liveRegion: true,
+        label: context.l10n.dashboard_screen_title,
+        child: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+            strokeWidth: 4.0,
+          ),
+        ),
+      );
+    }
+
+    // 데이터 있음
+    final dashboardData = dashboardState.value;
+    if (dashboardData == null) {
+      return const SizedBox.shrink();
+    }
+
+    return RefreshIndicator(
+      color: AppColors.primary,
+      backgroundColor: AppColors.surface,
+      strokeWidth: 3.0,
+      displacement: 40.0,
+      onRefresh: () async {
+        await ref.read(dashboardNotifierProvider.notifier).refresh();
+      },
+      child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 24),
+
+            // 1. EmotionalGreetingWidget - 감정적 인사
+            EmotionalGreetingWidget(dashboardData: dashboardData),
+            SizedBox(height: 24),
+
+            // 2. CelebratoryReportWidget - 주간 요약 (축하 관점)
+            CelebratoryReportWidget(summary: dashboardData.weeklySummary),
+            SizedBox(height: 24),
+
+            // 3. HopefulScheduleWidget - 일정 (희망적 프레이밍)
+            HopefulScheduleWidget(schedule: dashboardData.nextSchedule),
+            SizedBox(height: 24),
+
+            // 4. JourneyTimelineWidget - 여정 타임라인
+            JourneyTimelineWidget(events: dashboardData.timeline),
+            SizedBox(height: 24),
+
+            // 5. AIMessageSection - AI 메시지
+            _buildAIMessageSection(aiMessageState),
+            SizedBox(height: 24),
+
+            // 6. CelebratoryBadgeWidget - 뱃지 그리드
+            CelebratoryBadgeWidget(badges: dashboardData.badges),
+            SizedBox(height: 48),
+          ],
         ),
       ),
     );

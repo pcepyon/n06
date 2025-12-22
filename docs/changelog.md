@@ -21,6 +21,21 @@
 
 ## 2025-12-22
 
+- [fix] 온보딩 미완료 사용자 앱 재시작 시 무한 스피너 문제 수정 (BUG-20251222)
+  - **문제**: 회원가입 후 온보딩 미완료 상태에서 앱 재시작 시 무한 스피너 발생
+  - **원인**:
+    - 세션은 있지만 `user_profiles` 테이블에 데이터 없음
+    - `DashboardNotifier`가 `errorProfileNotFound` 에러 발생
+    - Riverpod 3.0 자동 재시도 시 `AsyncLoading` 상태이지만 `hasError=true`
+    - `when()`의 `loading` 분기로 들어가서 에러 감지 불가
+  - **해결**:
+    - `when()` 대신 `hasError`를 먼저 체크하는 로직으로 변경
+    - `errorProfileNotFound` 에러 감지 시 온보딩으로 자동 리디렉션
+    - 온보딩 완료 후 `dashboardProvider` invalidate하여 이전 에러 상태 제거
+  - **수정 파일**:
+    - `lib/features/dashboard/presentation/screens/home_dashboard_screen.dart`
+    - `lib/features/onboarding/presentation/widgets/summary_screen.dart`
+
 - [feat] 약물 드롭다운에 i18n 지원 추가 (로케일 기반 한글/영문 표시)
   - **변경 내용**: 온보딩/설정 화면의 약물 선택 드롭다운에서 로케일에 따라 약물명 표시
     - ko: "마운자로 (티르제파타이드)"

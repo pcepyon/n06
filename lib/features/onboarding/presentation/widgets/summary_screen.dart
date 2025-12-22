@@ -5,6 +5,7 @@ import 'package:n06/core/extensions/l10n_extension.dart';
 import 'package:n06/core/presentation/theme/app_colors.dart';
 import 'package:n06/core/presentation/theme/app_typography.dart';
 import 'package:n06/features/authentication/presentation/widgets/gabium_button.dart';
+import 'package:n06/features/dashboard/application/notifiers/dashboard_notifier.dart';
 import 'package:n06/features/onboarding/application/notifiers/onboarding_notifier.dart';
 import 'package:n06/features/onboarding/presentation/widgets/summary_card.dart';
 import 'package:n06/features/onboarding/presentation/widgets/validation_alert.dart';
@@ -146,6 +147,10 @@ class SummaryScreen extends ConsumerWidget {
                       );
 
                   if (context.mounted) {
+                    // BUG-20251222: 온보딩 완료 후 dashboardProvider를 invalidate하여
+                    // 이전 에러 상태(errorProfileNotFound)를 제거하고 새로 로드
+                    ref.invalidate(dashboardNotifierProvider);
+
                     if (onComplete != null) {
                       onComplete!();
                     } else {
