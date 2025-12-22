@@ -21,6 +21,17 @@
 
 ## 2025-12-22
 
+- [feat] 약물 드롭다운에 i18n 지원 추가 (로케일 기반 한글/영문 표시)
+  - **변경 내용**: 온보딩/설정 화면의 약물 선택 드롭다운에서 로케일에 따라 약물명 표시
+    - ko: "마운자로 (티르제파타이드)"
+    - en: "Mounjaro (티르제파타이드)"
+  - **하위 호환성**: 저장 시 기존 영문 형식(`displayName`) 유지, 기존 데이터 매칭 지원
+  - **수정 파일**:
+    - `lib/features/tracking/domain/entities/medication.dart`: `localizedDisplayName()` 메서드 추가, `findByDisplayName()` fallback 개선
+    - `lib/features/onboarding/presentation/widgets/dosage_plan_form.dart`: 드롭다운 한글 표시
+    - `lib/features/tracking/presentation/screens/edit_dosage_plan_screen.dart`: 드롭다운 한글 표시
+  - **테스트**: `test/features/tracking/domain/entities/medication_localized_display_name_test.dart` 추가 (13개 테스트)
+
 - [fix] OAuth 로그인 취소 후 다른 로그인 방법이 작동하지 않는 문제 수정 (BUG-20251222)
   - **문제**: 카카오/애플 로그인을 시작했다가 취소하면 `authProvider`가 에러 상태로 남아있어서 이메일 로그인 화면이 에러 UI만 표시
   - **원인**:

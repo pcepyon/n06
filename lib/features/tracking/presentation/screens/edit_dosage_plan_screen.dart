@@ -366,7 +366,9 @@ class _EditDosagePlanFormState extends ConsumerState<_EditDosagePlanForm> {
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
-                              medication.displayName,
+                              medication.localizedDisplayName(
+                                Localizations.localeOf(context).languageCode,
+                              ),
                               style: AppTypography.bodyLarge.copyWith(
                                 color: AppColors.textSecondary,
                               ),

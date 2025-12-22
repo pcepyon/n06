@@ -147,7 +147,9 @@ class _DosagePlanFormState extends ConsumerState<DosagePlanForm> {
                   items: medications.map((medication) {
                     return DropdownMenuItem(
                       value: medication,
-                      child: Text(medication.displayName),
+                      child: Text(medication.localizedDisplayName(
+                        Localizations.localeOf(context).languageCode,
+                      )),
                     );
                   }).toList(),
                   onChanged: (medication) {

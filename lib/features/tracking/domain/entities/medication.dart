@@ -40,15 +40,28 @@ class Medication extends Equatable {
     required this.createdAt,
   });
 
-  /// 기존 dosage_plans.medication_name과 호환되는 표시명
+  /// 기존 dosage_plans.medication_name과 호환되는 표시명 (저장/매칭용)
   ///
   /// 형식: "Wegovy (세마글루타이드)"
   /// 기존 MedicationTemplate.displayName과 동일한 형식을 유지합니다.
+  /// UI 표시에는 [localizedDisplayName]을 사용하세요.
   String get displayName {
     if (genericName != null && genericName!.isNotEmpty) {
       return '$nameEn ($genericName)';
     }
     return nameEn;
+  }
+
+  /// 로케일에 따른 표시명 (UI 표시용)
+  ///
+  /// - 'ko': "마운자로 (티르제파타이드)"
+  /// - 'en': "Mounjaro (티르제파타이드)"
+  String localizedDisplayName(String languageCode) {
+    final name = languageCode == 'ko' ? nameKo : nameEn;
+    if (genericName != null && genericName!.isNotEmpty) {
+      return '$name ($genericName)';
+    }
+    return name;
   }
 
   /// 권장 시작 용량 (없으면 첫 번째 용량, 빈 배열이면 0)
@@ -63,20 +76,31 @@ class Medication extends Equatable {
 
   /// displayName으로 약물 찾기 (fallback 포함)
   ///
-  /// 1차: displayName 정확 매칭
-  /// 2차: nameEn만으로 매칭 (case-insensitive)
+  /// 1차: displayName 정확 매칭 (영문 형식)
+  /// 2차: 한글 displayName 형식 매칭
+  /// 3차: nameKo로 매칭
+  /// 4차: nameEn으로 매칭 (case-insensitive)
   static Medication? findByDisplayName(
     List<Medication> medications,
     String displayName,
   ) {
-    // 1차: displayName 정확 매칭
+    // 1차: displayName 정확 매칭 (영문 형식)
     final exact = medications.where((m) => m.displayName == displayName).firstOrNull;
     if (exact != null) return exact;
 
-    // 2차: nameEn만으로 매칭 (case-insensitive)
-    final nameEn = displayName.split(' (').first;
+    // 2차: 한글 displayName 형식 매칭
+    final koExact = medications.where((m) => m.localizedDisplayName('ko') == displayName).firstOrNull;
+    if (koExact != null) return koExact;
+
+    final namePart = displayName.split(' (').first;
+
+    // 3차: nameKo로 매칭
+    final byNameKo = medications.where((m) => m.nameKo == namePart).firstOrNull;
+    if (byNameKo != null) return byNameKo;
+
+    // 4차: nameEn으로 매칭 (case-insensitive)
     return medications
-        .where((m) => m.nameEn.toLowerCase() == nameEn.toLowerCase())
+        .where((m) => m.nameEn.toLowerCase() == namePart.toLowerCase())
         .firstOrNull;
   }
 
