@@ -21,6 +21,14 @@
 
 ## 2025-12-22
 
+- [fix] 회원가입 비밀번호 필드 유효성 검사 상태 갱신 안 되는 버그 수정
+  - **문제**: 비밀번호 규정 위반 상태에서 회원가입 버튼 클릭 후, 올바른 비밀번호로 수정해도 오류 상태 유지
+  - **원인**: 비밀번호 필드의 `onChanged`에서 `setState()` 호출 시 Form 레벨 autovalidateMode가 TextFormField에 전파 안 됨
+  - **해결**: GabiumTextField에 autovalidateMode 파라미터 추가, 비밀번호 필드에 직접 전달
+  - **수정 파일**:
+    - `lib/features/authentication/presentation/screens/email_signup_screen.dart`
+    - `lib/features/authentication/presentation/widgets/gabium_text_field.dart`
+
 - [fix] 온보딩 미완료 사용자 앱 재시작 시 무한 스피너 문제 수정 (BUG-20251222)
   - **문제**: 회원가입 후 온보딩 미완료 상태에서 앱 재시작 시 무한 스피너 발생
   - **원인**:

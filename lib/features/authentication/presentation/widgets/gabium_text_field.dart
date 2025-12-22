@@ -17,6 +17,7 @@ class GabiumTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
   final String? semanticsLabel;
+  final AutovalidateMode? autovalidateMode;
 
   const GabiumTextField({
     super.key,
@@ -31,6 +32,7 @@ class GabiumTextField extends StatelessWidget {
     this.validator,
     this.onChanged,
     this.semanticsLabel,
+    this.autovalidateMode,
   });
 
   @override
@@ -73,6 +75,7 @@ class GabiumTextField extends StatelessWidget {
               keyboardType: keyboardType,
               validator: validator,
               onChanged: onChanged,
+              autovalidateMode: autovalidateMode,
               style: AppTypography.bodyLarge,
               decoration: InputDecoration(
                 hintText: hint,

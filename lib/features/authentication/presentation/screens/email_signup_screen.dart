@@ -44,6 +44,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
   bool _showPassword = false;
   bool _showConfirmPassword = false;
   bool _isLoading = false;
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   PasswordStrength _passwordStrength = PasswordStrength.weak;
 
@@ -75,6 +76,8 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
 
   Future<void> _handleSignup() async {
     if (!_formKey.currentState!.validate()) {
+      // 검증 실패 시 자동 재검증 활성화 (사용자가 수정하면 실시간 갱신)
+      setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
       return;
     }
 
@@ -208,6 +211,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Form(
           key: _formKey,
+          autovalidateMode: _autovalidateMode,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -236,6 +240,7 @@ class _EmailSignupScreenState extends ConsumerState<EmailSignupScreen> {
                 obscureText: !_showPassword,
                 onChanged: _updatePasswordStrength,
                 validator: _validatePassword,
+                autovalidateMode: _autovalidateMode,
                 suffixIcon: IconButton(
                   icon: Icon(
                     _showPassword ? Icons.visibility : Icons.visibility_off,
